@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AILib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic AILib: 45 functions for multi-provider AI integration — connect to Anthropic Claude, OpenAI GPT, Google Gemini, local models, and more with a single unified API.">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden; transition: background var(--transition), color var(--transition);
+}
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92); border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+}
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem; color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong); display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon { width: 26px; height: 26px; border-radius: 4px; filter: drop-shadow(0 0 6px var(--glow-strong)); }
+.theme-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+  font-family: var(--font-retro); font-size: 0.45rem; padding: 0.2rem 0.5rem;
+  cursor: pointer; transition: all var(--transition); letter-spacing: 1px; margin-left: auto;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border); color: var(--text-primary);
+  font-size: 1rem; cursor: pointer; padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.layout { display: flex; margin-top: 56px; min-height: calc(100vh - 56px); }
+
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--bg-secondary);
+  border-right: 1px solid var(--border); position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden; padding: 1.5rem 0; z-index: 100; transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+.sidebar-section { padding: 0.3rem 0; }
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem; color: var(--text-dim);
+  letter-spacing: 1.5px; text-transform: uppercase; padding: 0.6rem 1.2rem 0.3rem;
+}
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem; font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.5;
+}
+.sidebar-link:hover { color: var(--text-primary); background: var(--accent-subtle); border-left-color: var(--accent-dim); text-shadow: none; }
+.sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-subtle); text-shadow: 0 0 6px var(--glow-color); }
+
+.content { flex: 1; margin-left: var(--sidebar-w); padding: 2.5rem 3rem 5rem; max-width: 920px; }
+
+.doc-section { margin-bottom: 3.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.doc-section:last-child { border-bottom: none; }
+.doc-section h2 {
+  font-family: var(--font-retro); font-size: clamp(0.5rem, 1.8vw, 0.7rem); color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color); line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px; padding-top: 0.5rem;
+}
+.doc-section h3 {
+  font-family: var(--font-retro); font-size: 0.5rem; color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem; letter-spacing: 0.5px;
+}
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600; font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+.doc-section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.85; margin-bottom: 1rem; }
+.doc-section ul, .doc-section ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.doc-section li { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.8; margin-bottom: 0.3rem; }
+.doc-section li code { background: var(--bg-card); border: 1px solid var(--border); padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent); }
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+.doc-section code { background: var(--bg-card); border: 1px solid var(--border); padding: 0.1rem 0.4rem; font-size: 0.82rem; color: var(--keyword-color); font-family: var(--font-mono); }
+
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border); border-radius: 8px;
+  margin: 1rem 0 1.5rem; overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title { font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1; }
+.code-titlebar-controls { display: flex; align-items: center; gap: 0.1rem; margin-left: auto; }
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default; transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+.code-body { padding: 1rem 1.2rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8; color: var(--text-secondary); }
+.code-body pre { margin: 0; white-space: pre; }
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.82rem; }
+th {
+  font-family: var(--font-retro); font-size: 0.4rem; color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase; background: var(--bg-secondary);
+}
+td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+tr:hover td { background: var(--accent-subtle); }
+td code { background: var(--bg-terminal); border: 1px solid var(--border); padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color); }
+
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+
+/* Provider badges */
+.provider-badge { display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid var(--border); font-size: 0.72rem; margin: 0.15rem; color: var(--text-secondary); background: var(--bg-card); }
+.provider-badge.cloud { border-color: var(--accent-dim); color: var(--accent); }
+.provider-badge.local { border-color: #886633; color: #cc9944; }
+
+/* Architecture diagram */
+.arch-flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0; font-size: 0.78rem; }
+.arch-box { padding: 0.5rem 0.8rem; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); text-align: center; }
+.arch-box.highlight { border-color: var(--accent-dim); background: var(--accent-subtle); color: var(--accent); }
+.arch-arrow { color: var(--text-dim); font-size: 1rem; }
+
+@media (max-width: 1024px) { .content { padding: 2rem 2rem 4rem; } }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; min-width: 280px; box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .code-body { font-size: 0.72rem; }
+  .arch-flow { flex-direction: column; }
+  .arch-arrow { transform: rotate(90deg); }
+}
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
+.sidebar-overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="data:image/png;base64,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" alt="" class="topbar-logo-icon">
+    <span>Plan9Basic</span>
+  </a>
+  <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html" style="display:block;padding:0.5rem 1.2rem;font-size:0.8rem;">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">AILib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">45 functions &bull; AI Integration</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#architecture" class="sidebar-link">Architecture</a>
+    <a href="#providers" class="sidebar-link">Supported Providers</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#lifecycle" class="sidebar-link">Client Lifecycle</a>
+    <a href="#config" class="sidebar-link">Configuration</a>
+    <a href="#headers" class="sidebar-link">Custom Headers</a>
+    <a href="#identity" class="sidebar-link">Identity</a>
+    <a href="#chat" class="sidebar-link">Simple Chat</a>
+    <a href="#streaming" class="sidebar-link">Streaming</a>
+    <a href="#completion" class="sidebar-link">Single-Shot Completion</a>
+    <a href="#conversation" class="sidebar-link">Conversation Mgmt</a>
+    <a href="#metadata" class="sidebar-link">Response Metadata</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#chat-modes" class="sidebar-link">Choosing a Chat Mode</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+    <a href="#see-also" class="sidebar-link">See Also</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<!-- ================================================================ -->
+<section class="doc-section" id="overview">
+<h2>AILib &mdash; AI Client Library</h2>
+<p>Provides functions to communicate with <strong>large language model APIs</strong> from your applets. Supports multiple AI providers out of the box &mdash; Anthropic (Claude), OpenAI (GPT), Google (Gemini), local models, and many more. AILib handles HTTP transport, authentication, message formatting, streaming, and multi-turn conversations, so your programs only need to focus on <strong>what to say and how to use the response</strong>. <strong>45 functions.</strong></p>
+<table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>ai_error, errormsg$, strerror$, clearerror</td></tr>
+<tr><td>Client Lifecycle</td><td>2</td><td>ai_client#, ai_free</td></tr>
+<tr><td>Configuration</td><td>11</td><td>model, system, temperature, maxtokens, topp, timeout, baseurl, stop sequences</td></tr>
+<tr><td>Custom Headers</td><td>3</td><td>header#, headerremove#, headerclear#</td></tr>
+<tr><td>Identity</td><td>4</td><td>apikey#, endpoint#, useragent#, provider$</td></tr>
+<tr><td>Simple Chat</td><td>2</td><td>chat$, clearchat</td></tr>
+<tr><td>Streaming</td><td>3</td><td>ontoken#, chatstream, streambuffer$</td></tr>
+<tr><td>Single-Shot Completion</td><td>2</td><td>complete$, completesystem$</td></tr>
+<tr><td>Conversation Management</td><td>9</td><td>conversation#, free, system, clear, maxhistory, ask$, count, last$, tokens</td></tr>
+<tr><td>Response Metadata</td><td>5</td><td>status, body$, tokensin, tokensout, ok</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="architecture">
+<h2>Architecture</h2>
+<p>Your program talks to AILib, which handles all the plumbing:</p>
+<div class="arch-flow">
+  <div class="arch-box">Your Program</div>
+  <div class="arch-arrow">&rarr;</div>
+  <div class="arch-box highlight">AILib<br><small>45 functions</small></div>
+  <div class="arch-arrow">&rarr;</div>
+  <div class="arch-box">HTTP / JSON</div>
+  <div class="arch-arrow">&rarr;</div>
+  <div class="arch-box">AI Provider API<br><small>Claude, GPT, Gemini&hellip;</small></div>
+</div>
+<p>AILib automatically formats messages for each provider&rsquo;s API, handles authentication headers, parses JSON responses, extracts token usage, and supports streaming. You just choose a provider, set your key, and start chatting.</p>
+<div class="info-box"><strong>&#9432; Three ways to talk to AI:</strong> <em>Simple Chat</em> (<code>ai_chat$</code>) keeps history automatically. <em>Single-Shot Completion</em> (<code>ai_complete$</code>) is stateless. <em>Conversation</em> (<code>ai_ask$</code> + <code>ai_conversation#</code>) gives full control over history and token management.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="providers">
+<h2>Supported Providers</h2>
+<h3>Cloud Providers</h3>
+<table><thead><tr><th>Provider</th><th>Alias</th><th>Default Model</th></tr></thead><tbody>
+<tr><td><code>"anthropic"</code></td><td><code>"claude"</code></td><td>claude-sonnet-4-20250514</td></tr>
+<tr><td><code>"openai"</code></td><td><code>"gpt"</code></td><td>gpt-4o</td></tr>
+<tr><td><code>"google"</code></td><td><code>"gemini"</code></td><td>gemini-2.0-flash</td></tr>
+<tr><td><code>"mistral"</code></td><td>&mdash;</td><td>mistral-large-latest</td></tr>
+<tr><td><code>"groq"</code></td><td>&mdash;</td><td>llama-3.3-70b-versatile</td></tr>
+<tr><td><code>"deepseek"</code></td><td>&mdash;</td><td>deepseek-chat</td></tr>
+<tr><td><code>"xai"</code></td><td><code>"grok"</code></td><td>grok-3</td></tr>
+<tr><td><code>"perplexity"</code></td><td>&mdash;</td><td>sonar-pro</td></tr>
+<tr><td><code>"together"</code></td><td>&mdash;</td><td>meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo</td></tr>
+<tr><td><code>"fireworks"</code></td><td>&mdash;</td><td>accounts/fireworks/models/llama-v3p1-70b-instruct</td></tr>
+<tr><td><code>"openrouter"</code></td><td>&mdash;</td><td>anthropic/claude-sonnet-4-20250514</td></tr>
+</tbody></table>
+<h3>Local Providers (No API Key Needed)</h3>
+<table><thead><tr><th>Provider</th><th>Default Model</th><th>Default Port</th></tr></thead><tbody>
+<tr><td><code>"ollama"</code></td><td>llama3</td><td>11434</td></tr>
+<tr><td><code>"lmstudio"</code></td><td>local-model</td><td>1234</td></tr>
+<tr><td><code>"jan"</code></td><td>local-model</td><td>1337</td></tr>
+<tr><td><code>"custom"</code></td><td><em>(none &mdash; set with <code>ai_baseurl#</code> and <code>ai_model#</code>)</em></td><td>&mdash;</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; provider examples</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' Cloud providers — need API key</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, <span class="str">"sk-ant-xxxxx"</span>)
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"openai"</span>, <span class="str">"sk-xxxxx"</span>)
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"google"</span>, <span class="str">"AIzaSy-xxxxx"</span>)
+
+<span class="cmt">' Local models — no key needed</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"ollama"</span>, <span class="str">""</span>)
+
+<span class="cmt">' Custom endpoint</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"custom"</span>, myKey$)
+<span class="fn">ai_baseurl#</span>(ai#, <span class="str">"https://my-proxy.example.com/v1"</span>)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"my-model"</span>)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_error()</code></td><td><code>ai_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>ai_errormsg$()</code></td><td><code>ai_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>ai_strerror$(code)</code></td><td><code>ai_strerror$@n</code></td><td>Convert error code to description</td></tr>
+<tr><td><code>ai_clearerror()</code></td><td><code>ai_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table>
+<h3>Error Codes</h3>
+<table><thead><tr><th>Code</th><th>Name</th><th>Description</th><th>Retry?</th></tr></thead><tbody>
+<tr><td>0</td><td>None</td><td>No error</td><td>&mdash;</td></tr>
+<tr><td>1</td><td>Invalid Client</td><td>Invalid client handle</td><td>No</td></tr>
+<tr><td>2</td><td>Invalid Conversation</td><td>Invalid conversation handle</td><td>No</td></tr>
+<tr><td>3</td><td>Invalid Provider</td><td>Unknown provider name</td><td>No</td></tr>
+<tr><td>4</td><td>Invalid Key</td><td>Invalid API key format</td><td>No</td></tr>
+<tr><td>5</td><td>Connection Error</td><td>Network or connection failure</td><td>Yes</td></tr>
+<tr><td>6</td><td>Timeout</td><td>Request timed out</td><td>Yes</td></tr>
+<tr><td>7</td><td>API Error</td><td>Server returned an error</td><td>Maybe</td></tr>
+<tr><td>8</td><td>Parse Error</td><td>Could not parse JSON response</td><td>No</td></tr>
+<tr><td>9</td><td>Rate Limited</td><td>Too many requests</td><td>Yes (wait)</td></tr>
+<tr><td>10</td><td>Auth Failed</td><td>Authentication rejected</td><td>No (check key)</td></tr>
+<tr><td>11</td><td>Invalid Model</td><td>Model name not recognized</td><td>No</td></tr>
+<tr><td>12</td><td>Stream Error</td><td>Error during streaming</td><td>Yes</td></tr>
+<tr><td>13</td><td>Invalid Argument</td><td>Bad function argument</td><td>No</td></tr>
+<tr><td>14</td><td>Context Overflow</td><td>Exceeded context window</td><td>No (reduce history)</td></tr>
+</tbody></table>
+<div class="info-box"><strong>&#9432; Transient errors</strong> (codes 5, 6, 9, 12) can be retried after a brief wait. Permanent errors (codes 1-4, 8, 10-11, 13-14) require fixing the code or configuration.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="lifecycle">
+<h2>Client Lifecycle</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_client#(provider$, apiKey$)</code></td><td><code>ai_client#@$$</code></td><td>Create AI client for a provider</td></tr>
+<tr><td><code>ai_free(ai#)</code></td><td><code>ai_free@#</code></td><td>Free AI client and release resources</td></tr>
+</tbody></table>
+<div class="info-box"><strong>&#9432; Garbage collected.</strong> AI clients are tracked by the runtime GC and cleaned up automatically when the program ends. You can also call <code>ai_free</code> explicitly to release resources sooner.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="config">
+<h2>Configuration</h2>
+<p>All configuration setters return the AI client pointer, so they can be called as standalone statements without assigning the result:</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_model#(ai#, model$)</code></td><td><code>ai_model#@#$</code></td><td>Set the model to use</td></tr>
+<tr><td><code>ai_model$(ai#)</code></td><td><code>ai_model$@#</code></td><td>Get current model name</td></tr>
+<tr><td><code>ai_system#(ai#, prompt$)</code></td><td><code>ai_system#@#$</code></td><td>Set system prompt (sent with every request)</td></tr>
+<tr><td><code>ai_temperature#(ai#, value)</code></td><td><code>ai_temperature#@#n</code></td><td>Set temperature (0.0&ndash;2.0, lower = more deterministic)</td></tr>
+<tr><td><code>ai_maxtokens#(ai#, tokens)</code></td><td><code>ai_maxtokens#@#n</code></td><td>Set maximum output tokens</td></tr>
+<tr><td><code>ai_topp#(ai#, value)</code></td><td><code>ai_topp#@#n</code></td><td>Set top-p / nucleus sampling (0.0&ndash;1.0)</td></tr>
+<tr><td><code>ai_timeout#(ai#, seconds)</code></td><td><code>ai_timeout#@#n</code></td><td>Set request timeout in seconds</td></tr>
+<tr><td><code>ai_baseurl#(ai#, url$)</code></td><td><code>ai_baseurl#@#$</code></td><td>Set custom base URL (proxies, self-hosted)</td></tr>
+<tr><td><code>ai_baseurl$(ai#)</code></td><td><code>ai_baseurl$@#</code></td><td>Get current base URL</td></tr>
+<tr><td><code>ai_stop#(ai#, sequence$)</code></td><td><code>ai_stop#@#$</code></td><td>Add a stop sequence</td></tr>
+<tr><td><code>ai_clearstop#(ai#)</code></td><td><code>ai_clearstop#@#</code></td><td>Clear all stop sequences</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; typical configuration</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, key$)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">4096</span>)
+<span class="fn">ai_temperature#</span>(ai#, <span class="num">0.7</span>)
+<span class="fn">ai_system#</span>(ai#, <span class="str">"You are a helpful assistant."</span>)
+<span class="fn">ai_timeout#</span>(ai#, <span class="num">30</span>)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="headers">
+<h2>Custom Headers</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_header#(ai#, name$, value$)</code></td><td><code>ai_header#@#$$</code></td><td>Add a custom HTTP header to all requests</td></tr>
+<tr><td><code>ai_headerremove#(ai#, name$)</code></td><td><code>ai_headerremove#@#$</code></td><td>Remove a custom header by name</td></tr>
+<tr><td><code>ai_headerclear#(ai#)</code></td><td><code>ai_headerclear#@#</code></td><td>Remove all custom headers</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="identity">
+<h2>Identity</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_apikey#(ai#, key$)</code></td><td><code>ai_apikey#@#$</code></td><td>Change API key after client creation</td></tr>
+<tr><td><code>ai_endpoint#(ai#, path$)</code></td><td><code>ai_endpoint#@#$</code></td><td>Set custom endpoint path (appended to base URL)</td></tr>
+<tr><td><code>ai_useragent#(ai#, agent$)</code></td><td><code>ai_useragent#@#$</code></td><td>Set custom User-Agent header</td></tr>
+<tr><td><code>ai_provider$(ai#)</code></td><td><code>ai_provider$@#</code></td><td>Get provider name (e.g. &ldquo;anthropic&rdquo;, &ldquo;openai&rdquo;)</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="chat">
+<h2>Simple Chat</h2>
+<p>The easiest way to talk to an AI. Maintains internal history automatically &mdash; the AI remembers previous messages in the session.</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_chat$(ai#, message$)</code></td><td><code>ai_chat$@#$</code></td><td>Send message, get complete response (keeps history)</td></tr>
+<tr><td><code>ai_clearchat(ai#)</code></td><td><code>ai_clearchat@#</code></td><td>Clear internal chat history &mdash; next call starts fresh</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; simple-chat.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, key$)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">1024</span>)
+
+<span class="kw">let</span> reply$ = <span class="fn">ai_chat$</span>(ai#, <span class="str">"What causes the northern lights?"</span>)
+<span class="fn">println</span> reply$
+
+<span class="cmt">' Follow-up — the AI remembers the previous message</span>
+<span class="kw">let</span> reply$ = <span class="fn">ai_chat$</span>(ai#, <span class="str">"Where is the best place to see them?"</span>)
+<span class="fn">println</span> reply$
+
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="streaming">
+<h2>Streaming</h2>
+<p>Receive tokens in real-time as the AI generates them, via a callback function.</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_ontoken#(ai#, callback$)</code></td><td><code>ai_ontoken#@#$</code></td><td>Set the streaming callback function name</td></tr>
+<tr><td><code>ai_chatstream(ai#, message$)</code></td><td><code>ai_chatstream@#$</code></td><td>Send message and stream response via callback</td></tr>
+<tr><td><code>ai_streambuffer$(ai#)</code></td><td><code>ai_streambuffer$@#</code></td><td>Get the full accumulated text after streaming</td></tr>
+</tbody></table>
+<h4>Callback Signature</h4>
+<p>The callback receives two parameters: <code>token$</code> (the text chunk just received) and <code>done</code> (0 while streaming, 1 on the final token).</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; streaming.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">on_token$</span>(token$, done)
+    <span class="fn">print</span> token$;
+    <span class="kw">if</span> done = <span class="num">1</span> <span class="kw">then</span>
+        <span class="fn">println</span> <span class="str">""</span>
+        <span class="fn">println</span> <span class="str">"--- Stream complete ---"</span>
+    <span class="kw">end</span> <span class="kw">if</span>
+    <span class="kw">return</span> <span class="str">""</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, key$)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">512</span>)
+<span class="fn">ai_ontoken#</span>(ai#, <span class="str">"on_token"</span>)
+
+<span class="fn">ai_chatstream</span>(ai#, <span class="str">"Write a short poem about the ocean"</span>)
+
+<span class="cmt">' Get the complete response after streaming finishes</span>
+<span class="kw">let</span> full$ = <span class="fn">ai_streambuffer$</span>(ai#)
+<span class="fn">println</span> <span class="str">"Total: "</span> + <span class="fn">str$</span>(<span class="fn">len</span>(full$)) + <span class="str">" chars"</span>
+
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="completion">
+<h2>Single-Shot Completion</h2>
+<p>Stateless prompt-in/response-out with no chat history. Each call is independent. Ideal for classification, summarization, code generation, and one-off tasks.</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_complete$(ai#, prompt$)</code></td><td><code>ai_complete$@#$</code></td><td>Single-shot completion</td></tr>
+<tr><td><code>ai_completesystem$(ai#, sys$, msg$)</code></td><td><code>ai_completesystem$@#$$</code></td><td>Completion with system prompt for this call only</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; completion.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' Summarize text (stateless)</span>
+<span class="kw">let</span> summary$ = <span class="fn">ai_complete$</span>(ai#, <span class="str">"Summarize in one sentence: "</span> + longText$)
+
+<span class="cmt">' Generate code with a system prompt</span>
+<span class="kw">let</span> sys$ = <span class="str">"You are a concise assistant. Return only the answer, no explanation."</span>
+<span class="kw">let</span> answer$ = <span class="fn">ai_completesystem$</span>(ai#, sys$, <span class="str">"What is the capital of Australia?"</span>)
+<span class="fn">println</span> answer$</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="conversation">
+<h2>Conversation Management</h2>
+<p>Full control over multi-turn chat history. Create multiple conversations, set system prompts per conversation, manage history size for token awareness.</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_conversation#()</code></td><td><code>ai_conversation#@</code></td><td>Create a new empty conversation</td></tr>
+<tr><td><code>ai_conversation_free(conv#)</code></td><td><code>ai_conversation_free@#</code></td><td>Free conversation and its history</td></tr>
+<tr><td><code>ai_conversation_system#(conv#, sys$)</code></td><td><code>ai_conversation_system#@#$</code></td><td>Set system prompt for the conversation</td></tr>
+<tr><td><code>ai_conversation_clear(conv#)</code></td><td><code>ai_conversation_clear@#</code></td><td>Clear messages (keeps system prompt)</td></tr>
+<tr><td><code>ai_conversation_maxhistory#(conv#, n)</code></td><td><code>ai_conversation_maxhistory#@#n</code></td><td>Set max messages to keep (auto-trims old ones)</td></tr>
+<tr><td><code>ai_ask$(ai#, conv#, message$)</code></td><td><code>ai_ask$@##$</code></td><td>Send message using a conversation, get response</td></tr>
+<tr><td><code>ai_conversation_count(conv#)</code></td><td><code>ai_conversation_count@#</code></td><td>Number of messages in history</td></tr>
+<tr><td><code>ai_conversation_last$(conv#)</code></td><td><code>ai_conversation_last$@#</code></td><td>Text of last message (usually AI&rsquo;s response)</td></tr>
+<tr><td><code>ai_conversation_tokens(conv#)</code></td><td><code>ai_conversation_tokens@#</code></td><td>Estimated total token count for history</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; conversation.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, key$)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">1024</span>)
+
+<span class="kw">let</span> conv# = <span class="fn">ai_conversation#</span>()
+<span class="fn">ai_conversation_system#</span>(conv#, <span class="str">"You are a patient math tutor."</span>)
+<span class="fn">ai_conversation_maxhistory#</span>(conv#, <span class="num">10</span>)
+
+<span class="cmt">' First question</span>
+<span class="kw">let</span> r$ = <span class="fn">ai_ask$</span>(ai#, conv#, <span class="str">"What is a prime number?"</span>)
+<span class="fn">println</span> <span class="str">"A: "</span> + r$
+
+<span class="cmt">' Follow-up — AI remembers context</span>
+<span class="kw">let</span> r$ = <span class="fn">ai_ask$</span>(ai#, conv#, <span class="str">"Is 17 prime? Why?"</span>)
+<span class="fn">println</span> <span class="str">"A: "</span> + r$
+
+<span class="cmt">' Check state</span>
+<span class="fn">println</span> <span class="str">"Messages: "</span> + <span class="fn">str$</span>(<span class="fn">ai_conversation_count</span>(conv#))
+<span class="fn">println</span> <span class="str">"Tokens: "</span> + <span class="fn">str$</span>(<span class="fn">ai_conversation_tokens</span>(conv#))
+
+<span class="fn">ai_conversation_free</span>(conv#)
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="metadata">
+<h2>Response Metadata</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ai_status(ai#)</code></td><td><code>ai_status@#</code></td><td>HTTP status code (200, 401, 429, etc.)</td></tr>
+<tr><td><code>ai_body$(ai#)</code></td><td><code>ai_body$@#</code></td><td>Raw JSON response body (for debugging)</td></tr>
+<tr><td><code>ai_tokensin(ai#)</code></td><td><code>ai_tokensin@#</code></td><td>Input tokens used in last request</td></tr>
+<tr><td><code>ai_tokensout(ai#)</code></td><td><code>ai_tokensout@#</code></td><td>Output tokens generated in last request</td></tr>
+<tr><td><code>ai_ok(ai#)</code></td><td><code>ai_ok@#</code></td><td>Returns 1 if last request succeeded (HTTP 200)</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; checking results</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> reply$ = <span class="fn">ai_chat$</span>(ai#, <span class="str">"Hello!"</span>)
+
+<span class="kw">if</span> <span class="fn">ai_ok</span>(ai#) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="fn">println</span> <span class="str">"Response: "</span> + reply$
+    <span class="fn">println</span> <span class="str">"HTTP: "</span> + <span class="fn">str$</span>(<span class="fn">ai_status</span>(ai#))
+    <span class="fn">println</span> <span class="str">"Tokens: "</span> + <span class="fn">str$</span>(<span class="fn">ai_tokensin</span>(ai#)) + <span class="str">" in, "</span> + <span class="fn">str$</span>(<span class="fn">ai_tokensout</span>(ai#)) + <span class="str">" out"</span>
+<span class="kw">else</span>
+    <span class="fn">println</span> <span class="str">"Error "</span> + <span class="fn">str$</span>(<span class="fn">ai_error</span>()) + <span class="str">": "</span> + <span class="fn">ai_errormsg$</span>()
+    <span class="fn">println</span> <span class="str">"HTTP: "</span> + <span class="fn">str$</span>(<span class="fn">ai_status</span>(ai#))
+<span class="kw">end</span> <span class="kw">if</span></pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+
+<h3>Summarization with System Prompt</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; summarize.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">println</span> <span class="str">"=== Article Summarizer ==="</span>
+
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, <span class="str">"sk-ant-xxxxx"</span>)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">256</span>)
+
+<span class="kw">let</span> sys$ = <span class="str">"You are a concise summarizer. "</span>
+sys$ = sys$ + <span class="str">"Return a summary of 2-3 sentences maximum. "</span>
+sys$ = sys$ + <span class="str">"Focus on the key point and avoid filler words."</span>
+
+<span class="kw">let</span> article$ = <span class="str">"Scientists have discovered a new deep-sea species..."</span>
+<span class="kw">let</span> summary$ = <span class="fn">ai_completesystem$</span>(ai#, sys$, article$)
+
+<span class="kw">if</span> <span class="fn">ai_ok</span>(ai#) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="fn">println</span> <span class="str">"Summary:"</span>
+    <span class="fn">println</span> <span class="str">"---"</span>
+    <span class="fn">println</span> summary$
+    <span class="fn">println</span> <span class="str">"---"</span>
+<span class="kw">else</span>
+    <span class="fn">println</span> <span class="str">"Error: "</span> + <span class="fn">ai_errormsg$</span>()
+<span class="kw">end</span> <span class="kw">if</span>
+
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+
+<h3>Multi-Provider Comparison</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; multi-provider.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">println</span> <span class="str">"=== Multi-Provider Comparison ==="</span>
+
+<span class="kw">let</span> question$ = <span class="str">"In one sentence, what is recursion?"</span>
+
+<span class="cmt">' Anthropic</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, <span class="str">"sk-ant-xxxxx"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">100</span>)
+<span class="fn">println</span> <span class="str">"Claude: "</span> + <span class="fn">ai_chat$</span>(ai#, question$)
+<span class="fn">ai_free</span>(ai#)
+
+<span class="cmt">' OpenAI</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"openai"</span>, <span class="str">"sk-xxxxx"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">100</span>)
+<span class="fn">println</span> <span class="str">"GPT: "</span> + <span class="fn">ai_chat$</span>(ai#, question$)
+<span class="fn">ai_free</span>(ai#)
+
+<span class="cmt">' Local Ollama (free)</span>
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"ollama"</span>, <span class="str">""</span>)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"llama3"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">100</span>)
+<span class="fn">println</span> <span class="str">"Llama: "</span> + <span class="fn">ai_chat$</span>(ai#, question$)
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="chat-modes">
+<h2>Choosing a Chat Mode</h2>
+<table><thead><tr><th>Mode</th><th>Function</th><th>History</th><th>Best For</th></tr></thead><tbody>
+<tr><td><strong>Simple Chat</strong></td><td><code>ai_chat$</code></td><td>Automatic (internal)</td><td>Interactive chatbots, quick Q&amp;A</td></tr>
+<tr><td><strong>Single-Shot</strong></td><td><code>ai_complete$</code> / <code>ai_completesystem$</code></td><td>None (stateless)</td><td>Classification, summarization, code generation</td></tr>
+<tr><td><strong>Conversation</strong></td><td><code>ai_ask$</code> + <code>ai_conversation#</code></td><td>Explicit (you control)</td><td>Complex multi-topic apps, token budgeting</td></tr>
+</tbody></table>
+<div class="info-box"><strong>&#9432; Rule of thumb:</strong> Start with <code>ai_chat$</code>. Move to <code>ai_complete$</code> if you don&rsquo;t need history. Move to <code>ai_ask$</code> + <code>ai_conversation#</code> when you need multiple conversations or fine-grained token management.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Always check <code>ai_ok(ai#)</code> after API calls</td><td>Network errors, timeouts, and rate limits can happen</td></tr>
+<tr><td>Set <code>ai_maxtokens#</code> to limit output</td><td>Controls cost and prevents unexpectedly long responses</td></tr>
+<tr><td>Set <code>ai_timeout#</code> for production code</td><td>Prevents indefinite hangs on network issues</td></tr>
+<tr><td>Monitor tokens with <code>ai_tokensin</code> / <code>ai_tokensout</code></td><td>AI API calls are billed per token</td></tr>
+<tr><td>Use <code>ai_conversation_maxhistory#</code></td><td>Prevents unbounded history growth and context overflow</td></tr>
+<tr><td>Use <code>ai_complete$</code> for one-off tasks</td><td>Stateless &mdash; no risk of unintended context bleeding</td></tr>
+<tr><td>Transient errors (5, 6, 9, 12) can be retried</td><td>Network issues and rate limits are usually temporary</td></tr>
+<tr><td>Use local models (Ollama) for development</td><td>No API costs during testing &mdash; same AILib API</td></tr>
+<tr><td>Store API keys outside your code</td><td>Never hard-code secrets in source files</td></tr>
+<tr><td>Use <code>ai_system#</code> for behavior control</td><td>System prompts guide the AI&rsquo;s tone, format, and constraints</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference &mdash; All 45 Functions</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">ERROR HANDLING (4)</td></tr>
+<tr><td><code>ai_error()</code></td><td><code>ai_error@</code></td><td>Last error code</td></tr>
+<tr><td><code>ai_errormsg$()</code></td><td><code>ai_errormsg$@</code></td><td>Last error message</td></tr>
+<tr><td><code>ai_strerror$(code)</code></td><td><code>ai_strerror$@n</code></td><td>Error code &rarr; string</td></tr>
+<tr><td><code>ai_clearerror()</code></td><td><code>ai_clearerror@</code></td><td>Clear error state</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">CLIENT LIFECYCLE (2)</td></tr>
+<tr><td><code>ai_client#(provider$, key$)</code></td><td><code>ai_client#@$$</code></td><td>Create AI client</td></tr>
+<tr><td><code>ai_free(ai#)</code></td><td><code>ai_free@#</code></td><td>Free client</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">CONFIGURATION (11)</td></tr>
+<tr><td><code>ai_model#(ai#, model$)</code></td><td><code>ai_model#@#$</code></td><td>Set model</td></tr>
+<tr><td><code>ai_model$(ai#)</code></td><td><code>ai_model$@#</code></td><td>Get model</td></tr>
+<tr><td><code>ai_system#(ai#, prompt$)</code></td><td><code>ai_system#@#$</code></td><td>Set system prompt</td></tr>
+<tr><td><code>ai_temperature#(ai#, val)</code></td><td><code>ai_temperature#@#n</code></td><td>Set temperature</td></tr>
+<tr><td><code>ai_maxtokens#(ai#, n)</code></td><td><code>ai_maxtokens#@#n</code></td><td>Set max output tokens</td></tr>
+<tr><td><code>ai_topp#(ai#, val)</code></td><td><code>ai_topp#@#n</code></td><td>Set top-p</td></tr>
+<tr><td><code>ai_timeout#(ai#, sec)</code></td><td><code>ai_timeout#@#n</code></td><td>Set timeout</td></tr>
+<tr><td><code>ai_baseurl#(ai#, url$)</code></td><td><code>ai_baseurl#@#$</code></td><td>Set base URL</td></tr>
+<tr><td><code>ai_baseurl$(ai#)</code></td><td><code>ai_baseurl$@#</code></td><td>Get base URL</td></tr>
+<tr><td><code>ai_stop#(ai#, seq$)</code></td><td><code>ai_stop#@#$</code></td><td>Add stop sequence</td></tr>
+<tr><td><code>ai_clearstop#(ai#)</code></td><td><code>ai_clearstop#@#</code></td><td>Clear stop sequences</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">CUSTOM HEADERS (3)</td></tr>
+<tr><td><code>ai_header#(ai#, name$, val$)</code></td><td><code>ai_header#@#$$</code></td><td>Add header</td></tr>
+<tr><td><code>ai_headerremove#(ai#, name$)</code></td><td><code>ai_headerremove#@#$</code></td><td>Remove header</td></tr>
+<tr><td><code>ai_headerclear#(ai#)</code></td><td><code>ai_headerclear#@#</code></td><td>Clear all headers</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">IDENTITY (4)</td></tr>
+<tr><td><code>ai_apikey#(ai#, key$)</code></td><td><code>ai_apikey#@#$</code></td><td>Change API key</td></tr>
+<tr><td><code>ai_endpoint#(ai#, path$)</code></td><td><code>ai_endpoint#@#$</code></td><td>Set endpoint path</td></tr>
+<tr><td><code>ai_useragent#(ai#, agent$)</code></td><td><code>ai_useragent#@#$</code></td><td>Set User-Agent</td></tr>
+<tr><td><code>ai_provider$(ai#)</code></td><td><code>ai_provider$@#</code></td><td>Get provider name</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">SIMPLE CHAT (2)</td></tr>
+<tr><td><code>ai_chat$(ai#, msg$)</code></td><td><code>ai_chat$@#$</code></td><td>Chat (keeps history)</td></tr>
+<tr><td><code>ai_clearchat(ai#)</code></td><td><code>ai_clearchat@#</code></td><td>Clear chat history</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">STREAMING (3)</td></tr>
+<tr><td><code>ai_ontoken#(ai#, cb$)</code></td><td><code>ai_ontoken#@#$</code></td><td>Set stream callback</td></tr>
+<tr><td><code>ai_chatstream(ai#, msg$)</code></td><td><code>ai_chatstream@#$</code></td><td>Stream a message</td></tr>
+<tr><td><code>ai_streambuffer$(ai#)</code></td><td><code>ai_streambuffer$@#</code></td><td>Get streamed text</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">SINGLE-SHOT COMPLETION (2)</td></tr>
+<tr><td><code>ai_complete$(ai#, prompt$)</code></td><td><code>ai_complete$@#$</code></td><td>One-shot completion</td></tr>
+<tr><td><code>ai_completesystem$(ai#, sys$, msg$)</code></td><td><code>ai_completesystem$@#$$</code></td><td>Completion with system prompt</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">CONVERSATION MANAGEMENT (9)</td></tr>
+<tr><td><code>ai_conversation#()</code></td><td><code>ai_conversation#@</code></td><td>Create conversation</td></tr>
+<tr><td><code>ai_conversation_free(conv#)</code></td><td><code>ai_conversation_free@#</code></td><td>Free conversation</td></tr>
+<tr><td><code>ai_conversation_system#(conv#, sys$)</code></td><td><code>ai_conversation_system#@#$</code></td><td>Set system prompt</td></tr>
+<tr><td><code>ai_conversation_clear(conv#)</code></td><td><code>ai_conversation_clear@#</code></td><td>Clear messages</td></tr>
+<tr><td><code>ai_conversation_maxhistory#(conv#, n)</code></td><td><code>ai_conversation_maxhistory#@#n</code></td><td>Set max history</td></tr>
+<tr><td><code>ai_ask$(ai#, conv#, msg$)</code></td><td><code>ai_ask$@##$</code></td><td>Chat with conversation</td></tr>
+<tr><td><code>ai_conversation_count(conv#)</code></td><td><code>ai_conversation_count@#</code></td><td>Message count</td></tr>
+<tr><td><code>ai_conversation_last$(conv#)</code></td><td><code>ai_conversation_last$@#</code></td><td>Last message text</td></tr>
+<tr><td><code>ai_conversation_tokens(conv#)</code></td><td><code>ai_conversation_tokens@#</code></td><td>Estimated token count</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">RESPONSE METADATA (5)</td></tr>
+<tr><td><code>ai_status(ai#)</code></td><td><code>ai_status@#</code></td><td>HTTP status code</td></tr>
+<tr><td><code>ai_body$(ai#)</code></td><td><code>ai_body$@#</code></td><td>Raw response JSON</td></tr>
+<tr><td><code>ai_tokensin(ai#)</code></td><td><code>ai_tokensin@#</code></td><td>Input tokens used</td></tr>
+<tr><td><code>ai_tokensout(ai#)</code></td><td><code>ai_tokensout@#</code></td><td>Output tokens used</td></tr>
+<tr><td><code>ai_ok(ai#)</code></td><td><code>ai_ok@#</code></td><td>1 if last request succeeded</td></tr>
+</tbody></table>
+<p><em>45 functions. Integrates with RAGLib for knowledge-grounded responses.</em></p>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="see-also">
+<h2>See Also</h2>
+<ul>
+  <li><strong>RAGLib</strong> &mdash; Knowledge base retrieval for enriching AI prompts with domain-specific content</li>
+  <li><strong>JsonLib</strong> &mdash; JSON parsing for processing raw API responses</li>
+  <li><strong>HttpLib</strong> &mdash; Low-level HTTP client for custom API integration</li>
+</ul>
+</section>
+
+</main>
+</div>
+
+<script>
+const themes = ['green','amber','blue','pink','white'];
+let ti = 0;
+function cycleTheme() {
+  ti = (ti + 1) % themes.length;
+  document.documentElement.setAttribute('data-theme', themes[ti]);
+  document.getElementById('themeBtn').textContent = 'THEME: ' + themes[ti].toUpperCase();
+}
+
+// Sidebar toggle (mobile)
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebarOverlay');
+const toggle  = document.getElementById('sidebarToggle');
+toggle.addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+// Active link tracking on scroll
+const links = document.querySelectorAll('.sidebar-link[href^="#"]');
+const sections = [...links].map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+window.addEventListener('scroll', () => {
+  let current = '';
+  for (const s of sections) {
+    if (s.getBoundingClientRect().top <= 120) current = s.id;
+  }
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+  });
+}, { passive: true });
+
+// Close sidebar on link click (mobile)
+links.forEach(l => l.addEventListener('click', () => {
+  sidebar.classList.remove('open'); overlay.classList.remove('show');
+}));
+</script>
+</body>
+</html>

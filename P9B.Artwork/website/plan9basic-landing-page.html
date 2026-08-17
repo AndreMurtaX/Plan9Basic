@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan9Basic — Modern BASIC for Windows, Linux & Android</title>
+<meta name="description" content="A free, cross-platform BASIC interpreter with 300+ functions, GUI toolkit, AI integration, and retro coding vibes.">
+<link rel="icon" type="image/png" href="assets/img/launcher-48.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   THEME SYSTEM
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804;
+  --bg-secondary: #081008;
+  --bg-card: #0b160b;
+  --bg-terminal: #020602;
+  --text-primary: #33ff33;
+  --text-secondary: #22aa22;
+  --text-dim: #116611;
+  --accent: #00ff41;
+  --accent-dim: #00aa2a;
+  --accent-subtle: rgba(0, 255, 65, 0.06);
+  --glow-color: rgba(51, 255, 51, 0.15);
+  --glow-strong: rgba(51, 255, 51, 0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66;
+  --string-color: #88ffaa;
+  --number-color: #aaffcc;
+  --comment-color: #338833;
+  --mascot-filter: none;
+}
+
+[data-theme="amber"] {
+  --bg-primary: #080600;
+  --bg-secondary: #100c06;
+  --bg-card: #18120a;
+  --bg-terminal: #060400;
+  --text-primary: #ffbb33;
+  --text-secondary: #cc8800;
+  --text-dim: #885500;
+  --accent: #ffcc00;
+  --accent-dim: #aa8800;
+  --accent-subtle: rgba(255, 204, 0, 0.06);
+  --glow-color: rgba(255, 187, 51, 0.15);
+  --glow-strong: rgba(255, 187, 51, 0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66;
+  --string-color: #ffcc88;
+  --number-color: #ffddaa;
+  --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+
+[data-theme="blue"] {
+  --bg-primary: #040610;
+  --bg-secondary: #080e1e;
+  --bg-card: #0c1428;
+  --bg-terminal: #020410;
+  --text-primary: #33bbff;
+  --text-secondary: #2288cc;
+  --text-dim: #115588;
+  --accent: #00ccff;
+  --accent-dim: #0088aa;
+  --accent-subtle: rgba(0, 204, 255, 0.06);
+  --glow-color: rgba(51, 187, 255, 0.15);
+  --glow-strong: rgba(51, 187, 255, 0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff;
+  --string-color: #88ddff;
+  --number-color: #aaeeff;
+  --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+
+[data-theme="pink"] {
+  --bg-primary: #0c040c;
+  --bg-secondary: #160818;
+  --bg-card: #1e0c20;
+  --bg-terminal: #080208;
+  --text-primary: #ff66cc;
+  --text-secondary: #cc3399;
+  --text-dim: #882266;
+  --accent: #ff44bb;
+  --accent-dim: #aa2288;
+  --accent-subtle: rgba(255, 68, 187, 0.06);
+  --glow-color: rgba(255, 102, 204, 0.15);
+  --glow-strong: rgba(255, 102, 204, 0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd;
+  --string-color: #ffaaee;
+  --number-color: #ffbbee;
+  --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+
+[data-theme="white"] {
+  --bg-primary: #0c0c16;
+  --bg-secondary: #121226;
+  --bg-card: #18182e;
+  --bg-terminal: #080812;
+  --text-primary: #e0e0e8;
+  --text-secondary: #a0a0b0;
+  --text-dim: #606070;
+  --accent: #ffffff;
+  --accent-dim: #aaaaaa;
+  --accent-subtle: rgba(224, 224, 232, 0.04);
+  --glow-color: rgba(224, 224, 232, 0.08);
+  --glow-strong: rgba(224, 224, 232, 0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff;
+  --string-color: #ccddee;
+  --number-color: #bbccdd;
+  --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color var(--transition), text-shadow var(--transition);
+}
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: rgba(4,8,4,0.85);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: background var(--transition);
+}
+
+.nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+}
+
+.nav-logo {
+  font-family: var(--font-retro); font-size: 0.65rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.6rem;
+}
+
+.nav-logo-icon {
+  width: 30px; height: 30px; border-radius: 6px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+  transition: filter 0.5s ease, transform 0.3s ease;
+}
+.nav-logo:hover .nav-logo-icon {
+  transform: scale(1.15) rotate(-5deg);
+  filter: drop-shadow(0 0 12px var(--glow-strong)) var(--mascot-filter) brightness(1.2);
+}
+
+.nav-logo .blink {
+  display: inline-block; width: 8px; height: 13px;
+  background: var(--accent); animation: blink 1s step-end infinite;
+}
+
+.nav-links {
+  display: flex; gap: 1.5rem; list-style: none; align-items: center;
+}
+
+.nav-links a {
+  font-size: 0.75rem; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 0.3rem 0; border-bottom: 1px solid transparent;
+  transition: all var(--transition);
+}
+.nav-links a:hover {
+  color: var(--text-primary); border-bottom-color: var(--accent);
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.5rem; padding: 0.25rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 10px var(--glow-color);
+}
+
+.nav-hamburger {
+  display: none; background: none; border: none;
+  color: var(--text-primary); font-size: 1.4rem; cursor: pointer;
+}
+
+/* ============================================================
+   HERO — IMMERSIVE MASCOT + TERMINAL
+   ============================================================ */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 5rem 2rem 3rem;
+  position: relative; overflow: hidden;
+}
+
+/* Ambient background glow from mascot colors */
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 30% 40%, rgba(170, 50, 255, 0.08) 0%, transparent 100%),
+    radial-gradient(ellipse 500px 350px at 35% 50%, rgba(50, 255, 50, 0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 800px 600px at 50% 50%, var(--glow-color) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-layout {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1100px;
+  position: relative;
+}
+
+.hero-mascot {
+  flex-shrink: 0;
+  width: 340px;
+  z-index: 2;
+  animation: mascotFloat 5s ease-in-out infinite;
+  position: relative;
+}
+
+.hero-mascot img {
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 0 40px rgba(170, 50, 255, 0.5))
+    drop-shadow(0 0 80px rgba(50, 255, 50, 0.2))
+    var(--mascot-filter);
+  transition: filter 0.6s ease;
+}
+
+@keyframes mascotFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.hero-terminal {
+  flex: 1; min-width: 0; z-index: 1;
+}
+
+.terminal-frame {
+  background: var(--bg-terminal);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%; position: relative; overflow: hidden;
+  box-shadow: 0 0 50px var(--glow-color), inset 0 0 80px rgba(0,0,0,0.6);
+}
+
+.terminal-titlebar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0.45rem 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-dot.r { background: #ff5f56; }
+.terminal-dot.y { background: #ffbd2e; }
+.terminal-dot.g { background: #27c93f; }
+
+.terminal-title {
+  font-size: 0.6rem; color: var(--text-dim);
+  margin-left: 0.5rem; font-family: var(--font-mono);
+}
+
+.terminal-body {
+  padding: 1.5rem; font-family: var(--font-mono);
+  font-size: 0.85rem; line-height: 1.9;
+  min-height: 300px; position: relative;
+}
+
+.terminal-body .line { opacity: 0; animation: fadeIn 0.1s forwards; }
+.terminal-body .cursor {
+  display: inline-block; width: 0.55em; height: 1em;
+  background: var(--text-primary); vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+.boot-hi { color: var(--accent); text-shadow: 0 0 12px var(--glow-color); }
+.boot-dim { color: var(--text-dim); }
+.boot-ok { color: var(--text-secondary); }
+
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* Hero text below */
+.hero-text { margin-top: 3rem; text-align: center; max-width: 700px; }
+
+.hero-text h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.65rem, 2.5vw, 1rem);
+  line-height: 2.2; color: var(--text-primary);
+  text-shadow: 0 0 30px var(--glow-color);
+  letter-spacing: 1px;
+}
+.hero-text h1 .glow {
+  color: var(--accent);
+  text-shadow: 0 0 40px var(--glow-strong);
+}
+
+.hero-text p {
+  margin-top: 1rem; font-size: 0.95rem;
+  color: var(--text-secondary); line-height: 1.7;
+}
+
+.hero-ctas {
+  display: flex; gap: 1rem; margin-top: 2rem;
+  flex-wrap: wrap; justify-content: center;
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;
+  padding: 0.75rem 1.6rem; border: 1px solid var(--accent);
+  color: var(--accent); background: transparent; cursor: pointer;
+  text-decoration: none; transition: all var(--transition); letter-spacing: 0.5px;
+}
+.btn:hover {
+  background: var(--accent); color: var(--bg-primary);
+  box-shadow: 0 0 25px var(--glow-strong), 0 0 50px var(--glow-color);
+  text-shadow: none;
+}
+.btn-primary { background: var(--accent); color: var(--bg-primary); }
+.btn-primary:hover {
+  background: var(--text-primary);
+  box-shadow: 0 0 35px var(--glow-strong), 0 0 70px var(--glow-color);
+}
+
+/* ============================================================
+   SHARED SECTION STYLES
+   ============================================================ */
+.section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+.section-header { text-align: center; margin-bottom: 3rem; }
+
+.section-label {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 4px; margin-bottom: 0.8rem;
+}
+
+.section-title {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2vw, 0.85rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color); line-height: 2;
+}
+
+.divider {
+  width: 100%; max-width: 1200px; margin: 0 auto;
+  border: none; border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   MASCOT CALLOUT — "Meet the Alien"
+   ============================================================ */
+.mascot-callout {
+  padding: 4rem 2rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle stars-like background */
+.mascot-callout::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(1px 1px at 20% 30%, var(--text-dim), transparent),
+    radial-gradient(1px 1px at 70% 60%, var(--text-dim), transparent),
+    radial-gradient(1px 1px at 45% 80%, var(--text-dim), transparent),
+    radial-gradient(1px 1px at 85% 20%, var(--text-dim), transparent),
+    radial-gradient(1px 1px at 10% 70%, var(--text-dim), transparent);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.mascot-callout-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; align-items: center; gap: 2.5rem;
+  position: relative; z-index: 1;
+}
+
+.mascot-callout-img {
+  flex-shrink: 0; width: 160px;
+  animation: mascotFloat 5s ease-in-out infinite;
+}
+
+.mascot-callout-img img {
+  width: 100%; height: auto;
+  filter:
+    drop-shadow(0 0 20px rgba(170, 50, 255, 0.4))
+    drop-shadow(0 0 40px rgba(50, 255, 50, 0.15))
+    var(--mascot-filter);
+  transition: filter 0.5s ease;
+}
+
+.speech-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  position: relative; flex: 1;
+  box-shadow: 0 0 20px var(--glow-color);
+}
+.speech-bubble::before {
+  content: '';
+  position: absolute; left: -10px; top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: var(--border);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute; left: -8px; top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: var(--bg-card);
+}
+
+.speech-name {
+  font-family: var(--font-retro); font-size: 0.5rem;
+  color: var(--accent); margin-bottom: 0.6rem; letter-spacing: 2px;
+}
+
+.speech-text {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+}
+.speech-text em {
+  color: var(--accent); font-style: normal;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+/* ============================================================
+   PITCH CARDS
+   ============================================================ */
+.pitch-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;
+}
+
+.pitch-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 2rem; transition: all var(--transition);
+  position: relative; overflow: hidden;
+}
+.pitch-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity var(--transition);
+}
+.pitch-card:hover {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 30px var(--glow-color);
+  transform: translateY(-2px);
+}
+.pitch-card:hover::before { opacity: 1; }
+
+.pitch-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
+.pitch-title {
+  font-family: var(--font-retro); font-size: 0.6rem;
+  color: var(--accent); margin-bottom: 0.8rem; letter-spacing: 1px;
+}
+.pitch-text { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8; }
+
+/* ============================================================
+   CODE SHOWCASE
+   ============================================================ */
+.showcase {
+  display: grid; grid-template-columns: 1.2fr 1fr;
+  gap: 2rem; align-items: start;
+}
+
+.showcase-result { display: flex; flex-direction: column; gap: 1rem; }
+.showcase-result-label {
+  font-family: var(--font-retro); font-size: 0.5rem;
+  color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase;
+}
+
+.app-preview {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1.8rem;
+  display: flex; flex-direction: column; gap: 0.7rem;
+  font-family: var(--font-body);
+}
+.app-preview-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.app-preview-input {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem; color: var(--text-secondary);
+  font-family: var(--font-body); font-size: 0.88rem; border-radius: 4px;
+}
+.app-preview-btn {
+  display: inline-block; padding: 0.45rem 1rem;
+  background: var(--accent-dim); color: var(--bg-primary);
+  font-family: var(--font-body); font-weight: 600; font-size: 0.82rem;
+  border-radius: 4px; width: fit-content;
+}
+.app-preview-output {
+  font-family: var(--font-mono); font-size: 0.82rem;
+  color: var(--text-secondary); padding: 0.7rem;
+  background: var(--bg-terminal); border-radius: 4px;
+}
+
+.code-keyword { color: var(--keyword-color); font-weight: 600; }
+.code-string { color: var(--string-color); }
+.code-number { color: var(--number-color); }
+.code-comment { color: var(--comment-color); font-style: italic; }
+.code-func { color: var(--accent); }
+
+/* ============================================================
+   FEATURES — Stats with alien accent
+   ============================================================ */
+.features-section {
+  position: relative;
+  padding: 5rem 2rem;
+}
+
+.features-section::before {
+  content: '';
+  position: absolute;
+  right: -100px; top: 50%;
+  transform: translateY(-50%);
+  width: 300px; height: 360px;
+  background: url("assets/img/alien-250.png") no-repeat center/contain;
+  opacity: 0.04;
+  filter: var(--mascot-filter);
+  pointer-events: none;
+}
+
+.features-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;
+}
+
+.feature-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 1.5rem; transition: all var(--transition);
+}
+.feature-card:hover {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 20px var(--glow-color);
+}
+
+.feature-number {
+  font-family: var(--font-retro); font-size: 1.4rem;
+  color: var(--accent); text-shadow: 0 0 15px var(--glow-color);
+  margin-bottom: 0.4rem; display: block;
+}
+.feature-name {
+  font-family: var(--font-retro); font-size: 0.5rem;
+  color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: 1px;
+}
+.feature-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* ============================================================
+   AI SECTION
+   ============================================================ */
+.ai-section {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-section::before {
+  content: '';
+  position: absolute;
+  left: -80px; bottom: -60px;
+  width: 250px; height: 300px;
+  background: url("assets/img/alien-250.png") no-repeat center/contain;
+  opacity: 0.05;
+  filter: var(--mascot-filter);
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+.ai-content { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+.ai-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3rem; align-items: center;
+}
+
+.ai-text h3 {
+  font-family: var(--font-retro); font-size: 0.65rem;
+  color: var(--accent); margin-bottom: 1.5rem; line-height: 2.2; letter-spacing: 1px;
+}
+.ai-text p {
+  font-size: 0.92rem; color: var(--text-secondary);
+  margin-bottom: 1rem; line-height: 1.8;
+}
+
+.ai-providers { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.5rem; }
+.provider-tag {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  padding: 0.25rem 0.6rem; border: 1px solid var(--border);
+  color: var(--text-dim); transition: all var(--transition);
+}
+.provider-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   DOWNLOAD
+   ============================================================ */
+.download-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;
+}
+
+.download-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 2rem; text-align: center; transition: all var(--transition);
+}
+.download-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 30px var(--glow-color); transform: translateY(-3px);
+}
+
+.platform-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+.platform-name {
+  font-family: var(--font-retro); font-size: 0.65rem;
+  color: var(--text-primary); margin-bottom: 0.4rem; letter-spacing: 1px;
+}
+.platform-arch { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 1.2rem; }
+.download-card .btn { width: 100%; justify-content: center; }
+.download-note { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.7rem; }
+
+/* ============================================================
+   UPDATES
+   ============================================================ */
+.updates-list {
+  display: flex; flex-direction: column; gap: 1.2rem;
+  max-width: 800px; margin: 0 auto;
+}
+
+.update-item {
+  display: flex; gap: 1.5rem; padding: 1.3rem;
+  background: var(--bg-card); border: 1px solid var(--border);
+  transition: all var(--transition); align-items: flex-start;
+}
+.update-item:hover { border-color: var(--accent-dim); }
+
+.update-date {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--text-dim); white-space: nowrap;
+  padding-top: 0.2rem; letter-spacing: 0.5px; min-width: 90px;
+}
+.update-content h4 {
+  font-family: var(--font-mono); font-size: 0.9rem;
+  color: var(--text-primary); margin-bottom: 0.3rem;
+}
+.update-content p { font-size: 0.82rem; color: var(--text-secondary); }
+.update-tag {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.4rem;
+  padding: 0.15rem 0.4rem; border: 1px solid var(--accent-dim);
+  color: var(--accent-dim); margin-right: 0.3rem; margin-top: 0.5rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 3rem 2rem;
+}
+
+.footer-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem;
+}
+
+.footer-brand-row { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.footer-mascot-img {
+  width: 50px; height: auto;
+  filter: drop-shadow(0 0 8px var(--glow-color)) var(--mascot-filter);
+  transition: filter 0.5s ease;
+  animation: mascotFloat 5s ease-in-out infinite;
+}
+
+.footer-brand {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); text-shadow: 0 0 10px var(--glow-color);
+  letter-spacing: 1px;
+}
+.footer-tagline { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 0.8rem; line-height: 1.6; }
+
+.footer-heading {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--text-secondary); margin-bottom: 0.8rem;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.footer-links a { font-size: 0.82rem; color: var(--text-dim); transition: color var(--transition); }
+.footer-links a:hover { color: var(--text-primary); }
+
+.footer-bottom {
+  max-width: 1200px; margin: 2rem auto 0; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+
+/* ============================================================
+   FLOATING MASCOT
+   ============================================================ */
+.floater {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 900;
+  width: 50px; height: 50px; cursor: pointer;
+  animation: mascotFloat 5s ease-in-out infinite;
+  transition: transform 0.3s ease, opacity 0.4s ease, filter 0.5s ease;
+  filter: drop-shadow(0 0 12px rgba(170, 50, 255, 0.5)) var(--mascot-filter);
+  opacity: 0; pointer-events: none;
+}
+.floater.show { opacity: 1; pointer-events: auto; }
+.floater:hover {
+  transform: scale(1.25) translateY(-4px);
+  filter: drop-shadow(0 0 20px rgba(170, 50, 255, 0.7)) var(--mascot-filter) brightness(1.2);
+}
+.floater img { width: 100%; height: 100%; object-fit: contain; }
+
+.floater-tip {
+  position: absolute; bottom: 115%; right: 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem; font-family: var(--font-retro);
+  font-size: 0.4rem; color: var(--accent); white-space: nowrap;
+  letter-spacing: 1px; opacity: 0; transform: translateY(4px);
+  transition: all 0.2s ease; pointer-events: none;
+  box-shadow: 0 0 12px var(--glow-color);
+}
+.floater:hover .floater-tip { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   CONSTRUCTION BANNER
+   ============================================================ */
+.construction-banner {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--bg-secondary),
+    var(--bg-secondary) 10px,
+    var(--bg-card) 10px,
+    var(--bg-card) 20px
+  );
+  border-bottom: 1px solid var(--accent-dim);
+  border-top: 1px solid var(--accent-dim);
+  padding: 0.6rem 2rem;
+  text-align: center;
+  position: fixed;
+  top: 56px;
+  left: 0; right: 0;
+  z-index: 999;
+  box-shadow: 0 2px 20px var(--glow-color);
+}
+
+.construction-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.construction-icon {
+  font-size: 1rem;
+  animation: constructPulse 2s ease-in-out infinite;
+}
+
+@keyframes constructPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.construction-text {
+  font-family: var(--font-retro);
+  font-size: 0.45rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.construction-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-left: 0.5rem;
+}
+
+/* Offset content for the banner */
+.hero { padding-top: 8rem !important; }
+
+@media (max-width: 768px) {
+  .construction-banner { padding: 0.5rem 1rem; top: 56px; }
+  .construction-sub { display: none; }
+  .hero { padding-top: 7rem !important; }
+}
+
+/* ============================================================
+   INDIE SECTION
+   ============================================================ */
+.indie-section {
+  padding: 4rem 2rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.indie-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.indie-badge {
+  display: inline-block;
+  font-family: var(--font-retro);
+  font-size: 0.45rem;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border: 1px solid var(--accent-dim);
+  padding: 0.4rem 1rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 8px var(--glow-color);
+  box-shadow: 0 0 15px var(--glow-color);
+}
+
+.indie-title {
+  font-family: var(--font-retro);
+  font-size: clamp(0.55rem, 1.8vw, 0.75rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2;
+  margin-bottom: 1.5rem;
+}
+
+.indie-text {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.9;
+  margin-bottom: 1rem;
+}
+
+.indie-text em {
+  color: var(--accent);
+  font-style: normal;
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+.indie-values {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.indie-value {
+  text-align: center;
+  padding: 1.2rem;
+  min-width: 140px;
+}
+
+.indie-value-icon {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.indie-value-label {
+  font-family: var(--font-retro);
+  font-size: 0.45rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 0.3rem;
+}
+
+.indie-value-desc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.indie-terminal {
+  margin-top: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.indie-terminal .terminal-body {
+  min-height: auto;
+  padding: 1rem 1.2rem;
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.reveal {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.vis { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .hero-layout { flex-direction: column; gap: 1.5rem; }
+  .hero-mascot { width: 260px; }
+  .ai-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex; flex-direction: column;
+    position: absolute; top: 56px; left: 0; right: 0;
+    background: var(--bg-primary); border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem; gap: 1rem;
+  }
+  .nav-hamburger { display: block; }
+  .showcase { grid-template-columns: 1fr; }
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .hero { padding: 4.5rem 1rem 2rem; }
+  .hero-mascot { width: 260px; }
+  .terminal-body { font-size: 0.72rem; padding: 1rem; min-height: 260px; }
+  .section { padding: 3.5rem 1rem; }
+  .mascot-callout-inner { flex-direction: column; text-align: center; gap: 1.5rem; }
+  .speech-bubble::before, .speech-bubble::after { display: none; }
+  .floater { width: 42px; height: 42px; bottom: 1rem; right: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .footer-inner { grid-template-columns: 1fr; }
+  .download-grid { grid-template-columns: 1fr; }
+  .pitch-grid { grid-template-columns: 1fr; }
+  .hero-mascot { width: 220px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <img src="assets/img/launcher-48.png" alt="Plan9Basic" class="nav-logo-icon">
+      PLAN9BASIC <span class="blink"></span>
+    </a>
+    <button class="nav-hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">&#9776;</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#ai">AI</a></li>
+      <li><a href="#docs">Docs</a></li>
+      <li><a href="#download">Download</a></li>
+      <li><a href="#updates">Updates</a></li>
+      <li><button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- UNDER CONSTRUCTION BANNER -->
+<div class="construction-banner">
+  <div class="construction-inner">
+    <span class="construction-icon">&#128679;</span>
+    <span class="construction-text">SITE UNDER CONSTRUCTION</span>
+    <span class="construction-sub">&mdash; New content being added progressively. Stay tuned!</span>
+    <span class="construction-icon">&#128679;</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-layout">
+    <div class="hero-mascot">
+      <img src="assets/img/splash.png" alt="Plan9Basic Alien">
+    </div>
+    <div class="hero-terminal">
+      <div class="terminal-frame">
+        <div class="terminal-titlebar">
+          <span class="terminal-dot r"></span>
+          <span class="terminal-dot y"></span>
+          <span class="terminal-dot g"></span>
+          <span class="terminal-title">plan9basic &mdash; terminal</span>
+        </div>
+        <div class="terminal-body" id="bootTerminal"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-text">
+    <h1>Write code like it's 1985.<br><span class="glow">Run it like it's 2026.</span></h1>
+    <p>A free, cross-platform BASIC interpreter with 300+ functions, a full GUI toolkit, AI integration, and retro coding vibes. For Windows, Linux, and Android.</p>
+  </div>
+  <div class="hero-ctas">
+    <a href="#download" class="btn btn-primary">&#9654; Download Free</a>
+    <a href="#docs" class="btn">&#128214; Documentation</a>
+    <a href="#examples" class="btn">&#128161; Examples</a>
+  </div>
+</section>
+
+<!-- MASCOT CALLOUT -->
+<div class="mascot-callout">
+  <div class="mascot-callout-inner reveal">
+    <div class="mascot-callout-img">
+      <img src="assets/img/alien-250.png" alt="Plan9 Alien">
+    </div>
+    <div class="speech-bubble">
+      <div class="speech-name">&#128125; PLAN 9 ALIEN SAYS:</div>
+      <p class="speech-text">
+        <em>"Greetings, earthling!"</em> I've traveled across the galaxy to bring you the simplest way to create apps. No complex frameworks, no endless configuration &mdash; just pure BASIC joy. I come in peace... and with <em>300+ built-in functions</em>. Ready to code?
+      </p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- PITCH -->
+<section class="section" id="pitch">
+  <div class="section-header">
+    <div class="section-label">Why Plan9Basic?</div>
+    <h2 class="section-title">Simple. Powerful. Everywhere.</h2>
+  </div>
+  <div class="pitch-grid">
+    <div class="pitch-card reveal">
+      <span class="pitch-icon">&#9000;&#65039;</span>
+      <h3 class="pitch-title">Dead Simple</h3>
+      <p class="pitch-text">If you can type <code>PRINT "HELLO"</code>, you can program. No boilerplate, no ceremony. Three data types, structured programming, and an interactive command-line just like the old days.</p>
+    </div>
+    <div class="pitch-card reveal">
+      <span class="pitch-icon">&#128241;</span>
+      <h3 class="pitch-title">Cross-Platform</h3>
+      <p class="pitch-text">Write once, run on Windows, Linux, and Android. A native engine that creates real applications &mdash; not browser toys. Full GUI controls, shapes, effects, animations, and media.</p>
+    </div>
+    <div class="pitch-card reveal">
+      <span class="pitch-icon">&#129302;</span>
+      <h3 class="pitch-title">AI-Powered</h3>
+      <p class="pitch-text">Describe what you want, get working code. 12+ AI providers with a RAG-powered engine that truly understands Plan9Basic. Vibe coding isn't a buzzword &mdash; it's built in.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- CODE SHOWCASE -->
+<section class="section" id="examples">
+  <div class="section-header">
+    <div class="section-label">See It In Action</div>
+    <h2 class="section-title">From Code to App in Minutes</h2>
+  </div>
+  <div class="showcase reveal">
+    <div>
+      <div class="terminal-frame">
+        <div class="terminal-titlebar">
+          <span class="terminal-dot r"></span>
+          <span class="terminal-dot y"></span>
+          <span class="terminal-dot g"></span>
+          <span class="terminal-title">my_app.bas</span>
+        </div>
+        <div class="terminal-body" style="min-height:auto;">
+<pre style="margin:0;line-height:1.8;"><span class="code-comment">' A simple temperature converter</span>
+<span class="code-keyword">let</span> f# = form#(<span class="code-string">"Converter"</span>, <span class="code-number">320</span>, <span class="code-number">240</span>)
+
+<span class="code-func">label#</span>(f#, <span class="code-string">"Celsius:"</span>, <span class="code-number">20</span>, <span class="code-number">20</span>)
+<span class="code-keyword">let</span> e# = <span class="code-func">edit#</span>(f#, <span class="code-number">20</span>, <span class="code-number">50</span>, <span class="code-number">280</span>, <span class="code-number">36</span>)
+<span class="code-keyword">let</span> b# = <span class="code-func">button#</span>(f#,<span class="code-string">"Convert"</span>,<span class="code-number">20</span>,<span class="code-number">100</span>,<span class="code-number">280</span>,<span class="code-number">44</span>)
+<span class="code-keyword">let</span> r# = <span class="code-func">label#</span>(f#, <span class="code-string">""</span>, <span class="code-number">20</span>, <span class="code-number">160</span>)
+
+<span class="code-func">button_onclick#</span>(b#, <span class="code-string">"doConvert"</span>)
+<span class="code-func">form_show</span>(f#)
+
+<span class="code-keyword">function</span> doConvert(sender#)
+  <span class="code-keyword">local</span> c, f
+  <span class="code-keyword">let</span> c = <span class="code-func">val</span>(<span class="code-func">edit_text$</span>(e#))
+  <span class="code-keyword">let</span> f = c * <span class="code-number">9</span> / <span class="code-number">5</span> + <span class="code-number">32</span>
+  <span class="code-func">label_text#</span>(r#, <span class="code-func">str$</span>(c)+<span class="code-string">"&#176;C = "</span>+<span class="code-func">str$</span>(f)+<span class="code-string">"&#176;F"</span>)
+<span class="code-keyword">endfunction</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="showcase-result">
+      <div class="showcase-result-label">&#9654; Result on any platform</div>
+      <div class="app-preview">
+        <div class="app-preview-title">&#127777;&#65039; Converter</div>
+        <div class="app-preview-input">36.5</div>
+        <div class="app-preview-btn">Convert</div>
+        <div class="app-preview-output">36.5&#176;C = 97.7&#176;F</div>
+      </div>
+      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.6;">
+        15 lines of code &#8594; a native app on Windows, Linux, or Android.<br>No build tools. No dependencies. No complexity.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="features-inner">
+    <div class="section-header">
+      <div class="section-label">Under The Hood</div>
+      <h2 class="section-title">More Than You'd Expect From BASIC</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal"><span class="feature-number">300+</span><div class="feature-name">Built-in Functions</div><p class="feature-desc">Strings, math, dates, file I/O, regex, base64, gzip &mdash; all included, no imports needed.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">30+</span><div class="feature-name">GUI Controls</div><p class="feature-desc">Forms, buttons, labels, text fields, lists, checkboxes, switches, images, grids, sliders, media players.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">40+</span><div class="feature-name">Visual Effects</div><p class="feature-desc">Blur, glow, shadow, emboss, pixelate, ripple, swirl, wave, and 20+ animated transitions.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">12+</span><div class="feature-name">AI Providers</div><p class="feature-desc">OpenAI, Claude, Gemini, Mistral, Groq, DeepSeek, Ollama, LM Studio, and more.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">6</span><div class="feature-name">Animation Types</div><p class="feature-desc">Color, float, integer, bitmap list, path, and rect animations for smooth, dynamic interfaces.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">5</span><div class="feature-name">Color Themes</div><p class="feature-desc">Green, Amber, White, Blue, and Pink phosphor themes. Like choosing your favorite 80s monitor.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">&#8734;</span><div class="feature-name">Nostalgia</div><p class="feature-desc">Line numbers, GOTO, GOSUB, LIST, RUN, LOAD, SAVE &mdash; the commands you remember.</p></div>
+      <div class="feature-card reveal"><span class="feature-number">0</span><div class="feature-name">Cost</div><p class="feature-desc">Plan9Basic is free. No license fees, no subscriptions, no ads. Just download and create.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AI -->
+<section class="ai-section" id="ai">
+  <div class="ai-content">
+    <div class="ai-grid">
+      <div class="ai-text reveal">
+        <h3>&#129302; Vibe Coding: Just Describe What You Want</h3>
+        <p>Plan9Basic includes a complete Intelligence Engine powered by RAG. It knows every function, every syntax rule, every library. Describe your app in plain language &mdash; get working code.</p>
+        <p>Connect to any AI provider &mdash; from cloud giants to local models. The engine validates code, detects errors, and auto-corrects.</p>
+        <div class="ai-providers">
+          <span class="provider-tag">OpenAI</span><span class="provider-tag">Anthropic</span><span class="provider-tag">Google Gemini</span><span class="provider-tag">Mistral</span><span class="provider-tag">Groq</span><span class="provider-tag">DeepSeek</span><span class="provider-tag">xAI / Grok</span><span class="provider-tag">Perplexity</span><span class="provider-tag">Together AI</span><span class="provider-tag">Fireworks</span><span class="provider-tag">OpenRouter</span><span class="provider-tag">Ollama</span><span class="provider-tag">LM Studio</span>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="terminal-frame">
+          <div class="terminal-titlebar">
+            <span class="terminal-dot r"></span><span class="terminal-dot y"></span><span class="terminal-dot g"></span>
+            <span class="terminal-title">vibe coding</span>
+          </div>
+          <div class="terminal-body" style="min-height:auto;">
+<pre style="margin:0;line-height:1.8;font-size:0.8rem;"><span class="code-comment">' Initialize the AI engine</span>
+<span class="code-keyword">let</span> ai# = <span class="code-func">ai_client#</span>(<span class="code-string">"anthropic"</span>, key$)
+<span class="code-func">ai_model</span>(ai#, <span class="code-string">"claude-sonnet-4-20250514"</span>)
+
+<span class="code-keyword">let</span> eng# = <span class="code-func">p9_engine#</span>(ai#, basePath$)
+
+<span class="code-comment">' Just describe what you want!</span>
+<span class="code-keyword">let</span> code$ = <span class="code-func">p9_generate$</span>(eng#,
+  <span class="code-string">"Create a to-do list app</span>
+  <span class="code-string"> with add and remove buttons"</span>)
+
+<span class="code-keyword">println</span> code$
+<span class="code-comment">' &#8594; Working Plan9Basic GUI code!</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOCUMENTATION -->
+<section class="section" id="docs">
+  <div class="section-header">
+    <div class="section-label">Documentation</div>
+    <h2 class="section-title">Learn at Your Own Pace</h2>
+  </div>
+  <div class="pitch-grid">
+    <div class="pitch-card reveal"><span class="pitch-icon">&#128218;</span><h3 class="pitch-title">Language Reference</h3><p class="pitch-text">Complete syntax guide &mdash; variables, control structures, functions, data types, operators, and every keyword.</p></div>
+    <div class="pitch-card reveal"><span class="pitch-icon">&#127919;</span><h3 class="pitch-title">Library Guides</h3><p class="pitch-text">Detailed docs for every library &mdash; strings, math, HTTP, JSON, SQLite, GUI, effects, animations, AI. Added progressively.</p></div>
+    <div class="pitch-card reveal"><span class="pitch-icon">&#128161;</span><h3 class="pitch-title">Example Programs</h3><p class="pitch-text">Complete programs to copy, paste, and run. From "Hello World" to GUI apps, API clients, and AI tools.</p></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- DOWNLOAD -->
+<section class="section" id="download">
+  <div class="section-header">
+    <div class="section-label">Get Started</div>
+    <h2 class="section-title">Download Plan9Basic &mdash; Free</h2>
+  </div>
+  <div class="download-grid">
+    <div class="download-card reveal">
+      <span class="platform-icon">&#128187;</span>
+      <div class="platform-name">Windows</div><div class="platform-arch">64-bit (x86_64)</div>
+      <a href="#" class="btn btn-primary">&#11015; Download .exe</a>
+      <div class="download-note">Windows 10 or later</div>
+    </div>
+    <div class="download-card reveal">
+      <span class="platform-icon">&#128039;</span>
+      <div class="platform-name">Linux</div><div class="platform-arch">64-bit (x86_64)</div>
+      <a href="#" class="btn btn-primary">&#11015; Download</a>
+      <div class="download-note">Ubuntu 20.04+ / Debian / Fedora</div>
+    </div>
+    <div class="download-card reveal">
+      <span class="platform-icon">&#129302;</span>
+      <div class="platform-name">Android</div><div class="platform-arch">64-bit (arm64)</div>
+      <a href="#" class="btn btn-primary">&#11015; Download .apk</a>
+      <div class="download-note">Android 8.0+</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:2.5rem;">
+    <div class="terminal-frame" style="max-width:480px;margin:0 auto;text-align:left;">
+      <div class="terminal-titlebar">
+        <span class="terminal-dot r"></span><span class="terminal-dot y"></span><span class="terminal-dot g"></span>
+        <span class="terminal-title">quick start</span>
+      </div>
+      <div class="terminal-body" style="min-height:auto;padding:1rem;">
+<pre style="margin:0;line-height:2;"><span class="boot-dim">Plan9Basic v1.0 &mdash; Ready.</span>
+<span class="boot-dim">&gt;</span> <span class="code-keyword">PRINT</span> <span class="code-string">"Hello, World!"</span>
+Hello, World!
+<span class="boot-dim">&gt;</span> _<span class="cursor"></span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- UPDATES -->
+<section class="section" id="updates">
+  <div class="section-header">
+    <div class="section-label">The Journey</div>
+    <h2 class="section-title">What's New</h2>
+  </div>
+  <div class="updates-list">
+    <div class="update-item reveal">
+      <div class="update-date">2026.02.17</div>
+      <div class="update-content"><h4>&#128640; Plan9Basic Website Launches</h4><p>The official home of Plan9Basic is live! Download, explore the docs, and start coding.</p><span class="update-tag">LAUNCH</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.02.17</div>
+      <div class="update-content"><h4>&#128214; Core Language Documentation</h4><p>Complete reference for variables, types, operators, control structures, and functions.</p><span class="update-tag">DOCS</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">COMING SOON</div>
+      <div class="update-content"><h4>&#128295; Library Documentation Series</h4><p>Deep dives into each library &mdash; GUI, effects, HTTP, JSON, AI. Published progressively.</p><span class="update-tag">ROADMAP</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- INDIE DEVELOPER -->
+<div class="indie-section">
+  <div class="indie-inner reveal">
+    <div class="indie-badge">&#9825; INDIE &bull; FREE &bull; OPEN</div>
+    <h3 class="indie-title">Made by One Person.<br>For Everyone.</h3>
+    <p class="indie-text">
+      Plan9Basic is an <em>indie project</em> &mdash; designed, built, and maintained by a single developer during free time, driven by a genuine love for BASIC and the belief that programming should be accessible and fun.
+    </p>
+    <p class="indie-text">
+      There's no company behind this, no venture capital, no investors. Just <em>passion</em>, <em>curiosity</em>, and a lot of late-night coding sessions.
+    </p>
+    <p class="indie-text">
+      The language, the libraries, the IDE, the AI integration, this website &mdash; every line of code was written with care. Evolution happens at the pace of life, and each update is a labor of love.
+    </p>
+
+    <div class="indie-values">
+      <div class="indie-value">
+        <span class="indie-value-icon">&#128150;</span>
+        <div class="indie-value-label">PASSION-DRIVEN</div>
+        <div class="indie-value-desc">Built for love, not profit</div>
+      </div>
+      <div class="indie-value">
+        <span class="indie-value-icon">&#127981;</span>
+        <div class="indie-value-label">100% FREE</div>
+        <div class="indie-value-desc">No fees, no ads</div>
+      </div>
+      <div class="indie-value">
+        <span class="indie-value-icon">&#128640;</span>
+        <div class="indie-value-label">ALWAYS EVOLVING</div>
+        <div class="indie-value-desc">New features at the pace of life</div>
+      </div>
+      <div class="indie-value">
+        <span class="indie-value-icon">&#129309;</span>
+        <div class="indie-value-label">COMMUNITY SPIRIT</div>
+        <div class="indie-value-desc">Your feedback shapes the future</div>
+      </div>
+    </div>
+
+    <div class="indie-terminal">
+      <div class="terminal-frame">
+        <div class="terminal-titlebar">
+          <span class="terminal-dot r"></span><span class="terminal-dot y"></span><span class="terminal-dot g"></span>
+          <span class="terminal-title">about the developer</span>
+        </div>
+        <div class="terminal-body">
+<pre style="margin:0;line-height:2;font-size:0.8rem;"><span class="code-number">10</span> <span class="code-keyword">LET</span> dev$ = <span class="code-string">"one person"</span>
+<span class="code-number">20</span> <span class="code-keyword">LET</span> fuel$ = <span class="code-string">"passion + coffee"</span>
+<span class="code-number">30</span> <span class="code-keyword">LET</span> cost = <span class="code-number">0</span>
+<span class="code-number">40</span> <span class="code-keyword">PRINT</span> <span class="code-string">"Made with "</span> + fuel$
+<span class="code-number">50</span> <span class="code-keyword">PRINT</span> <span class="code-string">"Free to use."</span>
+<span class="code-number">60</span> <span class="code-keyword">GOTO</span> <span class="code-number">40</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-row">
+        <img src="assets/img/alien-83.png" alt="" class="footer-mascot-img">
+        <div>
+          <div class="footer-brand">PLAN9BASIC</div>
+          <p class="footer-tagline">A modern BASIC interpreter bringing the joy of classic programming to today's platforms.</p>
+        </div>
+      </div>
+      <p class="footer-tagline" style="font-size:0.72rem;">Made with &#10084;&#65039; and lots of BASIC</p>
+    </div>
+    <div><div class="footer-heading">Product</div><ul class="footer-links"><li><a href="#features">Features</a></li><li><a href="#download">Download</a></li><li><a href="#ai">AI Integration</a></li><li><a href="#">Changelog</a></li></ul></div>
+    <div><div class="footer-heading">Learn</div><ul class="footer-links"><li><a href="#docs">Documentation</a></li><li><a href="#examples">Examples</a></li><li><a href="#">Getting Started</a></li><li><a href="#">Tutorials</a></li></ul></div>
+    <div><div class="footer-heading">Community</div><ul class="footer-links"><li><a href="#">GitHub</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li><li><a href="#">Report a Bug</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <span style="font-family:var(--font-mono);"><span class="code-number">10</span> <span class="code-keyword">PRINT</span> <span class="code-string">"&#169; 2026 Plan9Basic"</span> : <span class="code-number">20</span> <span class="code-keyword">GOTO</span> <span class="code-number">10</span></span>
+    <span>v1.0 &mdash; Free to use</span>
+  </div>
+</footer>
+
+<!-- FLOATING MASCOT -->
+<div class="floater" id="floater">
+  <img src="assets/img/alien-83.png" alt="Back to top">
+  <div class="floater-tip">BACK TO TOP &#9650;</div>
+</div>
+
+<script>
+// Theme
+const themes=['green','amber','blue','pink','white'];
+let ti=0;
+function cycleTheme(){
+  ti=(ti+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[ti]);
+  document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
+  localStorage.setItem('p9t',themes[ti]);
+}
+const st=localStorage.getItem('p9t');
+if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
+
+// Boot sequence
+const boot=[
+  {t:'',d:300},
+  {t:'Plan9Basic v1.0',c:'boot-hi',d:400},
+  {t:'\u2550'.repeat(36),c:'boot-dim',d:200},
+  {t:'',d:200},
+  {t:'Checking system.............. OK',d:600},
+  {t:'Loading core engine.......... OK',d:400},
+  {t:'Initializing libraries....... 147 loaded',d:500},
+  {t:'Registering functions........ 3648 ready',d:400},
+  {t:'Configuring AI providers..... 12+ available',d:400},
+  {t:'GUI toolkit.................. active',d:300},
+  {t:'',d:200},
+  {t:'Platforms: Windows \u2502 Linux \u2502 Android',c:'boot-dim',d:300},
+  {t:'',d:300},
+  {t:'READY.',c:'boot-hi',d:0},
+  {t:'> ',cur:true,d:0}
+];
+function runBoot(){
+  const el=document.getElementById('bootTerminal');el.innerHTML='';let delay=0;
+  boot.forEach(l=>{
+    delay+=l.d;
+    setTimeout(()=>{
+      const div=document.createElement('div');div.className='line';
+      if(l.c)div.innerHTML='<span class="'+l.c+'">'+l.t+'</span>';
+      else div.textContent=l.t;
+      if(l.cur)div.innerHTML+='<span class="cursor"></span>';
+      el.appendChild(div);el.scrollTop=el.scrollHeight;
+    },delay);
+  });
+}
+window.addEventListener('load',()=>setTimeout(runBoot,400));
+
+// Scroll reveal
+const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('vis');}),{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Floating mascot
+const fl=document.getElementById('floater');
+window.addEventListener('scroll',()=>{fl.classList.toggle('show',window.scrollY>500);});
+fl.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){t.scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('navLinks').classList.remove('open');}
+  });
+});
+</script>
+</body>
+</html>

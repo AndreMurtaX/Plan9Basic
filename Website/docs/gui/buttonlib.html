@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ButtonLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic ButtonLib: 108 functions for creating and managing push-button controls with events, font styling, alignment, and cross-platform support.">
+<link rel="icon" type="image/png" href="../../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="../../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">ButtonLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">108 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+    <a href="#constants" class="sidebar-link">Numeric Values</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Core</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#text" class="sidebar-link">Text</a>
+    <a href="#font" class="sidebar-link">Font Properties</a>
+    <a href="#specific" class="sidebar-link">Button Behavior</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Layout</div>
+    <a href="#position" class="sidebar-link">Position &amp; Size</a>
+    <a href="#alignment" class="sidebar-link">Alignment &amp; Margins</a>
+    <a href="#visibility" class="sidebar-link">Visibility &amp; State</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Interaction</div>
+    <a href="#focus" class="sidebar-link">Focus</a>
+    <a href="#interaction" class="sidebar-link">Hit Test &amp; Drag</a>
+    <a href="#tag" class="sidebar-link">Tag &amp; Parent</a>
+    <a href="#events" class="sidebar-link">Events</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>ButtonLib &mdash; Button Control Library</h2>
+<p>Complete functionality for creating and managing push-button controls in Plan9Basic. Buttons are the standard clickable interface element for triggering actions in GUI applets. <strong>108 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>button_error, button_errormsg$, button_strerror$, button_clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>5</td><td>button# (4 overloads), button_free</td></tr>
+<tr><td>Text Content</td><td>2</td><td>button_text$ (get), button_text# (set)</td></tr>
+<tr><td>Font Properties</td><td>12</td><td>fontfamily, fontsize, fontcolor, bold, italic, underline, strikeout (get/set)</td></tr>
+<tr><td>Button-Specific</td><td>6</td><td>modalresult, default, cancel (get/set)</td></tr>
+<tr><td>Position &amp; Size</td><td>14</td><td>x, y, width, height (get/set), bounds#, move#, size#</td></tr>
+<tr><td>Alignment &amp; Margins</td><td>12</td><td>align (get/set), margin#, margins#, marginleft/top/right/bottom (get/set)</td></tr>
+<tr><td>Visibility &amp; State</td><td>6</td><td>visible, enabled, opacity (get/set)</td></tr>
+<tr><td>Focus</td><td>6</td><td>isfocused, setfocus#, resetfocus#, canfocus (get/set), taborder (get/set)</td></tr>
+<tr><td>Interaction</td><td>4</td><td>hittest (get/set), dragmode (get/set)</td></tr>
+<tr><td>Tag &amp; Parent</td><td>5</td><td>tag (get/set), parent# (get/set), bringtofront#, sendtoback#</td></tr>
+<tr><td>Events</td><td>32</td><td>14 event types &times; set/get + clearcallbacks# + onresize</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Mobile-optimized touch targets</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>iPhone/iPad</td></tr> -->
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_error()</code></td><td><code>button_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>button_errormsg$()</code></td><td><code>button_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>button_strerror$(code)</code></td><td><code>button_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>button_clearerror()</code></td><td><code>button_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;OK&quot;</span>)
+<span class="kw">if</span> <span class="fn">button_error</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Error: &quot;</span> + <span class="fn">button_errormsg$</span>()
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="constants">
+<h2>Numeric Values Reference</h2>
+<p>Plan9Basic does not have built-in constants. You can define your own named values for readability:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Alignment values</span>
+<span class="kw">let</span> ALIGN_NONE = <span class="num">0</span>
+<span class="kw">let</span> ALIGN_TOP = <span class="num">1</span>
+<span class="kw">let</span> ALIGN_CLIENT = <span class="num">9</span>
+
+<span class="cmt">&#x27; Modal result values</span>
+<span class="kw">let</span> MR_OK = <span class="num">1</span>
+<span class="kw">let</span> MR_CANCEL = <span class="num">2</span></pre></div></div>
+<h3>Alignment Values <code>button_align#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>None (absolute positioning)</td></tr>
+<tr><td>1</td><td>Top</td></tr>
+<tr><td>2</td><td>Left</td></tr>
+<tr><td>3</td><td>Right</td></tr>
+<tr><td>4</td><td>Bottom</td></tr>
+<tr><td>9</td><td>Client (fill parent)</td></tr>
+<tr><td>11</td><td>Center</td></tr>
+</tbody></table></div>
+<h3>Modal Result Values <code>button_modalresult#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>0</td><td>None</td></tr>
+<tr><td>1</td><td>OK</td></tr>
+<tr><td>2</td><td>Cancel</td></tr>
+<tr><td>6</td><td>Yes</td></tr>
+<tr><td>7</td><td>No</td></tr>
+</tbody></table></div>
+<h3>Drag Mode Values <code>button_dragmode#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>Manual (drag must be initiated by code)</td></tr>
+<tr><td>1</td><td>Automatic (drag starts on mouse-down)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button#(parent#)</code></td><td><code>button#@#</code></td><td>Create button with default text "Button"</td></tr>
+<tr><td><code>button#(parent#, text$)</code></td><td><code>button#@#$</code></td><td>Create with specified text</td></tr>
+<tr><td><code>button#(parent#, x, y, w, h)</code></td><td><code>button#@#nnnn</code></td><td>Create at position with size</td></tr>
+<tr><td><code>button#(parent#, text$, x, y, w, h)</code></td><td><code>button#@#$nnnn</code></td><td>Create with text, position, and size</td></tr>
+<tr><td><code>button_free(btn#)</code></td><td><code>button_free@#</code></td><td>Destroy button and release resources</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Minimal creation</span>
+<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#)
+
+<span class="cmt">&#x27; With text</span>
+<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Click Me&quot;</span>)
+
+<span class="cmt">&#x27; Full creation</span>
+<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Save&quot;</span>, <span class="num">50</span>, <span class="num">100</span>, <span class="num">120</span>, <span class="num">40</span>)
+
+<span class="cmt">&#x27; Cleanup</span>
+<span class="fn">button_free</span>(btn#)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> The <code>parent#</code> parameter must be a valid form or container control (panel, layout). The button is automatically added as a child of the parent.</div>
+</section>
+
+<section class="doc-section" id="text">
+<h2>Text Content</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_text$(btn#)</code></td><td><code>button_text$@#</code></td><td>Get the button&rsquo;s display text</td></tr>
+<tr><td><code>button_text#(btn#, text$)</code></td><td><code>button_text#@#$</code></td><td>Set the button&rsquo;s display text</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">button_text#</span>(btn#, <span class="str">&quot;Save File&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Button says: &quot;</span> + <span class="fn">button_text$</span>(btn#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="font">
+<h2>Font Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_fontfamily$(btn#)</code></td><td><code>button_fontfamily$@#</code></td><td>Get font family name</td></tr>
+<tr><td><code>button_fontfamily#(btn#, family$)</code></td><td><code>button_fontfamily#@#$</code></td><td>Set font family</td></tr>
+<tr><td><code>button_fontsize(btn#)</code></td><td><code>button_fontsize@#</code></td><td>Get font size</td></tr>
+<tr><td><code>button_fontsize#(btn#, size)</code></td><td><code>button_fontsize#@#n</code></td><td>Set font size</td></tr>
+<tr><td><code>button_fontcolor$(btn#)</code></td><td><code>button_fontcolor$@#</code></td><td>Get font color</td></tr>
+<tr><td><code>button_fontcolor#(btn#, color$)</code></td><td><code>button_fontcolor#@#$</code></td><td>Set font color</td></tr>
+<tr><td><code>button_bold(btn#)</code></td><td><code>button_bold@#</code></td><td>Get bold state (0/1)</td></tr>
+<tr><td><code>button_bold#(btn#, n)</code></td><td><code>button_bold#@#n</code></td><td>Set bold (0/1)</td></tr>
+<tr><td><code>button_italic(btn#)</code></td><td><code>button_italic@#</code></td><td>Get italic state (0/1)</td></tr>
+<tr><td><code>button_italic#(btn#, n)</code></td><td><code>button_italic#@#n</code></td><td>Set italic (0/1)</td></tr>
+<tr><td><code>button_underline(btn#)</code></td><td><code>button_underline@#</code></td><td>Get underline state (0/1)</td></tr>
+<tr><td><code>button_underline#(btn#, n)</code></td><td><code>button_underline#@#n</code></td><td>Set underline (0/1)</td></tr>
+<tr><td><code>button_strikeout(btn#)</code></td><td><code>button_strikeout@#</code></td><td>Get strikeout state (0/1)</td></tr>
+<tr><td><code>button_strikeout#(btn#, n)</code></td><td><code>button_strikeout#@#n</code></td><td>Set strikeout (0/1)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">button_fontfamily#</span>(btn#, <span class="str">&quot;Arial&quot;</span>)
+<span class="fn">button_fontsize#</span>(btn#, <span class="num">14</span>)
+<span class="fn">button_fontcolor#</span>(btn#, <span class="str">&quot;#333333&quot;</span>)
+<span class="fn">button_bold#</span>(btn#, <span class="num">1</span>)
+<span class="fn">button_underline#</span>(btn#, <span class="num">1</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="specific">
+<h2>Button-Specific Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_modalresult(btn#)</code></td><td><code>button_modalresult@#</code></td><td>Get modal result value</td></tr>
+<tr><td><code>button_modalresult#(btn#, n)</code></td><td><code>button_modalresult#@#n</code></td><td>Set modal result (0=none, 1=OK, 2=Cancel, 6=Yes, 7=No)</td></tr>
+<tr><td><code>button_default(btn#)</code></td><td><code>button_default@#</code></td><td>Get default state (0/1)</td></tr>
+<tr><td><code>button_default#(btn#, n)</code></td><td><code>button_default#@#n</code></td><td>Set as default button (responds to Enter key)</td></tr>
+<tr><td><code>button_cancel(btn#)</code></td><td><code>button_cancel@#</code></td><td>Get cancel state (0/1)</td></tr>
+<tr><td><code>button_cancel#(btn#, n)</code></td><td><code>button_cancel#@#n</code></td><td>Set as cancel button (responds to Escape key)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Dialog buttons with keyboard shortcuts</span>
+<span class="kw">let</span> btnOK# = <span class="fn">button#</span>(frm#, <span class="str">&quot;OK&quot;</span>, <span class="num">50</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_default#</span>(btnOK#, <span class="num">1</span>)         <span class="cmt">&#x27; Enter triggers this button</span>
+<span class="fn">button_modalresult#</span>(btnOK#, <span class="num">1</span>)     <span class="cmt">&#x27; Sets form result to OK</span>
+
+<span class="kw">let</span> btnCancel# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Cancel&quot;</span>, <span class="num">150</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_cancel#</span>(btnCancel#, <span class="num">1</span>)      <span class="cmt">&#x27; Escape triggers this button</span>
+<span class="fn">button_modalresult#</span>(btnCancel#, <span class="num">2</span>) <span class="cmt">&#x27; Sets form result to Cancel</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>button_default#</code> and <code>button_cancel#</code> work with the form&rsquo;s keyboard handling. When the user presses Enter, the default button&rsquo;s OnClick fires. When Escape is pressed, the cancel button&rsquo;s OnClick fires.</div>
+</section>
+
+<section class="doc-section" id="position">
+<h2>Position &amp; Size</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_x(btn#)</code></td><td><code>button_x@#</code></td><td>Get X position</td></tr>
+<tr><td><code>button_x#(btn#, x)</code></td><td><code>button_x#@#n</code></td><td>Set X position</td></tr>
+<tr><td><code>button_y(btn#)</code></td><td><code>button_y@#</code></td><td>Get Y position</td></tr>
+<tr><td><code>button_y#(btn#, y)</code></td><td><code>button_y#@#n</code></td><td>Set Y position</td></tr>
+<tr><td><code>button_width(btn#)</code></td><td><code>button_width@#</code></td><td>Get width</td></tr>
+<tr><td><code>button_width#(btn#, w)</code></td><td><code>button_width#@#n</code></td><td>Set width</td></tr>
+<tr><td><code>button_height(btn#)</code></td><td><code>button_height@#</code></td><td>Get height</td></tr>
+<tr><td><code>button_height#(btn#, h)</code></td><td><code>button_height#@#n</code></td><td>Set height</td></tr>
+<tr><td><code>button_bounds#(btn#, x, y, w, h)</code></td><td><code>button_bounds#@#nnnn</code></td><td>Set position and size in one call</td></tr>
+<tr><td><code>button_move#(btn#, x, y)</code></td><td><code>button_move#@#nn</code></td><td>Set position only</td></tr>
+<tr><td><code>button_size#(btn#, w, h)</code></td><td><code>button_size#@#nn</code></td><td>Set size only</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Position and size</span>
+<span class="fn">button_bounds#</span>(btn#, <span class="num">50</span>, <span class="num">100</span>, <span class="num">120</span>, <span class="num">40</span>)
+
+<span class="cmt">&#x27; Or separately</span>
+<span class="fn">button_move#</span>(btn#, <span class="num">50</span>, <span class="num">100</span>)
+<span class="fn">button_size#</span>(btn#, <span class="num">120</span>, <span class="num">40</span>)
+
+<span class="kw">println</span> <span class="str">&quot;At: &quot;</span> + <span class="fn">str$</span>(<span class="fn">button_x</span>(btn#)) + <span class="str">&quot;, &quot;</span> + <span class="fn">str$</span>(<span class="fn">button_y</span>(btn#))</pre></div></div>
+</section>
+
+<section class="doc-section" id="alignment">
+<h2>Alignment &amp; Margins</h2>
+<p>When <code>button_align#</code> is set to a value other than 0, the button is automatically positioned by the parent container. Margins control spacing between the button and adjacent controls when alignment is active.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_align(btn#)</code></td><td><code>button_align@#</code></td><td>Get alignment mode</td></tr>
+<tr><td><code>button_align#(btn#, n)</code></td><td><code>button_align#@#n</code></td><td>Set alignment (0=none, 1=top, 2=left, 3=right, 4=bottom, 9=client, 11=center)</td></tr>
+<tr><td><code>button_margin#(btn#, n)</code></td><td><code>button_margin#@#n</code></td><td>Set uniform margin on all four sides</td></tr>
+<tr><td><code>button_margins#(btn#, l, t, r, b)</code></td><td><code>button_margins#@#nnnn</code></td><td>Set individual margins (left, top, right, bottom)</td></tr>
+<tr><td><code>button_marginleft(btn#)</code></td><td><code>button_marginleft@#</code></td><td>Get left margin</td></tr>
+<tr><td><code>button_marginleft#(btn#, n)</code></td><td><code>button_marginleft#@#n</code></td><td>Set left margin</td></tr>
+<tr><td><code>button_margintop(btn#)</code></td><td><code>button_margintop@#</code></td><td>Get top margin</td></tr>
+<tr><td><code>button_margintop#(btn#, n)</code></td><td><code>button_margintop#@#n</code></td><td>Set top margin</td></tr>
+<tr><td><code>button_marginright(btn#)</code></td><td><code>button_marginright@#</code></td><td>Get right margin</td></tr>
+<tr><td><code>button_marginright#(btn#, n)</code></td><td><code>button_marginright#@#n</code></td><td>Set right margin</td></tr>
+<tr><td><code>button_marginbottom(btn#)</code></td><td><code>button_marginbottom@#</code></td><td>Get bottom margin</td></tr>
+<tr><td><code>button_marginbottom#(btn#, n)</code></td><td><code>button_marginbottom#@#n</code></td><td>Set bottom margin</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Button docked to the bottom with 5px spacing</span>
+<span class="fn">button_align#</span>(btn#, <span class="num">4</span>)       <span class="cmt">&#x27; Align bottom</span>
+<span class="fn">button_margin#</span>(btn#, <span class="num">5</span>)      <span class="cmt">&#x27; 5px all sides</span>
+
+<span class="cmt">&#x27; Individual margins</span>
+<span class="fn">button_margins#</span>(btn#, <span class="num">10</span>, <span class="num">5</span>, <span class="num">10</span>, <span class="num">5</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="visibility">
+<h2>Visibility &amp; State</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_visible(btn#)</code></td><td><code>button_visible@#</code></td><td>Get visibility (0/1)</td></tr>
+<tr><td><code>button_visible#(btn#, n)</code></td><td><code>button_visible#@#n</code></td><td>Set visibility (0=hidden, 1=visible)</td></tr>
+<tr><td><code>button_enabled(btn#)</code></td><td><code>button_enabled@#</code></td><td>Get enabled state (0/1)</td></tr>
+<tr><td><code>button_enabled#(btn#, n)</code></td><td><code>button_enabled#@#n</code></td><td>Set enabled state (0=disabled/grayed, 1=enabled)</td></tr>
+<tr><td><code>button_opacity(btn#)</code></td><td><code>button_opacity@#</code></td><td>Get opacity (0.0&ndash;1.0)</td></tr>
+<tr><td><code>button_opacity#(btn#, value)</code></td><td><code>button_opacity#@#n</code></td><td>Set opacity (0.0=transparent, 1.0=opaque)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Disable a button during a long operation</span>
+<span class="fn">button_enabled#</span>(btnSave#, <span class="num">0</span>)
+<span class="fn">button_opacity#</span>(btnSave#, <span class="num">0.5</span>)
+<span class="cmt">&#x27; ... do work ...</span>
+<span class="fn">button_enabled#</span>(btnSave#, <span class="num">1</span>)
+<span class="fn">button_opacity#</span>(btnSave#, <span class="num">1.0</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="focus">
+<h2>Focus</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_isfocused(btn#)</code></td><td><code>button_isfocused@#</code></td><td>Is this button focused? (0/1)</td></tr>
+<tr><td><code>button_setfocus#(btn#)</code></td><td><code>button_setfocus#@#</code></td><td>Give keyboard focus to this button</td></tr>
+<tr><td><code>button_resetfocus#(btn#)</code></td><td><code>button_resetfocus#@#</code></td><td>Release focus from this button</td></tr>
+<tr><td><code>button_canfocus(btn#)</code></td><td><code>button_canfocus@#</code></td><td>Get whether the button can receive focus (0/1)</td></tr>
+<tr><td><code>button_canfocus#(btn#, n)</code></td><td><code>button_canfocus#@#n</code></td><td>Set whether the button can receive focus (0/1)</td></tr>
+<tr><td><code>button_taborder(btn#)</code></td><td><code>button_taborder@#</code></td><td>Get tab order index</td></tr>
+<tr><td><code>button_taborder#(btn#, n)</code></td><td><code>button_taborder#@#n</code></td><td>Set tab order index</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Set logical tab order for a dialog</span>
+<span class="fn">button_taborder#</span>(btnOK#, <span class="num">1</span>)
+<span class="fn">button_taborder#</span>(btnCancel#, <span class="num">2</span>)
+
+<span class="cmt">&#x27; Give initial focus</span>
+<span class="fn">button_setfocus#</span>(btnOK#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="interaction">
+<h2>Interaction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_hittest(btn#)</code></td><td><code>button_hittest@#</code></td><td>Get hit-test state (0/1)</td></tr>
+<tr><td><code>button_hittest#(btn#, n)</code></td><td><code>button_hittest#@#n</code></td><td>Enable/disable mouse hit testing (0=click-through, 1=clickable)</td></tr>
+<tr><td><code>button_dragmode(btn#)</code></td><td><code>button_dragmode@#</code></td><td>Get drag mode (0=manual, 1=automatic)</td></tr>
+<tr><td><code>button_dragmode#(btn#, n)</code></td><td><code>button_dragmode#@#n</code></td><td>Set drag mode</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Setting <code>button_hittest#(btn#, 0)</code> makes the button transparent to mouse clicks &mdash; clicks pass through to the control behind it. Useful for overlay decorations.</div>
+</section>
+
+<section class="doc-section" id="tag">
+<h2>Tag &amp; Parent</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_tag(btn#)</code></td><td><code>button_tag@#</code></td><td>Get user-defined integer tag</td></tr>
+<tr><td><code>button_tag#(btn#, n)</code></td><td><code>button_tag#@#n</code></td><td>Set user-defined integer tag</td></tr>
+<tr><td><code>button_parent#(btn#)</code></td><td><code>button_parent#@#</code></td><td>Get parent control pointer</td></tr>
+<tr><td><code>button_parent#(btn#, parent#)</code></td><td><code>button_parent#@##</code></td><td>Move button to a different parent</td></tr>
+<tr><td><code>button_bringtofront#(btn#)</code></td><td><code>button_bringtofront#@#</code></td><td>Bring to front of Z-order</td></tr>
+<tr><td><code>button_sendtoback#(btn#)</code></td><td><code>button_sendtoback#@#</code></td><td>Send to back of Z-order</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Use tags to identify buttons in a shared callback</span>
+<span class="fn">button_tag#</span>(btnRed#, <span class="num">1</span>)
+<span class="fn">button_tag#</span>(btnGreen#, <span class="num">2</span>)
+<span class="fn">button_tag#</span>(btnBlue#, <span class="num">3</span>)
+
+<span class="kw">function</span> <span class="fn">OnColorClick</span>(sender#) <span class="kw">local</span> tag
+    tag = <span class="fn">button_tag</span>(sender#)
+    <span class="kw">if</span> tag = <span class="num">1</span> <span class="kw">then</span> <span class="kw">println</span> <span class="str">&quot;Red&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">2</span> <span class="kw">then</span> <span class="kw">println</span> <span class="str">&quot;Green&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">3</span> <span class="kw">then</span> <span class="kw">println</span> <span class="str">&quot;Blue&quot;</span>
+    <span class="kw">endif</span>
+<span class="kw">endfunction</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> (<code>button_onXXX#(btn#, func$)</code>) and a <strong>getter</strong> (<code>button_onXXX$(btn#)</code>) to assign or read the callback name. Use <code>button_clearcallbacks#(btn#)</code> to disconnect all callbacks at once.</p>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>button_onclick#(btn#, func$)</code></td><td><code>button_onclick$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_onenter#(btn#, func$)</code></td><td><code>button_onenter$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_onexit#(btn#, func$)</code></td><td><code>button_onexit$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_onkeydown#(btn#, func$)</code></td><td><code>button_onkeydown$(btn#)</code></td><td><code>function name(sender#, key, keychar$, shift$)</code></td></tr>
+<tr><td><code>button_onkeyup#(btn#, func$)</code></td><td><code>button_onkeyup$(btn#)</code></td><td><code>function name(sender#, key, keychar$, shift$)</code></td></tr>
+<tr><td><code>button_onmousedown#(btn#, func$)</code></td><td><code>button_onmousedown$(btn#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>button_onmouseup#(btn#, func$)</code></td><td><code>button_onmouseup$(btn#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>button_onmousemove#(btn#, func$)</code></td><td><code>button_onmousemove$(btn#)</code></td><td><code>function name(sender#, x, y, shift$)</code></td></tr>
+<tr><td><code>button_onmouseenter#(btn#, func$)</code></td><td><code>button_onmouseenter$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_onmouseleave#(btn#, func$)</code></td><td><code>button_onmouseleave$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_onresize#(btn#, func$)</code></td><td><code>button_onresize$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_ondragenter#(btn#, func$)</code></td><td><code>button_ondragenter$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_ondragover#(btn#, func$)</code></td><td><code>button_ondragover$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_ondragdrop#(btn#, func$)</code></td><td><code>button_ondragdrop$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_ondragleave#(btn#, func$)</code></td><td><code>button_ondragleave$(btn#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>button_clearcallbacks#(btn#)</code></td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Click handler</span>
+<span class="kw">function</span> <span class="fn">OnButtonClick</span>(sender#)
+    <span class="kw">println</span> <span class="str">&quot;Button clicked: &quot;</span> + <span class="fn">button_text$</span>(sender#)
+<span class="kw">endfunction</span>
+
+<span class="fn">button_onclick#</span>(btn#, <span class="str">&quot;OnButtonClick&quot;</span>)</pre></div></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Mouse hover effect</span>
+<span class="kw">function</span> <span class="fn">OnMouseEnter</span>(sender#)
+    <span class="fn">button_fontcolor#</span>(sender#, <span class="str">&quot;#0066CC&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnMouseLeave</span>(sender#)
+    <span class="fn">button_fontcolor#</span>(sender#, <span class="str">&quot;#000000&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="fn">button_onmouseenter#</span>(btn#, <span class="str">&quot;OnMouseEnter&quot;</span>)
+<span class="fn">button_onmouseleave#</span>(btn#, <span class="str">&quot;OnMouseLeave&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Click Counter</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; counter.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> clicks = <span class="num">0</span>
+
+<span class="kw">function</span> <span class="fn">OnClick</span>(sender#)
+    clicks = clicks + <span class="num">1</span>
+    <span class="fn">button_text#</span>(sender#, <span class="str">&quot;Clicks: &quot;</span> + <span class="fn">str$</span>(clicks))
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Counter&quot;</span>, <span class="num">300</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Clicks: 0&quot;</span>, <span class="num">50</span>, <span class="num">70</span>, <span class="num">200</span>, <span class="num">50</span>)
+<span class="fn">button_fontsize#</span>(btn#, <span class="num">16</span>)
+<span class="fn">button_onclick#</span>(btn#, <span class="str">&quot;OnClick&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Dialog with OK / Cancel</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; dialog.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> dlg# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
+
+<span class="kw">function</span> <span class="fn">OnOK</span>(sender#)
+    <span class="fn">form_modalresult#</span>(dlg#, <span class="num">1</span>)
+    <span class="fn">form_close</span>(dlg#)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnCancel</span>(sender#)
+    <span class="fn">form_modalresult#</span>(dlg#, <span class="num">2</span>)
+    <span class="fn">form_close</span>(dlg#)
+<span class="kw">endfunction</span>
+
+dlg# = <span class="fn">form#</span>(<span class="str">&quot;Confirm&quot;</span>, <span class="num">300</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(dlg#, <span class="num">4</span>)
+
+<span class="kw">let</span> btnOK# = <span class="fn">button#</span>(dlg#, <span class="str">&quot;OK&quot;</span>, <span class="num">50</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_default#</span>(btnOK#, <span class="num">1</span>)
+<span class="fn">button_onclick#</span>(btnOK#, <span class="str">&quot;OnOK&quot;</span>)
+
+<span class="kw">let</span> btnCancel# = <span class="fn">button#</span>(dlg#, <span class="str">&quot;Cancel&quot;</span>, <span class="num">170</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_cancel#</span>(btnCancel#, <span class="num">1</span>)
+<span class="fn">button_onclick#</span>(btnCancel#, <span class="str">&quot;OnCancel&quot;</span>)
+
+<span class="fn">form_show</span>(dlg#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(dlg#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Color Picker with Tags</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; colors.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnColorClick</span>(sender#) <span class="kw">local</span> tag, color$
+    tag = <span class="fn">button_tag</span>(sender#)
+    <span class="kw">if</span> tag = <span class="num">1</span> <span class="kw">then</span>
+        color$ = <span class="str">&quot;Red&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">2</span> <span class="kw">then</span>
+        color$ = <span class="str">&quot;Green&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">3</span> <span class="kw">then</span>
+        color$ = <span class="str">&quot;Blue&quot;</span>
+    <span class="kw">endif</span>
+    <span class="fn">label_text#</span>(lblResult#, <span class="str">&quot;Selected: &quot;</span> + color$)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Colors&quot;</span>, <span class="num">400</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lblResult# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Select a color&quot;</span>, <span class="num">150</span>, <span class="num">100</span>)
+
+<span class="kw">let</span> btnRed# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Red&quot;</span>, <span class="num">20</span>, <span class="num">40</span>, <span class="num">80</span>, <span class="num">40</span>)
+<span class="fn">button_tag#</span>(btnRed#, <span class="num">1</span>)
+<span class="fn">button_onclick#</span>(btnRed#, <span class="str">&quot;OnColorClick&quot;</span>)
+
+<span class="kw">let</span> btnGreen# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Green&quot;</span>, <span class="num">120</span>, <span class="num">40</span>, <span class="num">80</span>, <span class="num">40</span>)
+<span class="fn">button_tag#</span>(btnGreen#, <span class="num">2</span>)
+<span class="fn">button_onclick#</span>(btnGreen#, <span class="str">&quot;OnColorClick&quot;</span>)
+
+<span class="kw">let</span> btnBlue# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Blue&quot;</span>, <span class="num">220</span>, <span class="num">40</span>, <span class="num">80</span>, <span class="num">40</span>)
+<span class="fn">button_tag#</span>(btnBlue#, <span class="num">3</span>)
+<span class="fn">button_onclick#</span>(btnBlue#, <span class="str">&quot;OnColorClick&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Toolbar with Aligned Buttons</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; toolbar.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Toolbar Demo&quot;</span>, <span class="num">500</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="cmt">&#x27; Create a panel as toolbar container</span>
+<span class="kw">let</span> toolbar# = <span class="fn">panel#</span>(frm#)
+<span class="fn">panel_align#</span>(toolbar#, <span class="num">1</span>)        <span class="cmt">&#x27; Align top</span>
+<span class="fn">panel_height#</span>(toolbar#, <span class="num">50</span>)
+
+<span class="cmt">&#x27; Buttons docked inside the toolbar</span>
+<span class="kw">let</span> btnNew# = <span class="fn">button#</span>(toolbar#, <span class="str">&quot;New&quot;</span>)
+<span class="fn">button_align#</span>(btnNew#, <span class="num">2</span>)        <span class="cmt">&#x27; Align left</span>
+<span class="fn">button_width#</span>(btnNew#, <span class="num">80</span>)
+<span class="fn">button_margin#</span>(btnNew#, <span class="num">3</span>)
+
+<span class="kw">let</span> btnOpen# = <span class="fn">button#</span>(toolbar#, <span class="str">&quot;Open&quot;</span>)
+<span class="fn">button_align#</span>(btnOpen#, <span class="num">2</span>)       <span class="cmt">&#x27; Align left</span>
+<span class="fn">button_width#</span>(btnOpen#, <span class="num">80</span>)
+<span class="fn">button_margin#</span>(btnOpen#, <span class="num">3</span>)
+
+<span class="kw">let</span> btnSave# = <span class="fn">button#</span>(toolbar#, <span class="str">&quot;Save&quot;</span>)
+<span class="fn">button_align#</span>(btnSave#, <span class="num">2</span>)       <span class="cmt">&#x27; Align left</span>
+<span class="fn">button_width#</span>(btnSave#, <span class="num">80</span>)
+<span class="fn">button_margin#</span>(btnSave#, <span class="num">3</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Always set <code>button_onclick#</code></td><td>Buttons without handlers serve no purpose</td></tr>
+<tr><td>Use meaningful text</td><td>Button text should clearly indicate the action</td></tr>
+<tr><td>Set <code>button_default#</code> and <code>button_cancel#</code> for dialogs</td><td>Improves keyboard navigation (Enter/Escape)</td></tr>
+<tr><td>Use <code>button_tag#</code> with shared callbacks</td><td>Identify which button was clicked without global variables</td></tr>
+<tr><td>Set <code>button_taborder#</code></td><td>Ensures logical keyboard Tab navigation</td></tr>
+<tr><td>Initialize pointer variables with <code>Pointer#(0)</code></td><td>Required before assigning in callbacks or conditional code</td></tr>
+<tr><td>Declare locals with <code>LOCAL</code> on the function line</td><td>Prevents accidental use of global variables in callbacks</td></tr>
+<tr><td>Use <code>button_enabled#(btn#, 0)</code> to prevent double-clicks</td><td>Disable during async operations, re-enable when complete</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>button_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>button#(parent#[, text$][, x, y, w, h])</code></td><td><code>various</code></td><td>Create button (4 overloads)</td></tr>
+<tr><td><code>button_free(btn#)</code></td><td><code>button_free@#</code></td><td>Destroy button</td></tr>
+<tr><td><code>button_text$ / text#</code></td><td><code>button_text$@#, button_text#@#$</code></td><td>Text get/set</td></tr>
+<tr><td><code>button_fontfamily / fontsize / fontcolor / bold / italic / underline / strikeout</code></td><td><code>various</code></td><td>Font properties (14)</td></tr>
+<tr><td><code>button_modalresult / default / cancel</code></td><td><code>various</code></td><td>Button behavior (6)</td></tr>
+<tr><td><code>button_x/y/width/height (get/set)</code></td><td><code>various</code></td><td>Position &amp; size (8)</td></tr>
+<tr><td><code>button_bounds# / move# / size#</code></td><td><code>various</code></td><td>Batch position/size (3)</td></tr>
+<tr><td><code>button_align / margin# / margins# / margin[left/top/right/bottom]</code></td><td><code>various</code></td><td>Alignment &amp; margins (12)</td></tr>
+<tr><td><code>button_visible / enabled / opacity</code></td><td><code>various</code></td><td>State (6)</td></tr>
+<tr><td><code>button_isfocused / setfocus# / resetfocus# / canfocus / taborder</code></td><td><code>various</code></td><td>Focus (7)</td></tr>
+<tr><td><code>button_hittest / dragmode</code></td><td><code>various</code></td><td>Interaction (4)</td></tr>
+<tr><td><code>button_tag / parent# / bringtofront# / sendtoback#</code></td><td><code>various</code></td><td>Tag &amp; parent (6)</td></tr>
+<tr><td><code>button_onclick/onenter/onexit/onkeydown/onkeyup/onmousedown/onmouseup/onmousemove/onmouseenter/onmouseleave/onresize/ondragenter/ondragover/ondragdrop/ondragleave</code></td><td><code>various</code></td><td>Events set+get (31)</td></tr>
+<tr><td><code>button_clearcallbacks#</code></td><td><code>button_clearcallbacks#@#</code></td><td>Disconnect all events</td></tr>
+</tbody></table></div>
+<p><em>108 functions. Part of the Plan9Basic GUI library system.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

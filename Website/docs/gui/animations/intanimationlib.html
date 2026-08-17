@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IntAnimationLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic IntAnimationLib: 46 functions for animating integer properties — counters, scores, progress bars, and Tag-based value animation with callbacks.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden; transition: background var(--transition), color var(--transition);
+}
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92); border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem; color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong); display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon { width: 26px; height: 26px; border-radius: 4px; filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+.theme-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+  font-family: var(--font-retro); font-size: 0.45rem; padding: 0.2rem 0.5rem;
+  cursor: pointer; transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border); color: var(--text-primary);
+  font-size: 1rem; cursor: pointer; padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+.layout { display: flex; margin-top: 56px; min-height: calc(100vh - 56px); }
+
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--bg-secondary);
+  border-right: 1px solid var(--border); position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden; padding: 1.5rem 0; z-index: 100; transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+.sidebar-section { padding: 0.3rem 0; }
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem; color: var(--text-dim);
+  letter-spacing: 1.5px; text-transform: uppercase; padding: 0.6rem 1.2rem 0.3rem;
+}
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem; font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.5;
+}
+.sidebar-link:hover { color: var(--text-primary); background: var(--accent-subtle); border-left-color: var(--accent-dim); text-shadow: none; }
+.sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-subtle); text-shadow: 0 0 6px var(--glow-color); }
+
+.content { flex: 1; margin-left: var(--sidebar-w); padding: 2.5rem 3rem 5rem; max-width: 900px; }
+
+.doc-section { margin-bottom: 3.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.doc-section:last-child { border-bottom: none; }
+.doc-section h2 {
+  font-family: var(--font-retro); font-size: clamp(0.5rem, 1.8vw, 0.7rem); color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color); line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px; padding-top: 0.5rem;
+}
+.doc-section h3 {
+  font-family: var(--font-retro); font-size: 0.5rem; color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem; letter-spacing: 0.5px;
+}
+.doc-section p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.85; margin-bottom: 1rem; }
+.doc-section ul, .doc-section ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.doc-section li { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.8; margin-bottom: 0.3rem; }
+.doc-section li code { background: var(--bg-card); border: 1px solid var(--border); padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent); }
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+.doc-section code { background: var(--bg-card); border: 1px solid var(--border); padding: 0.1rem 0.4rem; font-size: 0.82rem; color: var(--keyword-color); font-family: var(--font-mono); }
+
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border); border-radius: 8px;
+  margin: 1rem 0 1.5rem; overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title { font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1; }
+.code-titlebar-controls { display: flex; align-items: center; gap: 0.1rem; margin-left: auto; }
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default; transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+.code-body { padding: 1rem 1.2rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8; color: var(--text-secondary); }
+.code-body pre { margin: 0; white-space: pre; }
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+.doc-table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.82rem; }
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem; color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase; background: var(--bg-secondary);
+}
+.doc-table td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code { background: var(--bg-terminal); border: 1px solid var(--border); padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color); }
+
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+
+@media (max-width: 1024px) { .content { padding: 2rem 2rem 4rem; } }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; min-width: 280px; box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .code-body { font-size: 0.72rem; }
+}
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
+.sidebar-overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">IntAnimationLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">46 functions &bull; Animation</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Concepts</div>
+    <a href="#how-it-works" class="sidebar-link">How It Works</a>
+    <a href="#int-vs-float" class="sidebar-link">Int vs Float Animation</a>
+    <a href="#interpolation" class="sidebar-link">Interpolation &amp; Easing</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#control" class="sidebar-link">Playback Control</a>
+    <a href="#core" class="sidebar-link">Core Properties</a>
+    <a href="#behavior" class="sidebar-link">Behavior Flags</a>
+    <a href="#state" class="sidebar-link">State Queries</a>
+    <a href="#triggers" class="sidebar-link">Triggers</a>
+    <a href="#events" class="sidebar-link">Events</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>IntAnimationLib &mdash; Integer Animation Library</h2>
+<p>Animates <strong>integer properties</strong> of visual controls. While most visual properties (position, opacity, scale) are floats, integer animation excels at <strong>animating counters, scores, progress percentages, and Tag-based values</strong> with smooth interpolation. The <code>Tag</code> property &mdash; an integer available on every control &mdash; makes this library a powerful tool for driving custom logic via the <code>onprocess</code> callback. <strong>46 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>intani_error, errormsg$, strerror$, clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>3</td><td>intani# (2 overloads), intani_free</td></tr>
+<tr><td>Playback Control</td><td>3</td><td>start, stop, stopatcurrent</td></tr>
+<tr><td>Core Properties</td><td>10</td><td>propertyname, startvalue, stopvalue, duration, delay (get/set)</td></tr>
+<tr><td>Behavior &mdash; Easing</td><td>4</td><td>animationtype, interpolation (get/set)</td></tr>
+<tr><td>Behavior &mdash; Flags</td><td>10</td><td>autoreverse, inverse, loop, enabled, startfromcurrent (get/set)</td></tr>
+<tr><td>State Queries</td><td>3</td><td>running, normalizedtime, name$</td></tr>
+<tr><td>Triggers</td><td>4</td><td>trigger, triggerinverse (get/set)</td></tr>
+<tr><td>Events</td><td>5</td><td>onfinish, onprocess (get/set), clearcallbacks#</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr> -->
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_error()</code></td><td><code>intani_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>intani_errormsg$()</code></td><td><code>intani_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>intani_strerror$(code)</code></td><td><code>intani_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>intani_clearerror()</code></td><td><code>intani_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+<h3>Error Codes</h3>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Constant</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_NIL_ANIMATION</td><td>Animation pointer is nil</td></tr>
+<tr><td>2</td><td>ERR_INVALID_PROPERTY</td><td>Invalid property name or object</td></tr>
+<tr><td>3</td><td>ERR_INVALID_VALUE</td><td>Invalid parameter value</td></tr>
+<tr><td>4</td><td>ERR_ANIMATION_RUNNING</td><td>Cannot modify while animation is running</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="how-it-works">
+<h2>How It Works</h2>
+<p>The integer animation smoothly transitions a <strong>single integer property</strong> from a start value to a stop value over a given duration. The most common pattern uses the <code>Tag</code> property (available on all controls) combined with an <code>onprocess</code> callback to update the UI on every frame:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; basic pattern</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; 1. Create the animation on a control</span>
+<span class="kw">let</span> ani# = <span class="fn">intani#</span>(myLabel#)
+
+<span class="cmt">&#x27; 2. REQUIRED: set which property to animate</span>
+<span class="fn">intani_propertyname#</span>(ani#, <span class="str">&quot;Tag&quot;</span>)
+
+<span class="cmt">&#x27; 3. Set integer range</span>
+<span class="fn">intani_startvalue#</span>(ani#, <span class="num">0</span>)
+<span class="fn">intani_stopvalue#</span>(ani#, <span class="num">100</span>)
+
+<span class="cmt">&#x27; 4. Set timing</span>
+<span class="fn">intani_duration#</span>(ani#, <span class="num">5.0</span>)
+
+<span class="cmt">&#x27; 5. Set callback to react to value changes</span>
+<span class="fn">intani_onprocess#</span>(ani#, <span class="str">&quot;OnUpdate&quot;</span>)
+
+<span class="cmt">&#x27; 6. Start!</span>
+<span class="fn">intani_start</span>(ani#)
+
+<span class="kw">function</span> <span class="fn">OnUpdate</span>(sender#) <span class="kw">local</span> val
+    val = <span class="fn">label_tag</span>(myLabel#)
+    <span class="fn">label_text#</span>(myLabel#, <span class="str">&quot;Value: &quot;</span> + <span class="fn">str$</span>(val))
+<span class="kw">endfunction</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Required:</strong> You <strong>MUST</strong> set <code>intani_propertyname#</code> before starting the animation. Without it, the animation will not run. Use <code>&quot;Tag&quot;</code> as the property name for most use cases.</div>
+</section>
+
+<section class="doc-section" id="int-vs-float">
+<h2>Int vs Float Animation</h2>
+<p>Most FireMonkey visual properties (Position, Opacity, Scale, RotationAngle) are <strong>float-based</strong>. Use <strong>FloatAnimationLib</strong> for those. IntAnimationLib is designed specifically for:</p>
+<div class="table-wrap"><table><thead><tr><th>Use Case</th><th>Recommended Library</th><th>Why</th></tr></thead><tbody>
+<tr><td>Move a control (Position.X/Y)</td><td>FloatAnimationLib</td><td>Position is a float property</td></tr>
+<tr><td>Fade a control (Opacity)</td><td>FloatAnimationLib</td><td>Opacity is a float (0.0&ndash;1.0)</td></tr>
+<tr><td>Rotate a control (RotationAngle)</td><td>FloatAnimationLib</td><td>Angle is a float</td></tr>
+<tr><td>Animate a counter (0 &rarr; 100)</td><td><strong>IntAnimationLib</strong></td><td>Tag is an integer</td></tr>
+<tr><td>Animate a score display</td><td><strong>IntAnimationLib</strong></td><td>Scores are whole numbers</td></tr>
+<tr><td>Drive a progress bar percentage</td><td><strong>IntAnimationLib</strong></td><td>Clean integer steps (0%&ndash;100%)</td></tr>
+<tr><td>Countdown timer (10 &rarr; 0)</td><td><strong>IntAnimationLib</strong></td><td>Whole second display</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="interpolation">
+<h2>Interpolation &amp; Easing</h2>
+<h3>Interpolation Curves</h3>
+<div class="table-wrap"><table><thead><tr><th>Interpolation</th><th>Character</th><th>Best For</th></tr></thead><tbody>
+<tr><td><code>"Linear"</code></td><td>Constant speed</td><td>Counters, timers, steady progress</td></tr>
+<tr><td><code>"Quadratic"</code></td><td>Gentle curve</td><td>Smooth progress bars</td></tr>
+<tr><td><code>"Cubic"</code></td><td>Moderate curve</td><td>Score reveals</td></tr>
+<tr><td><code>"Quartic"</code></td><td>Pronounced curve</td><td>Dramatic number reveals</td></tr>
+<tr><td><code>"Quintic"</code></td><td>Very pronounced</td><td>Emphatic counter effects</td></tr>
+<tr><td><code>"Sinusoidal"</code></td><td>Sine-wave smoothness</td><td>Natural-feeling transitions</td></tr>
+<tr><td><code>"Exponential"</code></td><td>Sharp start or end</td><td>Fast ramp-up/ramp-down</td></tr>
+<tr><td><code>"Circular"</code></td><td>Arc-based</td><td>Orbital counting effects</td></tr>
+<tr><td><code>"Elastic"</code></td><td>Springy overshoot</td><td>Bouncy score counters</td></tr>
+<tr><td><code>"Back"</code></td><td>Overshoots then settles</td><td>Attention-grabbing numbers</td></tr>
+<tr><td><code>"Bounce"</code></td><td>Bouncing ball effect</td><td>Playful score reveals</td></tr>
+</tbody></table></div>
+<h3>Easing Types (AnimationType)</h3>
+<div class="table-wrap"><table><thead><tr><th>Type</th><th>Effect</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>"In"</code></td><td>Slow start &rarr; fast end</td><td>Acceleration at the beginning</td></tr>
+<tr><td><code>"Out"</code></td><td>Fast start &rarr; slow end</td><td>Deceleration at the end</td></tr>
+<tr><td><code>"InOut"</code></td><td>Slow &rarr; fast &rarr; slow</td><td>Accelerate then decelerate</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani#(parent#)</code></td><td><code>intani#@#</code></td><td>Create animation attached to parent control</td></tr>
+<tr><td><code>intani#(parent#, name$)</code></td><td><code>intani#@#$</code></td><td>Create named animation attached to parent</td></tr>
+<tr><td><code>intani_free(ani#)</code></td><td><code>intani_free@#</code></td><td>Destroy animation object</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="control">
+<h2>Playback Control</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_start(ani#)</code></td><td><code>intani_start@#</code></td><td>Start the animation</td></tr>
+<tr><td><code>intani_stop(ani#)</code></td><td><code>intani_stop@#</code></td><td>Stop and reset to start value</td></tr>
+<tr><td><code>intani_stopatcurrent(ani#)</code></td><td><code>intani_stopatcurrent@#</code></td><td>Stop at current interpolated value</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="core">
+<h2>Core Properties</h2>
+<h3>Property Name</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_propertyname#(ani#, name$)</code></td><td><code>intani_propertyname#@#$</code></td><td><strong>REQUIRED</strong> &mdash; Set which property to animate</td></tr>
+<tr><td><code>intani_propertyname$(ani#)</code></td><td><code>intani_propertyname$@#</code></td><td>Get the property name</td></tr>
+</tbody></table></div>
+<h3>Value Range</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_startvalue#(ani#, value)</code></td><td><code>intani_startvalue#@#n</code></td><td>Set starting integer value</td></tr>
+<tr><td><code>intani_startvalue(ani#)</code></td><td><code>intani_startvalue@#</code></td><td>Get starting value</td></tr>
+<tr><td><code>intani_stopvalue#(ani#, value)</code></td><td><code>intani_stopvalue#@#n</code></td><td>Set ending integer value</td></tr>
+<tr><td><code>intani_stopvalue(ani#)</code></td><td><code>intani_stopvalue@#</code></td><td>Get ending value</td></tr>
+</tbody></table></div>
+<h3>Timing</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_duration#(ani#, seconds)</code></td><td><code>intani_duration#@#n</code></td><td>Set duration in seconds</td></tr>
+<tr><td><code>intani_duration(ani#)</code></td><td><code>intani_duration@#</code></td><td>Get duration</td></tr>
+<tr><td><code>intani_delay#(ani#, seconds)</code></td><td><code>intani_delay#@#n</code></td><td>Set delay before animation starts</td></tr>
+<tr><td><code>intani_delay(ani#)</code></td><td><code>intani_delay@#</code></td><td>Get delay</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="behavior">
+<h2>Behavior Flags</h2>
+<h3>Easing &amp; Interpolation</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_animationtype#(ani#, type$)</code></td><td><code>intani_animationtype#@#$</code></td><td>Set easing: <code>"In"</code>, <code>"Out"</code>, <code>"InOut"</code></td></tr>
+<tr><td><code>intani_animationtype$(ani#)</code></td><td><code>intani_animationtype$@#</code></td><td>Get current easing type</td></tr>
+<tr><td><code>intani_interpolation#(ani#, type$)</code></td><td><code>intani_interpolation#@#$</code></td><td>Set interpolation curve</td></tr>
+<tr><td><code>intani_interpolation$(ani#)</code></td><td><code>intani_interpolation$@#</code></td><td>Get current interpolation type</td></tr>
+</tbody></table></div>
+<h3>Boolean Flags</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_autoreverse#(ani#, flag)</code></td><td><code>intani_autoreverse#@#n</code></td><td>If 1, plays forward then backward</td></tr>
+<tr><td><code>intani_autoreverse(ani#)</code></td><td><code>intani_autoreverse@#</code></td><td>Get autoreverse flag</td></tr>
+<tr><td><code>intani_inverse#(ani#, flag)</code></td><td><code>intani_inverse#@#n</code></td><td>If 1, plays in reverse direction</td></tr>
+<tr><td><code>intani_inverse(ani#)</code></td><td><code>intani_inverse@#</code></td><td>Get inverse flag</td></tr>
+<tr><td><code>intani_loop#(ani#, flag)</code></td><td><code>intani_loop#@#n</code></td><td>If 1, loops indefinitely</td></tr>
+<tr><td><code>intani_loop(ani#)</code></td><td><code>intani_loop@#</code></td><td>Get loop flag</td></tr>
+<tr><td><code>intani_enabled#(ani#, flag)</code></td><td><code>intani_enabled#@#n</code></td><td>Enable or disable the animation</td></tr>
+<tr><td><code>intani_enabled(ani#)</code></td><td><code>intani_enabled@#</code></td><td>Get enabled state</td></tr>
+<tr><td><code>intani_startfromcurrent#(ani#, flag)</code></td><td><code>intani_startfromcurrent#@#n</code></td><td>If 1, begins from current property value</td></tr>
+<tr><td><code>intani_startfromcurrent(ani#)</code></td><td><code>intani_startfromcurrent@#</code></td><td>Get startfromcurrent flag</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="state">
+<h2>State Queries</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_running(ani#)</code></td><td><code>intani_running@#</code></td><td>Returns 1 if currently animating</td></tr>
+<tr><td><code>intani_normalizedtime(ani#)</code></td><td><code>intani_normalizedtime@#</code></td><td>Returns progress from 0.0 to 1.0</td></tr>
+<tr><td><code>intani_name$(ani#)</code></td><td><code>intani_name$@#</code></td><td>Get the animation&rsquo;s name</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="triggers">
+<h2>Triggers</h2>
+<p>Triggers let an animation start or reverse automatically when a parent property changes, without calling <code>intani_start</code> manually.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_trigger#(ani#, expr$)</code></td><td><code>intani_trigger#@#$</code></td><td>Set trigger expression (starts animation)</td></tr>
+<tr><td><code>intani_trigger$(ani#)</code></td><td><code>intani_trigger$@#</code></td><td>Get trigger expression</td></tr>
+<tr><td><code>intani_triggerinverse#(ani#, expr$)</code></td><td><code>intani_triggerinverse#@#$</code></td><td>Set inverse trigger (reverses animation)</td></tr>
+<tr><td><code>intani_triggerinverse$(ani#)</code></td><td><code>intani_triggerinverse$@#</code></td><td>Get inverse trigger expression</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> and a <strong>getter</strong>. Use <code>intani_clearcallbacks#</code> to disconnect all at once.</p>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_onfinish#(ani#, func$)</code></td><td><code>intani_onfinish$(ani#)</code></td><td><code>function name(sender#)</code></td><td>Fired when animation completes</td></tr>
+<tr><td><code>intani_onprocess#(ani#, func$)</code></td><td><code>intani_onprocess$(ani#)</code></td><td><code>function name(sender#)</code></td><td>Fired on every animation frame</td></tr>
+<tr><td><code>intani_clearcallbacks#(ani#)</code></td><td>&mdash;</td><td>&mdash;</td><td>Disconnect all callbacks</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Key pattern:</strong> The <code>onprocess</code> callback is the <strong>heart</strong> of integer animation. Inside it, read the control&rsquo;s <code>Tag</code> property (which the animation is updating) and use that value to update your UI &mdash; labels, progress bars, or any other visual element.</div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+
+<h3>Counter Animation (0 to 100)</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; counter.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Counter Demo&quot;</span>, <span class="num">400</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Count: 0&quot;</span>)
+<span class="fn">label_move#</span>(lbl#, <span class="num">130</span>, <span class="num">80</span>)
+<span class="fn">label_fontsize#</span>(lbl#, <span class="num">28</span>)
+
+<span class="cmt">&#x27; Animate Tag from 0 to 100 over 5 seconds</span>
+<span class="kw">let</span> intAni# = <span class="fn">intani#</span>(lbl#)
+<span class="fn">intani_propertyname#</span>(intAni#, <span class="str">&quot;Tag&quot;</span>)
+<span class="fn">intani_startvalue#</span>(intAni#, <span class="num">0</span>)
+<span class="fn">intani_stopvalue#</span>(intAni#, <span class="num">100</span>)
+<span class="fn">intani_duration#</span>(intAni#, <span class="num">5.0</span>)
+<span class="fn">intani_interpolation#</span>(intAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">intani_onprocess#</span>(intAni#, <span class="str">&quot;updatecount&quot;</span>)
+<span class="fn">intani_start</span>(intAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">updatecount</span>(sender#) <span class="kw">local</span> tagval
+    tagval = <span class="fn">label_tag</span>(lbl#)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Count: &quot;</span> + <span class="fn">str$</span>(tagval))
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Countdown Timer (10 to 0)</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; countdown.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Countdown Demo&quot;</span>, <span class="num">300</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;10&quot;</span>)
+<span class="fn">label_move#</span>(lbl#, <span class="num">120</span>, <span class="num">70</span>)
+<span class="fn">label_fontsize#</span>(lbl#, <span class="num">48</span>)
+
+<span class="kw">let</span> intAni# = <span class="fn">intani#</span>(lbl#)
+<span class="fn">intani_propertyname#</span>(intAni#, <span class="str">&quot;Tag&quot;</span>)
+<span class="fn">intani_startvalue#</span>(intAni#, <span class="num">10</span>)
+<span class="fn">intani_stopvalue#</span>(intAni#, <span class="num">0</span>)
+<span class="fn">intani_duration#</span>(intAni#, <span class="num">10.0</span>)
+<span class="fn">intani_interpolation#</span>(intAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">intani_onprocess#</span>(intAni#, <span class="str">&quot;showcountdown&quot;</span>)
+<span class="fn">intani_onfinish#</span>(intAni#, <span class="str">&quot;countdone&quot;</span>)
+<span class="fn">intani_start</span>(intAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">showcountdown</span>(sender#) <span class="kw">local</span> tagval
+    tagval = <span class="fn">label_tag</span>(lbl#)
+    <span class="fn">label_text#</span>(lbl#, <span class="fn">str$</span>(tagval))
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">countdone</span>(sender#)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Done!&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Progress Bar</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; progress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Progress Demo&quot;</span>, <span class="num">400</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> progressBg# = <span class="fn">rectangle#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">300</span>, <span class="num">30</span>)
+<span class="fn">rectangle_fill#</span>(progressBg#, <span class="str">&quot;#ecf0f1&quot;</span>)
+
+<span class="kw">let</span> progressBar# = <span class="fn">rectangle#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">0</span>, <span class="num">30</span>)
+<span class="fn">rectangle_fill#</span>(progressBar#, <span class="str">&quot;#27ae60&quot;</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;0%&quot;</span>)
+<span class="fn">label_move#</span>(lbl#, <span class="num">180</span>, <span class="num">90</span>)
+
+<span class="cmt">&#x27; Animate Tag 0-100, use onprocess to update bar width</span>
+<span class="kw">let</span> intAni# = <span class="fn">intani#</span>(progressBar#)
+<span class="fn">intani_propertyname#</span>(intAni#, <span class="str">&quot;Tag&quot;</span>)
+<span class="fn">intani_startvalue#</span>(intAni#, <span class="num">0</span>)
+<span class="fn">intani_stopvalue#</span>(intAni#, <span class="num">100</span>)
+<span class="fn">intani_duration#</span>(intAni#, <span class="num">3.0</span>)
+<span class="fn">intani_interpolation#</span>(intAni#, <span class="str">&quot;Quadratic&quot;</span>)
+<span class="fn">intani_animationtype#</span>(intAni#, <span class="str">&quot;Out&quot;</span>)
+<span class="fn">intani_onprocess#</span>(intAni#, <span class="str">&quot;updateprogress&quot;</span>)
+<span class="fn">intani_start</span>(intAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">updateprogress</span>(sender#) <span class="kw">local</span> pct
+    pct = <span class="fn">rectangle_tag</span>(progressBar#)
+    <span class="fn">label_text#</span>(lbl#, <span class="fn">str$</span>(pct) + <span class="str">&quot;%&quot;</span>)
+    <span class="fn">rectangle_width#</span>(progressBar#, pct * <span class="num">3</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Score with Bounce Effect</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; score.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Score Demo&quot;</span>, <span class="num">400</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Score: 0&quot;</span>)
+<span class="fn">label_move#</span>(lbl#, <span class="num">120</span>, <span class="num">80</span>)
+<span class="fn">label_fontsize#</span>(lbl#, <span class="num">24</span>)
+
+<span class="cmt">&#x27; Bounce-eased score counter: 0 to 1000</span>
+<span class="kw">let</span> intAni# = <span class="fn">intani#</span>(lbl#)
+<span class="fn">intani_propertyname#</span>(intAni#, <span class="str">&quot;Tag&quot;</span>)
+<span class="fn">intani_startvalue#</span>(intAni#, <span class="num">0</span>)
+<span class="fn">intani_stopvalue#</span>(intAni#, <span class="num">1000</span>)
+<span class="fn">intani_duration#</span>(intAni#, <span class="num">2.0</span>)
+<span class="fn">intani_interpolation#</span>(intAni#, <span class="str">&quot;Bounce&quot;</span>)
+<span class="fn">intani_animationtype#</span>(intAni#, <span class="str">&quot;Out&quot;</span>)
+<span class="fn">intani_onprocess#</span>(intAni#, <span class="str">&quot;updatescore&quot;</span>)
+<span class="fn">intani_start</span>(intAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">updatescore</span>(sender#) <span class="kw">local</span> score
+    score = <span class="fn">label_tag</span>(lbl#)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Score: &quot;</span> + <span class="fn">str$</span>(score))
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Always set <code>intani_propertyname#(ani#, "Tag")</code></td><td><strong>Required</strong> &mdash; animation will not run without it</td></tr>
+<tr><td>Use <code>"Tag"</code> as the property for most cases</td><td>Available on all controls, perfect for driving onprocess logic</td></tr>
+<tr><td>Read the Tag in <code>onprocess</code> to update UI</td><td>The Tag is silently updated; you reflect the change visually</td></tr>
+<tr><td>Declare local variables on the function line</td><td>Plan9Basic requires: <code>function name(sender#) local var1, var2</code></td></tr>
+<tr><td>Use <code>"Linear"</code> for timers and steady counters</td><td>Other curves make the counting speed uneven</td></tr>
+<tr><td>Use <code>"Bounce" + "Out"</code> for playful score reveals</td><td>Creates an engaging bouncing number effect</td></tr>
+<tr><td>Use <code>"Quadratic" + "Out"</code> for progress bars</td><td>Fast start, gentle deceleration feels natural</td></tr>
+<tr><td>Prefer FloatAnimationLib for visual properties</td><td>Position, Opacity, Scale, RotationAngle are float properties</td></tr>
+<tr><td>Use <code>onfinish</code> for completion actions</td><td>Trigger next step, show &ldquo;Done!&rdquo; message, start another animation</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>intani_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>intani#(parent#[, name$])</code></td><td><code>intani#@# / intani#@#$</code></td><td>Create (2 overloads)</td></tr>
+<tr><td><code>intani_free(ani#)</code></td><td><code>intani_free@#</code></td><td>Destroy</td></tr>
+<tr><td><code>intani_start / stop / stopatcurrent</code></td><td><code>various</code></td><td>Playback control (3)</td></tr>
+<tr><td><code>intani_propertyname# / propertyname$</code></td><td><code>various</code></td><td>Target property (2)</td></tr>
+<tr><td><code>intani_startvalue / stopvalue</code></td><td><code>various</code></td><td>Value range (4)</td></tr>
+<tr><td><code>intani_duration / delay</code></td><td><code>various</code></td><td>Timing (4)</td></tr>
+<tr><td><code>intani_animationtype / interpolation</code></td><td><code>various</code></td><td>Easing &amp; curves (4)</td></tr>
+<tr><td><code>intani_autoreverse / inverse / loop / enabled / startfromcurrent</code></td><td><code>various</code></td><td>Behavior flags (10)</td></tr>
+<tr><td><code>intani_running / normalizedtime / name$</code></td><td><code>various</code></td><td>State queries (3)</td></tr>
+<tr><td><code>intani_trigger / triggerinverse</code></td><td><code>various</code></td><td>Automatic triggers (4)</td></tr>
+<tr><td><code>intani_onfinish / onprocess / clearcallbacks#</code></td><td><code>various</code></td><td>Events (5)</td></tr>
+</tbody></table></div>
+<p><em>46 functions. Part of the Plan9Basic Animation library system.</em></p>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

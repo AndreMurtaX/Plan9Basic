@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Downloads &mdash; Plan9Basic</title>
+<meta name="description" content="Download Plan9Basic for Windows 64-bit, Linux 64-bit, and Android. Free and open source BASIC interpreter with 300+ built-in functions.">
+<link rel="icon" type="image/png" href="assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── THEME SYSTEM ─────────────────────────────────────────────── */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+  --font-body:  'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 260px;
+}
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+}
+[data-theme="amber"] {
+  --bg-primary: #0a0800; --bg-secondary: #100d00; --bg-card: #160f00; --bg-terminal: #050300;
+  --text-primary: #ffb000; --text-secondary: #cc8800; --text-dim: #664400;
+  --accent: #ffcc00; --accent-dim: #cc9900; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,176,0,0.15); --glow-strong: rgba(255,176,0,0.35);
+  --border: #3a2a00;
+  --keyword-color: #ffcc44; --string-color: #ffdd88; --number-color: #ffe8aa; --comment-color: #886600;
+}
+[data-theme="blue"] {
+  --bg-primary: #000814; --bg-secondary: #000d1f; --bg-card: #001028; --bg-terminal: #000510;
+  --text-primary: #00aaff; --text-secondary: #0077cc; --text-dim: #003366;
+  --accent: #00ccff; --accent-dim: #0088cc; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(0,170,255,0.15); --glow-strong: rgba(0,170,255,0.35);
+  --border: #002244;
+  --keyword-color: #44bbff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #335588;
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+}
+
+/* ── GLOBAL ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  min-height: 100vh;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--text-primary); }
+code {
+  font-family: var(--font-mono);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  font-size: 0.88em;
+  color: var(--accent);
+}
+strong { color: var(--text-primary); font-weight: 700; }
+
+/* ── TOPBAR ──────────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.topbar-logo {
+  font-family: var(--font-retro);
+  font-size: 0.65rem;
+  color: var(--text-primary);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-shadow: 0 0 10px var(--glow-color);
+}
+.topbar-logo a { color: inherit; text-decoration: none; }
+.topbar-nav { display: flex; gap: 1.5rem; font-size: 0.78rem; font-weight: 600; }
+.topbar-nav a { color: var(--text-secondary); transition: color var(--transition); white-space: nowrap; }
+.topbar-nav a:hover, .topbar-nav a.active { color: var(--text-primary); text-decoration: none; }
+.topbar-themes { margin-left: auto; display: flex; align-items: center; }
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.5rem; padding: 0.25rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px; white-space: nowrap;
+}
+.theme-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 10px var(--glow-color);
+}
+
+/* ── PAGE LAYOUT ─────────────────────────────────────────────── */
+.page-wrap {
+  display: flex; min-height: calc(100vh - 56px); position: relative; z-index: 1;
+}
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  position: sticky; top: 56px; height: calc(100vh - 56px);
+  overflow-y: auto; overflow-x: hidden;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0;
+}
+.sidebar-section { margin-bottom: 1.5rem; }
+.sidebar-title {
+  font-family: var(--font-retro);
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  padding: 0 1.2rem 0.5rem;
+  text-transform: uppercase;
+}
+.sidebar-link {
+  display: block; padding: 0.38rem 1.2rem 0.38rem 1.5rem;
+  font-size: 0.82rem; color: var(--text-secondary);
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.sidebar-link:hover { color: var(--text-primary); text-decoration: none; border-left-color: var(--accent-dim); }
+.sidebar-link.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.sidebar-badge {
+  display: inline-block; font-size: 0.62rem; font-weight: 700;
+  padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;
+  background: var(--accent-subtle); border: 1px solid var(--accent-dim); color: var(--accent);
+}
+
+.main-content {
+  flex: 1; min-width: 0;
+  padding: 2.5rem 3rem;
+  max-width: 900px;
+}
+
+/* ── PAGE HEADER ─────────────────────────────────────────────── */
+.page-header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.page-header-eyebrow {
+  font-family: var(--font-retro); font-size: 0.5rem;
+  letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 0.8rem;
+}
+.page-title {
+  font-family: var(--font-retro); font-size: 1.4rem;
+  color: var(--text-primary); line-height: 1.4;
+  text-shadow: 0 0 20px var(--glow-color);
+  margin-bottom: 0.8rem;
+}
+.page-subtitle { font-size: 1rem; color: var(--text-secondary); max-width: 640px; line-height: 1.6; }
+
+/* ── PLATFORM HERO CARDS ─────────────────────────────────────── */
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.2rem;
+  margin: 2rem 0 3rem;
+}
+.platform-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.8rem 1.6rem;
+  display: flex; flex-direction: column; gap: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  position: relative; overflow: hidden;
+}
+.platform-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 200px 120px at 50% 0%, var(--glow-color), transparent 70%);
+  pointer-events: none;
+}
+.platform-card:hover {
+  border-color: var(--accent-dim);
+  box-shadow: 0 8px 32px var(--glow-color);
+  transform: translateY(-3px);
+}
+.platform-icon { font-size: 2.4rem; line-height: 1; }
+.platform-name {
+  font-family: var(--font-retro); font-size: 0.7rem;
+  color: var(--text-primary); letter-spacing: 0.06em;
+}
+.platform-detail {
+  font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;
+}
+.platform-file {
+  font-family: var(--font-mono); font-size: 0.82rem;
+  color: var(--accent); background: var(--accent-subtle);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.file-size { font-size: 0.72rem; color: var(--text-dim); }
+.download-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;
+  padding: 0.6rem 1.1rem; border-radius: 7px;
+  cursor: pointer; text-decoration: none;
+  transition: all 0.2s; align-self: flex-start;
+}
+.download-btn:hover {
+  background: rgba(0,255,65,0.18); border-color: var(--accent);
+  text-decoration: none; color: var(--text-primary);
+  box-shadow: 0 0 16px var(--glow-color);
+}
+
+/* ── SECTION TITLES ─────────────────────────────────────────── */
+.doc-section { margin-bottom: 3rem; }
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: 0.72rem; letter-spacing: 0.1em;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-shadow: 0 0 8px var(--glow-color);
+}
+.doc-section h3 {
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--text-secondary);
+  margin: 1.5rem 0 0.6rem;
+}
+.doc-section p { margin-bottom: 0.9rem; color: var(--text-secondary); }
+.doc-section ul, .doc-section ol {
+  padding-left: 1.4rem; margin-bottom: 0.9rem; color: var(--text-secondary);
+}
+.doc-section li { margin-bottom: 0.35rem; }
+
+/* ── STEP BLOCKS ─────────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: 1rem; margin: 1.2rem 0; }
+.step {
+  display: flex; gap: 1rem; align-items: flex-start;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.1rem 1.2rem;
+  position: relative;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-subtle); border: 1px solid var(--accent-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent);
+}
+.step-body h4 { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.3rem; }
+.step-body p  { font-size: 0.84rem; color: var(--text-secondary); margin: 0; }
+
+/* ── CODE BLOCKS ─────────────────────────────────────────────── */
+.code-block { margin: 1rem 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.code-titlebar {
+  background: var(--bg-terminal); padding: 0.45rem 1rem;
+  display: flex; align-items: center; gap: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.code-titlebar-title { font-family: var(--font-mono); font-size: 0.72rem; }
+.code-titlebar-controls { margin-left: auto; display: flex; gap: 0.3rem; }
+.code-titlebar-btn {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--text-dim); font-size: 8px; display: flex;
+  align-items: center; justify-content: center; color: transparent;
+}
+.code-titlebar-btn.close { background: #ff5f56; }
+.code-body {
+  background: var(--bg-terminal); padding: 1rem 1.2rem;
+  font-family: var(--font-mono); font-size: 0.84rem;
+  line-height: 1.7; overflow-x: auto;
+}
+.code-body pre { white-space: pre; margin: 0; }
+.kw  { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn  { color: var(--accent); }
+.cmd { color: var(--text-primary); }
+.prompt { color: var(--text-dim); user-select: none; }
+
+/* ── INFO / WARNING BOXES ────────────────────────────────────── */
+.info-box, .warning-box, .tip-box {
+  border-radius: 8px; padding: 0.9rem 1.1rem;
+  font-size: 0.86rem; line-height: 1.6; margin: 1rem 0;
+  border-left: 3px solid;
+}
+.info-box    { background: var(--accent-subtle); border-color: var(--accent-dim); color: var(--text-secondary); }
+.warning-box { background: rgba(255,176,0,0.06); border-color: rgba(255,176,0,0.4); color: #cc9900; }
+.tip-box     { background: rgba(0,170,255,0.06); border-color: rgba(0,170,255,0.35); color: #44aadd; }
+
+/* ── OS DETAIL BLOCKS ────────────────────────────────────────── */
+.os-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+.os-header {
+  background: var(--bg-terminal);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.os-header-icon { font-size: 1.8rem; }
+.os-header-text h3 {
+  font-family: var(--font-retro); font-size: 0.65rem;
+  letter-spacing: 0.08em; color: var(--text-primary); margin: 0 0 0.2rem;
+}
+.os-header-text p { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.os-body { padding: 1.4rem 1.5rem; }
+
+/* ── SPEC TABLE ──────────────────────────────────────────────── */
+.spec-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 1.2rem; }
+.spec-table th {
+  text-align: left; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim); padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.spec-table td {
+  padding: 0.55rem 0.8rem; font-size: 0.84rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-secondary); vertical-align: top;
+}
+.spec-table tr:last-child td { border-bottom: none; }
+.spec-table td:first-child { color: var(--text-dim); width: 160px; }
+.spec-table td code { font-size: 0.82em; }
+
+/* ── QA BOX ──────────────────────────────────────────────────── */
+.qa-list { display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0; }
+.qa-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.qa-q {
+  padding: 0.8rem 1rem; font-size: 0.88rem; font-weight: 700;
+  color: var(--text-primary); cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: background 0.15s;
+}
+.qa-q:hover { background: rgba(255,255,255,0.03); }
+.qa-a {
+  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  font-size: 0.84rem; color: var(--text-secondary); line-height: 1.65;
+}
+.qa-item.open .qa-a { max-height: 400px; }
+.qa-a-inner { padding: 0 1rem 1rem; }
+
+/* ── FOOTER ──────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  padding: 1.5rem 3rem;
+  font-size: 0.78rem; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  position: relative; z-index: 1;
+}
+footer a { color: var(--text-dim); }
+footer a:hover { color: var(--text-secondary); text-decoration: none; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .sidebar { display: none; }
+  .main-content { padding: 1.5rem 1.2rem; }
+  .topbar-nav { display: none; }
+  footer { padding: 1rem 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <a href="./index.html">Plan9Basic</a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="./index.html">Home</a>
+    <a href="./docs/language-reference.html">Language</a>
+    <a href="./docs/library_guide.html">Libraries</a>
+    <a href="./docs/examples.html">Examples</a>
+    <a href="./downloads.html" class="active">Downloads</a>
+  </nav>
+  <div class="topbar-themes">
+    <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-title">Platforms</div>
+    <a href="#windows" class="sidebar-link active">🪟 Windows 64-bit</a>
+    <a href="#linux" class="sidebar-link">🐧 Linux 64-bit</a>
+    <a href="#android" class="sidebar-link">🤖 Android</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Running Scripts</div>
+    <a href="#run-win" class="sidebar-link">Running on Windows</a>
+    <a href="#run-linux" class="sidebar-link">Running on Linux</a>
+    <a href="#run-android" class="sidebar-link">Running on Android</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Extras</div>
+    <a href="#translations" class="sidebar-link">Translations.ini</a>
+    <a href="#faq" class="sidebar-link">FAQ</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-title">Documentation</div>
+    <a href="./docs/language-reference.html" class="sidebar-link">Language Reference</a>
+    <a href="./docs/library_guide.html" class="sidebar-link">Library Guide</a>
+    <a href="./docs/examples.html" class="sidebar-link">Code Examples</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+
+  <div class="page-header">
+    <div class="page-header-eyebrow">Plan9Basic &rsaquo; Downloads</div>
+    <h1 class="page-title">Get Plan9Basic</h1>
+    <p class="page-subtitle">
+      Plan9Basic runs natively on <strong>Windows</strong>, <strong>Linux</strong>, and <strong>Android</strong>.
+      Pick your platform, download the binary, and you're writing scripts in minutes &mdash; no runtime, no dependencies, no install.
+    </p>
+  </div>
+
+  <!-- ── PLATFORM HERO CARDS ───────────────────────────────────── -->
+  <div class="platform-grid">
+    <div class="platform-card">
+      <div class="platform-icon">🪟</div>
+      <div class="platform-name">Windows 64-bit</div>
+      <div class="platform-detail">Native Win64 executable. No installer, no registry entries &mdash; just a single <code>.exe</code> you can run from anywhere.</div>
+      <div class="platform-file">
+        <span>Plan9Basic.exe</span>
+        <span class="file-size">Win64</span>
+      </div>
+      <a class="download-btn" href="assets/devenv/Win64/Plan9Basic.exe" download="Plan9Basic.exe">
+        ⬇ Download .exe
+      </a>
+    </div>
+
+    <div class="platform-card">
+      <div class="platform-icon">🐧</div>
+      <div class="platform-name">Linux 64-bit</div>
+      <div class="platform-detail">Single self-contained binary for 64-bit Linux. One <code>chmod</code> and you're running. No libraries to install.</div>
+      <div class="platform-file">
+        <span>Plan9Basic</span>
+        <span class="file-size">Linux64</span>
+      </div>
+      <a class="download-btn" href="assets/devenv/Linux64/Plan9Basic" download="Plan9Basic">
+        ⬇ Download binary
+      </a>
+    </div>
+
+    <div class="platform-card">
+      <div class="platform-icon">🤖</div>
+      <div class="platform-name">Android</div>
+      <div class="platform-detail">Full Android APK with a built-in script editor and interpreter. Write and run BASIC scripts right on your phone or tablet.</div>
+      <div class="platform-file">
+        <span>Plan9Basic.apk</span>
+        <span class="file-size">Android 64-bit</span>
+      </div>
+      <a class="download-btn" href="assets/devenv/Android64/Plan9Basic.apk" download="Plan9Basic.apk">
+        ⬇ Download .apk
+      </a>
+    </div>
+  </div>
+
+  <!-- ── WINDOWS ───────────────────────────────────────────────── -->
+  <section class="doc-section" id="windows">
+    <h2>🪟 Windows 64-bit</h2>
+
+    <div class="os-section">
+      <div class="os-header">
+        <div class="os-header-icon">🪟</div>
+        <div class="os-header-text">
+          <h3>Windows 64-bit</h3>
+          <p>Windows 10 / 11 &mdash; x86-64 architecture</p>
+        </div>
+      </div>
+      <div class="os-body">
+        <table class="spec-table">
+          <tr><td>File</td><td><code>Plan9Basic.exe</code></td></tr>
+          <tr><td>Architecture</td><td>x86-64 (64-bit)</td></tr>
+          <tr><td>Requires</td><td>Windows 10 or later</td></tr>
+          <tr><td>Dependencies</td><td>None &mdash; fully self-contained</td></tr>
+          <tr><td>Install</td><td>No installer needed &mdash; just run the .exe</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h3 id="run-win">Getting started on Windows</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Download the executable</h4>
+          <p>Click the <strong>Download .exe</strong> button above. Save <code>Plan9Basic.exe</code> to any folder — your Desktop, <code>C:\Tools\</code>, or anywhere convenient.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Write your first script</h4>
+          <p>Open the application by clicking at the <strong>Editor</strong> button to open the code editor and type the code below:</p>
+        </div>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-titlebar">
+        <span class="code-titlebar-title">&#9583; hello.bas</span>
+        <div class="code-titlebar-controls">
+          <span class="code-titlebar-btn">&#9472;</span>
+          <span class="code-titlebar-btn">&#9723;</span>
+          <span class="code-titlebar-btn close">&#10005;</span>
+        </div>
+      </div>
+      <div class="code-body"><pre><span class="kw">PRINTLN</span> <span class="str">"Hello from Plan9Basic!"</span>
+<span class="kw">LET</span> name$ = <span class="str">"World"</span>
+<span class="kw">PRINTLN</span> <span class="str">"Hello, "</span> + name$ + <span class="str">"!"</span></pre></div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Run it from the application</h4>
+          <p>Click the <strong>Run</strong> option to execute the applet:</p>
+        </div>
+      </div>
+    </div>
+    <div class="info-box">&#9432; <strong>Windows SmartScreen:</strong> On first launch Windows may show a SmartScreen warning. Click <em>"More info" &rarr; "Run anyway"</em> to proceed — the binary is safe.</div>
+
+    <h3>Passing arguments to scripts</h3>
+    <p>Arguments after the script path are available via <code>paramcount</code> and <code>paramstr$(n)</code>:</p>
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; cmd.exe</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre><span class="prompt">C:\Tools&gt; </span><span class="cmd">Plan9Basic.exe Alice 42</span></pre></div>
+    </div>
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; myapp.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre><span class="kw">PRINTLN</span> <span class="str">"Args: "</span>; <span class="fn">paramcount()</span>       <span class="cmt">' Args: 2</span>
+<span class="kw">PRINTLN</span> <span class="fn">paramstr$</span>(<span class="num">1</span>)                 <span class="cmt">' Alice</span>
+<span class="kw">PRINTLN</span> <span class="fn">paramstr$</span>(<span class="num">2</span>)                 <span class="cmt">' 42</span></pre></div>
+    </div>
+  </section>
+
+  <!-- ── LINUX ─────────────────────────────────────────────────── -->
+  <section class="doc-section" id="linux">
+    <h2>🐧 Linux 64-bit</h2>
+
+    <div class="os-section">
+      <div class="os-header">
+        <div class="os-header-icon">🐧</div>
+        <div class="os-header-text">
+          <h3>Linux 64-bit</h3>
+          <p>Ubuntu, Debian, Fedora, Arch &mdash; any modern x86-64 distribution</p>
+        </div>
+      </div>
+      <div class="os-body">
+        <table class="spec-table">
+          <tr><td>File</td><td><code>Plan9Basic</code> (no extension)</td></tr>
+          <tr><td>Architecture</td><td>x86-64 (64-bit)</td></tr>
+          <tr><td>Requires</td><td>Linux kernel 4.x+ &mdash; any modern distro</td></tr>
+          <tr><td>Dependencies</td><td>None &mdash; statically linked</td></tr>
+          <tr><td>Install</td><td>Download, <code>chmod +x</code>, run</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h3 id="run-linux">Getting started on Linux</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Download and make executable</h4>
+          <p>Download the binary from above, then grant it execute permission. The binary has no extension &mdash; this is normal on Linux.</p>
+        </div>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; bash</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre><span class="cmt"># Download (or copy from your downloads folder)</span>
+<span class="prompt">$ </span><span class="cmd">mv ~/Downloads/Plan9Basic ~/bin/Plan9Basic</span>
+
+<span class="cmt"># Make it executable</span>
+<span class="prompt">$ </span><span class="cmd">chmod +x ~/bin/Plan9Basic</span>
+
+<span class="cmt"># Run</span>
+<span class="prompt">$ </span><span class="cmd">~/bin/Plan9Basic</span></pre></div>
+    </div>
+    
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>(Optional) Install system-wide</h4>
+          <p>Move the binary to <code>/usr/local/bin</code> so it's on your <code>$PATH</code> globally:</p>
+        </div>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; bash</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre><span class="prompt">$ </span><span class="cmd">sudo mv Plan9Basic /usr/local/bin/plan9basic</span>
+<span class="prompt">$ </span><span class="cmd">sudo chmod +x /usr/local/bin/plan9basic</span>
+<span class="cmt"># Now usable from anywhere:</span>
+<span class="prompt">$ </span><span class="cmd">plan9basic</span></pre></div>
+    </div>
+  </section>
+
+  <!-- ── ANDROID ───────────────────────────────────────────────── -->
+  <section class="doc-section" id="android">
+    <h2>🤖 Android</h2>
+
+    <div class="os-section">
+      <div class="os-header">
+        <div class="os-header-icon">🤖</div>
+        <div class="os-header-text">
+          <h3>Android</h3>
+          <p>64-bit ARM &mdash; Android 9.0 (Pie) or later</p>
+        </div>
+      </div>
+      <div class="os-body">
+        <table class="spec-table">
+          <tr><td>File</td><td><code>Plan9Basic.apk</code></td></tr>
+          <tr><td>Architecture</td><td>ARM64 (64-bit)</td></tr>
+          <tr><td>Requires</td><td>Android 9.0 (API 28) or later</td></tr>
+          <tr><td>Distribution</td><td>Direct APK &mdash; not on Google Play (sideload required)</td></tr>
+          <tr><td>Includes</td><td>Built-in code editor, file browser, and interpreter</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h3 id="run-android">Installing on Android (sideloading)</h3>
+    <p>Because Plan9Basic can be downloaded as a direct APK (not via the Play Store), you need to allow installation from unknown sources. This is a one-time setting.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Enable Unknown Sources</h4>
+          <p>Go to <strong>Settings &rarr; Apps &rarr; Special app access &rarr; Install unknown apps</strong>. Select your browser or file manager, then enable <em>"Allow from this source"</em>.</p>
+          <p><em>The exact path varies by manufacturer &mdash; Samsung users: Settings &rarr; Biometrics &amp; Security &rarr; Install unknown apps.</em></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Download the APK</h4>
+          <p>Tap the <strong>Download .apk</strong> button above directly on your Android device, or transfer <code>Plan9Basic.apk</code> from your computer via USB or cloud storage.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Install the APK</h4>
+          <p>Open your <strong>Downloads</strong> folder (or Files app), tap <code>Plan9Basic.apk</code>, and follow the on-screen installation prompts. Tap <em>Install</em> when asked.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Open and write your first script</h4>
+          <p>Launch <strong>Plan9Basic</strong> from your app drawer. The built-in editor opens immediately. Tap <em>New</em>, enter your code, and tap <em>Run</em>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; first_script.bas (type in the built-in editor)</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre><span class="cmt">' Detect the platform and greet</span>
+<span class="kw">LET</span> platform$ = <span class="fn">os_name$</span>()
+<span class="kw">LET</span> arch$ = <span class="fn">os_architecture$</span>()
+<span class="kw">PRINTLN</span> <span class="str">"Running on "</span> + platform$ + <span class="str">" ("</span> + arch$ + <span class="str">")"</span>
+<span class="kw">PRINTLN</span> <span class="str">"Plan9Basic is ready!"</span></pre></div>
+    </div>
+
+    <div class="warning-box">&#9888; <strong>Security note:</strong> Installing APKs from outside the Play Store bypasses Google&rsquo;s app review. Only install software from sources you trust. Remember to disable <em>Install unknown apps</em> after installation if you prefer.</div>
+  </section>
+
+  <!-- ── TRANSLATIONS.INI ──────────────────────────────────────── -->
+  <section class="doc-section" id="translations">
+    <h2>⚙ Translations.ini</h2>
+    <p>On the first launch, <code>Plan9Basic</code> automatically downloads <code>Translations.ini</code> from the project server in the background. An internet connection is required the very first time you run the application, after that, the file is cached locally alongside the executable and no further downloads are needed.</p>
+    <p><code>Translations.ini</code> controls all the text strings displayed by the runtime environment: error messages, UI labels, command prompts, and system notifications. It uses a standard INI key=value format and is placed in the same folder as the <code>Plan9Basic</code> executable (or inside the app data directory on Android).</p>
+    <div class="code-block">
+      <div class="code-titlebar"><span class="code-titlebar-title">&#9583; Folder layout (Windows example)</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
+      <div class="code-body"><pre>C:\Tools\Plan9Basic\
+├── Plan9Basic.exe
+├── Translations.ini
+└── scripts\
+    ├── hello.bas
+    └── myapp.bas</pre></div>
+    </div>
+    <div class="info-box">&#9432; You can customise <code>Translations.ini</code> to localise runtime messages for your own language. The file uses standard INI key=value format.</div>
+    <div class="info-box">&#9432; <code>Translations.ini</code> will be improved in future versions of the software to allow the use of other languages ​​during the environment's execution.</div>
+  </section>
+
+  <!-- ── FAQ ───────────────────────────────────────────────────── -->
+  <section class="doc-section" id="faq">
+    <h2>❓ Frequently Asked Questions</h2>
+    <div class="qa-list">
+      <div class="qa-item">
+        <div class="qa-q">Is Plan9Basic free? <span>▾</span></div>
+        <div class="qa-a"><div class="qa-a-inner">Yes. Plan9Basic is free to download and use. The interpreter, all libraries, and the example scripts are included at no cost.</div></div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Do I need to install anything else (runtimes, DLLs)? <span>▾</span></div>
+        <div class="qa-a"><div class="qa-a-inner">No. Each binary is self-contained. The Windows <code>.exe</code> and Linux binary require no external runtimes, libraries, or frameworks. The Android <code>.apk</code> is similarly self-contained.</div></div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Are 32-bit builds available? <span>▾</span></div>
+        <div class="qa-a"><div class="qa-a-inner">Currently only 64-bit builds are distributed.</div></div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">My antivirus flagged the .exe. Is it safe? <span>▾</span></div>
+        <div class="qa-a"><div class="qa-a-inner">This is a false positive &mdash; a common occurrence with freshly built, unsigned executables. The binary is built directly from the Delphi source in this repository. You can inspect the source code to verify. If your organisation requires signed binaries, compile from source and sign with your own certificate.</div></div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">What is the Translations.ini file for? <span>▾</span></div>
+        <div class="qa-a">
+          <div class="qa-a-inner">
+          <code>Translations.ini</code> localises the error messages, prompts, and UI strings shown by the runtime environment. Without it the interpreter falls back to built-in English text.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  <span>Plan9Basic &mdash; built with care in Delphi/Object Pascal.</span>
+  <span>
+    <a href="./index.html">Home</a> &middot;
+    <a href="./docs/language-reference.html">Docs</a> &middot;
+    <a href="./docs/library_guide.html">Libraries</a> &middot;
+    <a href="./docs/examples.html">Examples</a>
+  </span>
+</footer>
+
+<script>
+// Theme
+const themes=['green','amber','blue','pink','white'];
+let ti=0;
+function cycleTheme(){
+  ti=(ti+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[ti]);
+  document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
+  localStorage.setItem('p9t',themes[ti]);
+}
+const st=localStorage.getItem('p9t');
+if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
+
+// Sidebar active link on scroll
+const sections = document.querySelectorAll('.doc-section[id]');
+const links = document.querySelectorAll('.sidebar-link[href^="#"]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// FAQ accordion
+document.querySelectorAll('.qa-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.qa-item.open').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+</script>
+</body>
+</html>

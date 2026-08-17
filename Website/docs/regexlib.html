@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegexLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic RegexLib: 16 regular expression functions (28 signatures) for matching, searching, replacing, splitting, and capture groups.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box {
+  padding: 1rem 1.2rem; margin: 1rem 0;
+  border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle);
+  font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">RegexLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">16 functions &middot; 28 signatures</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#options" class="sidebar-link">Regex Options</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#validation" class="sidebar-link">Validation</a>
+    <a href="#matching" class="sidebar-link">Matching</a>
+    <a href="#find" class="sidebar-link">Find / Search</a>
+    <a href="#findall" class="sidebar-link">Find All</a>
+    <a href="#replace" class="sidebar-link">Replace</a>
+    <a href="#split" class="sidebar-link">Split</a>
+    <a href="#groups" class="sidebar-link">Groups / Capture</a>
+    <a href="#utility" class="sidebar-link">Utility</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#patterns" class="sidebar-link">Common Patterns</a>
+    <a href="#notes" class="sidebar-link">Notes</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>RegexLib &mdash; Regular Expression Library</h2>
+<p>Comprehensive regular expression support for Plan9Basic. Pattern matching, searching, replacing, splitting, and capture group extraction. Built on Delphi&rsquo;s <code>System.RegularExpressions</code> unit. 16 base functions (28 with option overloads).</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Validation</td><td>2</td><td>regex_isvalid, regex_error$</td></tr>
+<tr><td>Matching</td><td>2</td><td>regex_match, regex_matchfull (+ option overloads)</td></tr>
+<tr><td>Find / Search</td><td>3</td><td>regex_find$, regex_findpos, regex_findlen (+ option overloads)</td></tr>
+<tr><td>Find All</td><td>2</td><td>regex_findall#, regex_count (+ option overloads)</td></tr>
+<tr><td>Replace</td><td>2</td><td>regex_replace$, regex_replacefirst$ (+ option overloads)</td></tr>
+<tr><td>Split</td><td>1</td><td>regex_split# (+ option overload)</td></tr>
+<tr><td>Groups / Capture</td><td>3</td><td>regex_groups#, regex_group$, regex_groupcount</td></tr>
+<tr><td>Utility</td><td>1</td><td>regex_escape$</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>Description</th></tr></thead><tbody>
+<tr><td>Engine</td><td>Delphi <code>System.RegularExpressions</code> (PCRE-compatible)</td></tr>
+<tr><td>Results</td><td>TStringList pointers (from StrListLib) with 0-based indexing</td></tr>
+<tr><td>Positions</td><td><code>regex_findpos()</code> returns 1-based positions</td></tr>
+<tr><td>Backreferences</td><td><code>$1</code>, <code>$2</code>, etc. in replacement strings</td></tr>
+<tr><td>Error Handling</td><td>Invalid patterns return 0 or empty strings &mdash; no exceptions</td></tr>
+<tr><td>Memory</td><td>All TStringList results are garbage-collected</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="options">
+<h2>Regex Options</h2>
+<p>Options are numeric values combined with <code>+</code>. Pass as the last parameter to functions that accept an options argument. Plan9Basic does not have predefined constants, so define your own or use numeric values directly.</p>
+<div class="table-wrap"><table><thead><tr><th>Option</th><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>REGEX_IGNORECASE</td><td>1</td><td>Case-insensitive matching</td></tr>
+<tr><td>REGEX_MULTILINE</td><td>2</td><td><code>^</code> and <code>$</code> match line boundaries (not just start/end of string)</td></tr>
+<tr><td>REGEX_SINGLELINE</td><td>4</td><td><code>.</code> matches newlines (normally it doesn&rsquo;t)</td></tr>
+<tr><td>REGEX_EXPLICITCAPTURE</td><td>8</td><td>Only named or explicitly numbered groups capture</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Define your own constants</span>
+<span class="kw">let</span> REGEX_IGNORECASE = <span class="num">1</span>
+<span class="kw">let</span> REGEX_MULTILINE = <span class="num">2</span>
+<span class="kw">let</span> REGEX_SINGLELINE = <span class="num">4</span>
+<span class="kw">let</span> REGEX_EXPLICITCAPTURE = <span class="num">8</span>
+
+<span class="cmt">&#x27; Combine with +</span>
+opts = REGEX_IGNORECASE + REGEX_MULTILINE
+found = <span class="fn">regex_match</span>(<span class="str">&quot;[a-z]+&quot;</span>, text$, opts)
+
+<span class="cmt">&#x27; Or use numeric values directly</span>
+found = <span class="fn">regex_match</span>(<span class="str">&quot;[a-z]+&quot;</span>, text$, <span class="num">3</span>)  <span class="cmt">&#x27; 1 + 2 = 3</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="validation">
+<h2>Validation Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_isvalid(pattern$)</code></td><td><code>regex_isvalid@$</code></td><td>Check if pattern is valid regex (1=valid, 0=invalid)</td></tr>
+<tr><td><code>regex_error$(pattern$)</code></td><td><code>regex_error$@$</code></td><td>Error message for invalid pattern (empty string if valid)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Validate before using a pattern</span>
+<span class="kw">if</span> <span class="fn">regex_isvalid</span>(<span class="str">&quot;[a-z]+&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Valid pattern&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Get error description</span>
+err$ = <span class="fn">regex_error$</span>(<span class="str">&quot;[invalid&quot;</span>)
+<span class="kw">if</span> err$ &lt;&gt; <span class="str">&quot;&quot;</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Error: &quot;</span>; err$
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Always validate user-supplied patterns with <code>regex_isvalid()</code> before passing them to other regex functions.</div>
+</section>
+
+<section class="doc-section" id="matching">
+<h2>Matching Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_match(pat$, text$)</code></td><td><code>regex_match@$$</code></td><td>Match pattern anywhere in text (1/0)</td></tr>
+<tr><td><code>regex_match(pat$, text$, opts)</code></td><td><code>regex_match@$$n</code></td><td>Match with options</td></tr>
+<tr><td><code>regex_matchfull(pat$, text$)</code></td><td><code>regex_matchfull@$$</code></td><td>Match pattern against entire text (1/0)</td></tr>
+<tr><td><code>regex_matchfull(pat$, text$, opts)</code></td><td><code>regex_matchfull@$$n</code></td><td>Full match with options</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Partial match - pattern found anywhere in string</span>
+<span class="kw">if</span> <span class="fn">regex_match</span>(<span class="str">&quot;\d+&quot;</span>, <span class="str">&quot;abc123def&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Contains numbers&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Case-insensitive (option 1)</span>
+<span class="kw">if</span> <span class="fn">regex_match</span>(<span class="str">&quot;hello&quot;</span>, <span class="str">&quot;HELLO WORLD&quot;</span>, <span class="num">1</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Found hello&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Full match - entire string must match</span>
+email$ = <span class="str">&quot;user@example.com&quot;</span>
+<span class="kw">if</span> <span class="fn">regex_matchfull</span>(<span class="str">&quot;^[\w.-]+@[\w.-]+\.\w+$&quot;</span>, email$) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Valid email format&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>regex_match()</code> succeeds if the pattern is found <em>anywhere</em> in the text. <code>regex_matchfull()</code> requires the <em>entire</em> text to match the pattern.</div>
+</section>
+
+<section class="doc-section" id="find">
+<h2>Find / Search Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_find$(pat$, text$)</code></td><td><code>regex_find$@$$</code></td><td>First match as string (empty if none)</td></tr>
+<tr><td><code>regex_find$(pat$, text$, opts)</code></td><td><code>regex_find$@$$n</code></td><td>First match with options</td></tr>
+<tr><td><code>regex_findpos(pat$, text$)</code></td><td><code>regex_findpos@$$</code></td><td>1-based position of first match (0 if none)</td></tr>
+<tr><td><code>regex_findpos(pat$, text$, opts)</code></td><td><code>regex_findpos@$$n</code></td><td>Find position with options</td></tr>
+<tr><td><code>regex_findlen(pat$, text$)</code></td><td><code>regex_findlen@$$</code></td><td>Length of first match (0 if none)</td></tr>
+<tr><td><code>regex_findlen(pat$, text$, opts)</code></td><td><code>regex_findlen@$$n</code></td><td>Find length with options</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Find first number in text</span>
+num$ = <span class="fn">regex_find$</span>(<span class="str">&quot;\d+&quot;</span>, <span class="str">&quot;Price: $42.99&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Found: &quot;</span>; num$  <span class="cmt">&#x27; 42</span>
+
+<span class="cmt">&#x27; Position of first digit (1-based!)</span>
+pos = <span class="fn">regex_findpos</span>(<span class="str">&quot;\d&quot;</span>, <span class="str">&quot;abc123&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;First digit at: &quot;</span>; pos  <span class="cmt">&#x27; 4</span>
+
+<span class="cmt">&#x27; Length of first match</span>
+ln = <span class="fn">regex_findlen</span>(<span class="str">&quot;\d+&quot;</span>, <span class="str">&quot;abc123def&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Match length: &quot;</span>; ln  <span class="cmt">&#x27; 3</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>regex_findpos()</code> returns <strong>1-based</strong> positions (consistent with other Plan9Basic string functions). Returns 0 when no match is found.</div>
+</section>
+
+<section class="doc-section" id="findall">
+<h2>Find All Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_findall#(pat$, text$)</code></td><td><code>regex_findall#@$$</code></td><td>All matches as TStringList (0-based)</td></tr>
+<tr><td><code>regex_findall#(pat$, text$, opts)</code></td><td><code>regex_findall#@$$n</code></td><td>Find all with options</td></tr>
+<tr><td><code>regex_count(pat$, text$)</code></td><td><code>regex_count@$$</code></td><td>Number of matches</td></tr>
+<tr><td><code>regex_count(pat$, text$, opts)</code></td><td><code>regex_count@$$n</code></td><td>Count with options</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Find all words</span>
+matches# = <span class="fn">regex_findall#</span>(<span class="str">&quot;\w+&quot;</span>, <span class="str">&quot;Hello World Test&quot;</span>)
+n = <span class="fn">strings_count</span>(matches#)
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> n - <span class="num">1</span>
+    <span class="kw">println</span> <span class="fn">strings_strings$</span>(matches#, i)
+<span class="kw">next</span>
+<span class="cmt">&#x27; Hello / World / Test</span>
+
+<span class="cmt">&#x27; Count vowels (case-insensitive)</span>
+cnt = <span class="fn">regex_count</span>(<span class="str">&quot;[aeiou]&quot;</span>, <span class="str">&quot;Hello World&quot;</span>, <span class="num">1</span>)
+<span class="kw">println</span> <span class="str">&quot;Vowel count: &quot;</span>; cnt  <span class="cmt">&#x27; 3</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>regex_findall#()</code> returns a TStringList pointer. Use <code>strings_count()</code> and <code>strings_strings$()</code> from StrListLib to access individual results (0-based indexing).</div>
+</section>
+
+<section class="doc-section" id="replace">
+<h2>Replace Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_replace$(pat$, text$, repl$)</code></td><td><code>regex_replace$@$$$</code></td><td>Replace all matches</td></tr>
+<tr><td><code>regex_replace$(pat$, text$, repl$, opts)</code></td><td><code>regex_replace$@$$$$n</code></td><td>Replace all with options</td></tr>
+<tr><td><code>regex_replacefirst$(pat$, text$, repl$)</code></td><td><code>regex_replacefirst$@$$$</code></td><td>Replace first match only</td></tr>
+<tr><td><code>regex_replacefirst$(pat$, text$, repl$, opts)</code></td><td><code>regex_replacefirst$@$$$$n</code></td><td>Replace first with options</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Replace all digits with X</span>
+result$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;\d&quot;</span>, <span class="str">&quot;abc123def&quot;</span>, <span class="str">&quot;X&quot;</span>)
+<span class="kw">println</span> result$  <span class="cmt">&#x27; abcXXXdef</span>
+
+<span class="cmt">&#x27; Swap first and last name using capture groups</span>
+name$ = <span class="str">&quot;John Smith&quot;</span>
+result$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;(\w+) (\w+)&quot;</span>, name$, <span class="str">&quot;$2, $1&quot;</span>)
+<span class="kw">println</span> result$  <span class="cmt">&#x27; Smith, John</span>
+
+<span class="cmt">&#x27; Replace only the first match</span>
+result$ = <span class="fn">regex_replacefirst$</span>(<span class="str">&quot;\d&quot;</span>, <span class="str">&quot;a1b2c3&quot;</span>, <span class="str">&quot;X&quot;</span>)
+<span class="kw">println</span> result$  <span class="cmt">&#x27; aXb2c3</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Use <code>$1</code>, <code>$2</code>, etc. in the replacement string to reference capture groups from the pattern.</div>
+</section>
+
+<section class="doc-section" id="split">
+<h2>Split Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_split#(pat$, text$)</code></td><td><code>regex_split#@$$</code></td><td>Split string by pattern (returns TStringList, 0-based)</td></tr>
+<tr><td><code>regex_split#(pat$, text$, opts)</code></td><td><code>regex_split#@$$n</code></td><td>Split with options</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Split by multiple delimiters (comma, semicolon, or whitespace)</span>
+parts# = <span class="fn">regex_split#</span>(<span class="str">&quot;[,;\s]+&quot;</span>, <span class="str">&quot;apple,banana;cherry orange&quot;</span>)
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">strings_count</span>(parts#) - <span class="num">1</span>
+    <span class="kw">println</span> <span class="fn">strings_strings$</span>(parts#, i)
+<span class="kw">next</span>
+<span class="cmt">&#x27; apple / banana / cherry / orange</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="groups">
+<h2>Group / Capture Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_groups#(pat$, text$)</code></td><td><code>regex_groups#@$$</code></td><td>All capture groups from first match (TStringList, 0=full match)</td></tr>
+<tr><td><code>regex_groups#(pat$, text$, opts)</code></td><td><code>regex_groups#@$$n</code></td><td>Groups with options</td></tr>
+<tr><td><code>regex_group$(pat$, text$, index)</code></td><td><code>regex_group$@$$n</code></td><td>Specific capture group (0=full match, 1+=groups)</td></tr>
+<tr><td><code>regex_group$(pat$, text$, index, opts)</code></td><td><code>regex_group$@$$nn</code></td><td>Group with options</td></tr>
+<tr><td><code>regex_groupcount(pat$, text$)</code></td><td><code>regex_groupcount@$$</code></td><td>Number of groups including full match</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Parse date: capture year, month, day</span>
+groups# = <span class="fn">regex_groups#</span>(<span class="str">&quot;(\d{4})-(\d{2})-(\d{2})&quot;</span>, <span class="str">&quot;Date: 2025-01-03&quot;</span>)
+<span class="kw">if</span> <span class="fn">strings_count</span>(groups#) &gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Full:  &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">0</span>)   <span class="cmt">&#x27; 2025-01-03</span>
+    <span class="kw">println</span> <span class="str">&quot;Year:  &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">1</span>)   <span class="cmt">&#x27; 2025</span>
+    <span class="kw">println</span> <span class="str">&quot;Month: &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">2</span>)   <span class="cmt">&#x27; 01</span>
+    <span class="kw">println</span> <span class="str">&quot;Day:   &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">3</span>)   <span class="cmt">&#x27; 03</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Extract domain from email</span>
+domain$ = <span class="fn">regex_group$</span>(<span class="str">&quot;@([\w.-]+)&quot;</span>, <span class="str">&quot;user@example.com&quot;</span>, <span class="num">1</span>)
+<span class="kw">println</span> <span class="str">&quot;Domain: &quot;</span>; domain$  <span class="cmt">&#x27; example.com</span>
+
+<span class="cmt">&#x27; Count groups</span>
+cnt = <span class="fn">regex_groupcount</span>(<span class="str">&quot;(\w+)-(\w+)-(\w+)&quot;</span>, <span class="str">&quot;abc-def-ghi&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Groups: &quot;</span>; cnt  <span class="cmt">&#x27; 4 (full match + 3 captures)</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Group index 0 is always the <strong>full match</strong>. Numbered capture groups start at index 1.</div>
+</section>
+
+<section class="doc-section" id="utility">
+<h2>Utility Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_escape$(text$)</code></td><td><code>regex_escape$@$</code></td><td>Escape special regex characters for literal matching</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Make user input safe for regex</span>
+userInput$ = <span class="str">&quot;What is (2+2)?&quot;</span>
+safePattern$ = <span class="fn">regex_escape$</span>(userInput$)
+<span class="cmt">&#x27; safePattern$ = &quot;What is \(2\+2\)\?&quot;</span>
+
+<span class="kw">if</span> <span class="fn">regex_match</span>(safePattern$, userInput$) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Found exact text&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Email Validator</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; email_validator.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Email validation program</span>
+<span class="kw">function</span> <span class="fn">validateEmail$</span>(email$) <span class="kw">local</span> pattern$, result$
+    pattern$ = <span class="str">&quot;^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$&quot;</span>
+    <span class="kw">if</span> <span class="fn">regex_matchfull</span>(pattern$, email$) = <span class="num">1</span> <span class="kw">then</span>
+        result$ = <span class="str">&quot;Valid&quot;</span>
+    <span class="kw">else</span>
+        result$ = <span class="str">&quot;Invalid&quot;</span>
+    <span class="kw">endif</span>
+    <span class="kw">return</span> result$
+<span class="kw">endfunction</span>
+
+emails$ = <span class="str">&quot;user@example.com,invalid@,test@site.org,bad email&quot;</span>
+parts# = <span class="fn">regex_split#</span>(<span class="str">&quot;,&quot;</span>, emails$)
+
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">strings_count</span>(parts#) - <span class="num">1</span>
+    email$ = <span class="fn">strings_strings$</span>(parts#, i)
+    <span class="kw">println</span> email$; <span class="str">&quot; -&gt; &quot;</span>; <span class="fn">validateEmail$</span>(email$)
+<span class="kw">next</span></pre></div></div>
+<h3>Log Parser</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; log_parser.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Parse Apache-style log entries</span>
+logLine$ = <span class="str">&quot;192.168.1.1 - - [03/Jan/2025:10:15:30 +0000] \&quot;</span>GET /index.html HTTP/<span class="num">1.1</span>\<span class="str">&quot; 200 1234&quot;</span>
+
+pattern$ = <span class="str">&quot;^(\d+\.\d+\.\d+\.\d+).*\[([^\]]+)\].*\&quot;</span>(\w+) ([^ ]+).*\<span class="str">&quot; (\d+) (\d+)&quot;</span>
+groups# = <span class="fn">regex_groups#</span>(pattern$, logLine$)
+
+<span class="kw">if</span> <span class="fn">strings_count</span>(groups#) &gt;= <span class="num">7</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;IP:     &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">1</span>)
+    <span class="kw">println</span> <span class="str">&quot;Date:   &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">2</span>)
+    <span class="kw">println</span> <span class="str">&quot;Method: &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">3</span>)
+    <span class="kw">println</span> <span class="str">&quot;Path:   &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">4</span>)
+    <span class="kw">println</span> <span class="str">&quot;Status: &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">5</span>)
+    <span class="kw">println</span> <span class="str">&quot;Size:   &quot;</span>; <span class="fn">strings_strings$</span>(groups#, <span class="num">6</span>)
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed to parse&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<h3>Text Sanitizer</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; sanitizer.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Sanitize user input: strip HTML, normalize whitespace</span>
+<span class="kw">function</span> <span class="fn">sanitize$</span>(text$) <span class="kw">local</span> result$
+    result$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;&lt;[^&gt;]+&gt;&quot;</span>, text$, <span class="str">&quot;&quot;</span>)
+    result$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;\s+&quot;</span>, result$, <span class="str">&quot; &quot;</span>)
+    result$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;^\s+|\s+$&quot;</span>, result$, <span class="str">&quot;&quot;</span>)
+    <span class="kw">return</span> result$
+<span class="kw">endfunction</span>
+
+dirty$ = <span class="str">&quot;  &lt;b&gt;Hello&lt;/b&gt;   &lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;   World!  &quot;</span>
+clean$ = <span class="fn">sanitize$</span>(dirty$)
+
+<span class="kw">println</span> <span class="str">&quot;Original: [&quot;</span>; dirty$; <span class="str">&quot;]&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Cleaned:  [&quot;</span>; clean$; <span class="str">&quot;]&quot;</span></pre></div></div>
+<h3>Phone Number Formatter</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; phone_format.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Format phone numbers consistently</span>
+<span class="kw">function</span> <span class="fn">formatPhone$</span>(phone$) <span class="kw">local</span> digits$, area$, prefix$, line$, result$
+    digits$ = <span class="fn">regex_replace$</span>(<span class="str">&quot;[^\d]&quot;</span>, phone$, <span class="str">&quot;&quot;</span>)
+    
+    <span class="kw">if</span> <span class="fn">len</span>(digits$) = <span class="num">10</span> <span class="kw">then</span>
+        area$ = <span class="fn">mid$</span>(digits$, <span class="num">1</span>, <span class="num">3</span>)
+        prefix$ = <span class="fn">mid$</span>(digits$, <span class="num">4</span>, <span class="num">3</span>)
+        line$ = <span class="fn">mid$</span>(digits$, <span class="num">7</span>, <span class="num">4</span>)
+        result$ = <span class="str">&quot;(&quot;</span> + area$ + <span class="str">&quot;) &quot;</span> + prefix$ + <span class="str">&quot;-&quot;</span> + line$
+    <span class="kw">else</span> <span class="kw">if</span> <span class="fn">len</span>(digits$) = <span class="num">11</span> <span class="kw">and</span> <span class="fn">left$</span>(digits$, <span class="num">1</span>) = <span class="str">&quot;1&quot;</span> <span class="kw">then</span>
+        area$ = <span class="fn">mid$</span>(digits$, <span class="num">2</span>, <span class="num">3</span>)
+        prefix$ = <span class="fn">mid$</span>(digits$, <span class="num">5</span>, <span class="num">3</span>)
+        line$ = <span class="fn">mid$</span>(digits$, <span class="num">8</span>, <span class="num">4</span>)
+        result$ = <span class="str">&quot;+1 (&quot;</span> + area$ + <span class="str">&quot;) &quot;</span> + prefix$ + <span class="str">&quot;-&quot;</span> + line$
+    <span class="kw">else</span>
+        result$ = phone$
+    end <span class="kw">if</span>
+    <span class="kw">return</span> result$
+end <span class="kw">function</span>
+
+<span class="kw">println</span> <span class="fn">formatPhone$</span>(<span class="str">&quot;5551234567&quot;</span>)
+<span class="kw">println</span> <span class="fn">formatPhone$</span>(<span class="str">&quot;(555) 123-4567&quot;</span>)
+<span class="kw">println</span> <span class="fn">formatPhone$</span>(<span class="str">&quot;555.123.4567&quot;</span>)
+<span class="kw">println</span> <span class="fn">formatPhone$</span>(<span class="str">&quot;1-555-123-4567&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="patterns">
+<h2>Common Regex Patterns</h2>
+<div class="table-wrap"><table><thead><tr><th>Pattern</th><th>Description</th><th>Example Match</th></tr></thead><tbody>
+<tr><td><code>\d+</code></td><td>One or more digits</td><td><code>123</code></td></tr>
+<tr><td><code>\w+</code></td><td>One or more word characters</td><td><code>hello_123</code></td></tr>
+<tr><td><code>[a-zA-Z]+</code></td><td>One or more letters</td><td><code>Hello</code></td></tr>
+<tr><td><code>^\s*$</code></td><td>Empty or whitespace-only line</td><td><code>&nbsp;&nbsp;&nbsp;</code></td></tr>
+<tr><td><code>\b\w+\b</code></td><td>Whole word</td><td><code>word</code></td></tr>
+<tr><td><code>[^,]+</code></td><td>Anything except comma</td><td><code>abc def</code></td></tr>
+<tr><td><code>\S+@\S+\.\S+</code></td><td>Simple email pattern</td><td><code>a@b.com</code></td></tr>
+<tr><td><code>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</code></td><td>IPv4 address</td><td><code>192.168.1.1</code></td></tr>
+<tr><td><code>#[0-9a-fA-F]{6}</code></td><td>Hex color code</td><td><code>#FF5733</code></td></tr>
+<tr><td><code>(\w+)\s(\w+)</code></td><td>Two words (capture each)</td><td><code>John Smith</code></td></tr>
+<tr><td><code>^https?://</code></td><td>URL protocol prefix</td><td><code>https://</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="notes">
+<h2>Notes &amp; Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Topic</th><th>Details</th></tr></thead><tbody>
+<tr><td>0-based results</td><td>TStringList results (<code>regex_findall#</code>, <code>regex_split#</code>, <code>regex_groups#</code>) use 0-based indexing</td></tr>
+<tr><td>1-based positions</td><td><code>regex_findpos()</code> returns 1-based positions (like other Plan9Basic string functions)</td></tr>
+<tr><td>Backreferences</td><td>Use <code>$1</code>, <code>$2</code>, etc. in replacement strings to reference capture groups</td></tr>
+<tr><td>Group index 0</td><td>Group 0 is always the full match; numbered captures start at 1</td></tr>
+<tr><td>Memory</td><td>All TStringList results are managed by the garbage collector automatically</td></tr>
+<tr><td>Error handling</td><td>Invalid patterns return 0 or empty strings &mdash; no exceptions raised to BASIC</td></tr>
+<tr><td>Performance</td><td>For repeated matching, compile complex patterns once and reuse</td></tr>
+<tr><td>StrListLib</td><td>Results use StrListLib functions: <code>strings_count()</code>, <code>strings_strings$()</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<h3>All 28 Registered Signatures</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>regex_isvalid(pat$)</code></td><td><code>regex_isvalid@$</code></td><td>Pattern valid? (1/0)</td></tr>
+<tr><td><code>regex_error$(pat$)</code></td><td><code>regex_error$@$</code></td><td>Error message for invalid pattern</td></tr>
+<tr><td><code>regex_match(pat$, text$)</code></td><td><code>regex_match@$$</code></td><td>Match anywhere (1/0)</td></tr>
+<tr><td><code>regex_match(pat$, text$, opts)</code></td><td><code>regex_match@$$n</code></td><td>Match with options</td></tr>
+<tr><td><code>regex_matchfull(pat$, text$)</code></td><td><code>regex_matchfull@$$</code></td><td>Match entire text (1/0)</td></tr>
+<tr><td><code>regex_matchfull(pat$, text$, opts)</code></td><td><code>regex_matchfull@$$n</code></td><td>Full match with options</td></tr>
+<tr><td><code>regex_find$(pat$, text$)</code></td><td><code>regex_find$@$$</code></td><td>First match string</td></tr>
+<tr><td><code>regex_find$(pat$, text$, opts)</code></td><td><code>regex_find$@$$n</code></td><td>First match with options</td></tr>
+<tr><td><code>regex_findpos(pat$, text$)</code></td><td><code>regex_findpos@$$</code></td><td>Position of first match (1-based)</td></tr>
+<tr><td><code>regex_findpos(pat$, text$, opts)</code></td><td><code>regex_findpos@$$n</code></td><td>Find position with options</td></tr>
+<tr><td><code>regex_findlen(pat$, text$)</code></td><td><code>regex_findlen@$$</code></td><td>Length of first match</td></tr>
+<tr><td><code>regex_findlen(pat$, text$, opts)</code></td><td><code>regex_findlen@$$n</code></td><td>Find length with options</td></tr>
+<tr><td><code>regex_findall#(pat$, text$)</code></td><td><code>regex_findall#@$$</code></td><td>All matches (TStringList)</td></tr>
+<tr><td><code>regex_findall#(pat$, text$, opts)</code></td><td><code>regex_findall#@$$n</code></td><td>Find all with options</td></tr>
+<tr><td><code>regex_count(pat$, text$)</code></td><td><code>regex_count@$$</code></td><td>Number of matches</td></tr>
+<tr><td><code>regex_count(pat$, text$, opts)</code></td><td><code>regex_count@$$n</code></td><td>Count with options</td></tr>
+<tr><td><code>regex_replace$(pat$, text$, repl$)</code></td><td><code>regex_replace$@$$$</code></td><td>Replace all matches</td></tr>
+<tr><td><code>regex_replace$(pat$, text$, repl$, opts)</code></td><td><code>regex_replace$@$$$$n</code></td><td>Replace all with options</td></tr>
+<tr><td><code>regex_replacefirst$(pat$, text$, repl$)</code></td><td><code>regex_replacefirst$@$$$</code></td><td>Replace first match</td></tr>
+<tr><td><code>regex_replacefirst$(pat$, text$, repl$, opts)</code></td><td><code>regex_replacefirst$@$$$$n</code></td><td>Replace first with options</td></tr>
+<tr><td><code>regex_split#(pat$, text$)</code></td><td><code>regex_split#@$$</code></td><td>Split by pattern (TStringList)</td></tr>
+<tr><td><code>regex_split#(pat$, text$, opts)</code></td><td><code>regex_split#@$$n</code></td><td>Split with options</td></tr>
+<tr><td><code>regex_groups#(pat$, text$)</code></td><td><code>regex_groups#@$$</code></td><td>All capture groups (TStringList)</td></tr>
+<tr><td><code>regex_groups#(pat$, text$, opts)</code></td><td><code>regex_groups#@$$n</code></td><td>Groups with options</td></tr>
+<tr><td><code>regex_group$(pat$, text$, idx)</code></td><td><code>regex_group$@$$n</code></td><td>Specific capture group</td></tr>
+<tr><td><code>regex_group$(pat$, text$, idx, opts)</code></td><td><code>regex_group$@$$nn</code></td><td>Group with options</td></tr>
+<tr><td><code>regex_groupcount(pat$, text$)</code></td><td><code>regex_groupcount@$$</code></td><td>Number of groups</td></tr>
+<tr><td><code>regex_escape$(text$)</code></td><td><code>regex_escape$@$</code></td><td>Escape special regex chars</td></tr>
+</tbody></table></div>
+<p><em>16 base functions &mdash; 28 registered signatures (with option overloads) across 8 categories.</em></p>
+</section>
+
+</main>
+</div>
+
+<script>
+// Theme
+const themes=['green','amber','blue','pink','white'];
+let ti=0;
+function cycleTheme(){
+  ti=(ti+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[ti]);
+  document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
+  localStorage.setItem('p9t',themes[ti]);
+}
+const st=localStorage.getItem('p9t');
+if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
+
+// Sidebar toggle (mobile)
+const sidebar=document.getElementById('sidebar');
+const overlay=document.getElementById('sidebarOverlay');
+const toggle=document.getElementById('sidebarToggle');
+toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+
+// Active sidebar link on scroll
+const sections=document.querySelectorAll('.doc-section');
+const sidebarLinks=document.querySelectorAll('.sidebar-link');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      sidebarLinks.forEach(l=>l.classList.remove('active'));
+      const active=document.querySelector('.sidebar-link[href="#'+e.target.id+'"]');
+      if(active)active.classList.add('active');
+    }
+  });
+},{threshold:0.1,rootMargin:'-80px 0px -60% 0px'});
+sections.forEach(s=>observer.observe(s));
+
+// Close sidebar on link click (mobile)
+sidebarLinks.forEach(l=>l.addEventListener('click',()=>{
+  if(window.innerWidth<=768){sidebar.classList.remove('open');overlay.classList.remove('show');}
+}));
+</script>
+</body>
+</html>

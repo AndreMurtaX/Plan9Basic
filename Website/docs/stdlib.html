@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StdLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic StdLib: program control, type checking, type conversion, object information, and format settings.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+/* Info & Warning boxes */
+.info-box, .warning-box {
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong {
+  color: var(--accent);
+}
+.warning-box {
+  border-left-color: #cc8800;
+  background: rgba(204, 136, 0, 0.06);
+}
+.warning-box strong {
+  color: #ffcc00;
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">StdLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">14 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="#overview">Overview</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a class="sidebar-link" href="#program-control">Program Control</a>
+    <a class="sidebar-link" href="#type-checking">Type Checking</a>
+    <a class="sidebar-link" href="#type-conversion">Type Conversion</a>
+    <a class="sidebar-link" href="#object-info">Object Information</a>
+    <a class="sidebar-link" href="#format-settings">Format Settings</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a class="sidebar-link" href="#examples">Examples</a>
+    <a class="sidebar-link" href="#best-practices">Best Practices</a>
+    <a class="sidebar-link" href="#quick-ref">Quick Reference</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+<section class="doc-section" id="overview">
+<h2>StdLib &mdash; Standard Library</h2>
+<p>Essential utility functions for Plan9Basic programs. These core functions support program flow control, type checking, type conversion, object introspection, and regional format configuration. They work across all supported platforms.</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Functions</th><th>Description</th></tr></thead><tbody>
+<tr><td>Program Control</td><td>3</td><td>Pause execution, process system messages</td></tr>
+<tr><td>Type Checking</td><td>5</td><td>Detect NaN, infinity, null strings, nil pointers, sign</td></tr>
+<tr><td>Type Conversion</td><td>3</td><td>Convert between pointers and numbers</td></tr>
+<tr><td>Object Information</td><td>1</td><td>Get class name of objects</td></tr>
+<tr><td>Format Settings</td><td>2</td><td>Get/set regional format settings (dates, numbers, times)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="program-control">
+<h2>Program Control</h2>
+<p>Functions for managing program execution timing and system message processing.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>pause(seconds)</code></td><td><code>pause@n</code></td><td>Pause execution for n whole seconds</td></tr>
+<tr><td><code>processmessages()</code></td><td><code>processmessages@</code></td><td>Process all pending system messages</td></tr>
+<tr><td><code>handlemessage()</code></td><td><code>handlemessage@</code></td><td>Process a single pending system message</td></tr>
+</tbody></table></div>
+<h3>pause(seconds)</h3>
+<p>Pauses program execution for a specified number of <strong>whole seconds</strong>. Fractional values are truncated to the integer part. Returns 0.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">println</span> <span class="str">&quot;Starting...&quot;</span>
+<span class="fn">pause</span>(<span class="num">2</span>)              <span class="cmt">&#x27; Pause for 2 seconds</span>
+<span class="kw">println</span> <span class="str">&quot;2 seconds later...&quot;</span>
+
+<span class="fn">pause</span>(<span class="num">1</span>)              <span class="cmt">&#x27; Pause for 1 second</span>
+<span class="kw">println</span> <span class="str">&quot;Done!&quot;</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> The <code>pause()</code> function only accepts whole seconds. <code>pause(0.5)</code> is truncated to 0 and produces <strong>no delay</strong>. For sub-second timing, use Timer controls from the GUI library.</div>
+<div class="info-box"><strong>&#9432; Note:</strong> During a pause the program is blocked and will not respond to events. For responsive applications, use shorter pauses combined with <code>processmessages()</code>.</div>
+<h3>processmessages()</h3>
+<p>Processes <strong>all</strong> pending system messages, allowing the application to remain responsive during long operations. Returns 1.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Long operation with responsive UI</span>
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">1000000</span>
+    <span class="cmt">&#x27; Do some work...</span>
+    
+    <span class="cmt">&#x27; Process messages every 1000 iterations</span>
+    <span class="kw">if</span> i <span class="kw">mod</span> <span class="num">1000</span> = <span class="num">0</span> <span class="kw">then</span>
+        <span class="fn">processmessages</span>()
+    <span class="kw">endif</span>
+<span class="kw">next</span></pre></div></div>
+<p>Use cases: keeping the UI responsive during long calculations, allowing button clicks during loops, preventing &ldquo;application not responding&rdquo; states.</p>
+<h3>handlemessage()</h3>
+<p>Processes a <strong>single</strong> pending system message from the queue. Returns 1. Use when you need more granular control over message processing; <code>processmessages()</code> is generally preferred.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Process one message at a time for finer control</span>
+<span class="fn">handlemessage</span>()</pre></div></div>
+</section>
+
+<section class="doc-section" id="type-checking">
+<h2>Type Checking</h2>
+<p>Functions for detecting invalid or special values.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>isnan(n)</code></td><td><code>isnan@n</code></td><td>Is Not-a-Number? (1=yes, 0=no)</td></tr>
+<tr><td><code>isinfinite(n)</code></td><td><code>isinfinite@n</code></td><td>Is infinite? (1=yes, 0=no)</td></tr>
+<tr><td><code>isnull(s$)</code></td><td><code>isnull@$</code></td><td>Is string null/empty? (1=yes, 0=no)</td></tr>
+<tr><td><code>isassigned(p#)</code></td><td><code>isassigned@#</code></td><td>Is pointer assigned? (1=assigned, 0=nil)</td></tr>
+<tr><td><code>sign(n)</code></td><td><code>sign@n</code></td><td>Sign of number: -1, 0, or 1</td></tr>
+</tbody></table></div>
+<h3>isnan(n)</h3>
+<p>Tests whether a numeric value is &ldquo;Not a Number&rdquo; (NaN). Returns 1 if NaN, 0 if valid.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>a = <span class="num">0</span> / <span class="num">0</span>              <span class="cmt">&#x27; This might produce NaN</span>
+b = <span class="fn">sqr</span>(<span class="num">-1</span>)            <span class="cmt">&#x27; Square root of negative number</span>
+
+<span class="kw">if</span> <span class="fn">isnan</span>(a) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;a is not a number&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Safe calculation with NaN check</span>
+value = <span class="fn">someCalculation</span>()
+<span class="kw">if</span> <span class="fn">isnan</span>(value) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Calculation resulted in an invalid value&quot;</span>
+    value = <span class="num">0</span>          <span class="cmt">&#x27; Use default</span>
+<span class="kw">endif</span></pre></div></div>
+<p>Common NaN sources: division of 0 by 0, square root of negative numbers, logarithm of negative numbers, and other invalid mathematical operations.</p>
+<h3>isinfinite(n)</h3>
+<p>Tests whether a numeric value represents positive or negative infinity. Returns 1 if infinite, 0 if finite.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>a = <span class="num">1</span> / <span class="num">0</span>              <span class="cmt">&#x27; Division by zero produces infinity</span>
+b = <span class="num">-1</span> / <span class="num">0</span>             <span class="cmt">&#x27; Negative infinity</span>
+
+<span class="kw">if</span> <span class="fn">isinfinite</span>(a) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;a is infinite&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Validate calculation results</span>
+result = <span class="fn">someCalculation</span>()
+<span class="kw">if</span> <span class="fn">isinfinite</span>(result) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Result overflow - value is infinite&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<h3>isnull(s$)</h3>
+<p>Tests whether a string is null (empty or contains only the null character #0). Returns 1 if null, 0 if content exists.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>a$ = <span class="str">&quot;&quot;</span>
+b$ = <span class="str">&quot;Hello&quot;</span>
+
+<span class="kw">if</span> <span class="fn">isnull</span>(a$) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;a$ is null or empty&quot;</span>
+<span class="kw">endif</span>
+
+<span class="kw">if</span> <span class="fn">isnull</span>(b$) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;b$ has content: &quot;</span>; b$
+<span class="kw">endif</span></pre></div></div>
+<h3>isassigned(p#)</h3>
+<p>Tests whether a pointer is assigned (not nil). Returns <strong>1 if assigned</strong> (not nil), <strong>0 if nil</strong>.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>obj# = <span class="fn">createSomeObject</span>()
+
+<span class="kw">if</span> <span class="fn">isassigned</span>(obj#) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Object was created successfully&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Object creation failed (nil pointer)&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>isassigned()</code> returns 1 when the pointer <strong>IS</strong> valid (assigned). Think of it as &ldquo;is not nil&rdquo;. When the pointer is nil, it returns 0.</div>
+<h3>sign(n)</h3>
+<p>Returns the sign of a number: 1 if positive, 0 if zero, -1 if negative.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">println</span> <span class="fn">sign</span>(<span class="num">42</span>)       <span class="cmt">&#x27; Output: 1</span>
+<span class="kw">println</span> <span class="fn">sign</span>(<span class="num">0</span>)        <span class="cmt">&#x27; Output: 0</span>
+<span class="kw">println</span> <span class="fn">sign</span>(<span class="num">-17</span>)      <span class="cmt">&#x27; Output: -1</span>
+
+<span class="cmt">&#x27; Use sign to determine direction</span>
+velocity = <span class="num">-5</span>
+direction = <span class="fn">sign</span>(velocity)
+<span class="kw">if</span> direction = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Moving forward&quot;</span>
+<span class="kw">else</span> <span class="kw">if</span> direction = <span class="num">-1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Moving backward&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Stationary&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> This function is similar to <code>sgn()</code> in NumLib.</div>
+</section>
+
+<section class="doc-section" id="type-conversion">
+<h2>Type Conversion</h2>
+<p>Functions for converting between pointers and numeric values.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>number(p#)</code></td><td><code>number@#</code></td><td>Pointer &rarr; numeric address</td></tr>
+<tr><td><code>pointer#(n)</code></td><td><code>pointer#@n</code></td><td>Numeric address &rarr; pointer</td></tr>
+<tr><td><code>pnttonum(p#)</code></td><td><code>pnttonum@#</code></td><td>Pointer &rarr; numeric (nil-safe, returns 0 for nil)</td></tr>
+</tbody></table></div>
+<h3>number(p#)</h3>
+<p>Converts a pointer value to its numeric (integer) representation &mdash; the raw memory address.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>obj# = <span class="fn">createSomeObject</span>()
+addr = <span class="fn">number</span>(obj#)
+<span class="kw">println</span> <span class="str">&quot;Object address: &quot;</span>; addr</pre></div></div>
+<h3>pointer#(n)</h3>
+<p>Converts a numeric value to a pointer.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Store a pointer as a number and restore it</span>
+obj# = <span class="fn">createSomeObject</span>()
+addr = <span class="fn">number</span>(obj#)
+
+<span class="cmt">&#x27; Later, restore the pointer</span>
+restored# = <span class="fn">pointer#</span>(addr)</pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Use <code>pointer#()</code> with extreme caution. Creating pointers from arbitrary numbers can cause crashes or undefined behavior if the address is invalid.</div>
+<h3>pnttonum(p#)</h3>
+<p>Converts a pointer to a numeric value with nil checking. Returns 0 if the pointer is nil &mdash; safer than <code>number()</code>.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Safe nil check using pnttonum</span>
+obj# = <span class="fn">createSomeObject</span>()
+addr = <span class="fn">pnttonum</span>(obj#)
+
+<span class="kw">if</span> addr = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Pointer is nil&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Pointer address: &quot;</span>; addr
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>pnttonum()</code> is the recommended way to compare pointers to numbers. Direct pointer comparison in conditionals is not supported &mdash; always convert first.</div>
+</section>
+
+<section class="doc-section" id="object-info">
+<h2>Object Information</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>classname$(p#)</code></td><td><code>classname$@#</code></td><td>Get the class name of an object</td></tr>
+</tbody></table></div>
+<p>Returns the Delphi class name of the object referenced by a pointer. Useful for runtime type checking and debugging.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>obj# = <span class="fn">json_object#</span>()
+<span class="kw">println</span> <span class="str">&quot;Type: &quot;</span>; <span class="fn">classname$</span>(obj#)
+<span class="cmt">&#x27; Output: &quot;TJSONObject&quot;</span>
+
+<span class="cmt">&#x27; Use for runtime type checking</span>
+<span class="kw">if</span> <span class="fn">classname$</span>(obj#) = <span class="str">&quot;TStringList&quot;</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;It&#x27;s a string list&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="format-settings">
+<h2>Format Settings</h2>
+<p>Plan9Basic uses the system&rsquo;s regional settings for formatting dates, times, and numbers. These functions let you customize those settings at runtime.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>formatsettings(name$, value$)</code></td><td><code>formatsettings@$$</code></td><td>Set a format setting (returns 1=ok, 0=unknown)</td></tr>
+<tr><td><code>formatsettings$(name$)</code></td><td><code>formatsettings$@$</code></td><td>Get the current value of a format setting</td></tr>
+</tbody></table></div>
+<h3>Available Settings</h3>
+<div class="table-wrap"><table><thead><tr><th>Setting Name</th><th>Type</th><th>Description</th><th>Example Values</th></tr></thead><tbody>
+<tr><td><code>dateseparator</code></td><td>Char</td><td>Character separating date parts</td><td><code>/</code> &nbsp; <code>-</code> &nbsp; <code>.</code></td></tr>
+<tr><td><code>timeseparator</code></td><td>Char</td><td>Character separating time parts</td><td><code>:</code> &nbsp; <code>.</code></td></tr>
+<tr><td><code>decimalseparator</code></td><td>Char</td><td>Decimal point character</td><td><code>.</code> &nbsp; <code>,</code></td></tr>
+<tr><td><code>shortdateformat</code></td><td>String</td><td>Short date format pattern</td><td><code>MM/dd/yyyy</code></td></tr>
+<tr><td><code>longdateformat</code></td><td>String</td><td>Long date format pattern</td><td><code>MMMM d, yyyy</code></td></tr>
+<tr><td><code>shorttimeformat</code></td><td>String</td><td>Short time format pattern</td><td><code>HH:mm</code></td></tr>
+<tr><td><code>longtimeformat</code></td><td>String</td><td>Long time format pattern</td><td><code>HH:mm:ss</code></td></tr>
+<tr><td><code>timeamstring</code></td><td>String</td><td>AM indicator</td><td><code>AM</code></td></tr>
+<tr><td><code>timepmstring</code></td><td>String</td><td>PM indicator</td><td><code>PM</code></td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Get current settings</span>
+<span class="kw">println</span> <span class="str">&quot;Date separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;dateseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Decimal separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;decimalseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Short date format: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;shortdateformat&quot;</span>)
+
+<span class="cmt">&#x27; Change to European format</span>
+<span class="fn">formatsettings</span>(<span class="str">&quot;dateseparator&quot;</span>, <span class="str">&quot;.&quot;</span>)
+<span class="fn">formatsettings</span>(<span class="str">&quot;decimalseparator&quot;</span>, <span class="str">&quot;,&quot;</span>)
+<span class="fn">formatsettings</span>(<span class="str">&quot;shortdateformat&quot;</span>, <span class="str">&quot;dd.MM.yyyy&quot;</span>)
+
+<span class="kw">println</span> <span class="str">&quot;New date separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;dateseparator&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Safe Calculation with Validation</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; safe_calc.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Perform calculations with proper error checking</span>
+<span class="kw">function</span> <span class="fn">safeDivide</span>(a, b) <span class="kw">local</span> result
+    <span class="kw">if</span> b = <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Warning: Division by zero&quot;</span>
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    result = a / b
+    
+    <span class="kw">if</span> <span class="fn">isnan</span>(result) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Warning: Result is NaN&quot;</span>
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">if</span> <span class="fn">isinfinite</span>(result) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Warning: Result is infinite&quot;</span>
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">return</span> result
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">safeSqrt</span>(n) <span class="kw">local</span> result
+    <span class="kw">if</span> n &lt; <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Warning: Cannot take square root of negative number&quot;</span>
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    result = <span class="fn">sqr</span>(n)
+    
+    <span class="kw">if</span> <span class="fn">isnan</span>(result) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">return</span> result
+<span class="kw">endfunction</span>
+
+<span class="kw">println</span> <span class="str">&quot;=== Safe Calculation Demo ===&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="kw">println</span> <span class="str">&quot;10 / 2 = &quot;</span>; <span class="fn">safeDivide</span>(<span class="num">10</span>, <span class="num">2</span>)
+<span class="kw">println</span> <span class="str">&quot;10 / 0 = &quot;</span>; <span class="fn">safeDivide</span>(<span class="num">10</span>, <span class="num">0</span>)
+<span class="kw">println</span> <span class="str">&quot;sqrt(16) = &quot;</span>; <span class="fn">safeSqrt</span>(<span class="num">16</span>)
+<span class="kw">println</span> <span class="str">&quot;sqrt(-4) = &quot;</span>; <span class="fn">safeSqrt</span>(<span class="num">-4</span>)</pre></div></div>
+<h3>Progress Indicator with Responsive UI</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; progress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Simulate a long operation with progress updates</span>
+<span class="kw">println</span> <span class="str">&quot;=== Processing with Progress ===&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+total = <span class="num">100</span>
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> total
+    <span class="cmt">&#x27; Simulate work</span>
+    <span class="fn">processmessages</span>()
+    
+    <span class="cmt">&#x27; Update progress every 10%</span>
+    <span class="kw">if</span> i <span class="kw">mod</span> <span class="num">10</span> = <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Progress: &quot;</span>; i; <span class="str">&quot;%&quot;</span>
+        <span class="fn">pause</span>(<span class="num">1</span>)
+    <span class="kw">endif</span>
+<span class="kw">next</span>
+
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Processing complete!&quot;</span></pre></div></div>
+<h3>Responsive Countdown Timer</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; countdown.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Simple countdown timer</span>
+<span class="kw">function</span> <span class="fn">countdown</span>(seconds) <span class="kw">local</span> i
+    <span class="kw">println</span> <span class="str">&quot;Countdown starting from &quot;</span>; seconds; <span class="str">&quot; seconds...&quot;</span>
+    <span class="kw">println</span> <span class="str">&quot;&quot;</span>
+    
+    <span class="kw">for</span> i = seconds <span class="kw">to</span> <span class="num">1</span> <span class="kw">step</span> <span class="num">-1</span>
+        <span class="kw">println</span> i; <span class="str">&quot;...&quot;</span>
+        <span class="fn">pause</span>(<span class="num">1</span>)
+        <span class="fn">processmessages</span>()
+    <span class="kw">next</span>
+    
+    <span class="kw">println</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">println</span> <span class="str">&quot;Time&#x27;s up!&quot;</span>
+    <span class="kw">return</span> <span class="num">0</span>
+<span class="kw">endfunction</span>
+
+<span class="fn">countdown</span>(<span class="num">5</span>)</pre></div></div>
+<h3>Regional Format Configuration</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; format_settings.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Configure and display format settings</span>
+<span class="kw">println</span> <span class="str">&quot;=== Format Settings Demo ===&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="cmt">&#x27; Display current settings</span>
+<span class="kw">println</span> <span class="str">&quot;Current Settings:&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;  Date separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;dateseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  Time separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;timeseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  Decimal separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;decimalseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  Short date format: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;shortdateformat&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  AM string: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;timeamstring&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  PM string: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;timepmstring&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="cmt">&#x27; Switch to European format</span>
+<span class="kw">println</span> <span class="str">&quot;Switching to European format...&quot;</span>
+<span class="fn">formatsettings</span>(<span class="str">&quot;dateseparator&quot;</span>, <span class="str">&quot;.&quot;</span>)
+<span class="fn">formatsettings</span>(<span class="str">&quot;shortdateformat&quot;</span>, <span class="str">&quot;dd.MM.yyyy&quot;</span>)
+<span class="fn">formatsettings</span>(<span class="str">&quot;decimalseparator&quot;</span>, <span class="str">&quot;,&quot;</span>)
+
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;New Settings:&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;  Date separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;dateseparator&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  Short date format: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;shortdateformat&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;  Decimal separator: &quot;</span>; <span class="fn">formatsettings$</span>(<span class="str">&quot;decimalseparator&quot;</span>)</pre></div></div>
+<h3>Value Validation Utility</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; validate.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Comprehensive value validation</span>
+<span class="kw">function</span> <span class="fn">validateNumber</span>(value) <span class="kw">local</span> valid
+    valid = <span class="num">1</span>
+    
+    <span class="kw">if</span> <span class="fn">isnan</span>(value) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;  - Value is NaN&quot;</span>
+        valid = <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">if</span> <span class="fn">isinfinite</span>(value) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;  - Value is infinite&quot;</span>
+        valid = <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">return</span> valid
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">validateString</span>(value$) <span class="kw">local</span> valid
+    valid = <span class="num">1</span>
+    
+    <span class="kw">if</span> <span class="fn">isnull</span>(value$) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;  - String is null or empty&quot;</span>
+        valid = <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">return</span> valid
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">validatePointer</span>(value#) <span class="kw">local</span> valid
+    valid = <span class="num">1</span>
+    
+    <span class="kw">if</span> <span class="fn">isassigned</span>(value#) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;  - Pointer is nil&quot;</span>
+        valid = <span class="num">0</span>
+    <span class="kw">endif</span>
+    
+    <span class="kw">return</span> valid
+<span class="kw">endfunction</span>
+
+<span class="kw">println</span> <span class="str">&quot;=== Value Validation Demo ===&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="kw">println</span> <span class="str">&quot;Validating 42:&quot;</span>
+<span class="fn">validateNumber</span>(<span class="num">42</span>)
+
+<span class="kw">println</span> <span class="str">&quot;Validating 0/0:&quot;</span>
+<span class="fn">validateNumber</span>(<span class="num">0</span>/<span class="num">0</span>)
+
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="kw">println</span> <span class="str">&quot;Validating &#x27;Hello&#x27;:&quot;</span>
+<span class="fn">validateString</span>(<span class="str">&quot;Hello&quot;</span>)
+
+<span class="kw">println</span> <span class="str">&quot;Validating &#x27;&#x27;:&quot;</span>
+<span class="fn">validateString</span>(<span class="str">&quot;&quot;</span>)</pre></div></div>
+<h3>Number Sign Analysis</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; sign_analysis.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Analyze the sign of numbers</span>
+<span class="kw">println</span> <span class="str">&quot;=== Number Sign Analysis ===&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="kw">for</span> i = <span class="num">-3</span> <span class="kw">to</span> <span class="num">3</span>
+    s = <span class="fn">sign</span>(i)
+    
+    <span class="kw">print</span> i; <span class="str">&quot; is &quot;</span>;
+    
+    <span class="kw">if</span> s = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;positive&quot;</span>
+    <span class="kw">else</span> <span class="kw">if</span> s = <span class="num">-1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;negative&quot;</span>
+    <span class="kw">else</span>
+        <span class="kw">println</span> <span class="str">&quot;zero&quot;</span>
+    <span class="kw">endif</span>
+<span class="kw">next</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="best-practices">
+<h2>Best Practices</h2>
+<h3>Pause Limitations</h3>
+<div class="table-wrap"><table><thead><tr><th>Call</th><th>Result</th></tr></thead><tbody>
+<tr><td><code>pause(1)</code></td><td>Pauses 1 second &check;</td></tr>
+<tr><td><code>pause(2)</code></td><td>Pauses 2 seconds &check;</td></tr>
+<tr><td><code>pause(0.5)</code></td><td>Truncated to 0 &mdash; <strong>no pause</strong> &cross;</td></tr>
+<tr><td><code>pause(1.9)</code></td><td>Truncated to 1 second</td></tr>
+</tbody></table></div>
+<p>For sub-second timing or animations, use Timer controls from the GUI library instead.</p>
+<h3>Pause and Responsiveness</h3>
+<p>When using <code>pause()</code> for extended periods, break it into smaller chunks:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Instead of:</span>
+<span class="fn">pause</span>(<span class="num">10</span>)  <span class="cmt">&#x27; UI frozen for 10 seconds</span>
+
+<span class="cmt">&#x27; Use:</span>
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">10</span>
+    <span class="fn">pause</span>(<span class="num">1</span>)
+    <span class="fn">processmessages</span>()
+<span class="kw">next</span></pre></div></div>
+<h3>Checking for Invalid Values</h3>
+<p>Always validate calculation results that might produce special values:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>result = <span class="fn">someCalculation</span>()
+<span class="kw">if</span> <span class="fn">isnan</span>(result) = <span class="num">1</span> <span class="kw">or</span> <span class="fn">isinfinite</span>(result) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="cmt">&#x27; Handle error</span>
+    result = <span class="num">0</span>
+<span class="kw">endif</span></pre></div></div>
+<h3>Pointer Safety</h3>
+<p>Always check for nil before using a pointer:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>obj# = <span class="fn">getObject</span>()
+<span class="kw">if</span> <span class="fn">isassigned</span>(obj#) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="cmt">&#x27; Safe to use obj#</span>
+    <span class="kw">println</span> <span class="fn">classname$</span>(obj#)
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Object is nil&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>pause(seconds)</code></td><td><code>pause@n</code></td><td>Pause execution (whole seconds only)</td></tr>
+<tr><td><code>processmessages()</code></td><td><code>processmessages@</code></td><td>Process all pending system messages</td></tr>
+<tr><td><code>handlemessage()</code></td><td><code>handlemessage@</code></td><td>Process single system message</td></tr>
+<tr><td><code>isnan(n)</code></td><td><code>isnan@n</code></td><td>Is Not-a-Number? (1=yes, 0=no)</td></tr>
+<tr><td><code>isinfinite(n)</code></td><td><code>isinfinite@n</code></td><td>Is infinite? (1=yes, 0=no)</td></tr>
+<tr><td><code>isnull(s$)</code></td><td><code>isnull@$</code></td><td>Is string null/empty? (1=yes, 0=no)</td></tr>
+<tr><td><code>isassigned(p#)</code></td><td><code>isassigned@#</code></td><td>Is pointer assigned? (1=yes, 0=nil)</td></tr>
+<tr><td><code>sign(n)</code></td><td><code>sign@n</code></td><td>Sign: -1, 0, or 1</td></tr>
+<tr><td><code>number(p#)</code></td><td><code>number@#</code></td><td>Pointer &rarr; numeric address</td></tr>
+<tr><td><code>pointer#(n)</code></td><td><code>pointer#@n</code></td><td>Numeric address &rarr; pointer</td></tr>
+<tr><td><code>pnttonum(p#)</code></td><td><code>pnttonum@#</code></td><td>Pointer &rarr; numeric (nil-safe)</td></tr>
+<tr><td><code>classname$(p#)</code></td><td><code>classname$@#</code></td><td>Class name of object</td></tr>
+<tr><td><code>formatsettings(name$, val$)</code></td><td><code>formatsettings@$$</code></td><td>Set format setting (1/0)</td></tr>
+<tr><td><code>formatsettings$(name$)</code></td><td><code>formatsettings$@$</code></td><td>Get format setting</td></tr>
+</tbody></table></div>
+<p><em>14 functions total across 5 categories.</em></p>
+</section>
+</main>
+</div>
+
+<script>
+// Theme
+const themes=['green','amber','blue','pink','white'];
+let ti=0;
+function cycleTheme(){
+  ti=(ti+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[ti]);
+  document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
+  localStorage.setItem('p9t',themes[ti]);
+}
+const st=localStorage.getItem('p9t');
+if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
+
+// Sidebar toggle (mobile)
+const sidebar=document.getElementById('sidebar');
+const overlay=document.getElementById('sidebarOverlay');
+const toggle=document.getElementById('sidebarToggle');
+toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+
+// Active sidebar link on scroll
+const sections=document.querySelectorAll('.doc-section');
+const sidebarLinks=document.querySelectorAll('.sidebar-link');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      sidebarLinks.forEach(l=>l.classList.remove('active'));
+      const active=document.querySelector('.sidebar-link[href="#'+e.target.id+'"]');
+      if(active)active.classList.add('active');
+    }
+  });
+},{threshold:0.1,rootMargin:'-80px 0px -60% 0px'});
+sections.forEach(s=>observer.observe(s));
+
+// Close sidebar on link click (mobile)
+sidebarLinks.forEach(l=>l.addEventListener('click',()=>{
+  if(window.innerWidth<=768){sidebar.classList.remove('open');overlay.classList.remove('show');}
+}));
+</script>
+</body>
+</html>

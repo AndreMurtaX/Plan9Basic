@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CircleLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic CircleLib: 81 functions for circle shapes with fill/stroke styling, opacity, rotation, and mouse events for indicators, buttons, and animations.">
+<link rel="icon" type="image/png" href="../../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="../../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">CircleLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">81 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+    <a href="#constants" class="sidebar-link">Numeric Values</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Core</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#fill" class="sidebar-link">Fill</a>
+    <a href="#stroke" class="sidebar-link">Stroke</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Layout</div>
+    <a href="#position" class="sidebar-link">Position &amp; Size</a>
+    <a href="#alignment" class="sidebar-link">Alignment &amp; Margins</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">State</div>
+    <a href="#visibility" class="sidebar-link">Visibility &amp; State</a>
+    <a href="#tag" class="sidebar-link">Tag, Rotation &amp; Parent</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Events</div>
+    <a href="#events" class="sidebar-link">Events</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#comparison" class="sidebar-link">Circle vs Ellipse vs Arc</a>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>CircleLib &mdash; Circle Shape Library</h2>
+<p>Circle shapes for indicators, avatars, buttons, badges, loading dots, traffic lights, and data visualization. Circle is a special case of Ellipse where width equals height. Features fill/stroke styling, opacity, rotation, and a complete mouse event system. <strong>81 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>circle_error, errormsg$, strerror$, clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>4</td><td>circle# (3 overloads), circle_free</td></tr>
+<tr><td>Fill</td><td>3</td><td>fill$ (get), fill# (set), fillnone#</td></tr>
+<tr><td>Stroke</td><td>11</td><td>stroke$ / stroke# / strokenone#, thickness, dash, cap, join (get/set)</td></tr>
+<tr><td>Position &amp; Size</td><td>14</td><td>x, y, width, height (get/set), bounds#, move#, size#</td></tr>
+<tr><td>Alignment &amp; Margins</td><td>12</td><td>align (get/set), margin#, margins#, marginleft/top/right/bottom (get/set)</td></tr>
+<tr><td>Visibility &amp; State</td><td>8</td><td>visible, enabled, opacity, hittest (get/set)</td></tr>
+<tr><td>Tag, Rotation &amp; Parent</td><td>8</td><td>tag, rotation (get/set), parent# (get/set), bringtofront#, sendtoback#, invalidate#</td></tr>
+<tr><td>Events</td><td>19</td><td>9 event types &times; set/get + clearcallbacks#</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr> -->
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_error()</code></td><td><code>circle_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>circle_errormsg$()</code></td><td><code>circle_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>circle_strerror$(code)</code></td><td><code>circle_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>circle_clearerror()</code></td><td><code>circle_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="constants">
+<h2>Numeric Values Reference</h2>
+<h3>Control Alignment <code>circle_align#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>None (absolute positioning)</td></tr>
+<tr><td>1</td><td>Top</td></tr>
+<tr><td>2</td><td>Left</td></tr>
+<tr><td>3</td><td>Right</td></tr>
+<tr><td>4</td><td>Bottom</td></tr>
+<tr><td>9</td><td>Client (fill parent)</td></tr>
+</tbody></table></div>
+<h3>Stroke Dash Style <code>circle_strokedash#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Style</th></tr></thead><tbody>
+<tr><td>0</td><td>Solid</td></tr>
+<tr><td>1</td><td>Dash</td></tr>
+<tr><td>2</td><td>Dot</td></tr>
+<tr><td>3</td><td>DashDot</td></tr>
+<tr><td>4</td><td>DashDotDot</td></tr>
+</tbody></table></div>
+<h3>Stroke Cap Style <code>circle_strokecap#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Style</th></tr></thead><tbody>
+<tr><td>0</td><td>Flat</td></tr>
+<tr><td>1</td><td>Round</td></tr>
+</tbody></table></div>
+<h3>Stroke Join Style <code>circle_strokejoin#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Style</th></tr></thead><tbody>
+<tr><td>0</td><td>Miter</td></tr>
+<tr><td>1</td><td>Round</td></tr>
+<tr><td>2</td><td>Bevel</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle#(parent#)</code></td><td><code>circle#@#</code></td><td>Create with default size</td></tr>
+<tr><td><code>circle#(parent#, w, h)</code></td><td><code>circle#@#nn</code></td><td>Create with specified size</td></tr>
+<tr><td><code>circle#(parent#, x, y, w, h)</code></td><td><code>circle#@#nnnn</code></td><td>Create with position and size</td></tr>
+<tr><td><code>circle_free(c#)</code></td><td><code>circle_free@#</code></td><td>Destroy circle shape</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Perfect circle: width = height</span>
+<span class="kw">let</span> c# = <span class="fn">circle#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">80</span>)
+<span class="fn">circle_fill#</span>(c#, <span class="str">&quot;#e74c3c&quot;</span>)
+<span class="fn">circle_strokenone#</span>(c#)
+
+<span class="cmt">&#x27; Ring (outline only)</span>
+<span class="kw">let</span> ring# = <span class="fn">circle#</span>(frm#, <span class="num">150</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">80</span>)
+<span class="fn">circle_fillnone#</span>(ring#)
+<span class="fn">circle_stroke#</span>(ring#, <span class="str">&quot;#27ae60&quot;</span>)
+<span class="fn">circle_strokethickness#</span>(ring#, <span class="num">4</span>)</pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> For a <strong>true circle</strong>, always use equal width and height. If width &ne; height, the shape will render as an <strong>ellipse</strong>. Use EllipseLib if you intentionally want non-uniform dimensions.</div>
+</section>
+
+<section class="doc-section" id="fill">
+<h2>Fill Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_fill$(c#)</code></td><td><code>circle_fill$@#</code></td><td>Get fill color as hex string</td></tr>
+<tr><td><code>circle_fill#(c#, color$)</code></td><td><code>circle_fill#@#$</code></td><td>Set fill color ("#RRGGBB" or "#AARRGGBB")</td></tr>
+<tr><td><code>circle_fillnone#(c#)</code></td><td><code>circle_fillnone#@#</code></td><td>Remove fill (transparent body)</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Pattern</th><th>Fill</th><th>Stroke</th><th>Use Case</th></tr></thead><tbody>
+<tr><td>Solid circle</td><td><code>circle_fill#(c#, color$)</code></td><td><code>circle_strokenone#(c#)</code></td><td>Status indicators, dots, badges</td></tr>
+<tr><td>Bordered circle</td><td><code>circle_fill#(c#, color$)</code></td><td><code>circle_stroke#(c#, color$)</code></td><td>Avatars, buttons, decorations</td></tr>
+<tr><td>Ring (hollow)</td><td><code>circle_fillnone#(c#)</code></td><td><code>circle_stroke#(c#, color$)</code></td><td>Rings, progress arcs, outlines</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Use <code>#AARRGGBB</code> format for semi-transparent fills. Alpha ranges from 00 (fully transparent) to FF (fully opaque).</div>
+</section>
+
+<section class="doc-section" id="stroke">
+<h2>Stroke Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_stroke$(c#)</code></td><td><code>circle_stroke$@#</code></td><td>Get stroke color</td></tr>
+<tr><td><code>circle_stroke#(c#, color$)</code></td><td><code>circle_stroke#@#$</code></td><td>Set stroke color</td></tr>
+<tr><td><code>circle_strokenone#(c#)</code></td><td><code>circle_strokenone#@#</code></td><td>Remove stroke (no border)</td></tr>
+<tr><td><code>circle_strokethickness(c#)</code></td><td><code>circle_strokethickness@#</code></td><td>Get stroke thickness</td></tr>
+<tr><td><code>circle_strokethickness#(c#, n)</code></td><td><code>circle_strokethickness#@#n</code></td><td>Set stroke thickness</td></tr>
+<tr><td><code>circle_strokedash(c#)</code></td><td><code>circle_strokedash@#</code></td><td>Get dash style (0&ndash;4)</td></tr>
+<tr><td><code>circle_strokedash#(c#, n)</code></td><td><code>circle_strokedash#@#n</code></td><td>Set dash style</td></tr>
+<tr><td><code>circle_strokecap(c#)</code></td><td><code>circle_strokecap@#</code></td><td>Get cap style (0=Flat, 1=Round)</td></tr>
+<tr><td><code>circle_strokecap#(c#, n)</code></td><td><code>circle_strokecap#@#n</code></td><td>Set cap style</td></tr>
+<tr><td><code>circle_strokejoin(c#)</code></td><td><code>circle_strokejoin@#</code></td><td>Get join style (0=Miter, 1=Round, 2=Bevel)</td></tr>
+<tr><td><code>circle_strokejoin#(c#, n)</code></td><td><code>circle_strokejoin#@#n</code></td><td>Set join style</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="position">
+<h2>Position &amp; Size</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_x(c#)</code></td><td><code>circle_x@#</code></td><td>Get X position</td></tr>
+<tr><td><code>circle_x#(c#, x)</code></td><td><code>circle_x#@#n</code></td><td>Set X position</td></tr>
+<tr><td><code>circle_y(c#)</code></td><td><code>circle_y@#</code></td><td>Get Y position</td></tr>
+<tr><td><code>circle_y#(c#, y)</code></td><td><code>circle_y#@#n</code></td><td>Set Y position</td></tr>
+<tr><td><code>circle_width(c#)</code></td><td><code>circle_width@#</code></td><td>Get width</td></tr>
+<tr><td><code>circle_width#(c#, w)</code></td><td><code>circle_width#@#n</code></td><td>Set width</td></tr>
+<tr><td><code>circle_height(c#)</code></td><td><code>circle_height@#</code></td><td>Get height</td></tr>
+<tr><td><code>circle_height#(c#, h)</code></td><td><code>circle_height#@#n</code></td><td>Set height</td></tr>
+<tr><td><code>circle_bounds#(c#, x, y, w, h)</code></td><td><code>circle_bounds#@#nnnn</code></td><td>Set position and size</td></tr>
+<tr><td><code>circle_move#(c#, x, y)</code></td><td><code>circle_move#@#nn</code></td><td>Set position only</td></tr>
+<tr><td><code>circle_size#(c#, w, h)</code></td><td><code>circle_size#@#nn</code></td><td>Set size only</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> The X/Y coordinates specify the <strong>top-left corner of the bounding box</strong>, not the center. A circle at (50, 50) with size (80, 80) has its center at (90, 90).</div>
+</section>
+
+<section class="doc-section" id="alignment">
+<h2>Alignment &amp; Margins</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_align(c#)</code></td><td><code>circle_align@#</code></td><td>Get alignment</td></tr>
+<tr><td><code>circle_align#(c#, n)</code></td><td><code>circle_align#@#n</code></td><td>Set alignment</td></tr>
+<tr><td><code>circle_margin#(c#, n)</code></td><td><code>circle_margin#@#n</code></td><td>Set uniform margin on all four sides</td></tr>
+<tr><td><code>circle_margins#(c#, l, t, r, b)</code></td><td><code>circle_margins#@#nnnn</code></td><td>Set individual margins</td></tr>
+<tr><td><code>circle_marginleft(c#)</code></td><td><code>circle_marginleft@#</code></td><td>Get left margin</td></tr>
+<tr><td><code>circle_marginleft#(c#, n)</code></td><td><code>circle_marginleft#@#n</code></td><td>Set left margin</td></tr>
+<tr><td><code>circle_margintop(c#)</code></td><td><code>circle_margintop@#</code></td><td>Get top margin</td></tr>
+<tr><td><code>circle_margintop#(c#, n)</code></td><td><code>circle_margintop#@#n</code></td><td>Set top margin</td></tr>
+<tr><td><code>circle_marginright(c#)</code></td><td><code>circle_marginright@#</code></td><td>Get right margin</td></tr>
+<tr><td><code>circle_marginright#(c#, n)</code></td><td><code>circle_marginright#@#n</code></td><td>Set right margin</td></tr>
+<tr><td><code>circle_marginbottom(c#)</code></td><td><code>circle_marginbottom@#</code></td><td>Get bottom margin</td></tr>
+<tr><td><code>circle_marginbottom#(c#, n)</code></td><td><code>circle_marginbottom#@#n</code></td><td>Set bottom margin</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="visibility">
+<h2>Visibility &amp; State</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_visible(c#)</code></td><td><code>circle_visible@#</code></td><td>Get visibility (0/1)</td></tr>
+<tr><td><code>circle_visible#(c#, n)</code></td><td><code>circle_visible#@#n</code></td><td>Set visibility</td></tr>
+<tr><td><code>circle_enabled(c#)</code></td><td><code>circle_enabled@#</code></td><td>Get enabled state (0/1)</td></tr>
+<tr><td><code>circle_enabled#(c#, n)</code></td><td><code>circle_enabled#@#n</code></td><td>Set enabled state</td></tr>
+<tr><td><code>circle_opacity(c#)</code></td><td><code>circle_opacity@#</code></td><td>Get opacity (0.0&ndash;1.0)</td></tr>
+<tr><td><code>circle_opacity#(c#, n)</code></td><td><code>circle_opacity#@#n</code></td><td>Set opacity</td></tr>
+<tr><td><code>circle_hittest(c#)</code></td><td><code>circle_hittest@#</code></td><td>Get hit-test state (0/1)</td></tr>
+<tr><td><code>circle_hittest#(c#, n)</code></td><td><code>circle_hittest#@#n</code></td><td>Enable/disable mouse hit testing</td></tr>
+</tbody></table></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Set <code>circle_hittest#(c#, 1)</code> before assigning mouse event handlers. Without hit testing, the shape will not receive mouse events.</div>
+</section>
+
+<section class="doc-section" id="tag">
+<h2>Tag, Rotation &amp; Parent</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_tag(c#)</code></td><td><code>circle_tag@#</code></td><td>Get user-defined integer tag</td></tr>
+<tr><td><code>circle_tag#(c#, n)</code></td><td><code>circle_tag#@#n</code></td><td>Set user-defined integer tag</td></tr>
+<tr><td><code>circle_rotation(c#)</code></td><td><code>circle_rotation@#</code></td><td>Get rotation angle in degrees</td></tr>
+<tr><td><code>circle_rotation#(c#, angle)</code></td><td><code>circle_rotation#@#n</code></td><td>Set rotation angle</td></tr>
+<tr><td><code>circle_parent#(c#)</code></td><td><code>circle_parent#@#</code></td><td>Get parent control pointer</td></tr>
+<tr><td><code>circle_parent#(c#, parent#)</code></td><td><code>circle_parent#@##</code></td><td>Move to a different parent</td></tr>
+<tr><td><code>circle_bringtofront#(c#)</code></td><td><code>circle_bringtofront#@#</code></td><td>Bring to front of Z-order</td></tr>
+<tr><td><code>circle_sendtoback#(c#)</code></td><td><code>circle_sendtoback#@#</code></td><td>Send to back of Z-order</td></tr>
+<tr><td><code>circle_invalidate#(c#)</code></td><td><code>circle_invalidate#@#</code></td><td>Force the shape to redraw</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Rotation has no visible effect on a perfect circle, but it does affect the coordinate system if child controls are present.</div>
+</section>
+
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> (<code>circle_onXXX#</code>) and a <strong>getter</strong> (<code>circle_onXXX$</code>). Use <code>circle_clearcallbacks#(c#)</code> to disconnect all callbacks at once.</p>
+<h3>Mouse Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>circle_onclick#(c#, func$)</code></td><td><code>circle_onclick$(c#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>circle_ondblclick#(c#, func$)</code></td><td><code>circle_ondblclick$(c#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>circle_onmousedown#(c#, func$)</code></td><td><code>circle_onmousedown$(c#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>circle_onmouseup#(c#, func$)</code></td><td><code>circle_onmouseup$(c#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>circle_onmousemove#(c#, func$)</code></td><td><code>circle_onmousemove$(c#)</code></td><td><code>function name(sender#, x, y, shift$)</code></td></tr>
+<tr><td><code>circle_onmouseenter#(c#, func$)</code></td><td><code>circle_onmouseenter$(c#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>circle_onmouseleave#(c#, func$)</code></td><td><code>circle_onmouseleave$(c#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>circle_onmousewheel#(c#, func$)</code></td><td><code>circle_onmousewheel$(c#)</code></td><td><code>function name(sender#, delta)</code></td></tr>
+</tbody></table></div>
+<h3>Other Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>circle_onresize#(c#, func$)</code></td><td><code>circle_onresize$(c#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>circle_clearcallbacks#(c#)</code></td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="comparison">
+<h2>Circle vs Ellipse vs Arc vs Pie</h2>
+<div class="table-wrap"><table><thead><tr><th>Shape</th><th>Library</th><th>Key Difference</th><th>Best For</th></tr></thead><tbody>
+<tr><td>Circle</td><td>CircleLib</td><td>Width = Height for true circle</td><td>Status indicators, avatars, dots, buttons</td></tr>
+<tr><td>Ellipse</td><td>EllipseLib</td><td>Width &ne; Height supported</td><td>Ovals, decorative shapes</td></tr>
+<tr><td>Arc</td><td>ArcLib</td><td>Partial circle (start/end angles)</td><td>Progress rings, gauges, dials</td></tr>
+<tr><td>Pie</td><td>PieLib</td><td>Wedge shape (filled sector)</td><td>Charts, progress, segmented displays</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Status Indicators</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; status.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Status&quot;</span>, <span class="num">300</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="cmt">&#x27; Online indicator (green)</span>
+<span class="kw">let</span> indOn# = <span class="fn">circle#</span>(frm#, <span class="num">30</span>, <span class="num">30</span>, <span class="num">20</span>, <span class="num">20</span>)
+<span class="fn">circle_fill#</span>(indOn#, <span class="str">&quot;#27ae60&quot;</span>)
+<span class="fn">circle_strokenone#</span>(indOn#)
+
+<span class="kw">let</span> lblOn# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Online&quot;</span>)
+<span class="fn">label_move#</span>(lblOn#, <span class="num">60</span>, <span class="num">33</span>)
+
+<span class="cmt">&#x27; Away indicator (yellow)</span>
+<span class="kw">let</span> indAway# = <span class="fn">circle#</span>(frm#, <span class="num">30</span>, <span class="num">60</span>, <span class="num">20</span>, <span class="num">20</span>)
+<span class="fn">circle_fill#</span>(indAway#, <span class="str">&quot;#f1c40f&quot;</span>)
+<span class="fn">circle_strokenone#</span>(indAway#)
+
+<span class="kw">let</span> lblAway# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Away&quot;</span>)
+<span class="fn">label_move#</span>(lblAway#, <span class="num">60</span>, <span class="num">63</span>)
+
+<span class="cmt">&#x27; Offline indicator (gray)</span>
+<span class="kw">let</span> indOff# = <span class="fn">circle#</span>(frm#, <span class="num">30</span>, <span class="num">90</span>, <span class="num">20</span>, <span class="num">20</span>)
+<span class="fn">circle_fill#</span>(indOff#, <span class="str">&quot;#95a5a6&quot;</span>)
+<span class="fn">circle_strokenone#</span>(indOff#)
+
+<span class="kw">let</span> lblOff# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Offline&quot;</span>)
+<span class="fn">label_move#</span>(lblOff#, <span class="num">60</span>, <span class="num">93</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Traffic Light</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; traffic.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Traffic Light&quot;</span>, <span class="num">150</span>, <span class="num">350</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> state = <span class="num">1</span>
+
+<span class="cmt">&#x27; Background</span>
+<span class="kw">let</span> bg# = <span class="fn">roundrect#</span>(frm#, <span class="num">35</span>, <span class="num">20</span>, <span class="num">80</span>, <span class="num">220</span>)
+<span class="fn">roundrect_fill#</span>(bg#, <span class="str">&quot;#2c3e50&quot;</span>)
+<span class="fn">roundrect_corners#</span>(bg#, <span class="num">10</span>)
+
+<span class="cmt">&#x27; Red light (starts active)</span>
+<span class="kw">let</span> red# = <span class="fn">circle#</span>(frm#, <span class="num">45</span>, <span class="num">30</span>, <span class="num">60</span>, <span class="num">60</span>)
+<span class="fn">circle_fill#</span>(red#, <span class="str">&quot;#c0392b&quot;</span>)
+<span class="fn">circle_stroke#</span>(red#, <span class="str">&quot;#922b21&quot;</span>)
+<span class="fn">circle_strokethickness#</span>(red#, <span class="num">2</span>)
+
+<span class="cmt">&#x27; Yellow light</span>
+<span class="kw">let</span> yellow# = <span class="fn">circle#</span>(frm#, <span class="num">45</span>, <span class="num">100</span>, <span class="num">60</span>, <span class="num">60</span>)
+<span class="fn">circle_fill#</span>(yellow#, <span class="str">&quot;#7f8c8d&quot;</span>)
+<span class="fn">circle_stroke#</span>(yellow#, <span class="str">&quot;#5d6d7e&quot;</span>)
+<span class="fn">circle_strokethickness#</span>(yellow#, <span class="num">2</span>)
+
+<span class="cmt">&#x27; Green light</span>
+<span class="kw">let</span> green# = <span class="fn">circle#</span>(frm#, <span class="num">45</span>, <span class="num">170</span>, <span class="num">60</span>, <span class="num">60</span>)
+<span class="fn">circle_fill#</span>(green#, <span class="str">&quot;#7f8c8d&quot;</span>)
+<span class="fn">circle_stroke#</span>(green#, <span class="str">&quot;#5d6d7e&quot;</span>)
+<span class="fn">circle_strokethickness#</span>(green#, <span class="num">2</span>)
+
+<span class="kw">let</span> btnNext# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Next&quot;</span>)
+<span class="fn">button_bounds#</span>(btnNext#, <span class="num">35</span>, <span class="num">270</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btnNext#, <span class="str">&quot;OnNext&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnNext</span>(sender#)
+    <span class="cmt">&#x27; Reset all to gray</span>
+    <span class="fn">circle_fill#</span>(red#, <span class="str">&quot;#7f8c8d&quot;</span>)
+    <span class="fn">circle_fill#</span>(yellow#, <span class="str">&quot;#7f8c8d&quot;</span>)
+    <span class="fn">circle_fill#</span>(green#, <span class="str">&quot;#7f8c8d&quot;</span>)
+
+    state = state + <span class="num">1</span>
+    <span class="kw">if</span> state &gt; <span class="num">3</span> <span class="kw">then</span> state = <span class="num">1</span>
+
+    <span class="cmt">&#x27; Activate current light</span>
+    <span class="kw">if</span> state = <span class="num">1</span> <span class="kw">then</span>
+        <span class="fn">circle_fill#</span>(red#, <span class="str">&quot;#c0392b&quot;</span>)
+    <span class="kw">elseif</span> state = <span class="num">2</span> <span class="kw">then</span>
+        <span class="fn">circle_fill#</span>(yellow#, <span class="str">&quot;#f1c40f&quot;</span>)
+    <span class="kw">elseif</span> state = <span class="num">3</span> <span class="kw">then</span>
+        <span class="fn">circle_fill#</span>(green#, <span class="str">&quot;#27ae60&quot;</span>)
+    <span class="kw">endif</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Clickable Color Buttons</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; buttons.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Circle Buttons&quot;</span>, <span class="num">400</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+colors# = <span class="fn">sdim#</span>(<span class="num">4</span>)
+colors#$[<span class="num">1</span>] = <span class="str">&quot;#e74c3c&quot;</span> : colors#$[<span class="num">2</span>] = <span class="str">&quot;#3498db&quot;</span>
+colors#$[<span class="num">3</span>] = <span class="str">&quot;#2ecc71&quot;</span> : colors#$[<span class="num">4</span>] = <span class="str">&quot;#9b59b6&quot;</span>
+
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">4</span>
+    <span class="kw">let</span> c# = <span class="fn">circle#</span>(frm#, <span class="num">30</span> + i * <span class="num">80</span>, <span class="num">30</span>, <span class="num">60</span>, <span class="num">60</span>)
+    <span class="fn">circle_fill#</span>(c#, colors#$[i])
+    <span class="fn">circle_strokenone#</span>(c#)
+    <span class="fn">circle_hittest#</span>(c#, <span class="num">1</span>)
+    <span class="fn">circle_tag#</span>(c#, i)
+    <span class="fn">circle_onclick#</span>(c#, <span class="str">&quot;OnCircleClick&quot;</span>)
+    <span class="fn">circle_onmouseenter#</span>(c#, <span class="str">&quot;OnEnter&quot;</span>)
+    <span class="fn">circle_onmouseleave#</span>(c#, <span class="str">&quot;OnLeave&quot;</span>)
+<span class="kw">next</span>
+
+<span class="kw">let</span> lblSel# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Click a circle&quot;</span>)
+<span class="fn">label_move#</span>(lblSel#, <span class="num">20</span>, <span class="num">110</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnCircleClick</span>(sender#)
+    <span class="fn">label_text#</span>(lblSel#, <span class="str">&quot;Clicked: &quot;</span> + colors#$[<span class="fn">circle_tag</span>(sender#)])
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnEnter</span>(sender#)
+    <span class="fn">circle_opacity#</span>(sender#, <span class="num">0.7</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnLeave</span>(sender#)
+    <span class="fn">circle_opacity#</span>(sender#, <span class="num">1.0</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Animated Loading Dots</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; loading.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Loading&quot;</span>, <span class="num">250</span>, <span class="num">100</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> dot1# = <span class="fn">circle#</span>(frm#, <span class="num">70</span>, <span class="num">35</span>, <span class="num">25</span>, <span class="num">25</span>)
+<span class="fn">circle_fill#</span>(dot1#, <span class="str">&quot;#3498db&quot;</span>)
+<span class="fn">circle_strokenone#</span>(dot1#)
+
+<span class="kw">let</span> dot2# = <span class="fn">circle#</span>(frm#, <span class="num">110</span>, <span class="num">35</span>, <span class="num">25</span>, <span class="num">25</span>)
+<span class="fn">circle_fill#</span>(dot2#, <span class="str">&quot;#3498db&quot;</span>)
+<span class="fn">circle_strokenone#</span>(dot2#)
+<span class="fn">circle_opacity#</span>(dot2#, <span class="num">0.25</span>)
+
+<span class="kw">let</span> dot3# = <span class="fn">circle#</span>(frm#, <span class="num">150</span>, <span class="num">35</span>, <span class="num">25</span>, <span class="num">25</span>)
+<span class="fn">circle_fill#</span>(dot3#, <span class="str">&quot;#3498db&quot;</span>)
+<span class="fn">circle_strokenone#</span>(dot3#)
+<span class="fn">circle_opacity#</span>(dot3#, <span class="num">0.25</span>)
+
+<span class="kw">let</span> dotStep = <span class="num">0</span>
+
+<span class="kw">let</span> tmr# = <span class="fn">timer#</span>()
+<span class="fn">timer_interval#</span>(tmr#, <span class="num">300</span>)
+<span class="fn">timer_ontimer#</span>(tmr#, <span class="str">&quot;OnAnimate&quot;</span>)
+<span class="fn">timer_start#</span>(tmr#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnAnimate</span>(sender#)
+    dotStep = dotStep + <span class="num">1</span>
+    <span class="kw">if</span> dotStep &gt; <span class="num">2</span> <span class="kw">then</span> dotStep = <span class="num">0</span>
+
+    <span class="cmt">&#x27; Reset all to dim</span>
+    <span class="fn">circle_opacity#</span>(dot1#, <span class="num">0.25</span>)
+    <span class="fn">circle_opacity#</span>(dot2#, <span class="num">0.25</span>)
+    <span class="fn">circle_opacity#</span>(dot3#, <span class="num">0.25</span>)
+
+    <span class="cmt">&#x27; Highlight current dot</span>
+    <span class="kw">if</span> dotStep = <span class="num">0</span> <span class="kw">then</span>
+        <span class="fn">circle_opacity#</span>(dot1#, <span class="num">1.0</span>)
+    <span class="kw">elseif</span> dotStep = <span class="num">1</span> <span class="kw">then</span>
+        <span class="fn">circle_opacity#</span>(dot2#, <span class="num">1.0</span>)
+    <span class="kw">elseif</span> dotStep = <span class="num">2</span> <span class="kw">then</span>
+        <span class="fn">circle_opacity#</span>(dot3#, <span class="num">1.0</span>)
+    <span class="kw">endif</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Bouncing Ball</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; bounce.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Bouncing Ball&quot;</span>, <span class="num">400</span>, <span class="num">300</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> ball# = <span class="fn">circle#</span>(frm#, <span class="num">50</span>, <span class="num">130</span>, <span class="num">40</span>, <span class="num">40</span>)
+<span class="fn">circle_fill#</span>(ball#, <span class="str">&quot;#e74c3c&quot;</span>)
+<span class="fn">circle_strokenone#</span>(ball#)
+
+<span class="kw">let</span> posX = <span class="num">50</span>
+<span class="kw">let</span> posY = <span class="num">130</span>
+<span class="kw">let</span> dx = <span class="num">4</span>
+<span class="kw">let</span> dy = <span class="num">3</span>
+
+<span class="kw">let</span> tmr# = <span class="fn">timer#</span>()
+<span class="fn">timer_interval#</span>(tmr#, <span class="num">16</span>)
+<span class="fn">timer_ontimer#</span>(tmr#, <span class="str">&quot;OnFrame&quot;</span>)
+<span class="fn">timer_start#</span>(tmr#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnFrame</span>(sender#)
+    posX = posX + dx
+    posY = posY + dy
+
+    <span class="kw">if</span> posX &gt;= <span class="num">360</span> <span class="kw">then</span> dx = <span class="num">-4</span>
+    <span class="kw">if</span> posX &lt;= <span class="num">0</span> <span class="kw">then</span> dx = <span class="num">4</span>
+    <span class="kw">if</span> posY &gt;= <span class="num">260</span> <span class="kw">then</span> dy = <span class="num">-3</span>
+    <span class="kw">if</span> posY &lt;= <span class="num">0</span> <span class="kw">then</span> dy = <span class="num">3</span>
+
+    <span class="fn">circle_move#</span>(ball#, posX, posY)
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Use <strong>equal width and height</strong> for true circles</td><td>Unequal dimensions render as an ellipse</td></tr>
+<tr><td>Set <code>hittest = 1</code> for interactive circles</td><td>Required for mouse events to fire on shapes</td></tr>
+<tr><td>Use <code>fillnone#</code> for rings</td><td>Transparent body with visible stroke creates hollow circles</td></tr>
+<tr><td>Use <code>opacity</code> for hover feedback</td><td>Change opacity on mouse enter/leave for subtle interaction</td></tr>
+<tr><td>Use <code>tag</code> to identify circles in shared callbacks</td><td>Retrieve with <code>circle_tag(sender#)</code> inside the handler</td></tr>
+<tr><td>Use <code>circle_move#</code> for animation</td><td>More efficient than setting x and y separately</td></tr>
+<tr><td>Use <code>strokenone#</code> for clean indicators</td><td>Flat color dots without borders look modern</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>circle_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>circle#(parent#[, w, h] | [, x, y, w, h])</code></td><td><code>various</code></td><td>Create (3 overloads)</td></tr>
+<tr><td><code>circle_free(c#)</code></td><td><code>circle_free@#</code></td><td>Destroy</td></tr>
+<tr><td><code>circle_fill$ / fill# / fillnone#</code></td><td><code>various</code></td><td>Fill (3)</td></tr>
+<tr><td><code>circle_stroke$ / stroke# / strokenone# / strokethickness / strokedash / strokecap / strokejoin</code></td><td><code>various</code></td><td>Stroke (11)</td></tr>
+<tr><td><code>circle_x/y/width/height (get/set) / bounds# / move# / size#</code></td><td><code>various</code></td><td>Position &amp; size (14)</td></tr>
+<tr><td><code>circle_align / margin# / margins# / margin[left/top/right/bottom]</code></td><td><code>various</code></td><td>Alignment &amp; margins (12)</td></tr>
+<tr><td><code>circle_visible / enabled / opacity / hittest</code></td><td><code>various</code></td><td>Visibility &amp; state (8)</td></tr>
+<tr><td><code>circle_tag / rotation / parent# / bringtofront# / sendtoback# / invalidate#</code></td><td><code>various</code></td><td>Tag, rotation &amp; parent (8)</td></tr>
+<tr><td><code>circle_onclick/ondblclick/onmousedown/up/move/enter/leave/onmousewheel/onresize</code></td><td><code>various</code></td><td>Events set+get (18)</td></tr>
+<tr><td><code>circle_clearcallbacks#</code></td><td><code>circle_clearcallbacks#@#</code></td><td>Disconnect all events</td></tr>
+</tbody></table></div>
+<p><em>81 functions. Part of the Plan9Basic GUI shape library system.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

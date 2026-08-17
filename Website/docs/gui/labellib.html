@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabelLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic LabelLib: 89 functions for creating and managing text labels with font styling, alignment, word wrap, rotation, and mouse events.">
+<link rel="icon" type="image/png" href="../../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="../../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">LabelLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">89 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+    <a href="#constants" class="sidebar-link">Numeric Values</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Core</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#text" class="sidebar-link">Text</a>
+    <a href="#font" class="sidebar-link">Font Properties</a>
+    <a href="#textalign" class="sidebar-link">Text Alignment</a>
+    <a href="#wordwrap" class="sidebar-link">Wrap &amp; Auto Size</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Layout</div>
+    <a href="#position" class="sidebar-link">Position &amp; Size</a>
+    <a href="#alignment" class="sidebar-link">Alignment &amp; Margins</a>
+    <a href="#visibility" class="sidebar-link">Visibility &amp; Behavior</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Misc</div>
+    <a href="#tag" class="sidebar-link">Tag &amp; Rotation</a>
+    <a href="#parent" class="sidebar-link">Parent &amp; Z-Order</a>
+    <a href="#events" class="sidebar-link">Events</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>LabelLib &mdash; Label Control Library</h2>
+<p>Complete functionality for creating and managing text label controls in Plan9Basic. Labels display static or dynamic text with full font styling, alignment, word wrap, rotation, and mouse event support. <strong>89 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>label_error, label_errormsg$, label_strerror$, label_clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>5</td><td>label# (4 overloads), label_free</td></tr>
+<tr><td>Text Content</td><td>2</td><td>label_text$ (get), label_text# (set)</td></tr>
+<tr><td>Font Properties</td><td>14</td><td>fontfamily, fontsize, fontcolor, bold, italic, underline, strikeout (get/set)</td></tr>
+<tr><td>Text Alignment</td><td>4</td><td>textalign, vertalign (get/set)</td></tr>
+<tr><td>Word Wrap &amp; Auto Size</td><td>4</td><td>wordwrap, autosize (get/set)</td></tr>
+<tr><td>Position &amp; Size</td><td>14</td><td>x, y, width, height (get/set), bounds#, move#, size#</td></tr>
+<tr><td>Alignment &amp; Margins</td><td>12</td><td>align (get/set), margin#, margins#, marginleft/top/right/bottom (get/set)</td></tr>
+<tr><td>Visibility &amp; Behavior</td><td>8</td><td>visible, enabled, opacity, hittest (get/set)</td></tr>
+<tr><td>Tag &amp; Rotation</td><td>4</td><td>tag, rotation (get/set)</td></tr>
+<tr><td>Parent &amp; Z-Order</td><td>4</td><td>parent# (get/set), bringtofront#, sendtoback#</td></tr>
+<tr><td>Events</td><td>18</td><td>8 event types &times; set/get + clearcallbacks#</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Mobile-optimized</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>iPhone/iPad</td></tr> -->
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_error()</code></td><td><code>label_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>label_errormsg$()</code></td><td><code>label_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>label_strerror$(code)</code></td><td><code>label_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>label_clearerror()</code></td><td><code>label_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Hello&quot;</span>)
+<span class="kw">if</span> <span class="fn">label_error</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Error: &quot;</span> + <span class="fn">label_errormsg$</span>()
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="constants">
+<h2>Numeric Values Reference</h2>
+<p>Plan9Basic does not have built-in constants. You can define your own named values for readability:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Text alignment</span>
+<span class="kw">let</span> ALIGN_CENTER = <span class="num">0</span>
+<span class="kw">let</span> ALIGN_LEADING = <span class="num">1</span>
+<span class="kw">let</span> ALIGN_TRAILING = <span class="num">2</span>
+
+<span class="cmt">&#x27; Control alignment</span>
+<span class="kw">let</span> CTRL_NONE = <span class="num">0</span>
+<span class="kw">let</span> CTRL_TOP = <span class="num">1</span>
+<span class="kw">let</span> CTRL_CLIENT = <span class="num">9</span></pre></div></div>
+<h3>Text Horizontal Alignment <code>label_textalign#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>Center</td></tr>
+<tr><td>1</td><td>Leading (Left for LTR languages)</td></tr>
+<tr><td>2</td><td>Trailing (Right for LTR languages)</td></tr>
+</tbody></table></div>
+<h3>Text Vertical Alignment <code>label_vertalign#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>Center</td></tr>
+<tr><td>1</td><td>Leading (Top)</td></tr>
+<tr><td>2</td><td>Trailing (Bottom)</td></tr>
+</tbody></table></div>
+<h3>Control Alignment <code>label_align#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>None (absolute positioning)</td></tr>
+<tr><td>1</td><td>Top</td></tr>
+<tr><td>2</td><td>Left</td></tr>
+<tr><td>3</td><td>Right</td></tr>
+<tr><td>4</td><td>Bottom</td></tr>
+<tr><td>9</td><td>Client (fill parent)</td></tr>
+<tr><td>11</td><td>Center</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label#(parent#)</code></td><td><code>label#@#</code></td><td>Create an empty label</td></tr>
+<tr><td><code>label#(parent#, text$)</code></td><td><code>label#@#$</code></td><td>Create with text</td></tr>
+<tr><td><code>label#(parent#, text$, x, y)</code></td><td><code>label#@#$nn</code></td><td>Create with text and position</td></tr>
+<tr><td><code>label#(parent#, text$, x, y, w, h)</code></td><td><code>label#@#$nnnn</code></td><td>Create with text, position, and size</td></tr>
+<tr><td><code>label_free(lbl#)</code></td><td><code>label_free@#</code></td><td>Destroy label and release resources</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Empty label</span>
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#)
+
+<span class="cmt">&#x27; With text</span>
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Hello, World!&quot;</span>)
+
+<span class="cmt">&#x27; With text and position</span>
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Status:&quot;</span>, <span class="num">20</span>, <span class="num">50</span>)
+
+<span class="cmt">&#x27; Full creation</span>
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Description&quot;</span>, <span class="num">20</span>, <span class="num">80</span>, <span class="num">300</span>, <span class="num">60</span>)
+
+<span class="cmt">&#x27; Cleanup</span>
+<span class="fn">label_free</span>(lbl#)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Text is always the second parameter when provided. The <code>parent#</code> must be a valid form or container control (panel, layout).</div>
+</section>
+
+<section class="doc-section" id="text">
+<h2>Text Content</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_text$(lbl#)</code></td><td><code>label_text$@#</code></td><td>Get the label text</td></tr>
+<tr><td><code>label_text#(lbl#, text$)</code></td><td><code>label_text#@#$</code></td><td>Set the label text</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Processing...&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Label says: &quot;</span> + <span class="fn">label_text$</span>(lbl#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="font">
+<h2>Font Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_fontfamily$(lbl#)</code></td><td><code>label_fontfamily$@#</code></td><td>Get font family name</td></tr>
+<tr><td><code>label_fontfamily#(lbl#, family$)</code></td><td><code>label_fontfamily#@#$</code></td><td>Set font family</td></tr>
+<tr><td><code>label_fontsize(lbl#)</code></td><td><code>label_fontsize@#</code></td><td>Get font size</td></tr>
+<tr><td><code>label_fontsize#(lbl#, size)</code></td><td><code>label_fontsize#@#n</code></td><td>Set font size</td></tr>
+<tr><td><code>label_fontcolor$(lbl#)</code></td><td><code>label_fontcolor$@#</code></td><td>Get font color</td></tr>
+<tr><td><code>label_fontcolor#(lbl#, color$)</code></td><td><code>label_fontcolor#@#$</code></td><td>Set font color</td></tr>
+<tr><td><code>label_bold(lbl#)</code></td><td><code>label_bold@#</code></td><td>Get bold state (0/1)</td></tr>
+<tr><td><code>label_bold#(lbl#, n)</code></td><td><code>label_bold#@#n</code></td><td>Set bold (0/1)</td></tr>
+<tr><td><code>label_italic(lbl#)</code></td><td><code>label_italic@#</code></td><td>Get italic state (0/1)</td></tr>
+<tr><td><code>label_italic#(lbl#, n)</code></td><td><code>label_italic#@#n</code></td><td>Set italic (0/1)</td></tr>
+<tr><td><code>label_underline(lbl#)</code></td><td><code>label_underline@#</code></td><td>Get underline state (0/1)</td></tr>
+<tr><td><code>label_underline#(lbl#, n)</code></td><td><code>label_underline#@#n</code></td><td>Set underline (0/1)</td></tr>
+<tr><td><code>label_strikeout(lbl#)</code></td><td><code>label_strikeout@#</code></td><td>Get strikeout state (0/1)</td></tr>
+<tr><td><code>label_strikeout#(lbl#, n)</code></td><td><code>label_strikeout#@#n</code></td><td>Set strikeout (0/1)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">label_fontfamily#</span>(lbl#, <span class="str">&quot;Arial&quot;</span>)
+<span class="fn">label_fontsize#</span>(lbl#, <span class="num">18</span>)
+<span class="fn">label_fontcolor#</span>(lbl#, <span class="str">&quot;#0066CC&quot;</span>)
+<span class="fn">label_bold#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_italic#</span>(lbl#, <span class="num">1</span>)
+
+<span class="kw">println</span> <span class="str">&quot;Font: &quot;</span> + <span class="fn">label_fontfamily$</span>(lbl#) + <span class="str">&quot; &quot;</span> + <span class="fn">str$</span>(<span class="fn">label_fontsize</span>(lbl#)) + <span class="str">&quot;pt&quot;</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="textalign">
+<h2>Text Alignment</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_textalign(lbl#)</code></td><td><code>label_textalign@#</code></td><td>Get horizontal alignment (0=center, 1=left, 2=right)</td></tr>
+<tr><td><code>label_textalign#(lbl#, n)</code></td><td><code>label_textalign#@#n</code></td><td>Set horizontal alignment</td></tr>
+<tr><td><code>label_vertalign(lbl#)</code></td><td><code>label_vertalign@#</code></td><td>Get vertical alignment (0=center, 1=top, 2=bottom)</td></tr>
+<tr><td><code>label_vertalign#(lbl#, n)</code></td><td><code>label_vertalign#@#n</code></td><td>Set vertical alignment</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Center text both horizontally and vertically</span>
+<span class="fn">label_textalign#</span>(lbl#, <span class="num">0</span>)   <span class="cmt">&#x27; Horizontal center</span>
+<span class="fn">label_vertalign#</span>(lbl#, <span class="num">0</span>)   <span class="cmt">&#x27; Vertical center</span>
+
+<span class="cmt">&#x27; Top-left alignment</span>
+<span class="fn">label_textalign#</span>(lbl#, <span class="num">1</span>)   <span class="cmt">&#x27; Leading (left)</span>
+<span class="fn">label_vertalign#</span>(lbl#, <span class="num">1</span>)   <span class="cmt">&#x27; Leading (top)</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="wordwrap">
+<h2>Word Wrap &amp; Auto Size</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_wordwrap(lbl#)</code></td><td><code>label_wordwrap@#</code></td><td>Get word wrap state (0/1)</td></tr>
+<tr><td><code>label_wordwrap#(lbl#, n)</code></td><td><code>label_wordwrap#@#n</code></td><td>Enable/disable word wrap</td></tr>
+<tr><td><code>label_autosize(lbl#)</code></td><td><code>label_autosize@#</code></td><td>Get auto-size state (0/1)</td></tr>
+<tr><td><code>label_autosize#(lbl#, n)</code></td><td><code>label_autosize#@#n</code></td><td>Enable/disable auto-sizing</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Auto-size: label adjusts to fit text</span>
+<span class="fn">label_autosize#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Short&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Width: &quot;</span> + <span class="fn">str$</span>(<span class="fn">label_width</span>(lbl#))  <span class="cmt">&#x27; Shrinks to fit</span>
+
+<span class="cmt">&#x27; Word wrap: text wraps within a fixed width</span>
+<span class="fn">label_autosize#</span>(lbl#, <span class="num">0</span>)
+<span class="fn">label_size#</span>(lbl#, <span class="num">200</span>, <span class="num">80</span>)
+<span class="fn">label_wordwrap#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_text#</span>(lbl#, <span class="str">&quot;This is a longer piece of text that will wrap within the label boundaries.&quot;</span>)</pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Word wrap requires <code>label_autosize#(lbl#, 0)</code> and a fixed width. If auto-size is enabled, the label grows horizontally instead of wrapping.</div>
+</section>
+
+<section class="doc-section" id="position">
+<h2>Position &amp; Size</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_x(lbl#)</code></td><td><code>label_x@#</code></td><td>Get X position</td></tr>
+<tr><td><code>label_x#(lbl#, x)</code></td><td><code>label_x#@#n</code></td><td>Set X position</td></tr>
+<tr><td><code>label_y(lbl#)</code></td><td><code>label_y@#</code></td><td>Get Y position</td></tr>
+<tr><td><code>label_y#(lbl#, y)</code></td><td><code>label_y#@#n</code></td><td>Set Y position</td></tr>
+<tr><td><code>label_width(lbl#)</code></td><td><code>label_width@#</code></td><td>Get width</td></tr>
+<tr><td><code>label_width#(lbl#, w)</code></td><td><code>label_width#@#n</code></td><td>Set width</td></tr>
+<tr><td><code>label_height(lbl#)</code></td><td><code>label_height@#</code></td><td>Get height</td></tr>
+<tr><td><code>label_height#(lbl#, h)</code></td><td><code>label_height#@#n</code></td><td>Set height</td></tr>
+<tr><td><code>label_bounds#(lbl#, x, y, w, h)</code></td><td><code>label_bounds#@#nnnn</code></td><td>Set position and size in one call</td></tr>
+<tr><td><code>label_move#(lbl#, x, y)</code></td><td><code>label_move#@#nn</code></td><td>Set position only</td></tr>
+<tr><td><code>label_size#(lbl#, w, h)</code></td><td><code>label_size#@#nn</code></td><td>Set size only</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">label_bounds#</span>(lbl#, <span class="num">20</span>, <span class="num">50</span>, <span class="num">300</span>, <span class="num">60</span>)
+
+<span class="cmt">&#x27; Or separately</span>
+<span class="fn">label_move#</span>(lbl#, <span class="num">20</span>, <span class="num">50</span>)
+<span class="fn">label_size#</span>(lbl#, <span class="num">300</span>, <span class="num">60</span>)
+
+<span class="kw">println</span> <span class="str">&quot;At: &quot;</span> + <span class="fn">str$</span>(<span class="fn">label_x</span>(lbl#)) + <span class="str">&quot;, &quot;</span> + <span class="fn">str$</span>(<span class="fn">label_y</span>(lbl#))</pre></div></div>
+</section>
+
+<section class="doc-section" id="alignment">
+<h2>Alignment &amp; Margins</h2>
+<p>When <code>label_align#</code> is set to a value other than 0, the label is automatically positioned by its parent container. Margins control spacing when alignment is active.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_align(lbl#)</code></td><td><code>label_align@#</code></td><td>Get control alignment mode</td></tr>
+<tr><td><code>label_align#(lbl#, n)</code></td><td><code>label_align#@#n</code></td><td>Set control alignment (0=none, 1=top, 2=left, 3=right, 4=bottom, 9=client, 11=center)</td></tr>
+<tr><td><code>label_margin#(lbl#, n)</code></td><td><code>label_margin#@#n</code></td><td>Set uniform margin on all four sides</td></tr>
+<tr><td><code>label_margins#(lbl#, l, t, r, b)</code></td><td><code>label_margins#@#nnnn</code></td><td>Set individual margins (left, top, right, bottom)</td></tr>
+<tr><td><code>label_marginleft(lbl#)</code></td><td><code>label_marginleft@#</code></td><td>Get left margin</td></tr>
+<tr><td><code>label_marginleft#(lbl#, n)</code></td><td><code>label_marginleft#@#n</code></td><td>Set left margin</td></tr>
+<tr><td><code>label_margintop(lbl#)</code></td><td><code>label_margintop@#</code></td><td>Get top margin</td></tr>
+<tr><td><code>label_margintop#(lbl#, n)</code></td><td><code>label_margintop#@#n</code></td><td>Set top margin</td></tr>
+<tr><td><code>label_marginright(lbl#)</code></td><td><code>label_marginright@#</code></td><td>Get right margin</td></tr>
+<tr><td><code>label_marginright#(lbl#, n)</code></td><td><code>label_marginright#@#n</code></td><td>Set right margin</td></tr>
+<tr><td><code>label_marginbottom(lbl#)</code></td><td><code>label_marginbottom@#</code></td><td>Get bottom margin</td></tr>
+<tr><td><code>label_marginbottom#(lbl#, n)</code></td><td><code>label_marginbottom#@#n</code></td><td>Set bottom margin</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Dock a label to the top of a form as a header</span>
+<span class="fn">label_align#</span>(lbl#, <span class="num">1</span>)       <span class="cmt">&#x27; Align top</span>
+<span class="fn">label_height#</span>(lbl#, <span class="num">40</span>)
+<span class="fn">label_margin#</span>(lbl#, <span class="num">5</span>)      <span class="cmt">&#x27; 5px spacing all sides</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="visibility">
+<h2>Visibility &amp; Behavior</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_visible(lbl#)</code></td><td><code>label_visible@#</code></td><td>Get visibility (0/1)</td></tr>
+<tr><td><code>label_visible#(lbl#, n)</code></td><td><code>label_visible#@#n</code></td><td>Set visibility (0=hidden, 1=visible)</td></tr>
+<tr><td><code>label_enabled(lbl#)</code></td><td><code>label_enabled@#</code></td><td>Get enabled state (0/1)</td></tr>
+<tr><td><code>label_enabled#(lbl#, n)</code></td><td><code>label_enabled#@#n</code></td><td>Set enabled state (0=disabled/grayed, 1=enabled)</td></tr>
+<tr><td><code>label_opacity(lbl#)</code></td><td><code>label_opacity@#</code></td><td>Get opacity (0.0&ndash;1.0)</td></tr>
+<tr><td><code>label_opacity#(lbl#, value)</code></td><td><code>label_opacity#@#n</code></td><td>Set opacity (0.0=transparent, 1.0=opaque)</td></tr>
+<tr><td><code>label_hittest(lbl#)</code></td><td><code>label_hittest@#</code></td><td>Get hit-test state (0/1)</td></tr>
+<tr><td><code>label_hittest#(lbl#, n)</code></td><td><code>label_hittest#@#n</code></td><td>Enable/disable mouse hit testing (0=click-through, 1=clickable)</td></tr>
+</tbody></table></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Labels have <code>hittest = 0</code> by default, meaning they do <strong>not</strong> receive mouse events. You must call <code>label_hittest#(lbl#, 1)</code> before assigning click, double-click, or mouse callbacks.</div>
+</section>
+
+<section class="doc-section" id="tag">
+<h2>Tag &amp; Rotation</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_tag(lbl#)</code></td><td><code>label_tag@#</code></td><td>Get user-defined integer tag</td></tr>
+<tr><td><code>label_tag#(lbl#, n)</code></td><td><code>label_tag#@#n</code></td><td>Set user-defined integer tag</td></tr>
+<tr><td><code>label_rotation(lbl#)</code></td><td><code>label_rotation@#</code></td><td>Get rotation angle in degrees</td></tr>
+<tr><td><code>label_rotation#(lbl#, angle)</code></td><td><code>label_rotation#@#n</code></td><td>Set rotation angle in degrees (0&ndash;360)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Rotated label for a vertical sidebar effect</span>
+<span class="fn">label_rotation#</span>(lbl#, <span class="num">270</span>)     <span class="cmt">&#x27; 270 degrees = vertical, reading bottom-to-top</span>
+
+<span class="cmt">&#x27; Use tags to identify labels in shared callbacks</span>
+<span class="fn">label_tag#</span>(lblName#, <span class="num">1</span>)
+<span class="fn">label_tag#</span>(lblEmail#, <span class="num">2</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="parent">
+<h2>Parent &amp; Z-Order</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_parent#(lbl#)</code></td><td><code>label_parent#@#</code></td><td>Get parent control pointer</td></tr>
+<tr><td><code>label_parent#(lbl#, parent#)</code></td><td><code>label_parent#@##</code></td><td>Move label to a different parent</td></tr>
+<tr><td><code>label_bringtofront#(lbl#)</code></td><td><code>label_bringtofront#@#</code></td><td>Bring to front of Z-order</td></tr>
+<tr><td><code>label_sendtoback#(lbl#)</code></td><td><code>label_sendtoback#@#</code></td><td>Send to back of Z-order</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Move a label from the form into a panel</span>
+<span class="fn">label_parent#</span>(lbl#, panel#)
+
+<span class="cmt">&#x27; Ensure label is drawn on top</span>
+<span class="fn">label_bringtofront#</span>(lbl#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> (<code>label_onXXX#(lbl#, func$)</code>) and a <strong>getter</strong> (<code>label_onXXX$(lbl#)</code>) to assign or read the callback name. Use <code>label_clearcallbacks#(lbl#)</code> to disconnect all callbacks at once.</p>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Labels have <code>hittest = 0</code> by default. You <strong>must</strong> call <code>label_hittest#(lbl#, 1)</code> before any mouse event will fire.</div>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>label_onclick#(lbl#, func$)</code></td><td><code>label_onclick$(lbl#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>label_ondblclick#(lbl#, func$)</code></td><td><code>label_ondblclick$(lbl#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>label_onmousedown#(lbl#, func$)</code></td><td><code>label_onmousedown$(lbl#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>label_onmouseup#(lbl#, func$)</code></td><td><code>label_onmouseup$(lbl#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>label_onmousemove#(lbl#, func$)</code></td><td><code>label_onmousemove$(lbl#)</code></td><td><code>function name(sender#, x, y, shift$)</code></td></tr>
+<tr><td><code>label_onmouseenter#(lbl#, func$)</code></td><td><code>label_onmouseenter$(lbl#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>label_onmouseleave#(lbl#, func$)</code></td><td><code>label_onmouseleave$(lbl#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>label_onresize#(lbl#, func$)</code></td><td><code>label_onresize$(lbl#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>label_clearcallbacks#(lbl#)</code></td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Make a label clickable (hyperlink style)</span>
+<span class="fn">label_hittest#</span>(lbl#, <span class="num">1</span>)    <span class="cmt">&#x27; Required!</span>
+<span class="fn">label_onclick#</span>(lbl#, <span class="str">&quot;OnLabelClick&quot;</span>)
+
+<span class="kw">function</span> <span class="fn">OnLabelClick</span>(sender#)
+    <span class="kw">println</span> <span class="str">&quot;Label clicked: &quot;</span> + <span class="fn">label_text$</span>(sender#)
+<span class="kw">endfunction</span></pre></div></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Mouse hover effect on a label</span>
+<span class="fn">label_hittest#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_onmouseenter#</span>(lbl#, <span class="str">&quot;OnHover&quot;</span>)
+<span class="fn">label_onmouseleave#</span>(lbl#, <span class="str">&quot;OnLeave&quot;</span>)
+
+<span class="kw">function</span> <span class="fn">OnHover</span>(sender#)
+    <span class="fn">label_fontcolor#</span>(sender#, <span class="str">&quot;#0066CC&quot;</span>)
+    <span class="fn">label_underline#</span>(sender#, <span class="num">1</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnLeave</span>(sender#)
+    <span class="fn">label_fontcolor#</span>(sender#, <span class="str">&quot;#000000&quot;</span>)
+    <span class="fn">label_underline#</span>(sender#, <span class="num">0</span>)
+<span class="kw">endfunction</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Styled Labels</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; styled.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Styled Labels&quot;</span>, <span class="num">400</span>, <span class="num">300</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="cmt">&#x27; Title label</span>
+<span class="kw">let</span> lblTitle# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Welcome to Plan9Basic&quot;</span>)
+<span class="fn">label_move#</span>(lblTitle#, <span class="num">50</span>, <span class="num">30</span>)
+<span class="fn">label_fontsize#</span>(lblTitle#, <span class="num">24</span>)
+<span class="fn">label_fontcolor#</span>(lblTitle#, <span class="str">&quot;#0066CC&quot;</span>)
+<span class="fn">label_bold#</span>(lblTitle#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Subtitle</span>
+<span class="kw">let</span> lblSub# = <span class="fn">label#</span>(frm#, <span class="str">&quot;A modern BASIC interpreter&quot;</span>)
+<span class="fn">label_move#</span>(lblSub#, <span class="num">50</span>, <span class="num">70</span>)
+<span class="fn">label_fontsize#</span>(lblSub#, <span class="num">14</span>)
+<span class="fn">label_italic#</span>(lblSub#, <span class="num">1</span>)
+<span class="fn">label_fontcolor#</span>(lblSub#, <span class="str">&quot;gray&quot;</span>)
+
+<span class="cmt">&#x27; Description with word wrap</span>
+<span class="kw">let</span> lblDesc# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Create cross-platform applications easily.&quot;</span>)
+<span class="fn">label_bounds#</span>(lblDesc#, <span class="num">50</span>, <span class="num">120</span>, <span class="num">300</span>, <span class="num">100</span>)
+<span class="fn">label_wordwrap#</span>(lblDesc#, <span class="num">1</span>)
+<span class="fn">label_autosize#</span>(lblDesc#, <span class="num">0</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Clickable Hyperlink Label</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; clickable.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnLabelClick</span>(sender#)
+    <span class="fn">label_text#</span>(sender#, <span class="str">&quot;Clicked!&quot;</span>)
+    <span class="fn">label_fontcolor#</span>(sender#, <span class="str">&quot;red&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Clickable Label&quot;</span>, <span class="num">400</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Click me!&quot;</span>)
+<span class="fn">label_move#</span>(lbl#, <span class="num">150</span>, <span class="num">80</span>)
+<span class="fn">label_fontsize#</span>(lbl#, <span class="num">18</span>)
+<span class="fn">label_fontcolor#</span>(lbl#, <span class="str">&quot;blue&quot;</span>)
+<span class="fn">label_underline#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_hittest#</span>(lbl#, <span class="num">1</span>)
+<span class="fn">label_onclick#</span>(lbl#, <span class="str">&quot;OnLabelClick&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Dynamic Status Display</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; status.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnStart</span>(sender#)
+    <span class="fn">label_text#</span>(lblStatus#, <span class="str">&quot;Running...&quot;</span>)
+    <span class="fn">label_fontcolor#</span>(lblStatus#, <span class="str">&quot;green&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnStop</span>(sender#)
+    <span class="fn">label_text#</span>(lblStatus#, <span class="str">&quot;Stopped&quot;</span>)
+    <span class="fn">label_fontcolor#</span>(lblStatus#, <span class="str">&quot;red&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Status Demo&quot;</span>, <span class="num">400</span>, <span class="num">200</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lblStatus# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Ready&quot;</span>)
+<span class="fn">label_move#</span>(lblStatus#, <span class="num">150</span>, <span class="num">30</span>)
+<span class="fn">label_fontsize#</span>(lblStatus#, <span class="num">16</span>)
+
+<span class="kw">let</span> btnStart# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Start&quot;</span>, <span class="num">100</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="kw">let</span> btnStop# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Stop&quot;</span>, <span class="num">220</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btnStart#, <span class="str">&quot;OnStart&quot;</span>)
+<span class="fn">button_onclick#</span>(btnStop#, <span class="str">&quot;OnStop&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Text Alignment Showcase</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; alignment.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Alignment Demo&quot;</span>, <span class="num">500</span>, <span class="num">300</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="cmt">&#x27; Left aligned</span>
+<span class="kw">let</span> lbl1# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Left aligned text&quot;</span>)
+<span class="fn">label_bounds#</span>(lbl1#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">400</span>, <span class="num">30</span>)
+<span class="fn">label_textalign#</span>(lbl1#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Center aligned</span>
+<span class="kw">let</span> lbl2# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Center aligned text&quot;</span>)
+<span class="fn">label_bounds#</span>(lbl2#, <span class="num">50</span>, <span class="num">100</span>, <span class="num">400</span>, <span class="num">30</span>)
+<span class="fn">label_textalign#</span>(lbl2#, <span class="num">0</span>)
+
+<span class="cmt">&#x27; Right aligned</span>
+<span class="kw">let</span> lbl3# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Right aligned text&quot;</span>)
+<span class="fn">label_bounds#</span>(lbl3#, <span class="num">50</span>, <span class="num">150</span>, <span class="num">400</span>, <span class="num">30</span>)
+<span class="fn">label_textalign#</span>(lbl3#, <span class="num">2</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Rotated Labels</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; rotation.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Rotation Demo&quot;</span>, <span class="num">400</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lbl0# = <span class="fn">label#</span>(frm#, <span class="str">&quot;0 degrees&quot;</span>, <span class="num">180</span>, <span class="num">20</span>)
+<span class="fn">label_fontsize#</span>(lbl0#, <span class="num">14</span>)
+<span class="fn">label_rotation#</span>(lbl0#, <span class="num">0</span>)
+
+<span class="kw">let</span> lbl45# = <span class="fn">label#</span>(frm#, <span class="str">&quot;45 degrees&quot;</span>, <span class="num">280</span>, <span class="num">80</span>)
+<span class="fn">label_fontsize#</span>(lbl45#, <span class="num">14</span>)
+<span class="fn">label_rotation#</span>(lbl45#, <span class="num">45</span>)
+
+<span class="kw">let</span> lbl90# = <span class="fn">label#</span>(frm#, <span class="str">&quot;90 degrees&quot;</span>, <span class="num">350</span>, <span class="num">180</span>)
+<span class="fn">label_fontsize#</span>(lbl90#, <span class="num">14</span>)
+<span class="fn">label_rotation#</span>(lbl90#, <span class="num">90</span>)
+
+<span class="kw">let</span> lbl270# = <span class="fn">label#</span>(frm#, <span class="str">&quot;270 degrees&quot;</span>, <span class="num">20</span>, <span class="num">180</span>)
+<span class="fn">label_fontsize#</span>(lbl270#, <span class="num">14</span>)
+<span class="fn">label_rotation#</span>(lbl270#, <span class="num">270</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Call <code>label_hittest#(lbl#, 1)</code> before assigning mouse events</td><td>Labels ignore mouse events by default</td></tr>
+<tr><td>Use <code>label_autosize#(lbl#, 1)</code> for dynamic text</td><td>Label automatically resizes to fit content</td></tr>
+<tr><td>Disable auto-size for fixed layouts with word wrap</td><td>Set size manually with <code>label_bounds#</code>, then enable <code>label_wordwrap#</code></td></tr>
+<tr><td>Use <code>label_tag#</code> to identify labels in shared callbacks</td><td>Avoids global variables for distinguishing multiple labels</td></tr>
+<tr><td>Set font properties after creation</td><td>Fonts are applied immediately and affect auto-size calculations</td></tr>
+<tr><td>Use <code>label_textalign#</code> together with fixed width</td><td>Text alignment only matters when the label is wider than the text</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>label_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>label#(parent#[, text$][, x, y][, w, h])</code></td><td><code>various</code></td><td>Create label (4 overloads)</td></tr>
+<tr><td><code>label_free(lbl#)</code></td><td><code>label_free@#</code></td><td>Destroy label</td></tr>
+<tr><td><code>label_text$ / text#</code></td><td><code>label_text$@#, label_text#@#$</code></td><td>Text get/set</td></tr>
+<tr><td><code>label_fontfamily / fontsize / fontcolor / bold / italic / underline / strikeout</code></td><td><code>various</code></td><td>Font properties (14)</td></tr>
+<tr><td><code>label_textalign / vertalign</code></td><td><code>various</code></td><td>Text alignment (4)</td></tr>
+<tr><td><code>label_wordwrap / autosize</code></td><td><code>various</code></td><td>Wrap &amp; sizing (4)</td></tr>
+<tr><td><code>label_x/y/width/height (get/set)</code></td><td><code>various</code></td><td>Position &amp; size (8)</td></tr>
+<tr><td><code>label_bounds# / move# / size#</code></td><td><code>various</code></td><td>Batch position/size (3)</td></tr>
+<tr><td><code>label_align / margin# / margins# / margin[left/top/right/bottom]</code></td><td><code>various</code></td><td>Alignment &amp; margins (12)</td></tr>
+<tr><td><code>label_visible / enabled / opacity / hittest</code></td><td><code>various</code></td><td>Visibility &amp; behavior (8)</td></tr>
+<tr><td><code>label_tag / rotation</code></td><td><code>various</code></td><td>Tag &amp; rotation (4)</td></tr>
+<tr><td><code>label_parent# / bringtofront# / sendtoback#</code></td><td><code>various</code></td><td>Parent &amp; Z-order (4)</td></tr>
+<tr><td><code>label_onclick/ondblclick/onmousedown/onmouseup/onmousemove/onmouseenter/onmouseleave/onresize</code></td><td><code>various</code></td><td>Events set+get (17)</td></tr>
+<tr><td><code>label_clearcallbacks#</code></td><td><code>label_clearcallbacks#@#</code></td><td>Disconnect all events</td></tr>
+</tbody></table></div>
+<p><em>89 functions. Part of the Plan9Basic GUI library system.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZipLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic ZipLib: 14 functions for creating, reading, and extracting ZIP archives.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">ZipLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">14 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#openclose" class="sidebar-link">Open/Close</a>
+    <a href="#adding" class="sidebar-link">Adding Files</a>
+    <a href="#extracting" class="sidebar-link">Extracting</a>
+    <a href="#info" class="sidebar-link">Archive Info</a>
+    <a href="#convenience" class="sidebar-link">Quick Functions</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#notes" class="sidebar-link">Technical Notes</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>ZipLib &mdash; ZIP Archive Library</h2>
+<p>Create, read, and manipulate ZIP archives. Multi-file archives with individual compression, widely used for file distribution, backup, and data exchange. 14 functions.</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>1</td><td>ziperror</td></tr>
+<tr><td>Open/Close</td><td>3</td><td>zipcreate#, zipopen#, zipclose</td></tr>
+<tr><td>Adding Files</td><td>2</td><td>zipadd, zipaddstr</td></tr>
+<tr><td>Extracting</td><td>2</td><td>zipextract, zipextractall</td></tr>
+<tr><td>Archive Info</td><td>4</td><td>ziplist$, zipcount, zipexists, zipread$, zipfilesize</td></tr>
+<tr><td>Convenience</td><td>2</td><td>zipquick, unzipquick</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>Description</th></tr></thead><tbody>
+<tr><td>Create archives</td><td><code>zipcreate#</code> &rarr; add files &rarr; <code>zipclose</code></td></tr>
+<tr><td>Read archives</td><td><code>zipopen#</code> &rarr; list/extract/read &rarr; <code>zipclose</code></td></tr>
+<tr><td>String content</td><td>Add strings directly as files with <code>zipaddstr</code></td></tr>
+<tr><td>Quick one-liners</td><td><code>zipquick</code> / <code>unzipquick</code> for single operations</td></tr>
+<tr><td>Directory structure</td><td>Use forward slashes in archive names (e.g. <code>docs/readme.txt</code>)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Constant</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_INVALID_HANDLE</td><td>Archive not open or invalid handle</td></tr>
+<tr><td>2</td><td>ERR_FILE_NOT_FOUND</td><td>File not found in archive</td></tr>
+<tr><td>3</td><td>ERR_FILE_ERROR</td><td>File system error (read/write)</td></tr>
+<tr><td>4</td><td>ERR_INVALID_ARGUMENT</td><td>Invalid argument</td></tr>
+<tr><td>5</td><td>ERR_COMPRESSION</td><td>Compression error</td></tr>
+<tr><td>6</td><td>ERR_ARCHIVE_EXISTS</td><td>Archive already exists (when creating)</td></tr>
+<tr><td>7</td><td>ERR_ENTRY_EXISTS</td><td>Entry already exists in archive</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ziperror()</code></td><td><code>ziperror@</code></td><td>Error code from last ZipLib operation (0&ndash;7)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="openclose">
+<h2>Archive Open/Close</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>zipcreate#(path$)</code></td><td><code>zipcreate#@$</code></td><td>Create new ZIP for writing (returns handle, 0 on failure)</td></tr>
+<tr><td><code>zipopen#(path$)</code></td><td><code>zipopen#@$</code></td><td>Open existing ZIP for reading (returns handle, 0 on failure)</td></tr>
+<tr><td><code>zipclose(handle#)</code></td><td><code>zipclose@#</code></td><td>Close archive and release handle (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Create archive</span>
+handle# = <span class="fn">zipcreate#</span>(<span class="str">&quot;myarchive.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="cmt">&#x27; Add files...</span>
+    <span class="fn">zipclose</span>(handle#)
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Open existing archive</span>
+handle# = <span class="fn">zipopen#</span>(<span class="str">&quot;existing.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Contains &quot;</span>; <span class="fn">zipcount</span>(handle#); <span class="str">&quot; files&quot;</span>
+    <span class="fn">zipclose</span>(handle#)
+<span class="kw">endif</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Always close archives with <code>zipclose</code> to ensure data is written properly. Archives opened with <code>zipcreate#</code> can only add; archives opened with <code>zipopen#</code> can only read/extract.</div>
+</section>
+
+<section class="doc-section" id="adding">
+<h2>Adding Files</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>zipadd(h#, src$, name$)</code></td><td><code>zipadd@#$$</code></td><td>Add file to archive (1/0)</td></tr>
+<tr><td><code>zipaddstr(h#, content$, name$)</code></td><td><code>zipaddstr@#$$</code></td><td>Add string as file (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>handle# = <span class="fn">zipcreate#</span>(<span class="str">&quot;backup.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="cmt">&#x27; Add files with paths inside archive</span>
+    <span class="fn">zipadd</span>(handle#, <span class="str">&quot;C:\docs\report.docx&quot;</span>, <span class="str">&quot;documents/report.docx&quot;</span>)
+    <span class="fn">zipadd</span>(handle#, <span class="str">&quot;C:\data\sales.xlsx&quot;</span>, <span class="str">&quot;spreadsheets/sales.xlsx&quot;</span>)
+    
+    <span class="cmt">&#x27; Add generated content</span>
+    config$ = <span class="str">&quot;server=localhost&quot;</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+    config$ = config$ + <span class="str">&quot;port=8080&quot;</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+    <span class="fn">zipaddstr</span>(handle#, config$, <span class="str">&quot;config.txt&quot;</span>)
+    
+    <span class="cmt">&#x27; Add JSON data</span>
+    jsonData$ = <span class="str">&quot;{\&quot;</span>name\<span class="str">&quot;:\&quot;</span>Project\<span class="str">&quot;,\&quot;</span>version\<span class="str">&quot;:\&quot;</span><span class="num">1.0</span>\<span class="str">&quot;}&quot;</span>
+    <span class="fn">zipaddstr</span>(handle#, jsonData$, <span class="str">&quot;manifest.json&quot;</span>)
+    
+    <span class="fn">zipclose</span>(handle#)
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Use forward slashes (<code>/</code>) in archive names for cross-platform compatibility. <code>zipaddstr</code> uses UTF-8 encoding.</div>
+</section>
+
+<section class="doc-section" id="extracting">
+<h2>Extracting Files</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>zipextract(h#, name$, dest$)</code></td><td><code>zipextract@#$$</code></td><td>Extract single file to directory (1/0)</td></tr>
+<tr><td><code>zipextractall(h#, dest$)</code></td><td><code>zipextractall@#$</code></td><td>Extract all files to directory (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>handle# = <span class="fn">zipopen#</span>(<span class="str">&quot;archive.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="cmt">&#x27; Extract one file</span>
+    <span class="kw">if</span> <span class="fn">zipextract</span>(handle#, <span class="str">&quot;readme.txt&quot;</span>, <span class="str">&quot;.&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Extracted readme.txt&quot;</span>
+    <span class="kw">endif</span>
+    
+    <span class="cmt">&#x27; Extract everything</span>
+    <span class="kw">if</span> <span class="fn">zipextractall</span>(handle#, <span class="str">&quot;C:\extracted&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;All files extracted&quot;</span>
+    <span class="kw">else</span>
+        <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span>; <span class="fn">ziperror</span>()
+    <span class="kw">endif</span>
+    <span class="fn">zipclose</span>(handle#)
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="info">
+<h2>Archive Information</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ziplist$(h#)</code></td><td><code>ziplist$@#</code></td><td>Newline-separated list of file names</td></tr>
+<tr><td><code>zipcount(h#)</code></td><td><code>zipcount@#</code></td><td>Number of files in archive</td></tr>
+<tr><td><code>zipexists(h#, name$)</code></td><td><code>zipexists@#$</code></td><td>File exists in archive? (1/0)</td></tr>
+<tr><td><code>zipread$(h#, name$)</code></td><td><code>zipread$@#$</code></td><td>Read file from archive as string</td></tr>
+<tr><td><code>zipfilesize(h#, name$)</code></td><td><code>zipfilesize@#$</code></td><td>Uncompressed file size (-1 on error)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>handle# = <span class="fn">zipopen#</span>(<span class="str">&quot;archive.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Files: &quot;</span>; <span class="fn">zipcount</span>(handle#)
+    
+    <span class="cmt">&#x27; Check for a specific file</span>
+    <span class="kw">if</span> <span class="fn">zipexists</span>(handle#, <span class="str">&quot;config.txt&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+        content$ = <span class="fn">zipread$</span>(handle#, <span class="str">&quot;config.txt&quot;</span>)
+        <span class="kw">println</span> <span class="str">&quot;Config:&quot;</span>
+        <span class="kw">println</span> content$
+    <span class="kw">endif</span>
+    
+    <span class="cmt">&#x27; List all with sizes</span>
+    fileList$ = <span class="fn">ziplist$</span>(handle#)
+    <span class="kw">println</span> fileList$
+    <span class="fn">zipclose</span>(handle#)
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="convenience">
+<h2>Convenience Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>zipquick(src$, zip$)</code></td><td><code>zipquick@$$</code></td><td>Quick compress: single file &rarr; ZIP (1/0)</td></tr>
+<tr><td><code>unzipquick(zip$, dest$)</code></td><td><code>unzipquick@$$</code></td><td>Quick extract: ZIP &rarr; directory (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; One-liner compress</span>
+<span class="kw">if</span> <span class="fn">zipquick</span>(<span class="str">&quot;report.pdf&quot;</span>, <span class="str">&quot;report.zip&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Compressed!&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; One-liner extract</span>
+<span class="kw">if</span> <span class="fn">unzipquick</span>(<span class="str">&quot;package.zip&quot;</span>, <span class="str">&quot;C:\extracted&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Extracted!&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Convenience functions handle open/close automatically. Use the full API for multi-file archives.</div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Create Backup Archive</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; backup.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">println</span> <span class="str">&quot;=== Creating Backup ===&quot;</span>
+
+backupName$ = <span class="str">&quot;backup_&quot;</span> + <span class="fn">format$</span>(<span class="fn">now</span>(), <span class="str">&quot;yyyymmdd&quot;</span>) + <span class="str">&quot;.zip&quot;</span>
+handle# = <span class="fn">zipcreate#</span>(backupName$)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed to create archive&quot;</span>
+    <span class="kw">end</span>
+<span class="kw">endif</span>
+
+files# = <span class="fn">sdim#</span>(<span class="num">4</span>)
+files#$[<span class="num">1</span>] = <span class="str">&quot;config.ini&quot;</span>
+files#$[<span class="num">2</span>] = <span class="str">&quot;database.db&quot;</span>
+files#$[<span class="num">3</span>] = <span class="str">&quot;settings.json&quot;</span>
+files#$[<span class="num">4</span>] = <span class="str">&quot;notes.txt&quot;</span>
+
+addedCount = <span class="num">0</span>
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">4</span>
+    filename$ = files#$[i]
+    <span class="kw">if</span> <span class="fn">fileexists</span>(filename$, <span class="num">0</span>) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">if</span> <span class="fn">zipadd</span>(handle#, filename$, filename$) = <span class="num">1</span> <span class="kw">then</span>
+            <span class="kw">println</span> <span class="str">&quot;Added: &quot;</span>; filename$
+            addedCount = addedCount + <span class="num">1</span>
+        <span class="kw">endif</span>
+    <span class="kw">else</span>
+        <span class="kw">println</span> <span class="str">&quot;Skip: &quot;</span>; filename$
+    <span class="kw">endif</span>
+<span class="kw">next</span>
+
+<span class="fn">zipclose</span>(handle#)
+<span class="kw">println</span> <span class="str">&quot;Backup: &quot;</span>; backupName$; <span class="str">&quot; (&quot;</span>; addedCount; <span class="str">&quot; files)&quot;</span></pre></div></div>
+<h3>Archive Browser</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; browser.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">onZipPath$</span>(zipPath$) <span class="kw">local</span> handle#, count, fileList$
+    <span class="kw">if</span> zipPath$ = <span class="str">&quot;&quot;</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;No path&quot;</span>
+        <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">endif</span>
+    
+    handle# = <span class="fn">zipopen#</span>(zipPath$)
+    <span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Cannot open: &quot;</span>; <span class="fn">ziperror</span>()
+        <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">endif</span>
+    
+    count = <span class="fn">zipcount</span>(handle#)
+    <span class="kw">println</span> <span class="str">&quot;Archive: &quot;</span>; zipPath$
+    <span class="kw">println</span> <span class="str">&quot;Files: &quot;</span>; count
+    <span class="kw">println</span> <span class="str">&quot;&quot;</span>
+    
+    fileList$ = <span class="fn">ziplist$</span>(handle#)
+    <span class="kw">println</span> fileList$
+    
+    <span class="fn">zipclose</span>(handle#)
+    <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">println</span> <span class="str">&quot;=== ZIP Browser ===&quot;</span>
+<span class="kw">input</span> <span class="str">&quot;Open&quot;</span>, <span class="str">&quot;ZIP file:&quot;</span>, <span class="str">&quot;&quot;</span>, onZipPath$</pre></div></div>
+<h3>Generate Archive with Content</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; generate.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">println</span> <span class="str">&quot;=== Generate Archive ===&quot;</span>
+
+handle# = <span class="fn">zipcreate#</span>(<span class="str">&quot;generated.zip&quot;</span>)
+<span class="kw">if</span> <span class="fn">PntToNum</span>(handle#) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed&quot;</span>
+    <span class="kw">end</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; README</span>
+readme$ = <span class="str">&quot;Generated Archive&quot;</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+readme$ = readme$ + <span class="str">&quot;Created: &quot;</span> + <span class="fn">formatdatetime$</span>(<span class="str">&quot;yyyy-mm-dd hh:nn:ss&quot;</span>, <span class="fn">now</span>()) + <span class="fn">chr$</span>(<span class="num">10</span>)
+<span class="fn">zipaddstr</span>(handle#, readme$, <span class="str">&quot;README.txt&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Added: README.txt&quot;</span>
+
+<span class="fn">Randomize</span>()
+<span class="cmt">&#x27; Data files in subdirectory</span>
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">5</span>
+    data$ = <span class="str">&quot;File #&quot;</span> + <span class="fn">str$</span>(i) + <span class="fn">chr$</span>(<span class="num">10</span>)
+    data$ = data$ + <span class="str">&quot;Value: &quot;</span> + <span class="fn">str$</span>(<span class="fn">rnd</span>() * <span class="num">1000</span>) + <span class="fn">chr$</span>(<span class="num">10</span>)
+    <span class="fn">zipaddstr</span>(handle#, data$, <span class="str">&quot;data/file&quot;</span> + <span class="fn">stri$</span>(i) + <span class="str">&quot;.txt&quot;</span>)
+    <span class="kw">println</span> <span class="str">&quot;Added: data/file&quot;</span>; i; <span class="str">&quot;.txt&quot;</span>
+<span class="kw">next</span>
+
+<span class="cmt">&#x27; JSON manifest</span>
+manifest$ = <span class="str">&quot;{\&quot;</span>name\<span class="str">&quot;: \&quot;</span>Generated\<span class="str">&quot;, \&quot;</span>files\<span class="str">&quot;: 6}&quot;</span>
+<span class="fn">zipaddstr</span>(handle#, manifest$, <span class="str">&quot;manifest.json&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Added: manifest.json&quot;</span>
+
+<span class="fn">zipclose</span>(handle#)
+<span class="kw">println</span> <span class="str">&quot;Done: generated.zip&quot;</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="notes">
+<h2>Technical Notes</h2>
+<div class="table-wrap"><table><thead><tr><th>Topic</th><th>Details</th></tr></thead><tbody>
+<tr><td>Handle management</td><td>Always close with <code>zipclose</code>. Open handles consume system resources.</td></tr>
+<tr><td>Read vs Write</td><td><code>zipcreate#</code> = write only. <code>zipopen#</code> = read only.</td></tr>
+<tr><td>Path separators</td><td>Use <code>/</code> in archive names for cross-platform compatibility.</td></tr>
+<tr><td>Text encoding</td><td><code>zipaddstr</code> and <code>zipread$</code> use UTF-8.</td></tr>
+<tr><td>Large files</td><td>Use file-based functions (<code>zipadd</code>, <code>zipextract</code>) instead of string-based to avoid memory issues.</td></tr>
+<tr><td>Directory structure</td><td>Include path separators in archive names (e.g. <code>docs/readme.txt</code>).</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ziperror()</code></td><td><code>ziperror@</code></td><td>Last error code (0&ndash;7)</td></tr>
+<tr><td><code>zipcreate#(path$)</code></td><td><code>zipcreate#@$</code></td><td>Create new archive (write mode)</td></tr>
+<tr><td><code>zipopen#(path$)</code></td><td><code>zipopen#@$</code></td><td>Open existing archive (read mode)</td></tr>
+<tr><td><code>zipclose(h#)</code></td><td><code>zipclose@#</code></td><td>Close archive (1/0)</td></tr>
+<tr><td><code>zipadd(h#, src$, name$)</code></td><td><code>zipadd@#$$</code></td><td>Add file to archive (1/0)</td></tr>
+<tr><td><code>zipaddstr(h#, content$, name$)</code></td><td><code>zipaddstr@#$$</code></td><td>Add string as file (1/0)</td></tr>
+<tr><td><code>zipextract(h#, name$, dest$)</code></td><td><code>zipextract@#$$</code></td><td>Extract single file (1/0)</td></tr>
+<tr><td><code>zipextractall(h#, dest$)</code></td><td><code>zipextractall@#$</code></td><td>Extract all files (1/0)</td></tr>
+<tr><td><code>ziplist$(h#)</code></td><td><code>ziplist$@#</code></td><td>List all files (newline-separated)</td></tr>
+<tr><td><code>zipcount(h#)</code></td><td><code>zipcount@#</code></td><td>Number of files</td></tr>
+<tr><td><code>zipexists(h#, name$)</code></td><td><code>zipexists@#$</code></td><td>File exists? (1/0)</td></tr>
+<tr><td><code>zipread$(h#, name$)</code></td><td><code>zipread$@#$</code></td><td>Read file as string</td></tr>
+<tr><td><code>zipfilesize(h#, name$)</code></td><td><code>zipfilesize@#$</code></td><td>Uncompressed size (-1 on error)</td></tr>
+<tr><td><code>zipquick(src$, zip$)</code></td><td><code>zipquick@$$</code></td><td>Quick single-file compress (1/0)</td></tr>
+<tr><td><code>unzipquick(zip$, dest$)</code></td><td><code>unzipquick@$$</code></td><td>Quick extract all (1/0)</td></tr>
+</tbody></table></div>
+<p><em>14 functions across 6 categories.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

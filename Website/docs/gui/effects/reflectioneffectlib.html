@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReflectionEffectLib — Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic ReflectionEffectLib reference — mirror-like reflections wrapping TReflectionEffect with 16 functions.">
+<link rel="icon" href="../../../assets/img/launcher-48.png">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--font-retro:'Press Start 2P',monospace;--font-mono:'JetBrains Mono','Fira Code',monospace;--font-body:'Space Grotesk',sans-serif;--scanline-opacity:0.03;--transition:0.3s ease;--sidebar-w:280px}[data-theme="green"]{--bg-primary:#040804;--bg-secondary:#081008;--bg-card:#0b160b;--bg-terminal:#020602;--text-primary:#33ff33;--text-secondary:#22aa22;--text-dim:#116611;--accent:#00ff41;--accent-dim:#00aa2a;--accent-subtle:rgba(0,255,65,0.06);--glow-color:rgba(51,255,51,0.15);--glow-strong:rgba(51,255,51,0.35);--border:#1a3a1a;--keyword-color:#66ff66;--string-color:#88ffaa;--number-color:#aaffcc;--comment-color:#338833;--mascot-filter:none}[data-theme="amber"]{--bg-primary:#080600;--bg-secondary:#100c06;--bg-card:#18120a;--bg-terminal:#060400;--text-primary:#ffbb33;--text-secondary:#cc8800;--text-dim:#885500;--accent:#ffcc00;--accent-dim:#aa8800;--accent-subtle:rgba(255,204,0,0.06);--glow-color:rgba(255,187,51,0.15);--glow-strong:rgba(255,187,51,0.35);--border:#3a2a1a;--keyword-color:#ffdd66;--string-color:#ffcc88;--number-color:#ffddaa;--comment-color:#886633;--mascot-filter:hue-rotate(30deg) saturate(0.8)}[data-theme="blue"]{--bg-primary:#040610;--bg-secondary:#080e1e;--bg-card:#0c1428;--bg-terminal:#020410;--text-primary:#33bbff;--text-secondary:#2288cc;--text-dim:#115588;--accent:#00ccff;--accent-dim:#0088aa;--accent-subtle:rgba(0,204,255,0.06);--glow-color:rgba(51,187,255,0.15);--glow-strong:rgba(51,187,255,0.35);--border:#1a2a3a;--keyword-color:#66ccff;--string-color:#88ddff;--number-color:#aaeeff;--comment-color:#336688;--mascot-filter:hue-rotate(180deg) saturate(0.9)}[data-theme="pink"]{--bg-primary:#0c040c;--bg-secondary:#160818;--bg-card:#1e0c20;--bg-terminal:#080208;--text-primary:#ff66cc;--text-secondary:#cc3399;--text-dim:#882266;--accent:#ff44bb;--accent-dim:#aa2288;--accent-subtle:rgba(255,68,187,0.06);--glow-color:rgba(255,102,204,0.15);--glow-strong:rgba(255,102,204,0.35);--border:#3a1a3a;--keyword-color:#ff88dd;--string-color:#ffaaee;--number-color:#ffbbee;--comment-color:#883366;--mascot-filter:hue-rotate(330deg)}[data-theme="white"]{--bg-primary:#0c0c16;--bg-secondary:#121226;--bg-card:#18182e;--bg-terminal:#080812;--text-primary:#e0e0e8;--text-secondary:#a0a0b0;--text-dim:#606070;--accent:#ffffff;--accent-dim:#aaaaaa;--accent-subtle:rgba(224,224,232,0.04);--glow-color:rgba(224,224,232,0.08);--glow-strong:rgba(224,224,232,0.18);--border:#2a2a3a;--keyword-color:#ffffff;--string-color:#ccddee;--number-color:#bbccdd;--comment-color:#666680;--mascot-filter:saturate(0.3) brightness(1.1)}*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth;font-size:16px;scroll-padding-top:70px}body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);line-height:1.7;overflow-x:hidden;transition:background var(--transition),color var(--transition)}::selection{background:var(--text-primary);color:var(--bg-primary)}a{color:var(--accent);text-decoration:none;transition:color var(--transition),text-shadow var(--transition)}a:hover{color:var(--text-primary);text-shadow:0 0 10px var(--glow-color)}body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,var(--scanline-opacity)) 2px,rgba(0,0,0,var(--scanline-opacity)) 4px);pointer-events:none;z-index:9999}.topbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(4,8,4,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);height:56px;display:flex;align-items:center;padding:0 1.5rem}.topbar-logo{font-family:var(--font-retro);font-size:0.55rem;color:var(--accent);letter-spacing:2px;text-shadow:0 0 20px var(--glow-strong);display:flex;align-items:center;gap:0.5rem}.topbar-logo-icon{width:26px;height:26px;border-radius:4px;filter:drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter)}.topbar-nav{margin-left:auto;display:flex;align-items:center;gap:1.2rem}.topbar-nav a{font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);transition:color var(--transition)}.topbar-nav a:hover{color:var(--accent)}.theme-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:var(--font-retro);font-size:0.45rem;padding:0.2rem 0.5rem;cursor:pointer;transition:all var(--transition);letter-spacing:1px}.theme-btn:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px var(--glow-color)}.sidebar-toggle{display:none;background:none;border:1px solid var(--border);color:var(--text-primary);font-size:1rem;cursor:pointer;padding:0.2rem 0.5rem}.layout{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg-secondary);border-right:1px solid var(--border);position:fixed;top:56px;bottom:0;left:0;overflow-y:auto;overflow-x:hidden;padding:1.5rem 0;z-index:100;transition:transform 0.3s ease}.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:transparent}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}.sidebar-section{padding:0.3rem 0}.sidebar-section-title{font-family:var(--font-retro);font-size:0.38rem;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;padding:0.6rem 1.2rem 0.3rem}.sidebar-link{display:block;padding:0.35rem 1.2rem 0.35rem 1.5rem;font-size:0.75rem;color:var(--text-dim);border-left:2px solid transparent;transition:all 0.15s ease;line-height:1.5}.sidebar-link:hover{color:var(--text-primary);background:var(--accent-subtle);border-left-color:var(--accent-dim)}.sidebar-link.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-subtle);text-shadow:0 0 6px var(--glow-color)}.content{flex:1;margin-left:var(--sidebar-w);padding:2.5rem 3rem 5rem;max-width:900px}.doc-section{margin-bottom:3.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}.doc-section:last-child{border-bottom:none}.doc-section h2{font-family:var(--font-retro);font-size:clamp(0.5rem,1.8vw,0.7rem);color:var(--accent);text-shadow:0 0 15px var(--glow-color);line-height:2.2;margin-bottom:1.5rem;letter-spacing:1px;padding-top:0.5rem}.doc-section h3{font-family:var(--font-retro);font-size:0.5rem;color:var(--text-primary);line-height:2;margin:2rem 0 1rem}.doc-section p{font-size:0.88rem;color:var(--text-secondary);line-height:1.85;margin-bottom:1rem}.doc-section li code,.doc-section code{background:var(--bg-card);border:1px solid var(--border);padding:0.1rem 0.35rem;font-size:0.82rem;color:var(--keyword-color);font-family:var(--font-mono)}.doc-section strong{color:var(--text-primary)}.doc-section em{color:var(--accent);font-style:normal;text-shadow:0 0 4px var(--glow-color)}.code-block{background:var(--bg-terminal);border:1px solid var(--border);border-radius:8px;margin:1rem 0 1.5rem;overflow:hidden;box-shadow:0 0 20px var(--glow-color),inset 0 0 40px rgba(0,0,0,0.4)}.code-titlebar{background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:0 0 0 0.8rem;display:flex;align-items:center;height:26px}.code-titlebar-title{font-size:0.5rem;color:var(--text-dim);font-family:var(--font-mono);flex:1}.code-titlebar-controls{display:flex;align-items:center;gap:0.1rem;margin-left:auto}.code-titlebar-btn{width:24px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text-dim);background:transparent;border:none;cursor:default}.code-titlebar-btn.close:hover{background:#e81123;color:#fff}.code-body{padding:1rem 1.2rem;overflow-x:auto;font-family:var(--font-mono);font-size:0.8rem;line-height:1.8;color:var(--text-secondary)}.code-body pre{margin:0;white-space:pre}.kw{color:var(--keyword-color);font-weight:600}.str{color:var(--string-color)}.num{color:var(--number-color)}.cmt{color:var(--comment-color);font-style:italic}.fn{color:var(--accent)}.op{color:var(--text-primary)}.table-wrap{overflow-x:auto;margin:1rem 0 1.5rem}.table-wrap table{width:100%;border-collapse:collapse;font-size:0.82rem}.table-wrap th{font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);text-align:left;padding:0.7rem 0.8rem;border-bottom:2px solid var(--accent-dim);letter-spacing:1px;text-transform:uppercase;background:var(--bg-secondary)}.table-wrap td{padding:0.55rem 0.8rem;border-bottom:1px solid var(--border);color:var(--text-secondary);vertical-align:top}.table-wrap tr:hover td{background:var(--accent-subtle)}.table-wrap td code{background:var(--bg-terminal);border:1px solid var(--border);padding:0.05rem 0.3rem;font-size:0.78rem;color:var(--keyword-color)}.info-box{padding:1rem 1.2rem;margin:1rem 0;border-left:3px solid var(--accent-dim);background:var(--accent-subtle);font-size:0.88rem;line-height:1.7;color:var(--text-secondary)}.info-box strong{color:var(--accent)}@media(max-width:768px){.sidebar{transform:translateX(-100%);width:280px;min-width:280px}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:block}.content{margin-left:0;padding:1.5rem 1rem 4rem}.code-body{font-size:0.72rem}}.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99}.sidebar-overlay.show{display:block}
+</style>
+</head>
+<body>
+
+<header class="topbar"><a href="../../../index.html" class="topbar-logo"><img src="../../../assets/img/launcher-48.png" alt="" class="topbar-logo-icon"><span>Plan9Basic</span></a><nav class="topbar-nav"><a href="../../../index.html#docs">Docs</a><a href="language-reference.html">Language</a><button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button></nav><button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button></header>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<nav class="sidebar" id="sidebar">
+  <a href="../../../index.html">&larr; Back to Plan9Basic</a>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">ReflectionEffectLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">16 functions &bull; Visual effect</span>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#cross-platform" class="sidebar-link">Cross-Platform</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#creation" class="sidebar-link">Creation &amp; Destruction</a>
+    <a href="#error-handling" class="sidebar-link">Error Handling</a>
+    <a href="#length" class="sidebar-link">Length</a>
+    <a href="#opacity" class="sidebar-link">Opacity</a>
+    <a href="#offset" class="sidebar-link">Offset</a>
+    <a href="#control" class="sidebar-link">Effect Control</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#best-practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-reference" class="sidebar-link">Quick Reference</a>
+    <a href="#see-also" class="sidebar-link">See Also</a>
+  </div>
+</nav>
+
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+  <h2>Overview</h2>
+  <p><strong>ReflectionEffectLib</strong> creates mirror-like reflections below visual controls, wrapping the FireMonkey <code>TReflectionEffect</code> component. The effect renders a fading, inverted copy of the control beneath it — similar to iOS-style glossy reflections or objects reflected on a polished surface.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Property</th><th>Details</th></tr>
+      <tr><td>Library</td><td><code>ReflectionEffectLib</code></td></tr>
+      <tr><td>Prefix</td><td><code>reflection_</code></td></tr>
+      <tr><td>Wraps</td><td><code>TReflectionEffect</code></td></tr>
+      <tr><td>Functions</td><td>16</td></tr>
+      <tr><td>Type</td><td>Visual effect (decorative)</td></tr>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Category</th><th>Count</th><th>Description</th></tr>
+      <tr><td>Creation / Destruction</td><td>2</td><td>Create and free effect</td></tr>
+      <tr><td>Length</td><td>2</td><td>Get/set reflection height</td></tr>
+      <tr><td>Opacity</td><td>2</td><td>Get/set reflection transparency</td></tr>
+      <tr><td>Offset</td><td>2</td><td>Get/set gap from control</td></tr>
+      <tr><td>Effect Control</td><td>4</td><td>Enabled and trigger get/set</td></tr>
+      <tr><td>Error Handling</td><td>4</td><td>Error codes and messages</td></tr>
+    </table>
+  </div>
+  <div class="info-box">
+    <strong>&#129668; Glossy Surfaces:</strong> This effect adds a polished, professional look to UI elements. Use subtle opacity (0.2–0.4) and moderate length (0.3–0.5) for the most realistic appearance.
+  </div>
+</section>
+
+<section class="doc-section" id="cross-platform">
+  <h2>Cross-Platform Support</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Platform</th><th>Support</th></tr>
+      <tr><td>Windows</td><td>&#9989; Full support</td></tr>
+      <!-- <tr><td>macOS</td><td>&#9989; Full support</td></tr> -->
+      <tr><td>Linux</td><td>&#9989; Full support</td></tr>
+      <tr><td>Android</td><td>&#9989; Full support</td></tr>
+      <!-- <tr><td>iOS</td><td>&#9989; Full support</td></tr> -->
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="creation">
+  <h2>Creation &amp; Destruction</h2>
+  <h3>reflection#(parent#)</h3>
+  <p>Creates a new reflection effect attached to the specified visual control.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>parent#</code></td><td>Pointer</td><td>Target visual control</td></tr>
+      <tr><td><em>Returns</em></td><td>Pointer</td><td>Effect handle, or 0 on failure</td></tr>
+    </table>
+  </div>
+  <h3>reflection_free(effect#)</h3>
+  <p>Destroys the effect and releases associated resources.</p>
+</section>
+
+<section class="doc-section" id="error-handling">
+  <h2>Error Handling</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td><code>reflection_error()</code></td><td><code>reflection_error@</code></td><td>Returns last error code (0 = none)</td></tr>
+      <tr><td><code>reflection_errormsg$()</code></td><td><code>reflection_errormsg$@</code></td><td>Returns last error message</td></tr>
+      <tr><td><code>reflection_strerror$(code)</code></td><td><code>reflection_strerror$@n</code></td><td>Converts error code to text</td></tr>
+      <tr><td><code>reflection_clearerror()</code></td><td><code>reflection_clearerror@</code></td><td>Clears the error state</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="length">
+  <h2>Length</h2>
+  <p>Controls how much of the control is reflected. A value of 1.0 reflects the entire control; 0.5 reflects only the bottom half.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td><code>reflection_length#(effect#, value)</code></td><td><code>reflection_length#@#n</code></td><td>Set reflection height (0–1)</td></tr>
+      <tr><td><code>reflection_length(effect#)</code></td><td><code>reflection_length@#</code></td><td>Get reflection height</td></tr>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Value</th><th>Effect</th></tr>
+      <tr><td><code>0.2–0.3</code></td><td>Short, subtle reflection</td></tr>
+      <tr><td><code>0.4–0.5</code></td><td>Medium reflection (default range)</td></tr>
+      <tr><td><code>0.6–0.8</code></td><td>Tall reflection</td></tr>
+      <tr><td><code>1.0</code></td><td>Full mirror image</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="opacity">
+  <h2>Opacity</h2>
+  <p>Controls the transparency of the reflection. Lower values create a more subtle, realistic effect.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td><code>reflection_opacity#(effect#, value)</code></td><td><code>reflection_opacity#@#n</code></td><td>Set opacity (0–1)</td></tr>
+      <tr><td><code>reflection_opacity(effect#)</code></td><td><code>reflection_opacity@#</code></td><td>Get opacity</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="offset">
+  <h2>Offset</h2>
+  <p>Sets the gap in pixels between the control and its reflection, creating visual separation.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td><code>reflection_offset#(effect#, pixels)</code></td><td><code>reflection_offset#@#n</code></td><td>Set gap (pixels)</td></tr>
+      <tr><td><code>reflection_offset(effect#)</code></td><td><code>reflection_offset@#</code></td><td>Get gap</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="control">
+  <h2>Effect Control</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td><code>reflection_enabled#(effect#, value)</code></td><td><code>reflection_enabled#@#n</code></td><td>Enable (1) or disable (0)</td></tr>
+      <tr><td><code>reflection_enabled(effect#)</code></td><td><code>reflection_enabled@#</code></td><td>Gets enabled state</td></tr>
+      <tr><td><code>reflection_trigger#(effect#, trigger$)</code></td><td><code>reflection_trigger#@#$</code></td><td>Sets trigger string</td></tr>
+      <tr><td><code>reflection_trigger$(effect#)</code></td><td><code>reflection_trigger$@#</code></td><td>Gets trigger string</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="examples">
+  <h2>Complete Examples</h2>
+
+  <h3>Example 1: Basic Reflection</h3>
+  <div class="code-block">
+    <div class="code-titlebar"><span class="code-titlebar-title">&#9583; basic-reflection.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div>
+    <div class="code-body"><pre><span class="kw">let</span> frm# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> rect# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> refl# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+
+frm# <span class="op">=</span> <span class="fn">form#</span>(<span class="str">"Reflection Demo"</span>, <span class="num">400</span>, <span class="num">350</span>)
+
+rect# <span class="op">=</span> <span class="fn">rectangle#</span>(frm#)
+<span class="fn">rectangle_bounds#</span>(rect#, <span class="num">100</span>, <span class="num">50</span>, <span class="num">200</span>, <span class="num">100</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">"SteelBlue"</span>)
+
+refl# <span class="op">=</span> <span class="fn">reflection#</span>(rect#)
+<span class="fn">reflection_length#</span>(refl#, <span class="num">0.5</span>)
+<span class="fn">reflection_opacity#</span>(refl#, <span class="num">0.4</span>)
+<span class="fn">reflection_offset#</span>(refl#, <span class="num">2</span>)
+
+<span class="fn">form_show</span>(frm#)</pre></div>
+  </div>
+
+  <h3>Example 2: Reflection Controls</h3>
+  <div class="code-block">
+    <div class="code-titlebar"><span class="code-titlebar-title">&#9583; reflection-controls.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div>
+    <div class="code-body"><pre><span class="kw">let</span> frm# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> rect# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> refl# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> lbl# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+
+frm# <span class="op">=</span> <span class="fn">form#</span>(<span class="str">"Reflection Controls"</span>, <span class="num">450</span>, <span class="num">380</span>)
+
+rect# <span class="op">=</span> <span class="fn">rectangle#</span>(frm#)
+<span class="fn">rectangle_bounds#</span>(rect#, <span class="num">125</span>, <span class="num">40</span>, <span class="num">200</span>, <span class="num">100</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">"Navy"</span>)
+
+refl# <span class="op">=</span> <span class="fn">reflection#</span>(rect#)
+<span class="fn">reflection_length#</span>(refl#, <span class="num">0.5</span>)
+<span class="fn">reflection_opacity#</span>(refl#, <span class="num">0.5</span>)
+
+lbl# <span class="op">=</span> <span class="fn">label#</span>(frm#, <span class="str">"Length: 50%  Opacity: 50%"</span>, <span class="num">120</span>, <span class="num">220</span>)
+
+<span class="kw">let</span> btn1# <span class="op">=</span> <span class="fn">button#</span>(frm#, <span class="str">"Len 25%"</span>)
+<span class="fn">button_bounds#</span>(btn1#, <span class="num">40</span>, <span class="num">260</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btn1#, <span class="str">"SetLen25"</span>)
+
+<span class="kw">let</span> btn2# <span class="op">=</span> <span class="fn">button#</span>(frm#, <span class="str">"Len 50%"</span>)
+<span class="fn">button_bounds#</span>(btn2#, <span class="num">130</span>, <span class="num">260</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btn2#, <span class="str">"SetLen50"</span>)
+
+<span class="kw">let</span> btn3# <span class="op">=</span> <span class="fn">button#</span>(frm#, <span class="str">"Len 75%"</span>)
+<span class="fn">button_bounds#</span>(btn3#, <span class="num">220</span>, <span class="num">260</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btn3#, <span class="str">"SetLen75"</span>)
+
+<span class="kw">let</span> btn4# <span class="op">=</span> <span class="fn">button#</span>(frm#, <span class="str">"Toggle"</span>)
+<span class="fn">button_bounds#</span>(btn4#, <span class="num">310</span>, <span class="num">260</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="fn">button_onclick#</span>(btn4#, <span class="str">"Toggle"</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> SetLen25(sender#)
+  <span class="fn">reflection_length#</span>(refl#, <span class="num">0.25</span>)
+  <span class="fn">label_text#</span>(lbl#, <span class="str">"Length: 25%"</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> SetLen50(sender#)
+  <span class="fn">reflection_length#</span>(refl#, <span class="num">0.50</span>)
+  <span class="fn">label_text#</span>(lbl#, <span class="str">"Length: 50%"</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> SetLen75(sender#)
+  <span class="fn">reflection_length#</span>(refl#, <span class="num">0.75</span>)
+  <span class="fn">label_text#</span>(lbl#, <span class="str">"Length: 75%"</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> Toggle(sender#)
+  <span class="kw">if</span> <span class="fn">reflection_enabled</span>(refl#) <span class="op">=</span> <span class="num">1</span> <span class="kw">then</span>
+    <span class="fn">reflection_enabled#</span>(refl#, <span class="num">0</span>)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">"Reflection: OFF"</span>)
+  <span class="kw">else</span>
+    <span class="fn">reflection_enabled#</span>(refl#, <span class="num">1</span>)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">"Reflection: ON"</span>)
+  <span class="kw">endif</span>
+<span class="kw">endfunction</span></pre></div>
+  </div>
+
+  <h3>Example 3: Gallery with Reflections</h3>
+  <div class="code-block">
+    <div class="code-titlebar"><span class="code-titlebar-title">&#9583; reflection-gallery.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div>
+    <div class="code-body"><pre><span class="kw">let</span> frm# <span class="op">=</span> <span class="fn">Pointer#</span>(<span class="num">0</span>)
+
+frm# <span class="op">=</span> <span class="fn">form#</span>(<span class="str">"Reflection Gallery"</span>, <span class="num">500</span>, <span class="num">350</span>)
+
+<span class="cmt">' Create 3 items with reflections</span>
+<span class="kw">let</span> rect1# <span class="op">=</span> <span class="fn">rectangle#</span>(frm#)
+<span class="fn">rectangle_bounds#</span>(rect1#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">120</span>, <span class="num">80</span>)
+<span class="fn">rectangle_fill#</span>(rect1#, <span class="str">"Red"</span>)
+<span class="kw">let</span> refl1# <span class="op">=</span> <span class="fn">reflection#</span>(rect1#)
+<span class="fn">reflection_length#</span>(refl1#, <span class="num">0.4</span>)
+<span class="fn">reflection_opacity#</span>(refl1#, <span class="num">0.3</span>)
+
+<span class="kw">let</span> rect2# <span class="op">=</span> <span class="fn">rectangle#</span>(frm#)
+<span class="fn">rectangle_bounds#</span>(rect2#, <span class="num">190</span>, <span class="num">50</span>, <span class="num">120</span>, <span class="num">80</span>)
+<span class="fn">rectangle_fill#</span>(rect2#, <span class="str">"Green"</span>)
+<span class="kw">let</span> refl2# <span class="op">=</span> <span class="fn">reflection#</span>(rect2#)
+<span class="fn">reflection_length#</span>(refl2#, <span class="num">0.4</span>)
+<span class="fn">reflection_opacity#</span>(refl2#, <span class="num">0.3</span>)
+
+<span class="kw">let</span> rect3# <span class="op">=</span> <span class="fn">rectangle#</span>(frm#)
+<span class="fn">rectangle_bounds#</span>(rect3#, <span class="num">330</span>, <span class="num">50</span>, <span class="num">120</span>, <span class="num">80</span>)
+<span class="fn">rectangle_fill#</span>(rect3#, <span class="str">"Blue"</span>)
+<span class="kw">let</span> refl3# <span class="op">=</span> <span class="fn">reflection#</span>(rect3#)
+<span class="fn">reflection_length#</span>(refl3#, <span class="num">0.4</span>)
+<span class="fn">reflection_opacity#</span>(refl3#, <span class="num">0.3</span>)
+
+<span class="fn">form_show</span>(frm#)</pre></div>
+  </div>
+</section>
+
+<section class="doc-section" id="best-practices">
+  <h2>Best Practices</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Practice</th><th>Why</th></tr>
+      <tr><td>Use opacity 0.2–0.4 for professional look</td><td>Too opaque looks unrealistic</td></tr>
+      <tr><td>Keep length at 0.3–0.5</td><td>Realistic reflections fade before full length</td></tr>
+      <tr><td>Add small offset (2–4 px)</td><td>Creates visual separation from control</td></tr>
+      <tr><td>Works best on solid colored shapes</td><td>Complex controls may have uneven reflections</td></tr>
+      <tr><td>Leave space below the control</td><td>The reflection renders beneath the control's bounds</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="quick-reference">
+  <h2>Quick Reference</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Function</th><th>Signature</th><th>Description</th></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">CREATION &amp; DESTRUCTION</td></tr>
+      <tr><td><code>reflection#(parent#)</code></td><td><code>reflection#@#</code></td><td>Create effect</td></tr>
+      <tr><td><code>reflection_free(effect#)</code></td><td><code>reflection_free@#</code></td><td>Destroy effect</td></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">LENGTH</td></tr>
+      <tr><td><code>reflection_length#(effect#, value)</code></td><td><code>reflection_length#@#n</code></td><td>Set height (0–1)</td></tr>
+      <tr><td><code>reflection_length(effect#)</code></td><td><code>reflection_length@#</code></td><td>Get height</td></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">OPACITY</td></tr>
+      <tr><td><code>reflection_opacity#(effect#, value)</code></td><td><code>reflection_opacity#@#n</code></td><td>Set opacity (0–1)</td></tr>
+      <tr><td><code>reflection_opacity(effect#)</code></td><td><code>reflection_opacity@#</code></td><td>Get opacity</td></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">OFFSET</td></tr>
+      <tr><td><code>reflection_offset#(effect#, pixels)</code></td><td><code>reflection_offset#@#n</code></td><td>Set gap (pixels)</td></tr>
+      <tr><td><code>reflection_offset(effect#)</code></td><td><code>reflection_offset@#</code></td><td>Get gap</td></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">EFFECT CONTROL</td></tr>
+      <tr><td><code>reflection_enabled#(effect#, value)</code></td><td><code>reflection_enabled#@#n</code></td><td>Enable/disable</td></tr>
+      <tr><td><code>reflection_enabled(effect#)</code></td><td><code>reflection_enabled@#</code></td><td>Get enabled state</td></tr>
+      <tr><td><code>reflection_trigger#(effect#, trigger$)</code></td><td><code>reflection_trigger#@#$</code></td><td>Set trigger</td></tr>
+      <tr><td><code>reflection_trigger$(effect#)</code></td><td><code>reflection_trigger$@#</code></td><td>Get trigger</td></tr>
+      <tr><td colspan="3" style="font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);letter-spacing:1px;background:var(--bg-secondary);">ERROR HANDLING</td></tr>
+      <tr><td><code>reflection_error()</code></td><td><code>reflection_error@</code></td><td>Last error code</td></tr>
+      <tr><td><code>reflection_errormsg$()</code></td><td><code>reflection_errormsg$@</code></td><td>Last error message</td></tr>
+      <tr><td><code>reflection_strerror$(code)</code></td><td><code>reflection_strerror$@n</code></td><td>Code to text</td></tr>
+      <tr><td><code>reflection_clearerror()</code></td><td><code>reflection_clearerror@</code></td><td>Clear error state</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="doc-section" id="see-also">
+  <h2>See Also</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Library</th><th>Description</th></tr>
+      <tr><td><code>ShadowEffectLib</code></td><td>Drop shadow effects</td></tr>
+      <tr><td><code>GlowEffectLib</code></td><td>Outer glow effects</td></tr>
+      <tr><td><code>InnerGlowEffectLib</code></td><td>Inner glow effects</td></tr>
+    </table>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+const themes=['green','amber','blue','pink','white'];let ti=0;function cycleTheme(){ti=(ti+1)%themes.length;document.documentElement.setAttribute('data-theme',themes[ti]);document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase()}
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('sidebarOverlay'),toggle=document.getElementById('sidebarToggle');toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')});overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')});
+const links=document.querySelectorAll('.sidebar-link[href^="#"]'),sections=[...links].map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);window.addEventListener('scroll',()=>{let c='';for(const s of sections){if(s.getBoundingClientRect().top<=120)c=s.id}links.forEach(l=>{l.classList.toggle('active',l.getAttribute('href')==='#'+c)})},{passive:true});
+links.forEach(l=>l.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')}));
+</script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAGLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic RAGLib: 13 functions for local knowledge base retrieval — index any document collection, search by query, tag, or identifier, and get relevant results for display or AI enrichment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<style>
+:root{--font-retro:'Press Start 2P',monospace;--font-mono:'JetBrains Mono','Fira Code',monospace;--font-body:'Space Grotesk',sans-serif;--scanline-opacity:0.03;--transition:0.3s ease;--sidebar-w:280px}
+[data-theme="green"]{--bg-primary:#040804;--bg-secondary:#081008;--bg-card:#0b160b;--bg-terminal:#020602;--text-primary:#33ff33;--text-secondary:#22aa22;--text-dim:#116611;--accent:#00ff41;--accent-dim:#00aa2a;--accent-subtle:rgba(0,255,65,0.06);--glow-color:rgba(51,255,51,0.15);--glow-strong:rgba(51,255,51,0.35);--border:#1a3a1a;--keyword-color:#66ff66;--string-color:#88ffaa;--number-color:#aaffcc;--comment-color:#338833}
+[data-theme="amber"]{--bg-primary:#080600;--bg-secondary:#100c06;--bg-card:#18120a;--bg-terminal:#060400;--text-primary:#ffbb33;--text-secondary:#cc8800;--text-dim:#885500;--accent:#ffcc00;--accent-dim:#aa8800;--accent-subtle:rgba(255,204,0,0.06);--glow-color:rgba(255,187,51,0.15);--glow-strong:rgba(255,187,51,0.35);--border:#3a2a1a;--keyword-color:#ffdd66;--string-color:#ffcc88;--number-color:#ffddaa;--comment-color:#886633}
+[data-theme="blue"]{--bg-primary:#040610;--bg-secondary:#080e1e;--bg-card:#0c1428;--bg-terminal:#020410;--text-primary:#33bbff;--text-secondary:#2288cc;--text-dim:#115588;--accent:#00ccff;--accent-dim:#0088aa;--accent-subtle:rgba(0,204,255,0.06);--glow-color:rgba(51,187,255,0.15);--glow-strong:rgba(51,187,255,0.35);--border:#1a2a3a;--keyword-color:#66ccff;--string-color:#88ddff;--number-color:#aaeeff;--comment-color:#336688}
+[data-theme="pink"]{--bg-primary:#0c040c;--bg-secondary:#160818;--bg-card:#1e0c20;--bg-terminal:#080208;--text-primary:#ff66cc;--text-secondary:#cc3399;--text-dim:#882266;--accent:#ff44bb;--accent-dim:#aa2288;--accent-subtle:rgba(255,68,187,0.06);--glow-color:rgba(255,102,204,0.15);--glow-strong:rgba(255,102,204,0.35);--border:#3a1a3a;--keyword-color:#ff88dd;--string-color:#ffaaee;--number-color:#ffbbee;--comment-color:#883366}
+[data-theme="white"]{--bg-primary:#0c0c16;--bg-secondary:#121226;--bg-card:#18182e;--bg-terminal:#080812;--text-primary:#e0e0e8;--text-secondary:#a0a0b0;--text-dim:#606070;--accent:#ffffff;--accent-dim:#aaaaaa;--accent-subtle:rgba(224,224,232,0.04);--glow-color:rgba(224,224,232,0.08);--glow-strong:rgba(224,224,232,0.18);--border:#2a2a3a;--keyword-color:#ffffff;--string-color:#ccddee;--number-color:#bbccdd;--comment-color:#666680}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth;font-size:16px;scroll-padding-top:70px}body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--font-mono);line-height:1.7;overflow-x:hidden;transition:background var(--transition),color var(--transition)}::selection{background:var(--text-primary);color:var(--bg-primary)}a{color:var(--accent);text-decoration:none;transition:color var(--transition),text-shadow var(--transition)}a:hover{color:var(--text-primary);text-shadow:0 0 10px var(--glow-color)}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,var(--scanline-opacity)) 2px,rgba(0,0,0,var(--scanline-opacity)) 4px);pointer-events:none;z-index:9999}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(4,8,4,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);height:56px;display:flex;align-items:center;padding:0 1.5rem}
+.topbar-logo-icon{width:26px;height:26px;border-radius:4px;filter:drop-shadow(0 0 6px var(--glow-strong))}
+.topbar-logo{font-family:var(--font-retro);font-size:0.55rem;color:var(--accent);letter-spacing:2px;text-shadow:0 0 20px var(--glow-strong);display:flex;align-items:center;gap:0.5rem}
+.theme-btn{background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:var(--font-retro);font-size:0.45rem;padding:0.2rem 0.5rem;cursor:pointer;transition:all var(--transition);letter-spacing:1px;margin-left:auto}.theme-btn:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px var(--glow-color)}
+.sidebar-toggle{display:none;background:none;border:1px solid var(--border);color:var(--text-primary);font-size:1rem;cursor:pointer;padding:0.2rem 0.5rem;transition:all var(--transition)}.sidebar-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.layout{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg-secondary);border-right:1px solid var(--border);position:fixed;top:56px;bottom:0;left:0;overflow-y:auto;overflow-x:hidden;padding:1.5rem 0;z-index:100;transition:transform 0.3s ease}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:transparent}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}.sidebar::-webkit-scrollbar-thumb:hover{background:var(--accent-dim)}
+.sidebar-section{padding:0.3rem 0}.sidebar-section-title{font-family:var(--font-retro);font-size:0.38rem;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;padding:0.6rem 1.2rem 0.3rem}
+.sidebar-link{display:block;padding:0.35rem 1.2rem 0.35rem 1.5rem;font-size:0.75rem;color:var(--text-dim);border-left:2px solid transparent;transition:all 0.15s ease;line-height:1.5}
+.sidebar-link:hover{color:var(--text-primary);background:var(--accent-subtle);border-left-color:var(--accent-dim);text-shadow:none}.sidebar-link.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-subtle);text-shadow:0 0 6px var(--glow-color)}
+.content{flex:1;margin-left:var(--sidebar-w);padding:2.5rem 3rem 5rem;max-width:920px}
+.doc-section{margin-bottom:3.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}.doc-section:last-child{border-bottom:none}
+.doc-section h2{font-family:var(--font-retro);font-size:clamp(0.5rem,1.8vw,0.7rem);color:var(--accent);text-shadow:0 0 15px var(--glow-color);line-height:2.2;margin-bottom:1.5rem;letter-spacing:1px;padding-top:0.5rem}
+.doc-section h3{font-family:var(--font-retro);font-size:0.5rem;color:var(--text-primary);line-height:2;margin:2rem 0 1rem;letter-spacing:0.5px}
+.doc-section p{font-size:0.88rem;color:var(--text-secondary);line-height:1.85;margin-bottom:1rem}
+.doc-section ul,.doc-section ol{padding-left:1.5rem;margin-bottom:1rem}.doc-section li{font-size:0.85rem;color:var(--text-secondary);line-height:1.8;margin-bottom:0.3rem}.doc-section li code{background:var(--bg-card);border:1px solid var(--border);padding:0.1rem 0.35rem;font-size:0.82rem;color:var(--accent)}
+.doc-section strong{color:var(--text-primary)}.doc-section em{color:var(--accent);font-style:normal;text-shadow:0 0 4px var(--glow-color)}
+.doc-section code{background:var(--bg-card);border:1px solid var(--border);padding:0.1rem 0.4rem;font-size:0.82rem;color:var(--keyword-color);font-family:var(--font-mono)}
+.code-block{background:var(--bg-terminal);border:1px solid var(--border);border-radius:8px;margin:1rem 0 1.5rem;overflow:hidden;box-shadow:0 0 20px var(--glow-color),inset 0 0 40px rgba(0,0,0,0.4)}
+.code-titlebar{background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:0 0 0 0.8rem;display:flex;align-items:center;height:26px}
+.code-titlebar-title{font-size:0.5rem;color:var(--text-dim);font-family:var(--font-mono);flex:1}
+.code-titlebar-controls{display:flex;align-items:center;gap:0.1rem;margin-left:auto}
+.code-titlebar-btn{width:24px;height:22px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.6rem;color:var(--text-dim);background:transparent;border:none;cursor:default;transition:background 0.15s ease,color 0.15s ease}
+.code-titlebar-btn:hover{background:rgba(255,255,255,0.08);color:var(--text-secondary)}.code-titlebar-btn.close:hover{background:#e81123;color:#fff}
+.code-body{padding:1rem 1.2rem;overflow-x:auto;font-family:var(--font-mono);font-size:0.8rem;line-height:1.8;color:var(--text-secondary)}.code-body pre{margin:0;white-space:pre}
+.kw{color:var(--keyword-color);font-weight:600}.str{color:var(--string-color)}.num{color:var(--number-color)}.cmt{color:var(--comment-color);font-style:italic}.fn{color:var(--accent)}.op{color:var(--text-primary)}
+table{width:100%;border-collapse:collapse;margin:1rem 0 1.5rem;font-size:0.82rem}
+th{font-family:var(--font-retro);font-size:0.4rem;color:var(--accent);text-align:left;padding:0.7rem 0.8rem;border-bottom:2px solid var(--accent-dim);letter-spacing:1px;text-transform:uppercase;background:var(--bg-secondary)}
+td{padding:0.55rem 0.8rem;border-bottom:1px solid var(--border);color:var(--text-secondary);vertical-align:top}tr:hover td{background:var(--accent-subtle)}
+td code{background:var(--bg-terminal);border:1px solid var(--border);padding:0.05rem 0.3rem;font-size:0.78rem;color:var(--keyword-color)}
+.info-box{padding:1rem 1.2rem;margin:1rem 0;border-left:3px solid var(--accent-dim);background:var(--accent-subtle);font-size:0.88rem;line-height:1.7;color:var(--text-secondary)}.info-box strong{color:var(--accent)}
+.warning-box{padding:1rem 1.2rem;margin:1rem 0;border-left:3px solid #cc8800;background:rgba(204,136,0,0.06);font-size:0.88rem;line-height:1.7;color:var(--text-secondary)}.warning-box strong{color:#ffcc00}
+/* Dir tree */
+.dir-tree{background:var(--bg-terminal);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;margin:1rem 0;font-family:var(--font-mono);font-size:0.78rem;line-height:2;color:var(--text-dim)}
+.dir-tree .folder{color:var(--accent)}.dir-tree .file{color:var(--text-secondary)}
+/* Flow diagram */
+.flow-row{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;margin:1rem 0;font-size:0.78rem}
+.flow-box{padding:0.4rem 0.7rem;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);text-align:center;white-space:nowrap}
+.flow-box.hl{border-color:var(--accent-dim);background:var(--accent-subtle);color:var(--accent)}
+.flow-arrow{color:var(--text-dim);font-size:1rem}
+@media(max-width:1024px){.content{padding:2rem 2rem 4rem}}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);width:280px;min-width:280px;box-shadow:4px 0 20px rgba(0,0,0,0.5)}.sidebar.open{transform:translateX(0)}.sidebar-toggle{display:block}.content{margin-left:0;padding:1.5rem 1rem 4rem}.code-body{font-size:0.72rem}.flow-row{flex-direction:column}.flow-arrow{transform:rotate(90deg)}}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99}.sidebar-overlay.show{display:block}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo"><img src="data:image/png;base64,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" alt="" class="topbar-logo-icon"><span>Plan9Basic</span></a>
+  <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html" style="display:block;padding:0.5rem 1.2rem;font-size:0.8rem;">&larr; Back to Plan9Basic</a>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">RAGLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">13 functions &bull; Knowledge Retrieval</span>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#how-it-works" class="sidebar-link">How It Works</a>
+    <a href="#knowledge-base" class="sidebar-link">Knowledge Base Structure</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#lifecycle" class="sidebar-link">Engine Lifecycle (3)</a>
+    <a href="#retrieval" class="sidebar-link">Core Retrieval (3)</a>
+    <a href="#lookup" class="sidebar-link">Direct Lookup (3)</a>
+    <a href="#analysis" class="sidebar-link">Query Analysis (1)</a>
+    <a href="#info" class="sidebar-link">Information (3)</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+    <a href="#see-also" class="sidebar-link">See Also</a>
+  </div>
+</nav>
+
+<div class="layout">
+<main class="content">
+
+<!-- ================================================================ -->
+<section class="doc-section" id="overview">
+<h2>RAGLib &mdash; Knowledge Retrieval Library</h2>
+<p>Provides functions to index, search, and retrieve content from a <strong>local document collection</strong>. Given any free-text query, RAGLib scores and ranks the most relevant documents, returning them as plain text or structured JSON. Use the results however your applet needs: display them directly, feed them into an AI prompt via AILib, or build search features over your own data. RAGLib handles all the indexing, scoring, and formatting &mdash; your program just provides a query and gets relevant content back. <strong>13 functions.</strong></p>
+<table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Engine Lifecycle</td><td>3</td><td>rag#, rag_free, rag_rebuild#</td></tr>
+<tr><td>Core Retrieval</td><td>3</td><td>retrieve$ (text), retrieve_json$ (JSON), retrieve_budget$ (token-limited)</td></tr>
+<tr><td>Direct Lookup</td><td>3</td><td>doc$ (by ID), functions$ (by function names), tags$ (by tags)</td></tr>
+<tr><td>Query Analysis</td><td>1</td><td>analyze$ (intent, keywords, category hints as JSON)</td></tr>
+<tr><td>Information</td><td>3</td><td>count, funccount, summary$</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="how-it-works">
+<h2>How It Works</h2>
+<div class="flow-row">
+  <div class="flow-box">Your Query</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-box hl">RAGLib<br><small>score &amp; rank</small></div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-box">Relevant Docs</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-box">AI Prompt</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-box">Better Answer</div>
+</div>
+<p>The RAG engine reads markdown documents from a directory tree, builds a search index, and scores documents by <strong>keyword matching</strong>, <strong>identifier overlap</strong>, and <strong>tag relevance</strong>. Results are returned as formatted text ready for display or prompt injection, or as structured JSON with scores and metadata.</p>
+<div class="info-box"><strong>&#9432; Works with any document collection.</strong> RAGLib is domain-agnostic &mdash; point it at a folder of markdown files and it becomes a search engine for that content. Combine it with AILib to build AI assistants grounded in your own data: product manuals, FAQs, recipes, travel guides, personal notes, or any structured text.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="knowledge-base">
+<h2>Knowledge Base Structure</h2>
+<p>A knowledge base is simply a directory tree of markdown files. The structure and subject matter can be anything:</p>
+<div class="dir-tree">
+<span class="folder">knowledge/</span><br>
+&nbsp;&nbsp;&#9500;&#9472; <span class="folder">products/</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9500;&#9472; <span class="file">modelx-overview.md</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9500;&#9472; <span class="file">modelx-setup.md</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9492;&#9472; <span class="file">troubleshooting.md</span><br>
+&nbsp;&nbsp;&#9500;&#9472; <span class="folder">faq/</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9500;&#9472; <span class="file">billing.md</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9492;&#9472; <span class="file">shipping.md</span><br>
+&nbsp;&nbsp;&#9500;&#9472; <span class="folder">guides/</span><br>
+&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&#9492;&#9472; <span class="file">getting-started.md</span><br>
+&nbsp;&nbsp;&#9492;&#9472; <span class="folder">policies/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9492;&#9472; <span class="file">returns.md</span>
+</div>
+<p>Each document contains free-text content and can include tags and categories. Technical documents may also list identifiers (such as function names) that the engine indexes for precise lookup. The broader the collection, the richer the search results.</p>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="lifecycle">
+<h2>Engine Lifecycle</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>rag#(path$)</code></td><td><code>rag#@$</code></td><td>Create RAG engine from a knowledge base directory</td></tr>
+<tr><td><code>rag_free(eng#)</code></td><td><code>rag_free@#</code></td><td>Free RAG engine and release resources</td></tr>
+<tr><td><code>rag_rebuild#(eng#)</code></td><td><code>rag_rebuild#@#</code></td><td>Rebuild the search index from source documents (saved to disk)</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; lifecycle</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> eng# = <span class="fn">rag#</span>(<span class="str">"knowledge/"</span>)
+<span class="fn">println</span> <span class="str">"Documents: "</span> + <span class="fn">str$</span>(<span class="fn">rag_count</span>(eng#))
+<span class="fn">println</span> <span class="str">"Functions: "</span> + <span class="fn">str$</span>(<span class="fn">rag_funccount</span>(eng#))
+
+<span class="cmt">' Rebuild after adding/changing docs</span>
+<span class="fn">rag_rebuild#</span>(eng#)
+<span class="fn">println</span> <span class="str">"Index rebuilt!"</span>
+
+<span class="fn">rag_free</span>(eng#)</pre></div></div>
+<div class="info-box"><strong>&#9432; Index persistence.</strong> The index is saved to disk as JSON after <code>rag_rebuild#</code>. On subsequent runs, <code>rag#</code> loads the cached index instantly. Only rebuild when documents change.</div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="retrieval">
+<h2>Core Retrieval</h2>
+<p>Three ways to search the knowledge base, differing only in output format and budget control. All three accept the same free-text query:</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>rag_retrieve$(eng#, query$)</code></td><td><code>rag_retrieve$@#$</code></td><td>Search &rarr; formatted text (ready for display or prompt injection)</td></tr>
+<tr><td><code>rag_retrieve_json$(eng#, query$)</code></td><td><code>rag_retrieve_json$@#$</code></td><td>Search &rarr; JSON array with scores, categories, token counts</td></tr>
+<tr><td><code>rag_retrieve_budget$(eng#, q$, maxTok)</code></td><td><code>rag_retrieve_budget$@#$n</code></td><td>Search with token budget &mdash; stops when budget is exhausted</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; retrieval.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> eng# = <span class="fn">rag#</span>(<span class="str">"knowledge/"</span>)
+
+<span class="cmt">' Simple text retrieval — returns formatted content for display</span>
+<span class="kw">let</span> docs$ = <span class="fn">rag_retrieve$</span>(eng#, <span class="str">"how do I return a product?"</span>)
+<span class="fn">println</span> docs$
+
+<span class="cmt">' JSON retrieval — returns scores and metadata for each match</span>
+<span class="kw">let</span> json$ = <span class="fn">rag_retrieve_json$</span>(eng#, <span class="str">"delivery times"</span>)
+<span class="kw">let</span> results# = <span class="fn">json_parse#</span>(json$)
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">json_len</span>(results#) - <span class="num">1</span>
+    <span class="kw">let</span> doc# = <span class="fn">json_item#</span>(results#, i)
+    <span class="fn">println</span> <span class="fn">json_gets$</span>(doc#, <span class="str">"title"</span>) + <span class="str">" (score: "</span> + <span class="fn">str$</span>(<span class="fn">json_getn</span>(doc#, <span class="str">"score"</span>)) + <span class="str">")"</span>
+<span class="kw">next</span>
+
+<span class="cmt">' Budget-controlled retrieval — limits result size to fit AI context windows</span>
+<span class="kw">let</span> docs$ = <span class="fn">rag_retrieve_budget$</span>(eng#, <span class="str">"setup and installation"</span>, <span class="num">2000</span>)
+<span class="fn">println</span> docs$</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="lookup">
+<h2>Direct Lookup</h2>
+<p>When you know exactly what you&rsquo;re looking for &mdash; by document ID, specific technical identifier, or tag:</p>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>rag_doc$(eng#, docId$)</code></td><td><code>rag_doc$@#$</code></td><td>Get full content of a document by its ID</td></tr>
+<tr><td><code>rag_functions$(eng#, names$)</code></td><td><code>rag_functions$@#$</code></td><td>Find docs mentioning specific identifiers or function names (comma or space separated)</td></tr>
+<tr><td><code>rag_tags$(eng#, tags$)</code></td><td><code>rag_tags$@#$</code></td><td>Find docs matching specific tags (comma separated)</td></tr>
+</tbody></table>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; direct-lookup.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' Get a specific document by its ID</span>
+<span class="fn">println</span> <span class="fn">rag_doc$</span>(eng#, <span class="str">"troubleshooting"</span>)
+
+<span class="cmt">' Find docs mentioning specific identifiers</span>
+<span class="fn">println</span> <span class="fn">rag_functions$</span>(eng#, <span class="str">"order-number, tracking-code"</span>)
+
+<span class="cmt">' Find docs by tag</span>
+<span class="fn">println</span> <span class="fn">rag_tags$</span>(eng#, <span class="str">"shipping,returns,policy"</span>)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="analysis">
+<h2>Query Analysis</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>rag_analyze$(eng#, query$)</code></td><td><code>rag_analyze$@#$</code></td><td>Analyze query &rarr; JSON with intent, keywords, function names, library hints</td></tr>
+</tbody></table>
+<p>Returns a JSON object describing how the engine interprets the query &mdash; useful for debugging retrieval, building routing logic, or displaying search intent to the user.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; analysis.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> a$ = <span class="fn">rag_analyze$</span>(eng#, <span class="str">"how do I track my order after it ships?"</span>)
+<span class="fn">println</span> a$
+
+<span class="cmt">' Example output:</span>
+<span class="cmt">' {"query":"how do I track my order after it ships?",</span>
+<span class="cmt">'  "intent":"information_request",</span>
+<span class="cmt">'  "is_followup":false,</span>
+<span class="cmt">'  "keywords":["track","order","ships","shipping"],</span>
+<span class="cmt">'  "function_names":[],</span>
+<span class="cmt">'  "library_hints":["shipping","faq"]}</span></pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="info">
+<h2>Information</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>rag_count(eng#)</code></td><td><code>rag_count@#</code></td><td>Number of documents in the index</td></tr>
+<tr><td><code>rag_funccount(eng#)</code></td><td><code>rag_funccount@#</code></td><td>Number of function signatures indexed</td></tr>
+<tr><td><code>rag_summary$(eng#)</code></td><td><code>rag_summary$@#</code></td><td>Human-readable index summary (counts, categories, stats)</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+
+<h3>AI-Powered Q&amp;A Assistant</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; rag-codegen.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">println</span> <span class="str">"=== Product Support Assistant ==="</span>
+
+<span class="kw">let</span> ai# = <span class="fn">ai_client#</span>(<span class="str">"anthropic"</span>, <span class="str">"sk-ant-xxxxx"</span>)
+<span class="fn">ai_model#</span>(ai#, <span class="str">"claude-sonnet-4-20250514"</span>)
+<span class="fn">ai_maxtokens#</span>(ai#, <span class="num">512</span>)
+
+<span class="kw">let</span> eng# = <span class="fn">rag#</span>(<span class="str">"knowledge/"</span>)
+
+<span class="cmt">' Retrieve content relevant to the user question</span>
+<span class="kw">let</span> question$ = <span class="str">"How long does standard shipping take?"</span>
+<span class="kw">let</span> docs$ = <span class="fn">rag_retrieve_budget$</span>(eng#, question$, <span class="num">2000</span>)
+
+<span class="cmt">' Build system prompt: instruct AI to answer from the retrieved content</span>
+<span class="kw">let</span> sys$ = <span class="str">"You are a helpful customer support assistant."</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+sys$ = sys$ + <span class="str">"Answer the user's question using only the information below."</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+sys$ = sys$ + <span class="str">"If the answer is not in the content, say so clearly."</span> + <span class="fn">chr$</span>(<span class="num">10</span>)
+sys$ = sys$ + <span class="fn">chr$</span>(<span class="num">10</span>) + docs$
+
+<span class="cmt">' Ask the AI</span>
+<span class="kw">let</span> answer$ = <span class="fn">ai_completesystem$</span>(ai#, sys$, question$)
+<span class="kw">if</span> <span class="fn">ai_ok</span>(ai#) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="fn">println</span> answer$
+<span class="kw">else</span>
+    <span class="fn">println</span> <span class="str">"Error: "</span> + <span class="fn">ai_errormsg$</span>()
+<span class="kw">end</span> <span class="kw">if</span>
+
+<span class="fn">rag_free</span>(eng#)
+<span class="fn">ai_free</span>(ai#)</pre></div></div>
+<div class="info-box"><strong>&#9432; The core RAG pattern:</strong> retrieve relevant content &rarr; prepend to system prompt &rarr; call AI. The AI is constrained to answer from your documents, which makes responses more accurate and domain-specific than relying on model training alone.</div>
+
+<h3>Query Analysis Inspector</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; analyze.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">println</span> <span class="str">"=== Query Analysis Inspector ==="</span>
+
+<span class="kw">let</span> eng# = <span class="fn">rag#</span>(<span class="str">"knowledge/"</span>)
+
+<span class="kw">let</span> a$ = <span class="fn">rag_analyze$</span>(eng#, <span class="str">"how do I return a damaged item?"</span>)
+<span class="kw">let</span> a# = <span class="fn">json_parse#</span>(a$)
+<span class="fn">println</span> <span class="str">"Intent: "</span> + <span class="fn">json_gets$</span>(a#, <span class="str">"intent"</span>)
+
+<span class="kw">let</span> kw# = <span class="fn">json_get#</span>(a#, <span class="str">"keywords"</span>)
+<span class="kw">let</span> s$ = <span class="str">""</span>
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">json_len</span>(kw#) - <span class="num">1</span>
+    <span class="kw">if</span> i > <span class="num">0</span> <span class="kw">then</span> s$ = s$ + <span class="str">", "</span>
+    s$ = s$ + <span class="fn">json_items$</span>(kw#, i)
+<span class="kw">next</span>
+<span class="fn">println</span> <span class="str">"Keywords: "</span> + s$
+
+<span class="kw">let</span> hints# = <span class="fn">json_get#</span>(a#, <span class="str">"library_hints"</span>)
+<span class="kw">let</span> h$ = <span class="str">""</span>
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">json_len</span>(hints#) - <span class="num">1</span>
+    <span class="kw">if</span> i > <span class="num">0</span> <span class="kw">then</span> h$ = h$ + <span class="str">", "</span>
+    h$ = h$ + <span class="fn">json_items$</span>(hints#, i)
+<span class="kw">next</span>
+<span class="fn">println</span> <span class="str">"Categories: "</span> + h$
+
+<span class="fn">rag_free</span>(eng#)</pre></div></div>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Call <code>rag_rebuild#</code> after adding/modifying docs</td><td>New documents aren&rsquo;t searchable until the index is rebuilt</td></tr>
+<tr><td>Use <code>rag_retrieve_budget$</code> when passing results to AI</td><td>Prevents exceeding the AI model&rsquo;s context window</td></tr>
+<tr><td>Budget of 2000&ndash;4000 tokens is usually enough</td><td>Provides good context for most Q&amp;A and information tasks</td></tr>
+<tr><td>Use <code>rag_retrieve_json$</code> for custom scoring logic</td><td>Gives you scores, token counts, and match reasons</td></tr>
+<tr><td>Use <code>rag_functions$</code> when you know exact identifiers</td><td>More precise than keyword search for named entities, SKUs, or API names</td></tr>
+<tr><td>Organize docs into thematic categories</td><td>Improves search relevance and tag-based filtering</td></tr>
+</tbody></table>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference &mdash; All 13 Functions</h2>
+<table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">ENGINE LIFECYCLE (3)</td></tr>
+<tr><td><code>rag#(path$)</code></td><td><code>rag#@$</code></td><td>Create RAG engine</td></tr>
+<tr><td><code>rag_free(eng#)</code></td><td><code>rag_free@#</code></td><td>Free engine</td></tr>
+<tr><td><code>rag_rebuild#(eng#)</code></td><td><code>rag_rebuild#@#</code></td><td>Rebuild index</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">CORE RETRIEVAL (3)</td></tr>
+<tr><td><code>rag_retrieve$(eng#, q$)</code></td><td><code>rag_retrieve$@#$</code></td><td>Search (formatted text)</td></tr>
+<tr><td><code>rag_retrieve_json$(eng#, q$)</code></td><td><code>rag_retrieve_json$@#$</code></td><td>Search (JSON + scores)</td></tr>
+<tr><td><code>rag_retrieve_budget$(eng#, q$, tok)</code></td><td><code>rag_retrieve_budget$@#$n</code></td><td>Search (token-limited)</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">DIRECT LOOKUP (3)</td></tr>
+<tr><td><code>rag_doc$(eng#, id$)</code></td><td><code>rag_doc$@#$</code></td><td>Get document by ID</td></tr>
+<tr><td><code>rag_functions$(eng#, names$)</code></td><td><code>rag_functions$@#$</code></td><td>Find by function names</td></tr>
+<tr><td><code>rag_tags$(eng#, tags$)</code></td><td><code>rag_tags$@#$</code></td><td>Find by tags</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">QUERY ANALYSIS (1)</td></tr>
+<tr><td><code>rag_analyze$(eng#, q$)</code></td><td><code>rag_analyze$@#$</code></td><td>Analyze intent (JSON)</td></tr>
+<tr><td colspan="3" style="color:var(--accent);font-family:var(--font-retro);font-size:0.38rem;letter-spacing:1px;padding-top:1rem;">INFORMATION (3)</td></tr>
+<tr><td><code>rag_count(eng#)</code></td><td><code>rag_count@#</code></td><td>Document count</td></tr>
+<tr><td><code>rag_funccount(eng#)</code></td><td><code>rag_funccount@#</code></td><td>Function count</td></tr>
+<tr><td><code>rag_summary$(eng#)</code></td><td><code>rag_summary$@#</code></td><td>Index summary</td></tr>
+</tbody></table>
+<p><em>13 functions. Pairs with AILib to build knowledge-grounded AI features in any Plan9Basic applet.</em></p>
+</section>
+
+<!-- ================================================================ -->
+<section class="doc-section" id="see-also">
+<h2>See Also</h2>
+<ul>
+  <li><strong>AILib</strong> &mdash; AI client for making API calls; use together with RAGLib for context-enriched completions</li>
+  <li><strong>JsonLib</strong> &mdash; Parse JSON returned by <code>rag_retrieve_json$</code> and <code>rag_analyze$</code></li>
+</ul>
+</section>
+
+</main>
+</div>
+
+<script>
+const themes=['green','amber','blue','pink','white'];let ti=0;
+function cycleTheme(){ti=(ti+1)%themes.length;document.documentElement.setAttribute('data-theme',themes[ti]);document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase()}
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('sidebarOverlay'),toggle=document.getElementById('sidebarToggle');
+toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')});
+const links=document.querySelectorAll('.sidebar-link[href^="#"]'),sections=[...links].map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+window.addEventListener('scroll',()=>{let c='';for(const s of sections){if(s.getBoundingClientRect().top<=120)c=s.id}links.forEach(l=>{l.classList.toggle('active',l.getAttribute('href')==='#'+c)})},{passive:true});
+links.forEach(l=>l.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')}));
+</script>
+</body>
+</html>

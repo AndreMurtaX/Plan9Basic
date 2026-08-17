@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImageLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic ImageLib: 78 functions for image display with 6 wrap modes, HTTP loading, rotation, opacity, mouse wheel zoom, and comprehensive mouse events.">
+<link rel="icon" type="image/png" href="../../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="../../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">ImageLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">78 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+    <a href="#constants" class="sidebar-link">Numeric Values</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Core</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#loading" class="sidebar-link">Loading &amp; Saving</a>
+    <a href="#bitmap" class="sidebar-link">Bitmap Properties</a>
+    <a href="#wrapmode" class="sidebar-link">Wrap Mode</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Layout</div>
+    <a href="#position" class="sidebar-link">Position &amp; Size</a>
+    <a href="#alignment" class="sidebar-link">Alignment &amp; Margins</a>
+    <a href="#visibility" class="sidebar-link">Visibility &amp; State</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Misc</div>
+    <a href="#tag" class="sidebar-link">Tag &amp; Rotation</a>
+    <a href="#parent" class="sidebar-link">Parent &amp; Z-Order</a>
+    <a href="#events" class="sidebar-link">Events</a>
+    <a href="#web" class="sidebar-link">Web Images</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>ImageLib &mdash; Image Control Library</h2>
+<p>Display bitmap images in Plan9Basic applications with full control over scaling, positioning, and interactivity. Load images from local files or directly from the web via HTTP/HTTPS. Supports PNG (with transparency), JPEG, BMP, and GIF formats. Features include six wrap/scaling modes, rotation, opacity, mouse wheel zoom, and a complete mouse event system. <strong>78 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>image_error, errormsg$, strerror$, clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>4</td><td>image# (3 overloads), image_free</td></tr>
+<tr><td>Loading &amp; Saving</td><td>4</td><td>image_load (2 variants), image_save (2 variants)</td></tr>
+<tr><td>Bitmap Properties</td><td>5</td><td>bitmapwidth, bitmapheight, isempty, clear# (2 overloads)</td></tr>
+<tr><td>Wrap Mode</td><td>2</td><td>wrapmode (get/set)</td></tr>
+<tr><td>Position &amp; Size</td><td>14</td><td>x, y, width, height (get/set), bounds#, size#, move#</td></tr>
+<tr><td>Alignment &amp; Margins</td><td>12</td><td>align (get/set), margin#, margins#, marginleft/top/right/bottom (get/set)</td></tr>
+<tr><td>Visibility &amp; State</td><td>8</td><td>visible, enabled, opacity, hittest (get/set)</td></tr>
+<tr><td>Tag &amp; Rotation</td><td>4</td><td>tag (get/set), rotation (get/set)</td></tr>
+<tr><td>Parent &amp; Z-Order</td><td>4</td><td>parent# (get/set), bringtofront#, sendtoback#, invalidate#</td></tr>
+<tr><td>Events</td><td>17</td><td>8 event types &times; set/get + clearcallbacks#</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Mobile-optimized</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>iPhone/iPad</td></tr> -->
+</tbody></table></div>
+<h3>Supported Image Formats</h3>
+<div class="table-wrap"><table><thead><tr><th>Format</th><th>Extension</th><th>Notes</th></tr></thead><tbody>
+<tr><td>PNG</td><td><code>.png</code></td><td>Recommended for transparency support</td></tr>
+<tr><td>JPEG</td><td><code>.jpg</code> / <code>.jpeg</code></td><td>Best for photographs</td></tr>
+<tr><td>BMP</td><td><code>.bmp</code></td><td>Uncompressed bitmap</td></tr>
+<tr><td>GIF</td><td><code>.gif</code></td><td>Simple animations not supported (shows first frame)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_error()</code></td><td><code>image_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>image_errormsg$()</code></td><td><code>image_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>image_strerror$(code)</code></td><td><code>image_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>image_clearerror()</code></td><td><code>image_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="constants">
+<h2>Numeric Values Reference</h2>
+<h3>Wrap Mode <code>image_wrapmode#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Mode</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>Original</td><td>Display at original size, top-left aligned</td></tr>
+<tr><td>1</td><td>Fit</td><td>Scale to fit while keeping aspect ratio (default)</td></tr>
+<tr><td>2</td><td>Stretch</td><td>Stretch to fill control (may distort)</td></tr>
+<tr><td>3</td><td>Tile</td><td>Repeat image to fill control</td></tr>
+<tr><td>4</td><td>Center</td><td>Center without resizing</td></tr>
+<tr><td>5</td><td>Place</td><td>Fit if larger, center if smaller</td></tr>
+</tbody></table></div>
+<h3>Control Alignment <code>image_align#</code></h3>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>None (absolute positioning)</td></tr>
+<tr><td>1</td><td>Top</td></tr>
+<tr><td>2</td><td>Left</td></tr>
+<tr><td>3</td><td>Right</td></tr>
+<tr><td>4</td><td>Bottom</td></tr>
+<tr><td>9</td><td>Client (fill parent)</td></tr>
+<tr><td>11</td><td>Center</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image#(parent#)</code></td><td><code>image#@#</code></td><td>Create image control with default size</td></tr>
+<tr><td><code>image#(parent#, w, h)</code></td><td><code>image#@#nn</code></td><td>Create with size (positioned at 0, 0)</td></tr>
+<tr><td><code>image#(parent#, x, y, w, h)</code></td><td><code>image#@#nnnn</code></td><td>Create with position and size</td></tr>
+<tr><td><code>image_free(img#)</code></td><td><code>image_free@#</code></td><td>Destroy image control and release resources</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> img# = <span class="fn">image#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">400</span>, <span class="num">300</span>)
+
+<span class="cmt">&#x27; Or just specify size</span>
+<span class="kw">let</span> img# = <span class="fn">image#</span>(frm#, <span class="num">400</span>, <span class="num">300</span>)
+
+<span class="cmt">&#x27; Cleanup</span>
+<span class="fn">image_free</span>(img#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="loading">
+<h2>Loading &amp; Saving</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_load(img#, path$)</code></td><td><code>image_load@#$</code></td><td>Load from file or URL; returns 1 on success, 0 on failure</td></tr>
+<tr><td><code>image_load#(img#, path$)</code></td><td><code>image_load#@#$</code></td><td>Load from file or URL; returns image pointer</td></tr>
+<tr><td><code>image_save(img#, filepath$)</code></td><td><code>image_save@#$</code></td><td>Save to file; returns 1 on success, 0 on failure</td></tr>
+<tr><td><code>image_save#(img#, filepath$)</code></td><td><code>image_save#@#$</code></td><td>Save to file; returns image pointer</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Load from local file</span>
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;photo.png&quot;</span>)
+
+<span class="cmt">&#x27; Load from web URL</span>
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/400/300&quot;</span>)
+
+<span class="cmt">&#x27; Check if load succeeded</span>
+<span class="kw">if</span> <span class="fn">image_load</span>(img#, <span class="str">&quot;photo.png&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Loaded OK&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Load failed: &quot;</span> + <span class="fn">image_errormsg$</span>()
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Save to file</span>
+<span class="fn">image_save#</span>(img#, <span class="str">&quot;output.png&quot;</span>)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Image loading supports both local file paths and full HTTP/HTTPS URLs. Web images are downloaded automatically. Use <code>image_load</code> (returns 1/0) when you need to check success, or <code>image_load#</code> (returns pointer) for chaining.</div>
+</section>
+
+<section class="doc-section" id="bitmap">
+<h2>Bitmap Properties</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_bitmapwidth(img#)</code></td><td><code>image_bitmapwidth@#</code></td><td>Get the actual loaded image width in pixels</td></tr>
+<tr><td><code>image_bitmapheight(img#)</code></td><td><code>image_bitmapheight@#</code></td><td>Get the actual loaded image height in pixels</td></tr>
+<tr><td><code>image_isempty(img#)</code></td><td><code>image_isempty@#</code></td><td>Returns 1 if no image is loaded, 0 if loaded</td></tr>
+<tr><td><code>image_clear#(img#)</code></td><td><code>image_clear#@#</code></td><td>Clear the image (transparent)</td></tr>
+<tr><td><code>image_clear#(img#, color$)</code></td><td><code>image_clear#@#$</code></td><td>Clear with a fill color</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Check before accessing</span>
+<span class="kw">if</span> <span class="fn">image_isempty</span>(img#) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Image: &quot;</span> + <span class="fn">str$</span>(<span class="fn">image_bitmapwidth</span>(img#)) + <span class="str">&quot;x&quot;</span> + <span class="fn">str$</span>(<span class="fn">image_bitmapheight</span>(img#))
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Clear to transparent</span>
+<span class="fn">image_clear#</span>(img#)
+
+<span class="cmt">&#x27; Clear to a color</span>
+<span class="fn">image_clear#</span>(img#, <span class="str">&quot;#336699&quot;</span>)</pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>image_bitmapwidth</code> / <code>image_bitmapheight</code> return the actual pixel size of the loaded image, which is different from <code>image_width</code> / <code>image_height</code> which return the control size on the form.</div>
+</section>
+
+<section class="doc-section" id="wrapmode">
+<h2>Wrap Mode</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_wrapmode(img#)</code></td><td><code>image_wrapmode@#</code></td><td>Get current wrap mode (0&ndash;5)</td></tr>
+<tr><td><code>image_wrapmode#(img#, mode)</code></td><td><code>image_wrapmode#@#n</code></td><td>Set wrap mode</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Fit preserves aspect ratio (best for photos)</span>
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Stretch fills the control (may distort)</span>
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">2</span>)
+
+<span class="cmt">&#x27; Tile repeats the image (patterns)</span>
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">3</span>)
+
+<span class="cmt">&#x27; Place: fit-if-larger, center-if-smaller</span>
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">5</span>)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Use <strong>Fit</strong> (1) for photos, <strong>Stretch</strong> (2) for backgrounds, <strong>Tile</strong> (3) for patterns, and <strong>Place</strong> (5) when you want small images centered but large ones scaled down.</div>
+</section>
+
+<section class="doc-section" id="position">
+<h2>Position &amp; Size</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_x(img#)</code></td><td><code>image_x@#</code></td><td>Get X position</td></tr>
+<tr><td><code>image_x#(img#, x)</code></td><td><code>image_x#@#n</code></td><td>Set X position</td></tr>
+<tr><td><code>image_y(img#)</code></td><td><code>image_y@#</code></td><td>Get Y position</td></tr>
+<tr><td><code>image_y#(img#, y)</code></td><td><code>image_y#@#n</code></td><td>Set Y position</td></tr>
+<tr><td><code>image_width(img#)</code></td><td><code>image_width@#</code></td><td>Get control width</td></tr>
+<tr><td><code>image_width#(img#, w)</code></td><td><code>image_width#@#n</code></td><td>Set control width</td></tr>
+<tr><td><code>image_height(img#)</code></td><td><code>image_height@#</code></td><td>Get control height</td></tr>
+<tr><td><code>image_height#(img#, h)</code></td><td><code>image_height#@#n</code></td><td>Set control height</td></tr>
+<tr><td><code>image_bounds#(img#, x, y, w, h)</code></td><td><code>image_bounds#@#nnnn</code></td><td>Set position and size in one call</td></tr>
+<tr><td><code>image_size#(img#, w, h)</code></td><td><code>image_size#@#nn</code></td><td>Set size only</td></tr>
+<tr><td><code>image_move#(img#, x, y)</code></td><td><code>image_move#@#nn</code></td><td>Set position only</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="alignment">
+<h2>Alignment &amp; Margins</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_align(img#)</code></td><td><code>image_align@#</code></td><td>Get control alignment mode</td></tr>
+<tr><td><code>image_align#(img#, n)</code></td><td><code>image_align#@#n</code></td><td>Set alignment (0=none, 1=top, 2=left, 3=right, 4=bottom, 9=client, 11=center)</td></tr>
+<tr><td><code>image_margin#(img#, n)</code></td><td><code>image_margin#@#n</code></td><td>Set uniform margin on all four sides</td></tr>
+<tr><td><code>image_margins#(img#, l, t, r, b)</code></td><td><code>image_margins#@#nnnn</code></td><td>Set individual margins (left, top, right, bottom)</td></tr>
+<tr><td><code>image_marginleft(img#)</code></td><td><code>image_marginleft@#</code></td><td>Get left margin</td></tr>
+<tr><td><code>image_marginleft#(img#, n)</code></td><td><code>image_marginleft#@#n</code></td><td>Set left margin</td></tr>
+<tr><td><code>image_margintop(img#)</code></td><td><code>image_margintop@#</code></td><td>Get top margin</td></tr>
+<tr><td><code>image_margintop#(img#, n)</code></td><td><code>image_margintop#@#n</code></td><td>Set top margin</td></tr>
+<tr><td><code>image_marginright(img#)</code></td><td><code>image_marginright@#</code></td><td>Get right margin</td></tr>
+<tr><td><code>image_marginright#(img#, n)</code></td><td><code>image_marginright#@#n</code></td><td>Set right margin</td></tr>
+<tr><td><code>image_marginbottom(img#)</code></td><td><code>image_marginbottom@#</code></td><td>Get bottom margin</td></tr>
+<tr><td><code>image_marginbottom#(img#, n)</code></td><td><code>image_marginbottom#@#n</code></td><td>Set bottom margin</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Full-screen background image</span>
+<span class="fn">image_align#</span>(img#, <span class="num">9</span>)    <span class="cmt">&#x27; Client = fill</span>
+<span class="fn">image_margin#</span>(img#, <span class="num">0</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="visibility">
+<h2>Visibility &amp; State</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_visible(img#)</code></td><td><code>image_visible@#</code></td><td>Get visibility (0/1)</td></tr>
+<tr><td><code>image_visible#(img#, n)</code></td><td><code>image_visible#@#n</code></td><td>Set visibility</td></tr>
+<tr><td><code>image_enabled(img#)</code></td><td><code>image_enabled@#</code></td><td>Get enabled state (0/1)</td></tr>
+<tr><td><code>image_enabled#(img#, n)</code></td><td><code>image_enabled#@#n</code></td><td>Set enabled state</td></tr>
+<tr><td><code>image_opacity(img#)</code></td><td><code>image_opacity@#</code></td><td>Get opacity (0.0&ndash;1.0)</td></tr>
+<tr><td><code>image_opacity#(img#, value)</code></td><td><code>image_opacity#@#n</code></td><td>Set opacity (0.0=transparent, 1.0=opaque)</td></tr>
+<tr><td><code>image_hittest(img#)</code></td><td><code>image_hittest@#</code></td><td>Get hit-test state (0/1)</td></tr>
+<tr><td><code>image_hittest#(img#, n)</code></td><td><code>image_hittest#@#n</code></td><td>Enable/disable mouse hit testing</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Semi-transparent overlay</span>
+<span class="fn">image_opacity#</span>(imgOverlay#, <span class="num">0.5</span>)
+
+<span class="cmt">&#x27; Disable mouse interaction (click-through)</span>
+<span class="fn">image_hittest#</span>(imgBackground#, <span class="num">0</span>)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Set <code>image_hittest#(img#, 0)</code> to make an image &ldquo;click-through&rdquo; &mdash; mouse events will pass through to controls behind it. Useful for decorative overlays.</div>
+</section>
+
+<section class="doc-section" id="tag">
+<h2>Tag &amp; Rotation</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_tag(img#)</code></td><td><code>image_tag@#</code></td><td>Get user-defined integer tag</td></tr>
+<tr><td><code>image_tag#(img#, n)</code></td><td><code>image_tag#@#n</code></td><td>Set user-defined integer tag</td></tr>
+<tr><td><code>image_rotation(img#)</code></td><td><code>image_rotation@#</code></td><td>Get rotation angle in degrees</td></tr>
+<tr><td><code>image_rotation#(img#, angle)</code></td><td><code>image_rotation#@#n</code></td><td>Set rotation angle (0&ndash;360 degrees)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Rotate 45 degrees</span>
+<span class="fn">image_rotation#</span>(img#, <span class="num">45</span>)
+
+<span class="cmt">&#x27; Use tags to identify thumbnails</span>
+<span class="fn">image_tag#</span>(img1#, <span class="num">1</span>)
+<span class="fn">image_tag#</span>(img2#, <span class="num">2</span>)
+<span class="fn">image_tag#</span>(img3#, <span class="num">3</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="parent">
+<h2>Parent &amp; Z-Order</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_parent#(img#)</code></td><td><code>image_parent#@#</code></td><td>Get parent control pointer</td></tr>
+<tr><td><code>image_parent#(img#, parent#)</code></td><td><code>image_parent#@##</code></td><td>Move image to a different parent</td></tr>
+<tr><td><code>image_bringtofront#(img#)</code></td><td><code>image_bringtofront#@#</code></td><td>Bring to front of Z-order</td></tr>
+<tr><td><code>image_sendtoback#(img#)</code></td><td><code>image_sendtoback#@#</code></td><td>Send to back of Z-order</td></tr>
+<tr><td><code>image_invalidate#(img#)</code></td><td><code>image_invalidate#@#</code></td><td>Force the image to redraw</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Layer images: background behind foreground</span>
+<span class="fn">image_sendtoback#</span>(imgBackground#)
+<span class="fn">image_bringtofront#</span>(imgForeground#)
+
+<span class="cmt">&#x27; Force redraw after external changes</span>
+<span class="fn">image_invalidate#</span>(img#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> (<code>image_onXXX#(img#, func$)</code>) and a <strong>getter</strong> (<code>image_onXXX$(img#)</code>). Use <code>image_clearcallbacks#(img#)</code> to disconnect all callbacks at once.</p>
+<h3>Click Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>image_onclick#(img#, func$)</code></td><td><code>image_onclick$(img#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>image_ondblclick#(img#, func$)</code></td><td><code>image_ondblclick$(img#)</code></td><td><code>function name(sender#)</code></td></tr>
+</tbody></table></div>
+<h3>Mouse Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>image_onmousedown#(img#, func$)</code></td><td><code>image_onmousedown$(img#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>image_onmouseup#(img#, func$)</code></td><td><code>image_onmouseup$(img#)</code></td><td><code>function name(sender#, button, x, y, shift$)</code></td></tr>
+<tr><td><code>image_onmousemove#(img#, func$)</code></td><td><code>image_onmousemove$(img#)</code></td><td><code>function name(sender#, x, y, shift$)</code></td></tr>
+<tr><td><code>image_onmouseenter#(img#, func$)</code></td><td><code>image_onmouseenter$(img#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>image_onmouseleave#(img#, func$)</code></td><td><code>image_onmouseleave$(img#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>image_onmousewheel#(img#, func$)</code></td><td><code>image_onmousewheel$(img#)</code></td><td><code>function name(sender#, delta, shift$)</code></td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <strong>OnMouseWheel</strong> provides a <code>delta</code> value: positive for scroll up, negative for scroll down. Perfect for implementing zoom functionality.</div>
+<h3>Other Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
+<tr><td><code>image_onresize#(img#, func$)</code></td><td><code>image_onresize$(img#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>image_clearcallbacks#(img#)</code></td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="web">
+<h2>Free Web Image Sources</h2>
+<p><strong>Lorem Picsum</strong> (<code>https://picsum.photos</code>) provides free stock photos for testing:</p>
+<div class="table-wrap"><table><thead><tr><th>URL Pattern</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>https://picsum.photos/400/300</code></td><td>Random image 400&times;300</td></tr>
+<tr><td><code>https://picsum.photos/id/10/400/300</code></td><td>Specific image by ID</td></tr>
+<tr><td><code>https://picsum.photos/seed/hello/400/300</code></td><td>Consistent image from seed text</td></tr>
+<tr><td><code>https://picsum.photos/400/300?grayscale</code></td><td>Grayscale image</td></tr>
+<tr><td><code>https://picsum.photos/400/300?blur=5</code></td><td>Blurred image (1&ndash;10)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Random image each time</span>
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/400/300&quot;</span>)
+
+<span class="cmt">&#x27; Same image every time (use seed)</span>
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/seed/myapp/400/300&quot;</span>)
+
+<span class="cmt">&#x27; Specific image by ID</span>
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/id/42/400/300&quot;</span>)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Use the <code>seed</code> parameter to get the same image consistently across runs. Without it, each request returns a random image.</div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Web Image Gallery</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; gallery.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnThumbClick</span>(sender#) <span class="kw">local</span> tag, url$
+    tag = <span class="fn">image_tag</span>(sender#)
+    <span class="kw">if</span> tag = <span class="num">1</span> <span class="kw">then</span> url$ = <span class="str">&quot;https://picsum.photos/seed/nature/660/290&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">2</span> <span class="kw">then</span> url$ = <span class="str">&quot;https://picsum.photos/seed/city/660/290&quot;</span>
+    <span class="kw">elseif</span> tag = <span class="num">3</span> <span class="kw">then</span> url$ = <span class="str">&quot;https://picsum.photos/seed/ocean/660/290&quot;</span>
+    <span class="kw">endif</span>
+    <span class="fn">image_load#</span>(imgMain#, url$)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Gallery&quot;</span>, <span class="num">700</span>, <span class="num">450</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="cmt">&#x27; Thumbnails</span>
+<span class="kw">let</span> img1# = <span class="fn">image#</span>(frm#, <span class="num">20</span>, <span class="num">20</span>, <span class="num">150</span>, <span class="num">100</span>)
+<span class="kw">let</span> img2# = <span class="fn">image#</span>(frm#, <span class="num">190</span>, <span class="num">20</span>, <span class="num">150</span>, <span class="num">100</span>)
+<span class="kw">let</span> img3# = <span class="fn">image#</span>(frm#, <span class="num">360</span>, <span class="num">20</span>, <span class="num">150</span>, <span class="num">100</span>)
+<span class="fn">image_wrapmode#</span>(img1#, <span class="num">1</span>)
+<span class="fn">image_wrapmode#</span>(img2#, <span class="num">1</span>)
+<span class="fn">image_wrapmode#</span>(img3#, <span class="num">1</span>)
+<span class="fn">image_load#</span>(img1#, <span class="str">&quot;https://picsum.photos/seed/nature/150/100&quot;</span>)
+<span class="fn">image_load#</span>(img2#, <span class="str">&quot;https://picsum.photos/seed/city/150/100&quot;</span>)
+<span class="fn">image_load#</span>(img3#, <span class="str">&quot;https://picsum.photos/seed/ocean/150/100&quot;</span>)
+
+<span class="cmt">&#x27; Main display</span>
+<span class="kw">let</span> imgMain# = <span class="fn">image#</span>(frm#, <span class="num">20</span>, <span class="num">140</span>, <span class="num">660</span>, <span class="num">290</span>)
+<span class="fn">image_wrapmode#</span>(imgMain#, <span class="num">1</span>)
+
+<span class="fn">image_tag#</span>(img1#, <span class="num">1</span>)
+<span class="fn">image_tag#</span>(img2#, <span class="num">2</span>)
+<span class="fn">image_tag#</span>(img3#, <span class="num">3</span>)
+<span class="fn">image_onclick#</span>(img1#, <span class="str">&quot;OnThumbClick&quot;</span>)
+<span class="fn">image_onclick#</span>(img2#, <span class="str">&quot;OnThumbClick&quot;</span>)
+<span class="fn">image_onclick#</span>(img3#, <span class="str">&quot;OnThumbClick&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Wrap Mode Selector</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; wrapmodes.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">SetOriginal</span>(sender#)
+    <span class="fn">image_wrapmode#</span>(img#, <span class="num">0</span>)
+    <span class="fn">label_text#</span>(lblMode#, <span class="str">&quot;Mode: Original&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">SetFit</span>(sender#)
+    <span class="fn">image_wrapmode#</span>(img#, <span class="num">1</span>)
+    <span class="fn">label_text#</span>(lblMode#, <span class="str">&quot;Mode: Fit&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">SetStretch</span>(sender#)
+    <span class="fn">image_wrapmode#</span>(img#, <span class="num">2</span>)
+    <span class="fn">label_text#</span>(lblMode#, <span class="str">&quot;Mode: Stretch&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">SetTile</span>(sender#)
+    <span class="fn">image_wrapmode#</span>(img#, <span class="num">3</span>)
+    <span class="fn">label_text#</span>(lblMode#, <span class="str">&quot;Mode: Tile&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">SetCenter</span>(sender#)
+    <span class="fn">image_wrapmode#</span>(img#, <span class="num">4</span>)
+    <span class="fn">label_text#</span>(lblMode#, <span class="str">&quot;Mode: Center&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Wrap Modes&quot;</span>, <span class="num">600</span>, <span class="num">500</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> img# = <span class="fn">image#</span>(frm#, <span class="num">10</span>, <span class="num">50</span>, <span class="num">580</span>, <span class="num">400</span>)
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/seed/demo/400/300&quot;</span>)
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">1</span>)
+
+<span class="kw">let</span> lblMode# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Mode: Fit&quot;</span>, <span class="num">10</span>, <span class="num">460</span>)
+
+<span class="kw">let</span> btnOriginal# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Original&quot;</span>, <span class="num">10</span>, <span class="num">10</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="kw">let</span> btnFit# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Fit&quot;</span>, <span class="num">100</span>, <span class="num">10</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="kw">let</span> btnStretch# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Stretch&quot;</span>, <span class="num">190</span>, <span class="num">10</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="kw">let</span> btnTile# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Tile&quot;</span>, <span class="num">280</span>, <span class="num">10</span>, <span class="num">80</span>, <span class="num">30</span>)
+<span class="kw">let</span> btnCenter# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Center&quot;</span>, <span class="num">370</span>, <span class="num">10</span>, <span class="num">80</span>, <span class="num">30</span>)
+
+<span class="fn">button_onclick#</span>(btnOriginal#, <span class="str">&quot;SetOriginal&quot;</span>)
+<span class="fn">button_onclick#</span>(btnFit#, <span class="str">&quot;SetFit&quot;</span>)
+<span class="fn">button_onclick#</span>(btnStretch#, <span class="str">&quot;SetStretch&quot;</span>)
+<span class="fn">button_onclick#</span>(btnTile#, <span class="str">&quot;SetTile&quot;</span>)
+<span class="fn">button_onclick#</span>(btnCenter#, <span class="str">&quot;SetCenter&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Zoom with Mouse Wheel</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; zoom.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> zoomLevel = <span class="num">100</span>
+
+<span class="kw">function</span> <span class="fn">OnZoom</span>(sender#, delta, shift$) <span class="kw">local</span> w, h, origW, origH
+    origW = <span class="fn">image_bitmapwidth</span>(sender#)
+    origH = <span class="fn">image_bitmapheight</span>(sender#)
+
+    <span class="kw">if</span> delta &gt; <span class="num">0</span> <span class="kw">then</span>
+        zoomLevel = zoomLevel + <span class="num">10</span>
+        <span class="kw">if</span> zoomLevel &gt; <span class="num">400</span> <span class="kw">then</span> zoomLevel = <span class="num">400</span>
+    <span class="kw">else</span>
+        zoomLevel = zoomLevel - <span class="num">10</span>
+        <span class="kw">if</span> zoomLevel &lt; <span class="num">10</span> <span class="kw">then</span> zoomLevel = <span class="num">10</span>
+    <span class="kw">endif</span>
+
+    w = origW * zoomLevel / <span class="num">100</span>
+    h = origH * zoomLevel / <span class="num">100</span>
+    <span class="fn">image_size#</span>(sender#, w, h)
+    <span class="fn">label_text#</span>(lblZoom#, <span class="str">&quot;Zoom: &quot;</span> + <span class="fn">str$</span>(zoomLevel) + <span class="str">&quot;%&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Zoom&quot;</span>, <span class="num">800</span>, <span class="num">600</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> img# = <span class="fn">image#</span>(frm#, <span class="num">0</span>, <span class="num">40</span>, <span class="num">800</span>, <span class="num">560</span>)
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">0</span>)
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/seed/zoom/600/400&quot;</span>)
+
+<span class="kw">let</span> lblZoom# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Zoom: 100%&quot;</span>, <span class="num">10</span>, <span class="num">10</span>)
+<span class="fn">image_onmousewheel#</span>(img#, <span class="str">&quot;OnZoom&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Image Rotation</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; rotate.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">RotateLeft</span>(sender#) <span class="kw">local</span> angle
+    angle = <span class="fn">image_rotation</span>(img#) - <span class="num">15</span>
+    <span class="kw">if</span> angle &lt; <span class="num">0</span> <span class="kw">then</span> angle = angle + <span class="num">360</span>
+    <span class="fn">image_rotation#</span>(img#, angle)
+    <span class="fn">label_text#</span>(lblAngle#, <span class="str">&quot;Angle: &quot;</span> + <span class="fn">str$</span>(angle))
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">RotateRight</span>(sender#) <span class="kw">local</span> angle
+    angle = <span class="fn">image_rotation</span>(img#) + <span class="num">15</span>
+    <span class="kw">if</span> angle &gt;= <span class="num">360</span> <span class="kw">then</span> angle = angle - <span class="num">360</span>
+    <span class="fn">image_rotation#</span>(img#, angle)
+    <span class="fn">label_text#</span>(lblAngle#, <span class="str">&quot;Angle: &quot;</span> + <span class="fn">str$</span>(angle))
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Rotate&quot;</span>, <span class="num">500</span>, <span class="num">500</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> img# = <span class="fn">image#</span>(frm#, <span class="num">100</span>, <span class="num">50</span>, <span class="num">300</span>, <span class="num">300</span>)
+<span class="fn">image_load#</span>(img#, <span class="str">&quot;https://picsum.photos/seed/rotate/300/300&quot;</span>)
+<span class="fn">image_wrapmode#</span>(img#, <span class="num">1</span>)
+
+<span class="kw">let</span> lblAngle# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Angle: 0&quot;</span>, <span class="num">200</span>, <span class="num">370</span>)
+
+<span class="kw">let</span> btnLeft# = <span class="fn">button#</span>(frm#, <span class="str">&quot;&lt; Left&quot;</span>, <span class="num">100</span>, <span class="num">410</span>, <span class="num">120</span>, <span class="num">40</span>)
+<span class="kw">let</span> btnRight# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Right &gt;&quot;</span>, <span class="num">280</span>, <span class="num">410</span>, <span class="num">120</span>, <span class="num">40</span>)
+<span class="fn">button_onclick#</span>(btnLeft#, <span class="str">&quot;RotateLeft&quot;</span>)
+<span class="fn">button_onclick#</span>(btnRight#, <span class="str">&quot;RotateRight&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Opacity Layering</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; opacity.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> opacity = <span class="num">1.0</span>
+
+<span class="kw">function</span> <span class="fn">ToggleFade</span>(sender#) <span class="kw">local</span> pct
+    <span class="kw">if</span> opacity &gt; <span class="num">0.5</span> <span class="kw">then</span>
+        opacity = <span class="num">0.0</span>
+    <span class="kw">else</span>
+        opacity = <span class="num">1.0</span>
+    <span class="kw">endif</span>
+    <span class="fn">image_opacity#</span>(imgFront#, opacity)
+    pct = opacity * <span class="num">100</span>
+    <span class="fn">label_text#</span>(lblOpacity#, <span class="str">&quot;Opacity: &quot;</span> + <span class="fn">str$</span>(pct) + <span class="str">&quot;%&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Opacity&quot;</span>, <span class="num">600</span>, <span class="num">500</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> imgBack# = <span class="fn">image#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">500</span>, <span class="num">350</span>)
+<span class="fn">image_load#</span>(imgBack#, <span class="str">&quot;https://picsum.photos/seed/back/500/350&quot;</span>)
+<span class="fn">image_wrapmode#</span>(imgBack#, <span class="num">2</span>)
+
+<span class="kw">let</span> imgFront# = <span class="fn">image#</span>(frm#, <span class="num">50</span>, <span class="num">50</span>, <span class="num">500</span>, <span class="num">350</span>)
+<span class="fn">image_load#</span>(imgFront#, <span class="str">&quot;https://picsum.photos/seed/front/500/350&quot;</span>)
+<span class="fn">image_wrapmode#</span>(imgFront#, <span class="num">2</span>)
+
+<span class="kw">let</span> lblOpacity# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Opacity: 100%&quot;</span>, <span class="num">250</span>, <span class="num">420</span>)
+<span class="kw">let</span> btnFade# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Toggle&quot;</span>, <span class="num">250</span>, <span class="num">450</span>, <span class="num">100</span>, <span class="num">35</span>)
+<span class="fn">button_onclick#</span>(btnFade#, <span class="str">&quot;ToggleFade&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Use <strong>Fit</strong> mode (1) for photos</td><td>Preserves aspect ratio without distortion</td></tr>
+<tr><td>Use <strong>Stretch</strong> mode (2) for backgrounds</td><td>Fills the entire control area</td></tr>
+<tr><td>Use <strong>Tile</strong> mode (3) for patterns</td><td>Repeats the image seamlessly</td></tr>
+<tr><td>Check <code>image_isempty(img#)</code> after loading</td><td>Detects load failures before accessing bitmap properties</td></tr>
+<tr><td>Use PNG for transparency</td><td>PNG images correctly display transparent areas</td></tr>
+<tr><td>Distinguish control vs bitmap size</td><td><code>image_width</code> = control size; <code>image_bitmapwidth</code> = actual image pixels</td></tr>
+<tr><td>Use <code>seed</code> for consistent web images</td><td><code>https://picsum.photos/seed/myapp/400/300</code> always returns the same image</td></tr>
+<tr><td>Match requested size to display size</td><td>Request web images at the size you&rsquo;ll display them to avoid unnecessary bandwidth</td></tr>
+<tr><td>Set <code>image_hittest#(img#, 0)</code> for decorations</td><td>Makes the image click-through so mouse events reach controls behind it</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>image_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>image#(parent#[, w, h] | [, x, y, w, h])</code></td><td><code>various</code></td><td>Create (3 overloads)</td></tr>
+<tr><td><code>image_free(img#)</code></td><td><code>image_free@#</code></td><td>Destroy</td></tr>
+<tr><td><code>image_load / image_load# / image_save / image_save#</code></td><td><code>various</code></td><td>Loading &amp; saving (4)</td></tr>
+<tr><td><code>image_bitmapwidth / bitmapheight / isempty / clear#</code></td><td><code>various</code></td><td>Bitmap properties (5)</td></tr>
+<tr><td><code>image_wrapmode (get/set)</code></td><td><code>various</code></td><td>Wrap mode (2)</td></tr>
+<tr><td><code>image_x/y/width/height (get/set) / bounds# / size# / move#</code></td><td><code>various</code></td><td>Position &amp; size (14)</td></tr>
+<tr><td><code>image_align / margin# / margins# / margin[left/top/right/bottom]</code></td><td><code>various</code></td><td>Alignment &amp; margins (12)</td></tr>
+<tr><td><code>image_visible / enabled / opacity / hittest</code></td><td><code>various</code></td><td>Visibility &amp; state (8)</td></tr>
+<tr><td><code>image_tag / rotation</code></td><td><code>various</code></td><td>Tag &amp; rotation (4)</td></tr>
+<tr><td><code>image_parent# / bringtofront# / sendtoback# / invalidate#</code></td><td><code>various</code></td><td>Parent &amp; Z-order (4)</td></tr>
+<tr><td><code>image_onclick/ondblclick/onmousedown/up/move/enter/leave/onmousewheel/onresize</code></td><td><code>various</code></td><td>Events set+get (17)</td></tr>
+<tr><td><code>image_clearcallbacks#</code></td><td><code>image_clearcallbacks#@#</code></td><td>Disconnect all events</td></tr>
+</tbody></table></div>
+<p><em>78 functions. Part of the Plan9Basic GUI library system.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

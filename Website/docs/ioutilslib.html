@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IOUtilsLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic IOUtilsLib: 53 cross-platform functions for file operations, directory management, and path manipulation.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box {
+  padding: 1rem 1.2rem; margin: 1rem 0;
+  border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle);
+  font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">IOUtilsLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">53 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">File (TFile)</div>
+    <a href="#file-read" class="sidebar-link">Reading</a>
+    <a href="#file-write" class="sidebar-link">Writing</a>
+    <a href="#file-ops" class="sidebar-link">Operations</a>
+    <a href="#file-time" class="sidebar-link">Timestamps</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Directory (TDirectory)</div>
+    <a href="#dir-ops" class="sidebar-link">Operations</a>
+    <a href="#dir-list" class="sidebar-link">Listing</a>
+    <a href="#dir-time" class="sidebar-link">Timestamps</a>
+    <a href="#dir-info" class="sidebar-link">Working Directory</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Path (TPath)</div>
+    <a href="#path-combine" class="sidebar-link">Combining</a>
+    <a href="#path-parts" class="sidebar-link">Components</a>
+    <a href="#path-valid" class="sidebar-link">Validation</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>IOUtilsLib &mdash; I/O Utilities Library</h2>
+<p>Comprehensive file and directory operations for Plan9Basic. Based on Delphi&rsquo;s <code>System.IOUtils</code> unit (<code>TFile</code>, <code>TDirectory</code>, <code>TPath</code>). Fully cross-platform: Windows, macOS, Linux, Android, and iOS. 53 functions.</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>2</td><td>ioerror, iostrerror$</td></tr>
+<tr><td>File Reading</td><td>3</td><td>file_readalltext$ (2 overloads), file_readallbytes#</td></tr>
+<tr><td>File Writing</td><td>6</td><td>file_writealltext (2), file_appendalltext (2), file_writeallbytes, file_createempty</td></tr>
+<tr><td>File Operations</td><td>6</td><td>file_copy (2), file_move, file_delete, file_exists, file_getsize</td></tr>
+<tr><td>File Timestamps</td><td>6</td><td>get/set creation, access, and write times</td></tr>
+<tr><td>Directory Ops</td><td>7</td><td>dir_create, dir_delete (2), dir_exists, dir_move, dir_copy, dir_isempty</td></tr>
+<tr><td>Directory Listing</td><td>8</td><td>dir_getfiles$ (3), dir_getdirectories$ (3), dir_getentries$ (2)</td></tr>
+<tr><td>Directory Info</td><td>5</td><td>dir_getcurrent$, dir_setcurrent, dir_getparent$, dir_isrelativepath, + timestamps (6)</td></tr>
+<tr><td>Path Manipulation</td><td>8</td><td>path_combine$ (2), components (6)</td></tr>
+<tr><td>Path Validation</td><td>6</td><td>path_ispathrooted, isrelativepath, hasvalidpathchars, hasvalidfilenamechars, matchespattern (2)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>No error</td></tr>
+<tr><td>1</td><td>File not found</td></tr>
+<tr><td>2</td><td>Directory not found</td></tr>
+<tr><td>3</td><td>Access denied</td></tr>
+<tr><td>4</td><td>Path too long</td></tr>
+<tr><td>5</td><td>Invalid path</td></tr>
+<tr><td>6</td><td>I/O error</td></tr>
+<tr><td>7</td><td>File already exists</td></tr>
+<tr><td>8</td><td>Directory not empty</td></tr>
+<tr><td>9</td><td>Invalid argument</td></tr>
+<tr><td>10</td><td>Unknown error</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ioerror()</code></td><td><code>ioerror@</code></td><td>Last error code (0&ndash;10)</td></tr>
+<tr><td><code>iostrerror$()</code></td><td><code>iostrerror$@</code></td><td>Descriptive error message</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> content$ = <span class="fn">file_readalltext$</span>(<span class="str">&quot;missing.txt&quot;</span>)
+<span class="kw">if</span> <span class="fn">ioerror</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Error: &quot;</span>; <span class="fn">iostrerror$</span>()
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="file-read">
+<h2>File Reading</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>file_readalltext$(path$)</code></td><td><code>file_readalltext$@$</code></td><td>Read entire file as UTF-8 text</td></tr>
+<tr><td><code>file_readalltext$(path$, enc$)</code></td><td><code>file_readalltext$@$$</code></td><td>Read file with specified encoding</td></tr>
+<tr><td><code>file_readallbytes#(path$)</code></td><td><code>file_readallbytes#@$</code></td><td>Read file as byte stream (TMemoryStream)</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Encoding</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>utf-8</code></td><td>Default, recommended for most files</td></tr>
+<tr><td><code>utf-7</code></td><td>Legacy UTF-7 encoding</td></tr>
+<tr><td><code>ansi</code></td><td>System default ANSI encoding</td></tr>
+<tr><td><code>ascii</code></td><td>7-bit ASCII</td></tr>
+<tr><td><code>unicode</code></td><td>UTF-16 Little Endian</td></tr>
+<tr><td><code>utf-16be</code></td><td>UTF-16 Big Endian</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Read UTF-8 (default)</span>
+<span class="kw">let</span> content$ = <span class="fn">file_readalltext$</span>(<span class="str">&quot;data.txt&quot;</span>)
+<span class="kw">if</span> <span class="fn">ioerror</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Read error: &quot;</span>; <span class="fn">iostrerror$</span>()
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Read with specific encoding</span>
+<span class="kw">let</span> latin$ = <span class="fn">file_readalltext$</span>(<span class="str">&quot;latin.txt&quot;</span>, <span class="str">&quot;ansi&quot;</span>)
+
+<span class="cmt">&#x27; Read binary file</span>
+<span class="kw">let</span> stream# = <span class="fn">file_readallbytes#</span>(<span class="str">&quot;image.png&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="file-write">
+<h2>File Writing</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>file_writealltext(path$, content$)</code></td><td><code>file_writealltext@$$</code></td><td>Write text to file (UTF-8)</td></tr>
+<tr><td><code>file_writealltext(path$, content$, enc$)</code></td><td><code>file_writealltext@$$$</code></td><td>Write with encoding</td></tr>
+<tr><td><code>file_appendalltext(path$, content$)</code></td><td><code>file_appendalltext@$$</code></td><td>Append text (UTF-8)</td></tr>
+<tr><td><code>file_appendalltext(path$, content$, enc$)</code></td><td><code>file_appendalltext@$$$</code></td><td>Append with encoding</td></tr>
+<tr><td><code>file_writeallbytes(path$, stream#)</code></td><td><code>file_writeallbytes@$#</code></td><td>Write byte stream to file</td></tr>
+<tr><td><code>file_createempty(path$)</code></td><td><code>file_createempty@$</code></td><td>Create empty file or update timestamp</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Write text file</span>
+<span class="kw">let</span> result = <span class="fn">file_writealltext</span>(<span class="str">&quot;output.txt&quot;</span>, <span class="str">&quot;Hello, World!&quot;</span>)
+
+<span class="cmt">&#x27; Append to log</span>
+<span class="kw">let</span> logline$ = <span class="fn">formatdatetime$</span>(<span class="str">&quot;yyyy-mm-dd hh:nn:ss&quot;</span>, <span class="fn">now</span>()) + <span class="str">&quot; - Event&quot;</span>
+<span class="kw">let</span> result = <span class="fn">file_appendalltext</span>(<span class="str">&quot;log.txt&quot;</span>, logline$ + <span class="fn">chr$</span>(<span class="num">13</span>) + <span class="fn">chr$</span>(<span class="num">10</span>))
+
+<span class="cmt">&#x27; Write with specific encoding</span>
+<span class="kw">let</span> result = <span class="fn">file_writealltext</span>(<span class="str">&quot;data.csv&quot;</span>, <span class="str">&quot;Name;Value&quot;</span>, <span class="str">&quot;ansi&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="file-ops">
+<h2>File Operations</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>file_copy(src$, dst$)</code></td><td><code>file_copy@$$</code></td><td>Copy file (fails if destination exists)</td></tr>
+<tr><td><code>file_copy(src$, dst$, overwrite)</code></td><td><code>file_copy@$$n</code></td><td>Copy with overwrite option (1=overwrite)</td></tr>
+<tr><td><code>file_move(src$, dst$)</code></td><td><code>file_move@$$</code></td><td>Move or rename file</td></tr>
+<tr><td><code>file_delete(path$)</code></td><td><code>file_delete@$</code></td><td>Delete file</td></tr>
+<tr><td><code>file_exists(path$)</code></td><td><code>file_exists@$</code></td><td>File exists? (1/0)</td></tr>
+<tr><td><code>file_getsize(path$)</code></td><td><code>file_getsize@$</code></td><td>File size in bytes</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Copy with overwrite</span>
+<span class="kw">if</span> <span class="fn">file_exists</span>(<span class="str">&quot;source.txt&quot;</span>) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> result = <span class="fn">file_copy</span>(<span class="str">&quot;source.txt&quot;</span>, <span class="str">&quot;backup.txt&quot;</span>, <span class="num">1</span>)
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Move / rename</span>
+<span class="kw">let</span> result = <span class="fn">file_move</span>(<span class="str">&quot;old.txt&quot;</span>, <span class="str">&quot;new.txt&quot;</span>)
+
+<span class="cmt">&#x27; Delete</span>
+<span class="kw">let</span> result = <span class="fn">file_delete</span>(<span class="str">&quot;temp.txt&quot;</span>)
+<span class="kw">if</span> <span class="fn">ioerror</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Could not delete: &quot;</span>; <span class="fn">iostrerror$</span>()
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Get size</span>
+<span class="kw">let</span> size = <span class="fn">file_getsize</span>(<span class="str">&quot;document.pdf&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Size: &quot;</span>; size; <span class="str">&quot; bytes&quot;</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="file-time">
+<h2>File Timestamps</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>file_getcreationtime(path$)</code></td><td><code>file_getcreationtime@$</code></td><td>Creation time (TDateTime)</td></tr>
+<tr><td><code>file_getlastaccesstime(path$)</code></td><td><code>file_getlastaccesstime@$</code></td><td>Last access time</td></tr>
+<tr><td><code>file_getlastwritetime(path$)</code></td><td><code>file_getlastwritetime@$</code></td><td>Last modification time</td></tr>
+<tr><td><code>file_setcreationtime(path$, dt)</code></td><td><code>file_setcreationtime@$n</code></td><td>Set creation time</td></tr>
+<tr><td><code>file_setlastaccesstime(path$, dt)</code></td><td><code>file_setlastaccesstime@$n</code></td><td>Set last access time</td></tr>
+<tr><td><code>file_setlastwritetime(path$, dt)</code></td><td><code>file_setlastwritetime@$n</code></td><td>Set modification time</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Get modification time</span>
+<span class="kw">let</span> modified = <span class="fn">file_getlastwritetime</span>(<span class="str">&quot;document.txt&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Modified: &quot;</span>; <span class="fn">formatdatetime$</span>(<span class="str">&quot;yyyy-mm-dd hh:nn:ss&quot;</span>, modified)
+
+<span class="cmt">&#x27; Update modification time to now</span>
+<span class="kw">let</span> result = <span class="fn">file_setlastwritetime</span>(<span class="str">&quot;document.txt&quot;</span>, <span class="fn">now</span>())</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Timestamp values are Delphi TDateTime numbers. Use DateTimeLib functions like <code>formatdatetime$()</code> and <code>now()</code> to work with them.</div>
+</section>
+
+<section class="doc-section" id="dir-ops">
+<h2>Directory Operations</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>dir_create(path$)</code></td><td><code>dir_create@$</code></td><td>Create directory</td></tr>
+<tr><td><code>dir_delete(path$)</code></td><td><code>dir_delete@$</code></td><td>Delete empty directory</td></tr>
+<tr><td><code>dir_delete(path$, recursive)</code></td><td><code>dir_delete@$n</code></td><td>Delete with recursive option (1=recursive)</td></tr>
+<tr><td><code>dir_exists(path$)</code></td><td><code>dir_exists@$</code></td><td>Directory exists? (1/0)</td></tr>
+<tr><td><code>dir_move(src$, dst$)</code></td><td><code>dir_move@$$</code></td><td>Move or rename directory</td></tr>
+<tr><td><code>dir_copy(src$, dst$)</code></td><td><code>dir_copy@$$</code></td><td>Copy directory recursively</td></tr>
+<tr><td><code>dir_isempty(path$)</code></td><td><code>dir_isempty@$</code></td><td>Directory empty? (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Create directory</span>
+<span class="kw">let</span> result = <span class="fn">dir_create</span>(<span class="str">&quot;myproject&quot;</span>)
+
+<span class="cmt">&#x27; Check existence before creating</span>
+<span class="kw">if</span> <span class="fn">dir_exists</span>(<span class="str">&quot;backup&quot;</span>) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> result = <span class="fn">dir_create</span>(<span class="str">&quot;backup&quot;</span>)
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Delete directory tree (1 = recursive)</span>
+<span class="kw">let</span> result = <span class="fn">dir_delete</span>(<span class="str">&quot;temp&quot;</span>, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Copy entire directory</span>
+<span class="kw">let</span> result = <span class="fn">dir_copy</span>(<span class="str">&quot;project&quot;</span>, <span class="str">&quot;project_backup&quot;</span>)</pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>dir_delete(path$)</code> without the recursive flag only deletes <em>empty</em> directories. Use <code>dir_delete(path$, 1)</code> to delete a directory and all its contents.</div>
+</section>
+
+<section class="doc-section" id="dir-list">
+<h2>Directory Listing</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>dir_getfiles$(path$)</code></td><td><code>dir_getfiles$@$</code></td><td>All files (CRLF-separated)</td></tr>
+<tr><td><code>dir_getfiles$(path$, pattern$)</code></td><td><code>dir_getfiles$@$$</code></td><td>Files matching wildcard pattern</td></tr>
+<tr><td><code>dir_getfiles$(path$, pattern$, recursive)</code></td><td><code>dir_getfiles$@$$n</code></td><td>Files with recursion (1=recurse)</td></tr>
+<tr><td><code>dir_getdirectories$(path$)</code></td><td><code>dir_getdirectories$@$</code></td><td>All subdirectories</td></tr>
+<tr><td><code>dir_getdirectories$(path$, pattern$)</code></td><td><code>dir_getdirectories$@$$</code></td><td>Directories matching pattern</td></tr>
+<tr><td><code>dir_getdirectories$(path$, pattern$, recursive)</code></td><td><code>dir_getdirectories$@$$n</code></td><td>Directories with recursion</td></tr>
+<tr><td><code>dir_getentries$(path$)</code></td><td><code>dir_getentries$@$</code></td><td>All files and directories</td></tr>
+<tr><td><code>dir_getentries$(path$, pattern$)</code></td><td><code>dir_getentries$@$$</code></td><td>Entries matching pattern</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; List all files</span>
+<span class="kw">let</span> files$ = <span class="fn">dir_getfiles$</span>(<span class="fn">documentspath$</span>())
+<span class="kw">let</span> linecount = <span class="fn">count</span>(files$)
+<span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> linecount - <span class="num">1</span>
+    <span class="kw">println</span> <span class="fn">line$</span>(files$, i)
+<span class="kw">next</span>
+
+<span class="cmt">&#x27; Find .txt files recursively</span>
+<span class="kw">let</span> txtfiles$ = <span class="fn">dir_getfiles$</span>(<span class="fn">homepath$</span>(), <span class="str">&quot;*.txt&quot;</span>, <span class="num">1</span>)
+
+<span class="cmt">&#x27; List subdirectories</span>
+<span class="kw">let</span> subdirs$ = <span class="fn">dir_getdirectories$</span>(<span class="fn">homepath$</span>())</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Results are returned as a single string with entries separated by CRLF. Use <code>count()</code> to get the number of lines and <code>line$(str$, idx)</code> to access individual entries (0-based).</div>
+</section>
+
+<section class="doc-section" id="dir-time">
+<h2>Directory Timestamps</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>dir_getcreationtime(path$)</code></td><td><code>dir_getcreationtime@$</code></td><td>Creation time</td></tr>
+<tr><td><code>dir_getlastaccesstime(path$)</code></td><td><code>dir_getlastaccesstime@$</code></td><td>Last access time</td></tr>
+<tr><td><code>dir_getlastwritetime(path$)</code></td><td><code>dir_getlastwritetime@$</code></td><td>Last modification time</td></tr>
+<tr><td><code>dir_setcreationtime(path$, dt)</code></td><td><code>dir_setcreationtime@$n</code></td><td>Set creation time</td></tr>
+<tr><td><code>dir_setlastaccesstime(path$, dt)</code></td><td><code>dir_setlastaccesstime@$n</code></td><td>Set last access time</td></tr>
+<tr><td><code>dir_setlastwritetime(path$, dt)</code></td><td><code>dir_setlastwritetime@$n</code></td><td>Set modification time</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="dir-info">
+<h2>Working Directory</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>dir_getcurrent$()</code></td><td><code>dir_getcurrent$@</code></td><td>Get current working directory</td></tr>
+<tr><td><code>dir_setcurrent(path$)</code></td><td><code>dir_setcurrent@$</code></td><td>Set current working directory</td></tr>
+<tr><td><code>dir_getparent$(path$)</code></td><td><code>dir_getparent$@$</code></td><td>Get parent directory path</td></tr>
+<tr><td><code>dir_isrelativepath(path$)</code></td><td><code>dir_isrelativepath@$</code></td><td>Path is relative? (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Save and change directory</span>
+<span class="kw">let</span> original$ = <span class="fn">dir_getcurrent$</span>()
+<span class="kw">let</span> result = <span class="fn">dir_setcurrent</span>(<span class="fn">documentspath$</span>())
+<span class="kw">println</span> <span class="str">&quot;Working in: &quot;</span>; <span class="fn">dir_getcurrent$</span>()
+
+<span class="cmt">&#x27; Restore</span>
+<span class="kw">let</span> result = <span class="fn">dir_setcurrent</span>(original$)
+
+<span class="cmt">&#x27; Get parent</span>
+<span class="kw">let</span> parent$ = <span class="fn">dir_getparent$</span>(<span class="fn">homepath$</span>())
+<span class="kw">println</span> <span class="str">&quot;Parent: &quot;</span>; parent$</pre></div></div>
+</section>
+
+<section class="doc-section" id="path-combine">
+<h2>Path Combining</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>path_combine$(p1$, p2$)</code></td><td><code>path_combine$@$$</code></td><td>Combine two path segments</td></tr>
+<tr><td><code>path_combine$(p1$, p2$, p3$)</code></td><td><code>path_combine$@$$$</code></td><td>Combine three path segments</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> fullpath$ = <span class="fn">path_combine$</span>(<span class="fn">homepath$</span>(), <span class="str">&quot;Documents&quot;</span>, <span class="str">&quot;report.txt&quot;</span>)
+<span class="kw">println</span> fullpath$
+<span class="cmt">&#x27; Windows: C:\Users\John\Documents\report.txt</span>
+<span class="cmt">&#x27; Linux:   /home/john/Documents/report.txt</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="path-parts">
+<h2>Path Components</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>path_getdirectoryname$(path$)</code></td><td><code>path_getdirectoryname$@$</code></td><td>Directory portion of path</td></tr>
+<tr><td><code>path_getfilename$(path$)</code></td><td><code>path_getfilename$@$</code></td><td>Filename with extension</td></tr>
+<tr><td><code>path_getfilenamenoext$(path$)</code></td><td><code>path_getfilenamenoext$@$</code></td><td>Filename without extension</td></tr>
+<tr><td><code>path_getextension$(path$)</code></td><td><code>path_getextension$@$</code></td><td>Extension (with dot)</td></tr>
+<tr><td><code>path_changeextension$(path$, ext$)</code></td><td><code>path_changeextension$@$$</code></td><td>Change file extension</td></tr>
+<tr><td><code>path_hasextension(path$)</code></td><td><code>path_hasextension@$</code></td><td>Has extension? (1/0)</td></tr>
+<tr><td><code>path_getpathroot$(path$)</code></td><td><code>path_getpathroot$@$</code></td><td>Root portion of path</td></tr>
+<tr><td><code>path_getfullpath$(path$)</code></td><td><code>path_getfullpath$@$</code></td><td>Convert to absolute path</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> filepath$ = <span class="fn">path_combine$</span>(<span class="fn">documentspath$</span>(), <span class="str">&quot;report.pdf&quot;</span>)
+
+<span class="kw">println</span> <span class="str">&quot;Directory: &quot;</span>; <span class="fn">path_getdirectoryname$</span>(filepath$)
+<span class="kw">println</span> <span class="str">&quot;Filename:  &quot;</span>; <span class="fn">path_getfilename$</span>(filepath$)
+<span class="kw">println</span> <span class="str">&quot;Name only: &quot;</span>; <span class="fn">path_getfilenamenoext$</span>(filepath$)
+<span class="kw">println</span> <span class="str">&quot;Extension: &quot;</span>; <span class="fn">path_getextension$</span>(filepath$)
+<span class="kw">println</span> <span class="str">&quot;As backup: &quot;</span>; <span class="fn">path_changeextension$</span>(filepath$, <span class="str">&quot;.bak&quot;</span>)
+
+<span class="cmt">&#x27; Convert relative to absolute</span>
+<span class="kw">let</span> rel$ = <span class="str">&quot;data/config.ini&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Full: &quot;</span>; <span class="fn">path_getfullpath$</span>(rel$)</pre></div></div>
+</section>
+
+<section class="doc-section" id="path-valid">
+<h2>Path Validation</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>path_ispathrooted(path$)</code></td><td><code>path_ispathrooted@$</code></td><td>Path is absolute? (1/0)</td></tr>
+<tr><td><code>path_isrelativepath(path$)</code></td><td><code>path_isrelativepath@$</code></td><td>Path is relative? (1/0)</td></tr>
+<tr><td><code>path_hasvalidpathchars(path$)</code></td><td><code>path_hasvalidpathchars@$</code></td><td>Valid path characters? (1/0)</td></tr>
+<tr><td><code>path_hasvalidfilenamechars(name$)</code></td><td><code>path_hasvalidfilenamechars@$</code></td><td>Valid filename characters? (1/0)</td></tr>
+<tr><td><code>path_matchespattern(path$, pat$)</code></td><td><code>path_matchespattern@$$</code></td><td>Matches wildcard pattern? (1/0)</td></tr>
+<tr><td><code>path_matchespattern(path$, pat$, cs)</code></td><td><code>path_matchespattern@$$n</code></td><td>Match with case sensitivity (1=case-sensitive)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Validate user input</span>
+<span class="kw">let</span> userpath$ = <span class="str">&quot;myfile.txt&quot;</span>
+<span class="kw">if</span> <span class="fn">path_hasvalidfilenamechars</span>(userpath$) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Invalid filename!&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Pattern matching</span>
+<span class="kw">if</span> <span class="fn">path_matchespattern</span>(<span class="str">&quot;report_2024.pdf&quot;</span>, <span class="str">&quot;report_*.pdf&quot;</span>) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Matches pattern!&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Check absolute vs relative</span>
+<span class="kw">println</span> <span class="fn">path_ispathrooted</span>(<span class="str">&quot;/home/user&quot;</span>)  <span class="cmt">&#x27; 1</span>
+<span class="kw">println</span> <span class="fn">path_isrelativepath</span>(<span class="str">&quot;data/file.txt&quot;</span>)  <span class="cmt">&#x27; 1</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>File Manager</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; file_manager.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Simple file manager</span>
+<span class="kw">println</span> <span class="str">&quot;=== File Manager ===&quot;</span>
+
+<span class="kw">let</span> currentdir$ = <span class="fn">dir_getcurrent$</span>()
+<span class="kw">println</span> <span class="str">&quot;Directory: &quot;</span>; currentdir$
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+
+<span class="cmt">&#x27; List subdirectories</span>
+<span class="kw">let</span> dirs$ = <span class="fn">dir_getdirectories$</span>(currentdir$)
+<span class="kw">if</span> <span class="fn">len</span>(dirs$) &gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> dircount = <span class="fn">count</span>(dirs$)
+    <span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> dircount - <span class="num">1</span>
+        <span class="kw">let</span> dirname$ = <span class="fn">path_getfilename$</span>(<span class="fn">line$</span>(dirs$, i))
+        <span class="kw">println</span> <span class="str">&quot;[DIR]  &quot;</span>; dirname$
+    <span class="kw">next</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; List files with size</span>
+<span class="kw">let</span> files$ = <span class="fn">dir_getfiles$</span>(currentdir$)
+<span class="kw">if</span> <span class="fn">len</span>(files$) &gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> filecount = <span class="fn">count</span>(files$)
+    <span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> filecount - <span class="num">1</span>
+        <span class="kw">let</span> filepath$ = <span class="fn">line$</span>(files$, i)
+        <span class="kw">let</span> filename$ = <span class="fn">path_getfilename$</span>(filepath$)
+        <span class="kw">let</span> filesize = <span class="fn">file_getsize</span>(filepath$)
+        <span class="kw">println</span> <span class="str">&quot;       &quot;</span>; filename$; <span class="str">&quot; (&quot;</span>; <span class="fn">stri$</span>(filesize); <span class="str">&quot; bytes)&quot;</span>
+    <span class="kw">next</span>
+<span class="kw">endif</span></pre></div></div>
+<h3>Backup Utility</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; backup.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Back up all .txt files from Documents to backup folder</span>
+<span class="kw">println</span> <span class="str">&quot;=== Backup Utility ===&quot;</span>
+
+<span class="kw">let</span> srcdir$ = <span class="fn">documentspath$</span>()
+<span class="kw">let</span> bkdir$ = <span class="fn">path_combine$</span>(srcdir$, <span class="str">&quot;backup&quot;</span>)
+
+<span class="kw">if</span> <span class="fn">dir_exists</span>(bkdir$) = <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> result = <span class="fn">dir_create</span>(bkdir$)
+<span class="kw">endif</span>
+
+<span class="kw">let</span> files$ = <span class="fn">dir_getfiles$</span>(srcdir$, <span class="str">&quot;*.txt&quot;</span>)
+<span class="kw">let</span> copied = <span class="num">0</span>
+
+<span class="kw">if</span> <span class="fn">len</span>(files$) &gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> n = <span class="fn">count</span>(files$)
+    <span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> n - <span class="num">1</span>
+        <span class="kw">let</span> src$ = <span class="fn">line$</span>(files$, i)
+        <span class="kw">let</span> fname$ = <span class="fn">path_getfilename$</span>(src$)
+        <span class="kw">let</span> dst$ = <span class="fn">path_combine$</span>(bkdir$, fname$)
+        <span class="kw">if</span> <span class="fn">file_copy</span>(src$, dst$, <span class="num">1</span>) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+            <span class="kw">println</span> <span class="str">&quot;OK: &quot;</span>; fname$
+            copied = copied + <span class="num">1</span>
+        <span class="kw">else</span>
+            <span class="kw">println</span> <span class="str">&quot;FAIL: &quot;</span>; fname$; <span class="str">&quot; - &quot;</span>; <span class="fn">iostrerror$</span>()
+        <span class="kw">endif</span>
+    <span class="kw">next</span>
+<span class="kw">endif</span>
+
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Backed up &quot;</span>; copied; <span class="str">&quot; files&quot;</span></pre></div></div>
+<h3>Log Writer</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; log_writer.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Persistent log writer</span>
+<span class="kw">function</span> <span class="fn">logwrite</span>(msg$) <span class="kw">local</span> logpath$, logline$, result
+    logpath$ = <span class="fn">path_combine$</span>(<span class="fn">documentspath$</span>(), <span class="str">&quot;app.log&quot;</span>)
+    logline$ = <span class="fn">formatdatetime$</span>(<span class="str">&quot;yyyy-mm-dd hh:nn:ss&quot;</span>, <span class="fn">now</span>())
+    logline$ = logline$ + <span class="str">&quot; - &quot;</span> + msg$ + <span class="fn">chr$</span>(<span class="num">13</span>) + <span class="fn">chr$</span>(<span class="num">10</span>)
+    result = <span class="fn">file_appendalltext</span>(logpath$, logline$)
+    <span class="kw">return</span> result
+<span class="kw">endfunction</span>
+
+<span class="fn">logwrite</span>(<span class="str">&quot;Application started&quot;</span>)
+<span class="fn">logwrite</span>(<span class="str">&quot;Processing data...&quot;</span>)
+<span class="fn">logwrite</span>(<span class="str">&quot;Done&quot;</span>)
+
+<span class="cmt">&#x27; Read log</span>
+<span class="kw">let</span> log$ = <span class="fn">file_readalltext$</span>(<span class="fn">path_combine$</span>(<span class="fn">documentspath$</span>(), <span class="str">&quot;app.log&quot;</span>))
+<span class="kw">println</span> log$</pre></div></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<h3>Error Handling (2)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ioerror()</code></td><td><code>ioerror@</code></td><td>Last error code (0&ndash;10)</td></tr>
+<tr><td><code>iostrerror$()</code></td><td><code>iostrerror$@</code></td><td>Error message</td></tr>
+</tbody></table></div>
+<h3>File Functions (17)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>file_readalltext$(p$) / file_readalltext$(p$, enc$)</code></td><td><code>file_readalltext$@$[$]</code></td><td>Read text file</td></tr>
+<tr><td><code>file_readallbytes#(p$)</code></td><td><code>file_readallbytes#@$</code></td><td>Read binary file</td></tr>
+<tr><td><code>file_writealltext(p$, c$) / ...(p$, c$, enc$)</code></td><td><code>file_writealltext@$$[$]</code></td><td>Write text file</td></tr>
+<tr><td><code>file_appendalltext(p$, c$) / ...(p$, c$, enc$)</code></td><td><code>file_appendalltext@$$[$]</code></td><td>Append to text file</td></tr>
+<tr><td><code>file_writeallbytes(p$, s#)</code></td><td><code>file_writeallbytes@$#</code></td><td>Write binary file</td></tr>
+<tr><td><code>file_createempty(p$)</code></td><td><code>file_createempty@$</code></td><td>Create empty / touch</td></tr>
+<tr><td><code>file_copy(s$, d$) / file_copy(s$, d$, ow)</code></td><td><code>file_copy@$$[n]</code></td><td>Copy file</td></tr>
+<tr><td><code>file_move(s$, d$)</code></td><td><code>file_move@$$</code></td><td>Move/rename file</td></tr>
+<tr><td><code>file_delete(p$)</code></td><td><code>file_delete@$</code></td><td>Delete file</td></tr>
+<tr><td><code>file_exists(p$)</code></td><td><code>file_exists@$</code></td><td>File exists? (1/0)</td></tr>
+<tr><td><code>file_getsize(p$)</code></td><td><code>file_getsize@$</code></td><td>Size in bytes</td></tr>
+<tr><td><code>file_getcreationtime/getlastaccesstime/getlastwritetime</code></td><td><code>@$</code></td><td>Get timestamps</td></tr>
+<tr><td><code>file_setcreationtime/setlastaccesstime/setlastwritetime</code></td><td><code>@$n</code></td><td>Set timestamps</td></tr>
+</tbody></table></div>
+<h3>Directory Functions (20)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>dir_create(p$)</code></td><td><code>dir_create@$</code></td><td>Create directory</td></tr>
+<tr><td><code>dir_delete(p$) / dir_delete(p$, rec)</code></td><td><code>dir_delete@$[n]</code></td><td>Delete directory</td></tr>
+<tr><td><code>dir_exists(p$)</code></td><td><code>dir_exists@$</code></td><td>Exists? (1/0)</td></tr>
+<tr><td><code>dir_move(s$, d$) / dir_copy(s$, d$)</code></td><td><code>dir_move/copy@$$</code></td><td>Move/copy</td></tr>
+<tr><td><code>dir_isempty(p$)</code></td><td><code>dir_isempty@$</code></td><td>Empty? (1/0)</td></tr>
+<tr><td><code>dir_getfiles$(p$[, pat$[, rec]])</code></td><td><code>dir_getfiles$@$[$[$n]]</code></td><td>List files (CRLF-separated)</td></tr>
+<tr><td><code>dir_getdirectories$(p$[, pat$[, rec]])</code></td><td><code>dir_getdirectories$@$[$[$n]]</code></td><td>List subdirectories</td></tr>
+<tr><td><code>dir_getentries$(p$[, pat$])</code></td><td><code>dir_getentries$@$[$]</code></td><td>List all entries</td></tr>
+<tr><td><code>dir_getcurrent$() / dir_setcurrent(p$)</code></td><td><code>various</code></td><td>Working directory</td></tr>
+<tr><td><code>dir_getparent$(p$)</code></td><td><code>dir_getparent$@$</code></td><td>Parent directory</td></tr>
+<tr><td><code>dir_get/setcreationtime, lastaccesstime, lastwritetime</code></td><td><code>various</code></td><td>Directory timestamps (6)</td></tr>
+</tbody></table></div>
+<h3>Path Functions (14)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>path_combine$(p1$, p2$[, p3$])</code></td><td><code>path_combine$@$$[$]</code></td><td>Combine path segments</td></tr>
+<tr><td><code>path_getdirectoryname$(p$)</code></td><td><code>path_getdirectoryname$@$</code></td><td>Directory portion</td></tr>
+<tr><td><code>path_getfilename$(p$)</code></td><td><code>path_getfilename$@$</code></td><td>Filename with extension</td></tr>
+<tr><td><code>path_getfilenamenoext$(p$)</code></td><td><code>path_getfilenamenoext$@$</code></td><td>Filename without extension</td></tr>
+<tr><td><code>path_getextension$(p$)</code></td><td><code>path_getextension$@$</code></td><td>Extension (with dot)</td></tr>
+<tr><td><code>path_changeextension$(p$, ext$)</code></td><td><code>path_changeextension$@$$</code></td><td>Change extension</td></tr>
+<tr><td><code>path_hasextension(p$)</code></td><td><code>path_hasextension@$</code></td><td>Has extension? (1/0)</td></tr>
+<tr><td><code>path_getpathroot$(p$)</code></td><td><code>path_getpathroot$@$</code></td><td>Root portion</td></tr>
+<tr><td><code>path_getfullpath$(p$)</code></td><td><code>path_getfullpath$@$</code></td><td>Convert to absolute</td></tr>
+<tr><td><code>path_ispathrooted(p$)</code></td><td><code>path_ispathrooted@$</code></td><td>Absolute? (1/0)</td></tr>
+<tr><td><code>path_isrelativepath(p$)</code></td><td><code>path_isrelativepath@$</code></td><td>Relative? (1/0)</td></tr>
+<tr><td><code>path_hasvalidpathchars(p$)</code></td><td><code>path_hasvalidpathchars@$</code></td><td>Valid path chars? (1/0)</td></tr>
+<tr><td><code>path_hasvalidfilenamechars(n$)</code></td><td><code>path_hasvalidfilenamechars@$</code></td><td>Valid filename chars? (1/0)</td></tr>
+<tr><td><code>path_matchespattern(p$, pat$[, cs])</code></td><td><code>path_matchespattern@$$[n]</code></td><td>Matches wildcard? (1/0)</td></tr>
+</tbody></table></div>
+<p><em>53 functions across 4 major categories (TFile, TDirectory, TPath, errors).</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

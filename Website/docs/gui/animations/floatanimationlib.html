@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FloatAnimationLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic FloatAnimationLib: 46 functions for animating numeric properties — position, size, opacity, rotation, scale — with 11 interpolation curves and easing types.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* TOP BAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* LAYOUT */
+.layout { display: flex; margin-top: 56px; min-height: calc(100vh - 56px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem; text-shadow: 0 0 8px var(--glow-color);
+}
+.sidebar-section { padding: 0.3rem 0; }
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease; line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle); text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* CONTENT */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem; max-width: 900px;
+}
+
+/* SECTIONS */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px; padding-top: 0.5rem;
+}
+.doc-section h3 {
+  font-family: var(--font-retro); font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem; letter-spacing: 0.5px;
+}
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+.doc-section ul, .doc-section ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* CODE BLOCKS */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem; overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title { font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1; }
+.code-titlebar-controls { display: flex; align-items: center; gap: 0.1rem; margin-left: auto; }
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* TABLES */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* CALLOUT BOXES */
+.info-box, .warning-box {
+  padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) { .content { padding: 2rem 2rem 4rem; } }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; min-width: 280px; box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
+.sidebar-overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">FloatAnimationLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">46 functions &bull; Animation</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Cross-Platform</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Concepts</div>
+    <a href="#how-it-works" class="sidebar-link">How It Works</a>
+    <a href="#properties" class="sidebar-link">Animatable Properties</a>
+    <a href="#interpolation" class="sidebar-link">Interpolation Curves</a>
+    <a href="#easing" class="sidebar-link">Easing Types</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#creation" class="sidebar-link">Creation</a>
+    <a href="#control" class="sidebar-link">Playback Control</a>
+    <a href="#core" class="sidebar-link">Core Properties</a>
+    <a href="#behavior" class="sidebar-link">Behavior Flags</a>
+    <a href="#state" class="sidebar-link">State Queries</a>
+    <a href="#triggers" class="sidebar-link">Triggers</a>
+    <a href="#events" class="sidebar-link">Events</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<!-- ================================================================
+     OVERVIEW
+     ================================================================ -->
+<section class="doc-section" id="overview">
+<h2>FloatAnimationLib &mdash; Float Animation Library</h2>
+<p>Animates any <strong>numeric (float) property</strong> of a visual control &mdash; position, size, opacity, rotation, scale, and more. This is the most versatile animation type in Plan9Basic, capable of creating smooth transitions, looping effects, and complex motion with 11 interpolation curves and 3 easing modes. <strong>46 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>floatani_error, errormsg$, strerror$, clearerror</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>3</td><td>floatani# (2 overloads), floatani_free</td></tr>
+<tr><td>Playback Control</td><td>3</td><td>start, stop, stopatcurrent</td></tr>
+<tr><td>Core Properties</td><td>10</td><td>propertyname, startvalue, stopvalue, duration, delay (get/set)</td></tr>
+<tr><td>Behavior &mdash; Easing</td><td>4</td><td>animationtype, interpolation (get/set)</td></tr>
+<tr><td>Behavior &mdash; Flags</td><td>10</td><td>autoreverse, inverse, loop, enabled, startfromcurrent (get/set)</td></tr>
+<tr><td>State Queries</td><td>3</td><td>running, normalizedtime, name$</td></tr>
+<tr><td>Triggers</td><td>4</td><td>trigger, triggerinverse (get/set)</td></tr>
+<tr><td>Events</td><td>5</td><td>onfinish, onprocess (get/set), clearcallbacks#</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     CROSS-PLATFORM
+     ================================================================ -->
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td>&#9989; Full Support</td><td>Win32/Win64</td></tr>
+<!-- <tr><td>macOS</td><td>&#9989; Full Support</td><td>Intel/ARM (Apple Silicon)</td></tr> -->
+<tr><td>Linux</td><td>&#9989; Full Support</td><td>GTK-based</td></tr>
+<tr><td>Android</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr>
+<!-- <tr><td>iOS</td><td>&#9989; Full Support</td><td>Hardware-accelerated</td></tr> -->
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     ERROR HANDLING
+     ================================================================ -->
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_error()</code></td><td><code>floatani_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>floatani_errormsg$()</code></td><td><code>floatani_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>floatani_strerror$(code)</code></td><td><code>floatani_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>floatani_clearerror()</code></td><td><code>floatani_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+
+<h3>Error Codes</h3>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Constant</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_NIL_ANIMATION</td><td>Animation pointer is nil</td></tr>
+<tr><td>2</td><td>ERR_INVALID_PROPERTY</td><td>Invalid property name or object</td></tr>
+<tr><td>3</td><td>ERR_INVALID_VALUE</td><td>Invalid parameter value</td></tr>
+<tr><td>4</td><td>ERR_ANIMATION_RUNNING</td><td>Cannot modify while animation is running</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     HOW IT WORKS
+     ================================================================ -->
+<section class="doc-section" id="how-it-works">
+<h2>How It Works</h2>
+<p>A float animation smoothly transitions a <strong>single numeric property</strong> of its parent control from a start value to a stop value over a given duration. The animation is <strong>attached to a parent control</strong> (rectangle, circle, image, label, etc.) and targets one of its properties by name.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; basic pattern</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; 1. Create the animation on a parent control</span>
+<span class="kw">let</span> ani# = <span class="fn">floatani#</span>(myControl#)
+
+<span class="cmt">&#x27; 2. Tell it WHAT to animate</span>
+<span class="fn">floatani_propertyname#</span>(ani#, <span class="str">&quot;Opacity&quot;</span>)
+
+<span class="cmt">&#x27; 3. Tell it FROM where TO where</span>
+<span class="fn">floatani_startvalue#</span>(ani#, <span class="num">1.0</span>)
+<span class="fn">floatani_stopvalue#</span>(ani#, <span class="num">0.0</span>)
+
+<span class="cmt">&#x27; 4. Tell it HOW LONG</span>
+<span class="fn">floatani_duration#</span>(ani#, <span class="num">2.0</span>)
+
+<span class="cmt">&#x27; 5. Optionally set easing curve</span>
+<span class="fn">floatani_interpolation#</span>(ani#, <span class="str">&quot;Quadratic&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(ani#, <span class="str">&quot;InOut&quot;</span>)
+
+<span class="cmt">&#x27; 6. Start!</span>
+<span class="fn">floatani_start</span>(ani#)</pre></div></div>
+<div class="info-box"><strong>&#9432; Key concept:</strong> The animation is a <strong>child</strong> of the control it animates. When you call <code>floatani#(rect#)</code>, the animation becomes owned by that rectangle and will animate one of its properties.</div>
+</section>
+
+<!-- ================================================================
+     ANIMATABLE PROPERTIES
+     ================================================================ -->
+<section class="doc-section" id="properties">
+<h2>Animatable Properties</h2>
+<p>You can animate <strong>any numeric property</strong> accessible by name on a FireMonkey control. The most common ones:</p>
+<div class="table-wrap"><table><thead><tr><th>Property Name</th><th>Type</th><th>Description</th><th>Typical Range</th></tr></thead><tbody>
+<tr><td><code>Position.X</code></td><td>Float</td><td>Horizontal position</td><td>0 &ndash; parent width</td></tr>
+<tr><td><code>Position.Y</code></td><td>Float</td><td>Vertical position</td><td>0 &ndash; parent height</td></tr>
+<tr><td><code>Width</code></td><td>Float</td><td>Control width</td><td>0+</td></tr>
+<tr><td><code>Height</code></td><td>Float</td><td>Control height</td><td>0+</td></tr>
+<tr><td><code>Opacity</code></td><td>Float</td><td>Transparency</td><td>0.0 (invisible) &ndash; 1.0 (opaque)</td></tr>
+<tr><td><code>RotationAngle</code></td><td>Float</td><td>Rotation in degrees</td><td>0 &ndash; 360</td></tr>
+<tr><td><code>Scale.X</code></td><td>Float</td><td>Horizontal scale factor</td><td>0.0+ (1.0 = normal)</td></tr>
+<tr><td><code>Scale.Y</code></td><td>Float</td><td>Vertical scale factor</td><td>0.0+ (1.0 = normal)</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Tip:</strong> Property names are <strong>case-insensitive</strong> in FireMonkey. <code>"Opacity"</code>, <code>"opacity"</code>, and <code>"OPACITY"</code> all work. Dot notation accesses sub-properties: <code>"Position.X"</code>, <code>"Scale.Y"</code>.</div>
+</section>
+
+<!-- ================================================================
+     INTERPOLATION CURVES
+     ================================================================ -->
+<section class="doc-section" id="interpolation">
+<h2>Interpolation Curves</h2>
+<p>The interpolation type controls the <strong>mathematical curve</strong> used to transition between values. Combined with an easing type (In/Out/InOut), this creates a wide range of motion effects:</p>
+<div class="table-wrap"><table><thead><tr><th>Interpolation</th><th>Character</th><th>Best For</th></tr></thead><tbody>
+<tr><td><code>"Linear"</code></td><td>Constant speed, no acceleration</td><td>Progress bars, continuous rotation</td></tr>
+<tr><td><code>"Quadratic"</code></td><td>Gentle curve</td><td>Subtle, natural-feeling motion</td></tr>
+<tr><td><code>"Cubic"</code></td><td>Moderate curve</td><td>UI transitions, slide-ins</td></tr>
+<tr><td><code>"Quartic"</code></td><td>Pronounced curve</td><td>Dramatic entrances/exits</td></tr>
+<tr><td><code>"Quintic"</code></td><td>Very pronounced curve</td><td>Emphatic motion</td></tr>
+<tr><td><code>"Sinusoidal"</code></td><td>Sine-wave smoothness</td><td>Pulsing, breathing effects</td></tr>
+<tr><td><code>"Exponential"</code></td><td>Sharp start or end</td><td>Snap-in or fade-out effects</td></tr>
+<tr><td><code>"Circular"</code></td><td>Arc-based acceleration</td><td>Orbital or circular-feeling motion</td></tr>
+<tr><td><code>"Elastic"</code></td><td>Springy overshoot</td><td>Bouncy UI, playful interactions</td></tr>
+<tr><td><code>"Back"</code></td><td>Overshoots then settles</td><td>Pull-back effects, attention-grabbing</td></tr>
+<tr><td><code>"Bounce"</code></td><td>Bouncing ball effect</td><td>Drop animations, playful physics</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     EASING TYPES
+     ================================================================ -->
+<section class="doc-section" id="easing">
+<h2>Easing Types (AnimationType)</h2>
+<p>The easing type controls <strong>where</strong> the interpolation curve is applied:</p>
+<div class="table-wrap"><table><thead><tr><th>Type</th><th>Effect</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>"In"</code></td><td>Slow start &rarr; fast end</td><td>Acceleration at the beginning</td></tr>
+<tr><td><code>"Out"</code></td><td>Fast start &rarr; slow end</td><td>Deceleration at the end</td></tr>
+<tr><td><code>"InOut"</code></td><td>Slow &rarr; fast &rarr; slow</td><td>Accelerate then decelerate</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; easing combinations</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Smooth slide-in: starts fast, decelerates</span>
+<span class="fn">floatani_interpolation#</span>(ani#, <span class="str">&quot;Cubic&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(ani#, <span class="str">&quot;Out&quot;</span>)
+
+<span class="cmt">&#x27; Bouncing drop: drops and bounces at the end</span>
+<span class="fn">floatani_interpolation#</span>(ani#, <span class="str">&quot;Bounce&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(ani#, <span class="str">&quot;Out&quot;</span>)
+
+<span class="cmt">&#x27; Elastic snap: overshoots with springy feel</span>
+<span class="fn">floatani_interpolation#</span>(ani#, <span class="str">&quot;Elastic&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(ani#, <span class="str">&quot;Out&quot;</span>)
+
+<span class="cmt">&#x27; Gentle pulse: smooth in and out</span>
+<span class="fn">floatani_interpolation#</span>(ani#, <span class="str">&quot;Sinusoidal&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(ani#, <span class="str">&quot;InOut&quot;</span>)</pre></div></div>
+</section>
+
+<!-- ================================================================
+     CREATION
+     ================================================================ -->
+<section class="doc-section" id="creation">
+<h2>Creation &amp; Destruction</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani#(parent#)</code></td><td><code>floatani#@#</code></td><td>Create animation attached to parent control</td></tr>
+<tr><td><code>floatani#(parent#, name$)</code></td><td><code>floatani#@#$</code></td><td>Create named animation attached to parent</td></tr>
+<tr><td><code>floatani_free(ani#)</code></td><td><code>floatani_free@#</code></td><td>Destroy animation object</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> The <code>parent#</code> parameter is the <strong>control being animated</strong>, not a layout container. The animation becomes a child component of that control. Named animations are useful for identification when multiple animations exist on one control.</div>
+</section>
+
+<!-- ================================================================
+     PLAYBACK CONTROL
+     ================================================================ -->
+<section class="doc-section" id="control">
+<h2>Playback Control</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_start(ani#)</code></td><td><code>floatani_start@#</code></td><td>Start the animation</td></tr>
+<tr><td><code>floatani_stop(ani#)</code></td><td><code>floatani_stop@#</code></td><td>Stop and reset to start value</td></tr>
+<tr><td><code>floatani_stopatcurrent(ani#)</code></td><td><code>floatani_stopatcurrent@#</code></td><td>Stop at the current interpolated position</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Tip:</strong> Use <code>floatani_stopatcurrent</code> when you want the property to <strong>freeze</strong> at wherever it is mid-animation, rather than snapping back to the start value.</div>
+</section>
+
+<!-- ================================================================
+     CORE PROPERTIES
+     ================================================================ -->
+<section class="doc-section" id="core">
+<h2>Core Properties</h2>
+<h3>Property Name</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_propertyname#(ani#, name$)</code></td><td><code>floatani_propertyname#@#$</code></td><td>Set which property to animate</td></tr>
+<tr><td><code>floatani_propertyname$(ani#)</code></td><td><code>floatani_propertyname$@#</code></td><td>Get the property name</td></tr>
+</tbody></table></div>
+
+<h3>Value Range</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_startvalue#(ani#, value)</code></td><td><code>floatani_startvalue#@#n</code></td><td>Set starting value</td></tr>
+<tr><td><code>floatani_startvalue(ani#)</code></td><td><code>floatani_startvalue@#</code></td><td>Get starting value</td></tr>
+<tr><td><code>floatani_stopvalue#(ani#, value)</code></td><td><code>floatani_stopvalue#@#n</code></td><td>Set ending value</td></tr>
+<tr><td><code>floatani_stopvalue(ani#)</code></td><td><code>floatani_stopvalue@#</code></td><td>Get ending value</td></tr>
+</tbody></table></div>
+
+<h3>Timing</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_duration#(ani#, seconds)</code></td><td><code>floatani_duration#@#n</code></td><td>Set duration in seconds</td></tr>
+<tr><td><code>floatani_duration(ani#)</code></td><td><code>floatani_duration@#</code></td><td>Get duration</td></tr>
+<tr><td><code>floatani_delay#(ani#, seconds)</code></td><td><code>floatani_delay#@#n</code></td><td>Set delay before animation starts</td></tr>
+<tr><td><code>floatani_delay(ani#)</code></td><td><code>floatani_delay@#</code></td><td>Get delay</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     BEHAVIOR FLAGS
+     ================================================================ -->
+<section class="doc-section" id="behavior">
+<h2>Behavior Flags</h2>
+<h3>Easing &amp; Interpolation</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_animationtype#(ani#, type$)</code></td><td><code>floatani_animationtype#@#$</code></td><td>Set easing: <code>"In"</code>, <code>"Out"</code>, <code>"InOut"</code></td></tr>
+<tr><td><code>floatani_animationtype$(ani#)</code></td><td><code>floatani_animationtype$@#</code></td><td>Get current easing type</td></tr>
+<tr><td><code>floatani_interpolation#(ani#, type$)</code></td><td><code>floatani_interpolation#@#$</code></td><td>Set interpolation curve (see table above)</td></tr>
+<tr><td><code>floatani_interpolation$(ani#)</code></td><td><code>floatani_interpolation$@#</code></td><td>Get current interpolation type</td></tr>
+</tbody></table></div>
+
+<h3>Boolean Flags</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_autoreverse#(ani#, flag)</code></td><td><code>floatani_autoreverse#@#n</code></td><td>If 1, plays forward then backward</td></tr>
+<tr><td><code>floatani_autoreverse(ani#)</code></td><td><code>floatani_autoreverse@#</code></td><td>Get autoreverse flag</td></tr>
+<tr><td><code>floatani_inverse#(ani#, flag)</code></td><td><code>floatani_inverse#@#n</code></td><td>If 1, plays in reverse direction</td></tr>
+<tr><td><code>floatani_inverse(ani#)</code></td><td><code>floatani_inverse@#</code></td><td>Get inverse flag</td></tr>
+<tr><td><code>floatani_loop#(ani#, flag)</code></td><td><code>floatani_loop#@#n</code></td><td>If 1, loops indefinitely</td></tr>
+<tr><td><code>floatani_loop(ani#)</code></td><td><code>floatani_loop@#</code></td><td>Get loop flag</td></tr>
+<tr><td><code>floatani_enabled#(ani#, flag)</code></td><td><code>floatani_enabled#@#n</code></td><td>Enable or disable the animation</td></tr>
+<tr><td><code>floatani_enabled(ani#)</code></td><td><code>floatani_enabled@#</code></td><td>Get enabled state</td></tr>
+<tr><td><code>floatani_startfromcurrent#(ani#, flag)</code></td><td><code>floatani_startfromcurrent#@#n</code></td><td>If 1, ignores startvalue and begins from current property value</td></tr>
+<tr><td><code>floatani_startfromcurrent(ani#)</code></td><td><code>floatani_startfromcurrent@#</code></td><td>Get startfromcurrent flag</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Combining flags:</strong> Set <code>autoreverse = 1</code> + <code>loop = 1</code> to create a continuous back-and-forth oscillation (e.g., pulsing opacity, breathing scale effect). Set <code>startfromcurrent = 1</code> when you want to smoothly transition from wherever the property currently is, without jumping to the start value.</div>
+</section>
+
+<!-- ================================================================
+     STATE QUERIES
+     ================================================================ -->
+<section class="doc-section" id="state">
+<h2>State Queries</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_running(ani#)</code></td><td><code>floatani_running@#</code></td><td>Returns 1 if currently animating</td></tr>
+<tr><td><code>floatani_normalizedtime(ani#)</code></td><td><code>floatani_normalizedtime@#</code></td><td>Returns progress from 0.0 to 1.0</td></tr>
+<tr><td><code>floatani_name$(ani#)</code></td><td><code>floatani_name$@#</code></td><td>Get the animation&rsquo;s name (set at creation)</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     TRIGGERS
+     ================================================================ -->
+<section class="doc-section" id="triggers">
+<h2>Triggers</h2>
+<p>Triggers let an animation start or reverse automatically when a parent property changes, without calling <code>floatani_start</code> manually. They use FireMonkey trigger expressions.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_trigger#(ani#, expr$)</code></td><td><code>floatani_trigger#@#$</code></td><td>Set trigger expression (starts animation)</td></tr>
+<tr><td><code>floatani_trigger$(ani#)</code></td><td><code>floatani_trigger$@#</code></td><td>Get trigger expression</td></tr>
+<tr><td><code>floatani_triggerinverse#(ani#, expr$)</code></td><td><code>floatani_triggerinverse#@#$</code></td><td>Set inverse trigger (reverses animation)</td></tr>
+<tr><td><code>floatani_triggerinverse$(ani#)</code></td><td><code>floatani_triggerinverse$@#</code></td><td>Get inverse trigger expression</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; trigger example</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Auto-fade when mouse enters/leaves</span>
+<span class="fn">floatani_trigger#</span>(ani#, <span class="str">&quot;IsMouseOver=true&quot;</span>)
+<span class="fn">floatani_triggerinverse#</span>(ani#, <span class="str">&quot;IsMouseOver=false&quot;</span>)</pre></div></div>
+</section>
+
+<!-- ================================================================
+     EVENTS
+     ================================================================ -->
+<section class="doc-section" id="events">
+<h2>Events</h2>
+<p>Each event has a <strong>setter</strong> and a <strong>getter</strong>. Use <code>floatani_clearcallbacks#</code> to disconnect all at once.</p>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_onfinish#(ani#, func$)</code></td><td><code>floatani_onfinish$(ani#)</code></td><td><code>function name(sender#)</code></td><td>Fired when animation completes (after all loops)</td></tr>
+<tr><td><code>floatani_onprocess#(ani#, func$)</code></td><td><code>floatani_onprocess$(ani#)</code></td><td><code>function name(sender#)</code></td><td>Fired on every animation frame</td></tr>
+<tr><td><code>floatani_clearcallbacks#(ani#)</code></td><td>&mdash;</td><td>&mdash;</td><td>Disconnect all callbacks</td></tr>
+</tbody></table></div>
+<div class="warning-box"><strong>&#9888; Performance:</strong> The <code>onprocess</code> callback fires on <strong>every animation frame</strong> (typically 60 times per second). Use it sparingly &mdash; heavy logic in this callback can cause stuttering. Prefer <code>onfinish</code> when you only need to know when the animation completes.</div>
+</section>
+
+<!-- ================================================================
+     EXAMPLES
+     ================================================================ -->
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+
+<h3>Fade In/Out</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; fade.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Fade Demo&quot;</span>, <span class="num">400</span>, <span class="num">300</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> rect# = <span class="fn">rectangle#</span>(frm#, <span class="num">100</span>, <span class="num">50</span>, <span class="num">200</span>, <span class="num">200</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">&quot;#3498db&quot;</span>)
+
+<span class="cmt">&#x27; Fade opacity from 1.0 to 0.2 and back, forever</span>
+<span class="kw">let</span> fadeAni# = <span class="fn">floatani#</span>(rect#)
+<span class="fn">floatani_propertyname#</span>(fadeAni#, <span class="str">&quot;Opacity&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(fadeAni#, <span class="num">1.0</span>)
+<span class="fn">floatani_stopvalue#</span>(fadeAni#, <span class="num">0.2</span>)
+<span class="fn">floatani_duration#</span>(fadeAni#, <span class="num">2.0</span>)
+<span class="fn">floatani_interpolation#</span>(fadeAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(fadeAni#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(fadeAni#, <span class="num">1</span>)
+<span class="fn">floatani_start</span>(fadeAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Bouncing Ball</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; bounce.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Bounce Demo&quot;</span>, <span class="num">400</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> ball# = <span class="fn">circle#</span>(frm#, <span class="num">175</span>, <span class="num">50</span>, <span class="num">50</span>, <span class="num">50</span>)
+<span class="fn">circle_fill#</span>(ball#, <span class="str">&quot;#e74c3c&quot;</span>)
+
+<span class="cmt">&#x27; Animate Y position with bounce easing</span>
+<span class="kw">let</span> bounceAni# = <span class="fn">floatani#</span>(ball#)
+<span class="fn">floatani_propertyname#</span>(bounceAni#, <span class="str">&quot;Position.Y&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(bounceAni#, <span class="num">50</span>)
+<span class="fn">floatani_stopvalue#</span>(bounceAni#, <span class="num">300</span>)
+<span class="fn">floatani_duration#</span>(bounceAni#, <span class="num">1.5</span>)
+<span class="fn">floatani_interpolation#</span>(bounceAni#, <span class="str">&quot;Bounce&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(bounceAni#, <span class="str">&quot;Out&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(bounceAni#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(bounceAni#, <span class="num">1</span>)
+<span class="fn">floatani_start</span>(bounceAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Spinning Rectangle</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; spin.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Spin Demo&quot;</span>, <span class="num">400</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> rect# = <span class="fn">rectangle#</span>(frm#, <span class="num">150</span>, <span class="num">150</span>, <span class="num">100</span>, <span class="num">100</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">&quot;#2ecc71&quot;</span>)
+
+<span class="cmt">&#x27; Continuous 360-degree rotation</span>
+<span class="kw">let</span> spinAni# = <span class="fn">floatani#</span>(rect#)
+<span class="fn">floatani_propertyname#</span>(spinAni#, <span class="str">&quot;RotationAngle&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(spinAni#, <span class="num">0</span>)
+<span class="fn">floatani_stopvalue#</span>(spinAni#, <span class="num">360</span>)
+<span class="fn">floatani_duration#</span>(spinAni#, <span class="num">2.0</span>)
+<span class="fn">floatani_interpolation#</span>(spinAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">floatani_loop#</span>(spinAni#, <span class="num">1</span>)
+<span class="fn">floatani_start</span>(spinAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Pulsing Scale</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; pulse.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Pulse Demo&quot;</span>, <span class="num">400</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> circ# = <span class="fn">circle#</span>(frm#, <span class="num">150</span>, <span class="num">150</span>, <span class="num">100</span>, <span class="num">100</span>)
+<span class="fn">circle_fill#</span>(circ#, <span class="str">&quot;#9b59b6&quot;</span>)
+
+<span class="cmt">&#x27; Pulse Scale.X</span>
+<span class="kw">let</span> scaleX# = <span class="fn">floatani#</span>(circ#)
+<span class="fn">floatani_propertyname#</span>(scaleX#, <span class="str">&quot;Scale.X&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(scaleX#, <span class="num">1.0</span>)
+<span class="fn">floatani_stopvalue#</span>(scaleX#, <span class="num">1.2</span>)
+<span class="fn">floatani_duration#</span>(scaleX#, <span class="num">0.5</span>)
+<span class="fn">floatani_interpolation#</span>(scaleX#, <span class="str">&quot;Sinusoidal&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(scaleX#, <span class="str">&quot;InOut&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(scaleX#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(scaleX#, <span class="num">1</span>)
+<span class="fn">floatani_start</span>(scaleX#)
+
+<span class="cmt">&#x27; Pulse Scale.Y in sync</span>
+<span class="kw">let</span> scaleY# = <span class="fn">floatani#</span>(circ#)
+<span class="fn">floatani_propertyname#</span>(scaleY#, <span class="str">&quot;Scale.Y&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(scaleY#, <span class="num">1.0</span>)
+<span class="fn">floatani_stopvalue#</span>(scaleY#, <span class="num">1.2</span>)
+<span class="fn">floatani_duration#</span>(scaleY#, <span class="num">0.5</span>)
+<span class="fn">floatani_interpolation#</span>(scaleY#, <span class="str">&quot;Sinusoidal&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(scaleY#, <span class="str">&quot;InOut&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(scaleY#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(scaleY#, <span class="num">1</span>)
+<span class="fn">floatani_start</span>(scaleY#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Slide with Finish Callback</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; slide.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Slide Demo&quot;</span>, <span class="num">500</span>, <span class="num">300</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> rect# = <span class="fn">rectangle#</span>(frm#, <span class="num">0</span>, <span class="num">100</span>, <span class="num">80</span>, <span class="num">80</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">&quot;#e67e22&quot;</span>)
+
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Sliding...&quot;</span>)
+<span class="fn">label_bounds#</span>(lbl#, <span class="num">180</span>, <span class="num">250</span>, <span class="num">140</span>, <span class="num">25</span>)
+
+<span class="cmt">&#x27; Slide across the screen</span>
+<span class="kw">let</span> slideAni# = <span class="fn">floatani#</span>(rect#)
+<span class="fn">floatani_propertyname#</span>(slideAni#, <span class="str">&quot;Position.X&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(slideAni#, <span class="num">0</span>)
+<span class="fn">floatani_stopvalue#</span>(slideAni#, <span class="num">420</span>)
+<span class="fn">floatani_duration#</span>(slideAni#, <span class="num">3.0</span>)
+<span class="fn">floatani_interpolation#</span>(slideAni#, <span class="str">&quot;Cubic&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(slideAni#, <span class="str">&quot;InOut&quot;</span>)
+<span class="fn">floatani_onfinish#</span>(slideAni#, <span class="str">&quot;OnSlideComplete&quot;</span>)
+<span class="fn">floatani_start</span>(slideAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnSlideComplete</span>(sender#)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Done!&quot;</span>)
+    <span class="cmt">&#x27; Reverse direction and go back</span>
+    <span class="fn">floatani_inverse#</span>(sender#, <span class="num">1</span>)
+    <span class="fn">floatani_start</span>(sender#)
+<span class="kw">endfunction</span>
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+
+<h3>Multiple Animations on One Control</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; combined.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Combined Animations&quot;</span>, <span class="num">500</span>, <span class="num">400</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> rect# = <span class="fn">rectangle#</span>(frm#, <span class="num">50</span>, <span class="num">150</span>, <span class="num">80</span>, <span class="num">80</span>)
+<span class="fn">rectangle_fill#</span>(rect#, <span class="str">&quot;#1abc9c&quot;</span>)
+
+<span class="cmt">&#x27; Slide horizontally</span>
+<span class="kw">let</span> moveAni# = <span class="fn">floatani#</span>(rect#, <span class="str">&quot;MoveX&quot;</span>)
+<span class="fn">floatani_propertyname#</span>(moveAni#, <span class="str">&quot;Position.X&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(moveAni#, <span class="num">50</span>)
+<span class="fn">floatani_stopvalue#</span>(moveAni#, <span class="num">370</span>)
+<span class="fn">floatani_duration#</span>(moveAni#, <span class="num">3.0</span>)
+<span class="fn">floatani_interpolation#</span>(moveAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(moveAni#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(moveAni#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Spin while sliding</span>
+<span class="kw">let</span> spinAni# = <span class="fn">floatani#</span>(rect#, <span class="str">&quot;Spin&quot;</span>)
+<span class="fn">floatani_propertyname#</span>(spinAni#, <span class="str">&quot;RotationAngle&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(spinAni#, <span class="num">0</span>)
+<span class="fn">floatani_stopvalue#</span>(spinAni#, <span class="num">360</span>)
+<span class="fn">floatani_duration#</span>(spinAni#, <span class="num">1.5</span>)
+<span class="fn">floatani_interpolation#</span>(spinAni#, <span class="str">&quot;Linear&quot;</span>)
+<span class="fn">floatani_loop#</span>(spinAni#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Fade in and out</span>
+<span class="kw">let</span> fadeAni# = <span class="fn">floatani#</span>(rect#, <span class="str">&quot;Fade&quot;</span>)
+<span class="fn">floatani_propertyname#</span>(fadeAni#, <span class="str">&quot;Opacity&quot;</span>)
+<span class="fn">floatani_startvalue#</span>(fadeAni#, <span class="num">1.0</span>)
+<span class="fn">floatani_stopvalue#</span>(fadeAni#, <span class="num">0.3</span>)
+<span class="fn">floatani_duration#</span>(fadeAni#, <span class="num">2.0</span>)
+<span class="fn">floatani_interpolation#</span>(fadeAni#, <span class="str">&quot;Sinusoidal&quot;</span>)
+<span class="fn">floatani_animationtype#</span>(fadeAni#, <span class="str">&quot;InOut&quot;</span>)
+<span class="fn">floatani_autoreverse#</span>(fadeAni#, <span class="num">1</span>)
+<span class="fn">floatani_loop#</span>(fadeAni#, <span class="num">1</span>)
+
+<span class="cmt">&#x27; Start all three at once</span>
+<span class="fn">floatani_start</span>(moveAni#)
+<span class="fn">floatani_start</span>(spinAni#)
+<span class="fn">floatani_start</span>(fadeAni#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<!-- ================================================================
+     BEST PRACTICES
+     ================================================================ -->
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Use <code>autoreverse + loop</code> for continuous oscillation</td><td>Creates smooth back-and-forth without manual restart</td></tr>
+<tr><td>Use <code>"Linear"</code> for continuous rotation</td><td>Other interpolations create uneven speed, noticeable in looped spins</td></tr>
+<tr><td>Use <code>"Cubic" + "Out"</code> for UI slide-ins</td><td>Feels natural &mdash; fast entry, gentle deceleration</td></tr>
+<tr><td>Use <code>"Bounce" + "Out"</code> for playful drops</td><td>Objects appear to fall and bounce realistically</td></tr>
+<tr><td>Use <code>"Sinusoidal" + "InOut"</code> for pulsing</td><td>Most natural breathing/heartbeat rhythm</td></tr>
+<tr><td>Use <code>startfromcurrent = 1</code> for smooth interruptions</td><td>Avoids jarring jumps when restarting mid-animation</td></tr>
+<tr><td>Avoid heavy logic in <code>onprocess</code></td><td>Called every frame (~60/sec) &mdash; can cause stuttering</td></tr>
+<tr><td>Name animations with <code>floatani#(parent#, name$)</code></td><td>Easier to identify when multiple animations on one control</td></tr>
+<tr><td>Pair Scale.X and Scale.Y animations</td><td>Animating only one axis creates distortion (unless that&rsquo;s intended)</td></tr>
+<tr><td>Use <code>delay</code> for staggered animations</td><td>Different delays on multiple controls create cascade effects</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================================================================
+     QUICK REFERENCE
+     ================================================================ -->
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>floatani_error / errormsg$ / strerror$ / clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>floatani#(parent#[, name$])</code></td><td><code>floatani#@# / floatani#@#$</code></td><td>Create (2 overloads)</td></tr>
+<tr><td><code>floatani_free(ani#)</code></td><td><code>floatani_free@#</code></td><td>Destroy</td></tr>
+<tr><td><code>floatani_start / stop / stopatcurrent</code></td><td><code>various</code></td><td>Playback control (3)</td></tr>
+<tr><td><code>floatani_propertyname# / propertyname$</code></td><td><code>various</code></td><td>Target property (2)</td></tr>
+<tr><td><code>floatani_startvalue / stopvalue</code></td><td><code>various</code></td><td>Value range (4)</td></tr>
+<tr><td><code>floatani_duration / delay</code></td><td><code>various</code></td><td>Timing (4)</td></tr>
+<tr><td><code>floatani_animationtype / interpolation</code></td><td><code>various</code></td><td>Easing &amp; curves (4)</td></tr>
+<tr><td><code>floatani_autoreverse / inverse / loop / enabled / startfromcurrent</code></td><td><code>various</code></td><td>Behavior flags (10)</td></tr>
+<tr><td><code>floatani_running / normalizedtime / name$</code></td><td><code>various</code></td><td>State queries (3)</td></tr>
+<tr><td><code>floatani_trigger / triggerinverse</code></td><td><code>various</code></td><td>Automatic triggers (4)</td></tr>
+<tr><td><code>floatani_onfinish / onprocess / clearcallbacks#</code></td><td><code>various</code></td><td>Events (5)</td></tr>
+</tbody></table></div>
+<p><em>46 functions. Part of the Plan9Basic Animation library system.</em></p>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

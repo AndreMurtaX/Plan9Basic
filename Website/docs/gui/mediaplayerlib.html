@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediaPlayerLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic MediaPlayerLib: 58 functions for audio and video playback with non-visual Media Player for background audio and visual Media Control for video display.">
+<link rel="icon" type="image/png" href="../../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box { padding: 1rem 1.2rem; margin: 1rem 0; border-left: 3px solid var(--accent-dim); background: var(--accent-subtle); font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); }
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../../index.html" class="topbar-logo">
+    <img src="../../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">MediaPlayerLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">58 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Platform &amp; Formats</a>
+    <a href="#states" class="sidebar-link">Media States</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Audio</div>
+    <a href="#player" class="sidebar-link">Media Player (Audio)</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Video</div>
+    <a href="#control" class="sidebar-link">Media Control (Video)</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#comparison" class="sidebar-link">Player vs Control</a>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#troubleshooting" class="sidebar-link">Troubleshooting</a>
+    <a href="#practices" class="sidebar-link">Best Practices</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>MediaPlayerLib &mdash; Media Player Library</h2>
+<p>Audio and video playback for Plan9Basic applets. The library provides two components: a <strong>non-visual Media Player</strong> for background audio, and a <strong>visual Media Control</strong> for video display. Both share similar playback APIs (load, play, pause, stop, seek, volume) and event callbacks. <strong>58 functions.</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Component</th><th>Prefix</th><th>Type</th><th>Use Case</th></tr></thead><tbody>
+<tr><td>Media Player</td><td><code>media_*</code></td><td>Non-visual</td><td>Background audio, music players, sound effects</td></tr>
+<tr><td>Media Control</td><td><code>media_ctrl_*</code></td><td>Visual (placed on form)</td><td>Video playback, multimedia presentations</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Player</th><th>Control</th><th>Total</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>&mdash;</td><td>4</td></tr>
+<tr><td>Creation &amp; Destruction</td><td>2</td><td>2</td><td>4</td></tr>
+<tr><td>Loading &amp; Playback</td><td>4</td><td>4</td><td>8</td></tr>
+<tr><td>Properties</td><td>7</td><td>9 + hasplayer</td><td>17</td></tr>
+<tr><td>Position &amp; Size</td><td>&mdash;</td><td>10</td><td>10</td></tr>
+<tr><td>Events</td><td>2</td><td>8</td><td>10</td></tr>
+<tr><td>Utility</td><td>&mdash;</td><td>1 (clear)</td><td>1</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>19</strong></td><td><strong>39</strong></td><td><strong>58</strong></td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Cross-Platform Support</h2>
+<p>Plan9Basic delegates media decoding to the host operating system's native media services. This provides the best performance but means supported formats vary by platform.</p>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Best Video Formats</th><th>Best Audio Formats</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Windows</td><td><strong>WMV</strong>, AVI</td><td>WMA, MP3, WAV</td><td>MP4 may work depending on codecs</td></tr>
+<!-- <tr><td>macOS</td><td><strong>MOV</strong>, M4V, MP4 (H.264)</td><td>AAC, MP3</td><td>Excellent H.264/AAC support</td></tr> -->
+<tr><td>Linux</td><td>Depends on system codecs</td><td>MP3, OGG, WAV</td><td>Install multimedia codecs for broader support</td></tr>
+<tr><td>Android</td><td><strong>MP4</strong> (H.264), 3GP, WebM</td><td>AAC, MP3</td><td>Standard mobile codecs</td></tr>
+<!-- <tr><td>iOS</td><td><strong>MOV</strong>, M4V, MP4 (H.264)</td><td>AAC, MP3</td><td>Same as macOS</td></tr> -->
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <strong>Audio</strong> files can be loaded from local paths or URLs (<code>http://</code>, <code>https://</code>). <strong>Video</strong> files should use local paths &mdash; URL streaming for video has not been reliably tested.</div>
+<h3>Cross-Platform Recommendations</h3>
+<div class="table-wrap"><table><thead><tr><th>Strategy</th><th>Description</th></tr></thead><tbody>
+<tr><td>Use <strong>MP3</strong> for audio</td><td>Works reliably on all platforms, supports URL streaming</td></tr>
+<tr><td>Provide multiple video formats</td><td>Load the appropriate format based on detected platform</td></tr>
+<tr><td>Test on target platforms</td><td>Codec support varies; always verify playback on each target</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="states">
+<h2>Media States</h2>
+<p>Both components use the same state values, returned by <code>media_state()</code> and <code>media_ctrl_state()</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Value</th><th>State</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>Unavailable</td><td>No media loaded or an error occurred</td></tr>
+<tr><td>1</td><td>Stopped</td><td>Media is loaded but not playing</td></tr>
+<tr><td>2</td><td>Playing</td><td>Media is currently playing</td></tr>
+<tr><td>3</td><td>Paused</td><td>Playback is paused (platform-dependent)</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_error()</code></td><td><code>media_error@</code></td><td>Last error code (0 = no error)</td></tr>
+<tr><td><code>media_errormsg$()</code></td><td><code>media_errormsg$@</code></td><td>Last error message as string</td></tr>
+<tr><td><code>media_strerror$(code)</code></td><td><code>media_strerror$@n</code></td><td>Description for a given error code</td></tr>
+<tr><td><code>media_clearerror()</code></td><td><code>media_clearerror@</code></td><td>Clear the error state</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Error</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_INVALID_PLAYER</td><td>Invalid media player pointer</td></tr>
+<tr><td>2</td><td>ERR_INVALID_CONTROL</td><td>Invalid media control pointer</td></tr>
+<tr><td>3</td><td>ERR_INVALID_PARENT</td><td>Invalid parent for control</td></tr>
+<tr><td>4</td><td>ERR_INVALID_VALUE</td><td>Invalid parameter value</td></tr>
+<tr><td>5</td><td>ERR_CREATE_FAILED</td><td>Failed to create component</td></tr>
+<tr><td>6</td><td>ERR_LOAD_FAILED</td><td>Failed to load media file</td></tr>
+<tr><td>7</td><td>ERR_FILE_NOT_FOUND</td><td>Media file not found</td></tr>
+<tr><td>8</td><td>ERR_NOT_LOADED</td><td>No media is loaded</td></tr>
+<tr><td>9</td><td>ERR_INVALID_CALLBACK</td><td>Invalid callback function</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Some operations may report errors even when they succeed. The most reliable way to verify media loaded correctly is to start playback and monitor state via <code>OnStateChanged</code>.</div>
+</section>
+
+<section class="doc-section" id="player">
+<h2>Media Player (Audio)</h2>
+<p>A <strong>non-visual</strong> component for background audio playback. Does not require a form &mdash; works entirely in the background.</p>
+<h3>Creation &amp; Destruction</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_player#()</code></td><td><code>media_player#@</code></td><td>Create a new media player (returns pointer)</td></tr>
+<tr><td><code>media_free(player#)</code></td><td><code>media_free@#</code></td><td>Destroy media player and release resources</td></tr>
+</tbody></table></div>
+<h3>Loading &amp; Playback</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_load#(player#, file$)</code></td><td><code>media_load#@#$</code></td><td>Load media file (local path or URL)</td></tr>
+<tr><td><code>media_play(player#)</code></td><td><code>media_play@#</code></td><td>Start or resume playback</td></tr>
+<tr><td><code>media_pause(player#)</code></td><td><code>media_pause@#</code></td><td>Pause playback</td></tr>
+<tr><td><code>media_stop(player#)</code></td><td><code>media_stop@#</code></td><td>Stop playback and reset position to beginning</td></tr>
+<tr><td><code>media_clear(player#)</code></td><td><code>media_clear@#</code></td><td>Clear the loaded media</td></tr>
+</tbody></table></div>
+<h3>Properties</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_state(player#)</code></td><td><code>media_state@#</code></td><td>Current state (0=unavailable, 1=stopped, 2=playing, 3=paused)</td></tr>
+<tr><td><code>media_volume(player#)</code></td><td><code>media_volume@#</code></td><td>Get volume (0.0&ndash;1.0)</td></tr>
+<tr><td><code>media_volume#(player#, vol)</code></td><td><code>media_volume#@#n</code></td><td>Set volume</td></tr>
+<tr><td><code>media_duration(player#)</code></td><td><code>media_duration@#</code></td><td>Total duration in seconds</td></tr>
+<tr><td><code>media_position(player#)</code></td><td><code>media_position@#</code></td><td>Current playback position in seconds</td></tr>
+<tr><td><code>media_position#(player#, secs)</code></td><td><code>media_position#@#n</code></td><td>Seek to position in seconds</td></tr>
+<tr><td><code>media_filename$(player#)</code></td><td><code>media_filename$@#</code></td><td>Get the loaded filename/URL</td></tr>
+<tr><td><code>media_isplaying(player#)</code></td><td><code>media_isplaying@#</code></td><td>Returns 1 if playing, 0 otherwise</td></tr>
+</tbody></table></div>
+<h3>Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Callback Signature</th><th>When It Fires</th></tr></thead><tbody>
+<tr><td><code>media_onend#(player#, func$)</code></td><td><code>function name(sender#)</code></td><td>When playback reaches the end</td></tr>
+<tr><td><code>media_onstatechanged#(player#, func$)</code></td><td><code>function name(sender#, state)</code></td><td>When state changes (0/1/2/3)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; audioplayer.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Complete audio player example</span>
+<span class="kw">let</span> player# = <span class="fn">media_player#</span>()
+<span class="fn">media_load#</span>(player#, <span class="str">&quot;https://www.w3schools.com/html/horse.mp3&quot;</span>)
+<span class="fn">media_volume#</span>(player#, <span class="num">0.7</span>)
+<span class="fn">media_onend#</span>(player#, <span class="str">&quot;OnEnd&quot;</span>)
+<span class="fn">media_onstatechanged#</span>(player#, <span class="str">&quot;OnState&quot;</span>)
+<span class="fn">media_play</span>(player#)
+
+<span class="kw">function</span> <span class="fn">OnEnd</span>(sender#)
+    <span class="kw">println</span> <span class="str">&quot;Playback finished!&quot;</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnState</span>(sender#, state)
+    <span class="kw">if</span> state = <span class="num">2</span> <span class="kw">then</span> <span class="kw">println</span> <span class="str">&quot;Playing&quot;</span>
+    <span class="kw">if</span> state = <span class="num">1</span> <span class="kw">then</span> <span class="kw">println</span> <span class="str">&quot;Stopped&quot;</span>
+<span class="kw">endfunction</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="control">
+<h2>Media Control (Video)</h2>
+<p>A <strong>visual</strong> component that displays video content within a form. Supports both audio and video playback with a visible rendering surface.</p>
+<h3>Creation &amp; Destruction</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_control#(parent#, x, y, w, h)</code></td><td><code>media_ctrl_control#@#nnnn</code></td><td>Create media control with position and size</td></tr>
+<tr><td><code>media_ctrl_free(ctrl#)</code></td><td><code>media_ctrl_free@#</code></td><td>Destroy media control</td></tr>
+</tbody></table></div>
+<h3>Loading &amp; Playback</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_ctrl_load#(ctrl#, file$)</code></td><td><code>media_ctrl_load#@#$</code></td><td>Load media file (local path recommended)</td></tr>
+<tr><td><code>media_ctrl_play(ctrl#)</code></td><td><code>media_ctrl_play@#</code></td><td>Start or resume playback</td></tr>
+<tr><td><code>media_ctrl_pause(ctrl#)</code></td><td><code>media_ctrl_pause@#</code></td><td>Pause playback</td></tr>
+<tr><td><code>media_ctrl_stop(ctrl#)</code></td><td><code>media_ctrl_stop@#</code></td><td>Stop playback and reset to beginning</td></tr>
+<tr><td><code>media_ctrl_clear(ctrl#)</code></td><td><code>media_ctrl_clear@#</code></td><td>Clear loaded media</td></tr>
+</tbody></table></div>
+<h3>Playback Properties</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_ctrl_state(ctrl#)</code></td><td><code>media_ctrl_state@#</code></td><td>Current state (0&ndash;3)</td></tr>
+<tr><td><code>media_ctrl_volume(ctrl#)</code></td><td><code>media_ctrl_volume@#</code></td><td>Get volume (0.0&ndash;1.0)</td></tr>
+<tr><td><code>media_ctrl_volume#(ctrl#, vol)</code></td><td><code>media_ctrl_volume#@#n</code></td><td>Set volume</td></tr>
+<tr><td><code>media_ctrl_duration(ctrl#)</code></td><td><code>media_ctrl_duration@#</code></td><td>Total duration in seconds</td></tr>
+<tr><td><code>media_ctrl_position(ctrl#)</code></td><td><code>media_ctrl_position@#</code></td><td>Current position in seconds</td></tr>
+<tr><td><code>media_ctrl_position#(ctrl#, secs)</code></td><td><code>media_ctrl_position#@#n</code></td><td>Seek to position in seconds</td></tr>
+<tr><td><code>media_ctrl_filename$(ctrl#)</code></td><td><code>media_ctrl_filename$@#</code></td><td>Get loaded filename</td></tr>
+<tr><td><code>media_ctrl_isplaying(ctrl#)</code></td><td><code>media_ctrl_isplaying@#</code></td><td>Returns 1 if playing, 0 otherwise</td></tr>
+<tr><td><code>media_ctrl_hasplayer(ctrl#)</code></td><td><code>media_ctrl_hasplayer@#</code></td><td>Returns 1 if an internal player is available</td></tr>
+</tbody></table></div>
+<h3>Position &amp; Size</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_ctrl_x(ctrl#)</code></td><td><code>media_ctrl_x@#</code></td><td>Get X position</td></tr>
+<tr><td><code>media_ctrl_y(ctrl#)</code></td><td><code>media_ctrl_y@#</code></td><td>Get Y position</td></tr>
+<tr><td><code>media_ctrl_width(ctrl#)</code></td><td><code>media_ctrl_width@#</code></td><td>Get width</td></tr>
+<tr><td><code>media_ctrl_height(ctrl#)</code></td><td><code>media_ctrl_height@#</code></td><td>Get height</td></tr>
+<tr><td><code>media_ctrl_pos#(ctrl#, x, y)</code></td><td><code>media_ctrl_pos#@#nn</code></td><td>Set position</td></tr>
+<tr><td><code>media_ctrl_size#(ctrl#, w, h)</code></td><td><code>media_ctrl_size#@#nn</code></td><td>Set size</td></tr>
+<tr><td><code>media_ctrl_bounds#(ctrl#, x, y, w, h)</code></td><td><code>media_ctrl_bounds#@#nnnn</code></td><td>Set position and size in one call</td></tr>
+<tr><td><code>media_ctrl_visible(ctrl#)</code></td><td><code>media_ctrl_visible@#</code></td><td>Get visibility (0/1)</td></tr>
+<tr><td><code>media_ctrl_visible#(ctrl#, n)</code></td><td><code>media_ctrl_visible#@#n</code></td><td>Set visibility</td></tr>
+<tr><td><code>media_ctrl_enabled(ctrl#)</code></td><td><code>media_ctrl_enabled@#</code></td><td>Get enabled state (0/1)</td></tr>
+<tr><td><code>media_ctrl_enabled#(ctrl#, n)</code></td><td><code>media_ctrl_enabled#@#n</code></td><td>Set enabled state</td></tr>
+<tr><td><code>media_ctrl_align(ctrl#)</code></td><td><code>media_ctrl_align@#</code></td><td>Get alignment</td></tr>
+<tr><td><code>media_ctrl_align#(ctrl#, n)</code></td><td><code>media_ctrl_align#@#n</code></td><td>Set alignment (0=None, 1=Top, 2=Left, 3=Right, 4=Bottom, 9=Client, 11=Center)</td></tr>
+</tbody></table></div>
+<h3>Events</h3>
+<div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Callback Signature</th><th>When It Fires</th></tr></thead><tbody>
+<tr><td><code>media_ctrl_onend#(ctrl#, func$)</code></td><td><code>function name(sender#)</code></td><td>When playback reaches the end</td></tr>
+<tr><td><code>media_ctrl_onstatechanged#(ctrl#, func$)</code></td><td><code>function name(sender#, state)</code></td><td>When state changes (0/1/2/3)</td></tr>
+<tr><td><code>media_ctrl_onclick#(ctrl#, func$)</code></td><td><code>function name(sender#)</code></td><td>When the control is clicked</td></tr>
+<tr><td><code>media_ctrl_ondblclick#(ctrl#, func$)</code></td><td><code>function name(sender#)</code></td><td>When double-clicked</td></tr>
+<tr><td><code>media_ctrl_onmousedown#(ctrl#, func$)</code></td><td><code>function name(sender#, button, x, y)</code></td><td>Mouse button pressed</td></tr>
+<tr><td><code>media_ctrl_onmouseup#(ctrl#, func$)</code></td><td><code>function name(sender#, button, x, y)</code></td><td>Mouse button released</td></tr>
+<tr><td><code>media_ctrl_onmousemove#(ctrl#, func$)</code></td><td><code>function name(sender#, x, y)</code></td><td>Mouse moved over control</td></tr>
+<tr><td><code>media_ctrl_onresize#(ctrl#, func$)</code></td><td><code>function name(sender#)</code></td><td>When the control is resized</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="comparison">
+<h2>Media Player vs Media Control</h2>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>Media Player (<code>media_*</code>)</th><th>Media Control (<code>media_ctrl_*</code>)</th></tr></thead><tbody>
+<tr><td>Type</td><td>Non-visual (no form needed)</td><td>Visual (placed on a form)</td></tr>
+<tr><td>Video Display</td><td>&#10060; No</td><td>&#9989; Yes</td></tr>
+<tr><td>Audio Playback</td><td>&#9989; Yes</td><td>&#9989; Yes</td></tr>
+<tr><td>URL Loading</td><td>&#9989; Tested with audio URLs</td><td>&#10060; Local files recommended</td></tr>
+<tr><td>Position/Size</td><td>N/A</td><td>Full position/size/alignment API</td></tr>
+<tr><td>Mouse Events</td><td>N/A</td><td>Click, double-click, mouse down/up/move, resize</td></tr>
+<tr><td>Best For</td><td>Background music, sound effects, audio-only</td><td>Video playback, multimedia presentations</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Music Player with Playlist</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; playlist.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">dim</span> <span class="fn">playlist$</span>(<span class="num">5</span>)
+<span class="kw">let</span> currentTrack = <span class="num">0</span>
+
+<span class="fn">playlist$</span>(<span class="num">0</span>) = <span class="str">&quot;track1.mp3&quot;</span>
+<span class="fn">playlist$</span>(<span class="num">1</span>) = <span class="str">&quot;track2.mp3&quot;</span>
+<span class="fn">playlist$</span>(<span class="num">2</span>) = <span class="str">&quot;track3.mp3&quot;</span>
+<span class="fn">playlist$</span>(<span class="num">3</span>) = <span class="str">&quot;track4.mp3&quot;</span>
+<span class="fn">playlist$</span>(<span class="num">4</span>) = <span class="str">&quot;track5.mp3&quot;</span>
+
+<span class="kw">function</span> <span class="fn">PlayNextTrack</span>(sender#)
+    currentTrack = currentTrack + <span class="num">1</span>
+    <span class="kw">if</span> currentTrack &gt;= <span class="num">5</span> <span class="kw">then</span> currentTrack = <span class="num">0</span>
+    <span class="fn">media_load#</span>(player#, <span class="fn">playlist$</span>(currentTrack))
+    <span class="fn">media_play</span>(player#)
+    <span class="fn">label_text#</span>(lblTrack#, <span class="str">&quot;Track &quot;</span> + <span class="fn">str$</span>(currentTrack + <span class="num">1</span>) + <span class="str">&quot;: &quot;</span> + <span class="fn">playlist$</span>(currentTrack))
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnPlay</span>(sender#)
+    <span class="fn">media_load#</span>(player#, <span class="fn">playlist$</span>(currentTrack))
+    <span class="fn">media_play</span>(player#)
+    <span class="fn">label_text#</span>(lblTrack#, <span class="str">&quot;Track &quot;</span> + <span class="fn">str$</span>(currentTrack + <span class="num">1</span>) + <span class="str">&quot;: &quot;</span> + <span class="fn">playlist$</span>(currentTrack))
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnStop</span>(sender#)
+    <span class="fn">media_stop</span>(player#)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnNext</span>(sender#)
+    <span class="fn">PlayNextTrack</span>(player#)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnPrev</span>(sender#)
+    currentTrack = currentTrack - <span class="num">1</span>
+    <span class="kw">if</span> currentTrack &lt; <span class="num">0</span> <span class="kw">then</span> currentTrack = <span class="num">4</span>
+    <span class="fn">media_load#</span>(player#, <span class="fn">playlist$</span>(currentTrack))
+    <span class="fn">media_play</span>(player#)
+    <span class="fn">label_text#</span>(lblTrack#, <span class="str">&quot;Track &quot;</span> + <span class="fn">str$</span>(currentTrack + <span class="num">1</span>) + <span class="str">&quot;: &quot;</span> + <span class="fn">playlist$</span>(currentTrack))
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Music Player&quot;</span>, <span class="num">400</span>, <span class="num">150</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lblTrack# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Ready&quot;</span>)
+<span class="fn">label_bounds#</span>(lblTrack#, <span class="num">10</span>, <span class="num">10</span>, <span class="num">380</span>, <span class="num">30</span>)
+
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Prev&quot;</span>, <span class="num">10</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnPrev&quot;</span>)
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Play&quot;</span>, <span class="num">100</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnPlay&quot;</span>)
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Next&quot;</span>, <span class="num">190</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnNext&quot;</span>)
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Stop&quot;</span>, <span class="num">280</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnStop&quot;</span>)
+
+<span class="kw">let</span> player# = <span class="fn">media_player#</span>()
+<span class="fn">media_volume#</span>(player#, <span class="num">0.7</span>)
+<span class="fn">media_onend#</span>(player#, <span class="str">&quot;PlayNextTrack&quot;</span>)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Video Player with Controls</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; videoplayer.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnPlay</span>(sender#)
+    <span class="fn">media_ctrl_play</span>(video#)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnPause</span>(sender#)
+    <span class="fn">media_ctrl_pause</span>(video#)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnStop</span>(sender#)
+    <span class="fn">media_ctrl_stop</span>(video#)
+    <span class="fn">trackbar_value#</span>(trkPos#, <span class="num">0</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnVolumeChange</span>(sender#) <span class="kw">local</span> vol
+    vol = <span class="fn">trackbar_value</span>(trkVol#) / <span class="num">100</span>
+    <span class="fn">media_ctrl_volume#</span>(video#, vol)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnPositionChange</span>(sender#) <span class="kw">local</span> dur, pos, t
+    dur = <span class="fn">media_ctrl_duration</span>(video#)
+    pos = <span class="fn">trackbar_value</span>(trkPos#)
+    t = (pos / <span class="num">1000</span>) * dur
+    <span class="fn">media_ctrl_position#</span>(video#, t)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnUpdateUI</span>(sender#) <span class="kw">local</span> pos, dur, pct, pm, ps, dm, ds, s$
+    pos = <span class="fn">media_ctrl_position</span>(video#)
+    dur = <span class="fn">media_ctrl_duration</span>(video#)
+    <span class="kw">if</span> dur &gt; <span class="num">0</span> <span class="kw">then</span>
+        pct = (pos / dur) * <span class="num">1000</span>
+        <span class="fn">trackbar_value#</span>(trkPos#, <span class="fn">int</span>(pct))
+        pm = <span class="fn">int</span>(pos / <span class="num">60</span>) : ps = <span class="fn">int</span>(pos) <span class="kw">mod</span> <span class="num">60</span>
+        dm = <span class="fn">int</span>(dur / <span class="num">60</span>) : ds = <span class="fn">int</span>(dur) <span class="kw">mod</span> <span class="num">60</span>
+        s$ = <span class="fn">str$</span>(pm) + <span class="str">&quot;:&quot;</span> + <span class="fn">right$</span>(<span class="str">&quot;0&quot;</span> + <span class="fn">str$</span>(ps), <span class="num">2</span>)
+        s$ = s$ + <span class="str">&quot; / &quot;</span> + <span class="fn">str$</span>(dm) + <span class="str">&quot;:&quot;</span> + <span class="fn">right$</span>(<span class="str">&quot;0&quot;</span> + <span class="fn">str$</span>(ds), <span class="num">2</span>)
+        <span class="fn">label_text#</span>(lblStatus#, s$)
+    <span class="kw">endif</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnVideoEnd</span>(sender#)
+    <span class="fn">label_text#</span>(lblStatus#, <span class="str">&quot;Playback completed&quot;</span>)
+    <span class="fn">trackbar_value#</span>(trkPos#, <span class="num">0</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Video Player&quot;</span>, <span class="num">800</span>, <span class="num">650</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> video# = <span class="fn">media_control#</span>(frm#, <span class="num">10</span>, <span class="num">10</span>, <span class="num">780</span>, <span class="num">480</span>)
+
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Play&quot;</span>, <span class="num">10</span>, <span class="num">500</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnPlay&quot;</span>)
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Pause&quot;</span>, <span class="num">100</span>, <span class="num">500</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnPause&quot;</span>)
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Stop&quot;</span>, <span class="num">190</span>, <span class="num">500</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnStop&quot;</span>)
+
+<span class="fn">label#</span>(frm#, <span class="str">&quot;Volume:&quot;</span>, <span class="num">300</span>, <span class="num">505</span>)
+<span class="kw">let</span> trkVol# = <span class="fn">trackbar#</span>(frm#, <span class="num">360</span>, <span class="num">500</span>, <span class="num">150</span>, <span class="num">30</span>)
+<span class="fn">trackbar_max#</span>(trkVol#, <span class="num">100</span>)
+<span class="fn">trackbar_value#</span>(trkVol#, <span class="num">80</span>)
+<span class="fn">trackbar_onchange#</span>(trkVol#, <span class="str">&quot;OnVolumeChange&quot;</span>)
+
+<span class="kw">let</span> lblStatus# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Ready&quot;</span>)
+<span class="fn">label_bounds#</span>(lblStatus#, <span class="num">10</span>, <span class="num">540</span>, <span class="num">780</span>, <span class="num">25</span>)
+
+<span class="kw">let</span> trkPos# = <span class="fn">trackbar#</span>(frm#, <span class="num">10</span>, <span class="num">570</span>, <span class="num">780</span>, <span class="num">30</span>)
+<span class="fn">trackbar_max#</span>(trkPos#, <span class="num">1000</span>)
+<span class="fn">trackbar_onchange#</span>(trkPos#, <span class="str">&quot;OnPositionChange&quot;</span>)
+
+<span class="fn">media_ctrl_onend#</span>(video#, <span class="str">&quot;OnVideoEnd&quot;</span>)
+<span class="fn">media_ctrl_load#</span>(video#, <span class="str">&quot;movie.wmv&quot;</span>)
+<span class="fn">media_ctrl_volume#</span>(video#, <span class="num">0.8</span>)
+
+<span class="kw">let</span> tmr# = <span class="fn">timer#</span>()
+<span class="fn">timer_interval#</span>(tmr#, <span class="num">250</span>)
+<span class="fn">timer_ontimer#</span>(tmr#, <span class="str">&quot;OnUpdateUI&quot;</span>)
+<span class="fn">timer_start#</span>(tmr#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Audio Progress with Timer</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; progress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">UpdateProgress</span>(sender#) <span class="kw">local</span> pos, dur, pct, bar$, i
+    pos = <span class="fn">media_position</span>(player#)
+    dur = <span class="fn">media_duration</span>(player#)
+    pct = <span class="num">0</span>
+    <span class="kw">if</span> dur &gt; <span class="num">0</span> <span class="kw">then</span> pct = <span class="fn">int</span>((pos / dur) * <span class="num">100</span>)
+    bar$ = <span class="str">&quot;[&quot;</span>
+    <span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">20</span>
+        <span class="kw">if</span> i &lt;= pct / <span class="num">5</span> <span class="kw">then</span>
+            bar$ = bar$ + <span class="str">&quot;=&quot;</span>
+        <span class="kw">else</span>
+            bar$ = bar$ + <span class="str">&quot; &quot;</span>
+        <span class="kw">endif</span>
+    <span class="kw">next</span>
+    bar$ = bar$ + <span class="str">&quot;] &quot;</span> + <span class="fn">str$</span>(pct) + <span class="str">&quot;%&quot;</span>
+    <span class="fn">label_text#</span>(lblProgress#, bar$)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnSongEnd</span>(sender#)
+    <span class="fn">timer_stop#</span>(tmr#)
+    <span class="fn">label_text#</span>(lblProgress#, <span class="str">&quot;Playback complete!&quot;</span>)
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnStopClick</span>(sender#)
+    <span class="fn">timer_stop#</span>(tmr#)
+    <span class="fn">media_stop</span>(player#)
+    <span class="fn">form_close</span>(frm#)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Now Playing&quot;</span>, <span class="num">400</span>, <span class="num">100</span>)
+<span class="fn">form_position#</span>(frm#, <span class="num">4</span>)
+
+<span class="kw">let</span> lblProgress# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Loading...&quot;</span>)
+<span class="fn">label_bounds#</span>(lblProgress#, <span class="num">10</span>, <span class="num">10</span>, <span class="num">380</span>, <span class="num">30</span>)
+<span class="fn">label_fontfamily#</span>(lblProgress#, <span class="str">&quot;Consolas&quot;</span>)
+
+<span class="fn">button_onclick#</span>(<span class="fn">button#</span>(frm#, <span class="str">&quot;Stop&quot;</span>, <span class="num">160</span>, <span class="num">50</span>, <span class="num">80</span>, <span class="num">30</span>), <span class="str">&quot;OnStopClick&quot;</span>)
+
+<span class="kw">let</span> player# = <span class="fn">media_player#</span>()
+<span class="fn">media_load#</span>(player#, <span class="str">&quot;https://www.w3schools.com/html/horse.mp3&quot;</span>)
+<span class="fn">media_onend#</span>(player#, <span class="str">&quot;OnSongEnd&quot;</span>)
+<span class="fn">media_play</span>(player#)
+
+<span class="kw">let</span> tmr# = <span class="fn">timer#</span>()
+<span class="fn">timer_interval#</span>(tmr#, <span class="num">500</span>)
+<span class="fn">timer_ontimer#</span>(tmr#, <span class="str">&quot;UpdateProgress&quot;</span>)
+<span class="fn">timer_start#</span>(tmr#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+<h3>Fullscreen Video</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; fullscreen.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">function</span> <span class="fn">OnDoubleClick</span>(sender#)
+    <span class="kw">if</span> <span class="fn">form_windowstate</span>(frm#) = <span class="num">2</span> <span class="kw">then</span>
+        <span class="fn">form_windowstate#</span>(frm#, <span class="num">0</span>)
+        <span class="fn">form_borderstyle#</span>(frm#, <span class="num">1</span>)
+    <span class="kw">else</span>
+        <span class="fn">form_windowstate#</span>(frm#, <span class="num">2</span>)
+        <span class="fn">form_borderstyle#</span>(frm#, <span class="num">0</span>)
+    <span class="kw">endif</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">OnVideoEnd</span>(sender#)
+    <span class="fn">form_close</span>(frm#)
+<span class="kw">endfunction</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;&quot;</span>, <span class="num">1024</span>, <span class="num">768</span>)
+<span class="fn">form_windowstate#</span>(frm#, <span class="num">2</span>)
+<span class="fn">form_borderstyle#</span>(frm#, <span class="num">0</span>)
+
+<span class="kw">let</span> video# = <span class="fn">media_control#</span>(frm#, <span class="num">0</span>, <span class="num">0</span>, <span class="num">100</span>, <span class="num">100</span>)
+<span class="fn">media_ctrl_align#</span>(video#, <span class="num">9</span>)  <span class="cmt">&#x27; Client - fills entire form</span>
+
+<span class="fn">media_ctrl_load#</span>(video#, <span class="str">&quot;movie.wmv&quot;</span>)
+<span class="fn">media_ctrl_ondblclick#</span>(video#, <span class="str">&quot;OnDoubleClick&quot;</span>)
+<span class="fn">media_ctrl_onend#</span>(video#, <span class="str">&quot;OnVideoEnd&quot;</span>)
+<span class="fn">media_ctrl_play</span>(video#)
+
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">while</span> <span class="fn">form_visible</span>(frm#) = <span class="num">1</span>
+    <span class="fn">processmessages</span>()
+<span class="kw">end</span> <span class="kw">while</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="troubleshooting">
+<h2>Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th>Problem</th><th>Likely Cause</th><th>Solution</th></tr></thead><tbody>
+<tr><td>&ldquo;Unsupported media file&rdquo;</td><td>OS cannot decode the format</td><td>Use platform-appropriate format (WMV for Windows, MOV/MP4 for macOS/iOS, MP4 for Android)</td></tr>
+<tr><td>Video loads but doesn't display</td><td>Control not visible or zero-sized</td><td>Ensure non-zero width/height, control is parented to a visible form</td></tr>
+<tr><td>State remains 0 after loading</td><td>State changes asynchronously</td><td>Use <code>OnStateChanged</code> callback; state changes to 1 or 2 after calling play</td></tr>
+<tr><td>No audio on video playback</td><td>Volume too low or no audio track</td><td>Check <code>media_ctrl_volume#(ctrl#, 1.0)</code>; verify file has an audio track</td></tr>
+<tr><td>URL streaming not working</td><td>Server blocking non-browser requests</td><td>Verify URL is accessible; use HTTPS; some servers block programmatic access</td></tr>
+<tr><td>Playback stutters on mobile</td><td>File too large or high bitrate</td><td>Use lower bitrate, smaller resolution, or pre-download files</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="practices">
+<h2>Best Practices</h2>
+<div class="table-wrap"><table><thead><tr><th>Practice</th><th>Why</th></tr></thead><tbody>
+<tr><td>Use <code>OnStateChanged</code> to verify playback</td><td>More reliable than checking error codes after load</td></tr>
+<tr><td>Use <code>MP3</code> for cross-platform audio</td><td>Works reliably on all platforms, supports URL streaming</td></tr>
+<tr><td>Use a <strong>Timer</strong> for UI position updates</td><td>Don't poll in a loop; use <code>timer_interval#(tmr#, 250)</code> for 4&times;/second updates</td></tr>
+<tr><td>Set <code>OnEnd</code> for playlist behavior</td><td>Automatically advance to next track when playback finishes</td></tr>
+<tr><td>Use <code>media_ctrl_align#(ctrl#, 9)</code> for fullscreen video</td><td>Client alignment fills the entire parent container</td></tr>
+<tr><td>Clean up with <code>media_stop</code> + <code>media_free</code></td><td>Always stop playback before freeing to release resources</td></tr>
+<tr><td>Initialize pointers with <code>Pointer#(0)</code></td><td>Good practice for all pointer variables</td></tr>
+<tr><td>Start volume at 0.7</td><td>Safer than full volume; let the user adjust</td></tr>
+</tbody></table></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Always call <code>media_stop(player#)</code> before <code>media_free(player#)</code>. Freeing a player during active playback may cause issues on some platforms.</div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<h3>Media Player (Audio) &mdash; 19 functions</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_error / media_errormsg$ / media_strerror$ / media_clearerror</code></td><td><code>various</code></td><td>Error handling (4)</td></tr>
+<tr><td><code>media_player#()</code></td><td><code>media_player#@</code></td><td>Create audio player</td></tr>
+<tr><td><code>media_free(player#)</code></td><td><code>media_free@#</code></td><td>Destroy player</td></tr>
+<tr><td><code>media_load# / play / pause / stop / clear</code></td><td><code>various</code></td><td>Playback (5)</td></tr>
+<tr><td><code>media_state / volume / duration / position / filename$ / isplaying</code></td><td><code>various</code></td><td>Properties get (6)</td></tr>
+<tr><td><code>media_volume# / media_position#</code></td><td><code>various</code></td><td>Properties set (2)</td></tr>
+<tr><td><code>media_onend# / media_onstatechanged#</code></td><td><code>various</code></td><td>Events (2)</td></tr>
+</tbody></table></div>
+<h3>Media Control (Video) &mdash; 39 functions</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>media_control#(parent#, x, y, w, h)</code></td><td><code>media_ctrl_control#@#nnnn</code></td><td>Create video control</td></tr>
+<tr><td><code>media_ctrl_free(ctrl#)</code></td><td><code>media_ctrl_free@#</code></td><td>Destroy control</td></tr>
+<tr><td><code>media_ctrl_load# / play / pause / stop / clear</code></td><td><code>various</code></td><td>Playback (5)</td></tr>
+<tr><td><code>media_ctrl_state / volume / duration / position / filename$ / isplaying / hasplayer</code></td><td><code>various</code></td><td>Properties get (7)</td></tr>
+<tr><td><code>media_ctrl_volume# / media_ctrl_position#</code></td><td><code>various</code></td><td>Properties set (2)</td></tr>
+<tr><td><code>media_ctrl_x / y / width / height / pos# / size# / bounds# / visible / enabled / align</code></td><td><code>various</code></td><td>Position &amp; visual (13)</td></tr>
+<tr><td><code>media_ctrl_onend# / onstatechanged# / onclick# / ondblclick# / onmousedown# / onmouseup# / onmousemove# / onresize#</code></td><td><code>various</code></td><td>Events (8)</td></tr>
+</tbody></table></div>
+<p><em>58 functions total. Part of the Plan9Basic GUI library system.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

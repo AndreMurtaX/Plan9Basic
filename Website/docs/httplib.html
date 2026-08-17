@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HttpLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic HttpLib: 92 HTTP client functions for REST APIs, file transfers, form uploads, authentication, cookies, and async operations.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box {
+  padding: 1rem 1.2rem; margin: 1rem 0;
+  border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle);
+  font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">HttpLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">92 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#platform" class="sidebar-link">Platforms</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Setup</div>
+    <a href="#client" class="sidebar-link">Client Management</a>
+    <a href="#config" class="sidebar-link">Configuration</a>
+    <a href="#params" class="sidebar-link">Query Parameters</a>
+    <a href="#headers" class="sidebar-link">Custom Headers</a>
+    <a href="#auth" class="sidebar-link">Authentication</a>
+    <a href="#cookies" class="sidebar-link">Cookies</a>
+    <a href="#proxy" class="sidebar-link">Proxy</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Requests</div>
+    <a href="#forms" class="sidebar-link">Form Data</a>
+    <a href="#sync" class="sidebar-link">Sync Methods</a>
+    <a href="#async" class="sidebar-link">Async (Polling)</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Responses</div>
+    <a href="#response" class="sidebar-link">Response Access</a>
+    <a href="#fileops" class="sidebar-link">File Operations</a>
+    <a href="#encoding" class="sidebar-link">Encoding Utilities</a>
+    <a href="#simple" class="sidebar-link">Simple Functions</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>HttpLib &mdash; HTTP Client Library</h2>
+<p>Comprehensive HTTP client for Plan9Basic. RESTful API interactions, file transfers, form uploads, and full HTTP protocol support across all platforms. 92 functions.</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>4</td><td>http_error, http_errormsg$, http_strerror$, http_clearerror</td></tr>
+<tr><td>Client Management</td><td>4</td><td>http_client# (2 overloads), http_free, http_reset#</td></tr>
+<tr><td>Configuration</td><td>11</td><td>Base URL, timeouts, user-agent, content type, accept, redirects, SSL</td></tr>
+<tr><td>Query Parameters</td><td>4</td><td>http_param#, http_param$, http_paramremove#, http_paramclear#</td></tr>
+<tr><td>Custom Headers</td><td>5</td><td>http_header#, http_header$, http_headerremove#, http_headerclear#, http_headercount</td></tr>
+<tr><td>Authentication</td><td>4</td><td>http_basicauth#, http_bearerauth#, http_customauth#, http_clearauth#</td></tr>
+<tr><td>Cookies</td><td>5</td><td>http_cookie#, http_cookie$, http_cookieremove#, http_cookieclear#, http_cookiecount</td></tr>
+<tr><td>Proxy</td><td>3</td><td>http_proxy#, http_proxyauth#, http_clearproxy#</td></tr>
+<tr><td>Form Data</td><td>10</td><td>Create, fields, files (3 overloads), clear, count, URL-encode, free</td></tr>
+<tr><td>Sync HTTP Methods</td><td>11</td><td>GET, POST (3), PUT (2), PATCH, DELETE, HEAD, OPTIONS</td></tr>
+<tr><td>Async HTTP Methods</td><td>6</td><td>GET, POST, PUT, DELETE, PATCH async + http_busy</td></tr>
+<tr><td>Response Access</td><td>20</td><td>Status, body, headers, cookies, content info, category checks</td></tr>
+<tr><td>File Operations</td><td>4</td><td>http_download, http_upload$, http_uploadput$, http_postfile$</td></tr>
+<tr><td>Encoding Utilities</td><td>4</td><td>http_urlencode$, http_urldecode$, http_htmlencode$, http_htmldecode$</td></tr>
+<tr><td>Simple Functions</td><td>3</td><td>http_simpleget$, http_simplepost$, http_simpledownload</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="platform">
+<h2>Platform Considerations</h2>
+<div class="table-wrap"><table><thead><tr><th>Platform</th><th>Approach</th><th>Reason</th></tr></thead><tbody>
+<tr><td>Desktop (Windows, macOS, Linux)</td><td><strong>Synchronous</strong> functions</td><td>Simple, blocking &mdash; main thread is fine</td></tr>
+<tr><td>Mobile (Android, iOS)</td><td><strong>Asynchronous</strong> + polling</td><td>Non-blocking to avoid ANR / UI freeze</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; desktop.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Desktop - synchronous (simple)</span>
+<span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://api.example.com&quot;</span>)
+<span class="kw">let</span> response$ = <span class="fn">http_get$</span>(client#, <span class="str">&quot;/data&quot;</span>)
+<span class="kw">println</span> <span class="fn">http_body$</span>(client#)</pre></div></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; mobile.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Mobile - async with timer polling</span>
+<span class="fn">http_get_async</span>(client#, <span class="str">&quot;/data&quot;</span>)
+
+<span class="kw">function</span> <span class="fn">OnTimer</span>(sender#) <span class="kw">local</span> x
+    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="fn">timer_enabled#</span>(sender#, <span class="num">0</span>)
+        <span class="kw">println</span> <span class="fn">http_body$</span>(client#)
+    <span class="kw">end</span> <span class="kw">if</span>
+<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Constant</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_INVALID_CLIENT</td><td>Invalid or null client pointer</td></tr>
+<tr><td>2</td><td>ERR_INVALID_URL</td><td>Malformed URL</td></tr>
+<tr><td>3</td><td>ERR_CONNECTION</td><td>Network connection failed</td></tr>
+<tr><td>4</td><td>ERR_TIMEOUT</td><td>Request timed out</td></tr>
+<tr><td>5</td><td>ERR_SSL</td><td>SSL/TLS certificate error</td></tr>
+<tr><td>6</td><td>ERR_INVALID_ARGUMENT</td><td>Invalid function argument</td></tr>
+<tr><td>7</td><td>ERR_FILE</td><td>File read/write error</td></tr>
+<tr><td>8</td><td>ERR_AUTH</td><td>Authentication failed</td></tr>
+<tr><td>9</td><td>ERR_INVALID_RESPONSE</td><td>Malformed response</td></tr>
+<tr><td>10</td><td>ERR_INVALID_FORM</td><td>Invalid form data pointer</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_error()</code></td><td><code>http_error@</code></td><td>Last error code (0&ndash;10)</td></tr>
+<tr><td><code>http_errormsg$()</code></td><td><code>http_errormsg$@</code></td><td>Detailed error message from last operation</td></tr>
+<tr><td><code>http_strerror$(code)</code></td><td><code>http_strerror$@n</code></td><td>Description for a specific error code</td></tr>
+<tr><td><code>http_clearerror()</code></td><td><code>http_clearerror@</code></td><td>Clear error state</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> errcode = <span class="fn">http_error</span>()
+<span class="kw">let</span> errmsg$ = <span class="fn">http_errormsg$</span>()
+<span class="kw">let</span> desc$ = <span class="fn">http_strerror$</span>(errcode)
+<span class="kw">let</span> result = <span class="fn">http_clearerror</span>()</pre></div></div>
+</section>
+
+<section class="doc-section" id="client">
+<h2>Client Management</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_client#()</code></td><td><code>http_client#@</code></td><td>Create HTTP client (no base URL)</td></tr>
+<tr><td><code>http_client#(baseUrl$)</code></td><td><code>http_client#@$</code></td><td>Create client with base URL</td></tr>
+<tr><td><code>http_free(client#)</code></td><td><code>http_free@#</code></td><td>Free client resources</td></tr>
+<tr><td><code>http_reset#(client#)</code></td><td><code>http_reset#@#</code></td><td>Reset client to defaults</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Create with base URL</span>
+<span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://api.example.com&quot;</span>)
+
+<span class="cmt">&#x27; ... use client ...</span>
+
+<span class="cmt">&#x27; Free when done</span>
+<span class="kw">let</span> x = <span class="fn">http_free</span>(client#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="config">
+<h2>Configuration</h2>
+<p>All configuration functions return the client pointer for chaining.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_baseurl#(c#, url$)</code></td><td><code>http_baseurl#@#$</code></td><td>Set base URL</td></tr>
+<tr><td><code>http_baseurl$(c#)</code></td><td><code>http_baseurl$@#</code></td><td>Get base URL</td></tr>
+<tr><td><code>http_timeout#(c#, ms)</code></td><td><code>http_timeout#@#n</code></td><td>Set connection timeout (milliseconds)</td></tr>
+<tr><td><code>http_timeout(c#)</code></td><td><code>http_timeout@#</code></td><td>Get connection timeout</td></tr>
+<tr><td><code>http_responsetimeout#(c#, ms)</code></td><td><code>http_responsetimeout#@#n</code></td><td>Set response timeout</td></tr>
+<tr><td><code>http_useragent#(c#, ua$)</code></td><td><code>http_useragent#@#$</code></td><td>Set User-Agent header</td></tr>
+<tr><td><code>http_contenttype#(c#, ct$)</code></td><td><code>http_contenttype#@#$</code></td><td>Set Content-Type header</td></tr>
+<tr><td><code>http_accept#(c#, accept$)</code></td><td><code>http_accept#@#$</code></td><td>Set Accept header</td></tr>
+<tr><td><code>http_followredirects#(c#, n)</code></td><td><code>http_followredirects#@#n</code></td><td>Enable/disable redirects (1/0)</td></tr>
+<tr><td><code>http_maxredirects#(c#, n)</code></td><td><code>http_maxredirects#@#n</code></td><td>Set max redirect count</td></tr>
+<tr><td><code>http_validatessl#(c#, n)</code></td><td><code>http_validatessl#@#n</code></td><td>Enable/disable SSL validation (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://api.example.com&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_timeout#</span>(client#, <span class="num">30000</span>)
+<span class="kw">let</span> client# = <span class="fn">http_useragent#</span>(client#, <span class="str">&quot;MyApp/1.0&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_contenttype#</span>(client#, <span class="str">&quot;application/json&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_accept#</span>(client#, <span class="str">&quot;application/json&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_followredirects#</span>(client#, <span class="num">1</span>)
+<span class="kw">let</span> client# = <span class="fn">http_maxredirects#</span>(client#, <span class="num">5</span>)
+<span class="kw">let</span> client# = <span class="fn">http_validatessl#</span>(client#, <span class="num">1</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="params">
+<h2>Query Parameters</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_param#(c#, key$, val$)</code></td><td><code>http_param#@#$$</code></td><td>Add/update query parameter</td></tr>
+<tr><td><code>http_param$(c#, key$)</code></td><td><code>http_param$@#$</code></td><td>Get parameter value</td></tr>
+<tr><td><code>http_paramremove#(c#, key$)</code></td><td><code>http_paramremove#@#$</code></td><td>Remove parameter</td></tr>
+<tr><td><code>http_paramclear#(c#)</code></td><td><code>http_paramclear#@#</code></td><td>Clear all parameters</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_param#</span>(client#, <span class="str">&quot;page&quot;</span>, <span class="str">&quot;1&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_param#</span>(client#, <span class="str">&quot;limit&quot;</span>, <span class="str">&quot;20&quot;</span>)
+<span class="cmt">&#x27; Requests now append ?page=1&amp;limit=20</span>
+
+<span class="kw">let</span> val$ = <span class="fn">http_param$</span>(client#, <span class="str">&quot;page&quot;</span>)  <span class="cmt">&#x27; &quot;1&quot;</span>
+<span class="kw">let</span> client# = <span class="fn">http_paramremove#</span>(client#, <span class="str">&quot;page&quot;</span>)</pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> Parameters are automatically URL-encoded and appended to all requests.</div>
+</section>
+
+<section class="doc-section" id="headers">
+<h2>Custom Headers</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_header#(c#, name$, val$)</code></td><td><code>http_header#@#$$</code></td><td>Set custom header</td></tr>
+<tr><td><code>http_header$(c#, name$)</code></td><td><code>http_header$@#$</code></td><td>Get header value</td></tr>
+<tr><td><code>http_headerremove#(c#, name$)</code></td><td><code>http_headerremove#@#$</code></td><td>Remove header</td></tr>
+<tr><td><code>http_headerclear#(c#)</code></td><td><code>http_headerclear#@#</code></td><td>Clear all custom headers</td></tr>
+<tr><td><code>http_headercount(c#)</code></td><td><code>http_headercount@#</code></td><td>Number of custom headers</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_header#</span>(client#, <span class="str">&quot;X-API-Key&quot;</span>, <span class="str">&quot;abc123&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_header#</span>(client#, <span class="str">&quot;X-Request-ID&quot;</span>, <span class="str">&quot;req-456&quot;</span>)
+<span class="kw">let</span> key$ = <span class="fn">http_header$</span>(client#, <span class="str">&quot;X-API-Key&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="auth">
+<h2>Authentication</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_basicauth#(c#, user$, pass$)</code></td><td><code>http_basicauth#@#$$</code></td><td>Basic authentication (username/password)</td></tr>
+<tr><td><code>http_bearerauth#(c#, token$)</code></td><td><code>http_bearerauth#@#$</code></td><td>Bearer token authentication</td></tr>
+<tr><td><code>http_customauth#(c#, value$)</code></td><td><code>http_customauth#@#$</code></td><td>Custom Authorization header value</td></tr>
+<tr><td><code>http_clearauth#(c#)</code></td><td><code>http_clearauth#@#</code></td><td>Clear authentication</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Basic auth</span>
+<span class="kw">let</span> client# = <span class="fn">http_basicauth#</span>(client#, <span class="str">&quot;username&quot;</span>, <span class="str">&quot;password&quot;</span>)
+
+<span class="cmt">&#x27; Bearer token</span>
+<span class="kw">let</span> client# = <span class="fn">http_bearerauth#</span>(client#, <span class="str">&quot;eyJhbGciOiJIUzI1NiIs...&quot;</span>)
+
+<span class="cmt">&#x27; Custom</span>
+<span class="kw">let</span> client# = <span class="fn">http_customauth#</span>(client#, <span class="str">&quot;ApiKey my-secret-key&quot;</span>)
+
+<span class="cmt">&#x27; Clear</span>
+<span class="kw">let</span> client# = <span class="fn">http_clearauth#</span>(client#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="cookies">
+<h2>Cookie Management</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_cookie#(c#, name$, val$)</code></td><td><code>http_cookie#@#$$</code></td><td>Set request cookie</td></tr>
+<tr><td><code>http_cookie$(c#, name$)</code></td><td><code>http_cookie$@#$</code></td><td>Get cookie value</td></tr>
+<tr><td><code>http_cookieremove#(c#, name$)</code></td><td><code>http_cookieremove#@#$</code></td><td>Remove cookie</td></tr>
+<tr><td><code>http_cookieclear#(c#)</code></td><td><code>http_cookieclear#@#</code></td><td>Clear all cookies</td></tr>
+<tr><td><code>http_cookiecount(c#)</code></td><td><code>http_cookiecount@#</code></td><td>Number of cookies</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_cookie#</span>(client#, <span class="str">&quot;session&quot;</span>, <span class="str">&quot;abc123&quot;</span>)
+<span class="kw">let</span> sess$ = <span class="fn">http_cookie$</span>(client#, <span class="str">&quot;session&quot;</span>)
+<span class="kw">let</span> count = <span class="fn">http_cookiecount</span>(client#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="proxy">
+<h2>Proxy Configuration</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_proxy#(c#, host$, port)</code></td><td><code>http_proxy#@#$n</code></td><td>Set proxy server</td></tr>
+<tr><td><code>http_proxyauth#(c#, user$, pass$)</code></td><td><code>http_proxyauth#@#$$</code></td><td>Set proxy authentication</td></tr>
+<tr><td><code>http_clearproxy#(c#)</code></td><td><code>http_clearproxy#@#</code></td><td>Clear proxy settings</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_proxy#</span>(client#, <span class="str">&quot;proxy.example.com&quot;</span>, <span class="num">8080</span>)
+<span class="kw">let</span> client# = <span class="fn">http_proxyauth#</span>(client#, <span class="str">&quot;proxyuser&quot;</span>, <span class="str">&quot;proxypass&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="forms">
+<h2>Form Data</h2>
+<p>Build complex multipart forms with text fields and multiple file attachments.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_form#()</code></td><td><code>http_form#@</code></td><td>Create empty form data</td></tr>
+<tr><td><code>http_formfield#(f#, name$, val$)</code></td><td><code>http_formfield#@#$$</code></td><td>Add text field</td></tr>
+<tr><td><code>http_formfile#(f#, name$, path$)</code></td><td><code>http_formfile#@#$$</code></td><td>Add file (uses original filename)</td></tr>
+<tr><td><code>http_formfilenamed#(f#, name$, path$, fn$)</code></td><td><code>http_formfilenamed#@#$$$</code></td><td>Add file with custom filename</td></tr>
+<tr><td><code>http_formfiletype#(f#, name$, path$, fn$, ct$)</code></td><td><code>http_formfiletype#@#$$$$</code></td><td>Add file with name and content type</td></tr>
+<tr><td><code>http_formfieldcount(f#)</code></td><td><code>http_formfieldcount@#</code></td><td>Count of text fields</td></tr>
+<tr><td><code>http_formfilecount(f#)</code></td><td><code>http_formfilecount@#</code></td><td>Count of files</td></tr>
+<tr><td><code>http_formurlencoded$(f#)</code></td><td><code>http_formurlencoded$@#</code></td><td>URL-encoded string (text fields only)</td></tr>
+<tr><td><code>http_formclear#(f#)</code></td><td><code>http_formclear#@#</code></td><td>Clear all fields and files</td></tr>
+<tr><td><code>http_formfree(f#)</code></td><td><code>http_formfree@#</code></td><td>Free form data</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Build a form with text fields and file</span>
+<span class="kw">let</span> form# = <span class="fn">http_form#</span>()
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;title&quot;</span>, <span class="str">&quot;Report&quot;</span>)
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;department&quot;</span>, <span class="str">&quot;Finance&quot;</span>)
+<span class="kw">let</span> form# = <span class="fn">http_formfile#</span>(form#, <span class="str">&quot;document&quot;</span>, <span class="str">&quot;C:\Reports\Q4.pdf&quot;</span>)
+
+<span class="cmt">&#x27; POST as multipart/form-data (supports files)</span>
+<span class="kw">let</span> resp$ = <span class="fn">http_postform$</span>(client#, <span class="str">&quot;/upload&quot;</span>, form#)
+
+<span class="cmt">&#x27; POST as URL-encoded (text fields only)</span>
+<span class="kw">let</span> resp$ = <span class="fn">http_postformurl$</span>(client#, <span class="str">&quot;/login&quot;</span>, form#)
+
+<span class="cmt">&#x27; PUT as multipart</span>
+<span class="kw">let</span> resp$ = <span class="fn">http_putform$</span>(client#, <span class="str">&quot;/update&quot;</span>, form#)
+
+<span class="kw">let</span> x = <span class="fn">http_formfree</span>(form#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="sync">
+<h2>Synchronous HTTP Methods</h2>
+<p>Block until request completes. Ideal for desktop platforms.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_get$(c#, url$)</code></td><td><code>http_get$@#$</code></td><td>GET request</td></tr>
+<tr><td><code>http_post$(c#, url$, body$)</code></td><td><code>http_post$@#$$</code></td><td>POST with body</td></tr>
+<tr><td><code>http_postform$(c#, url$, form#)</code></td><td><code>http_postform$@#$#</code></td><td>POST multipart form (files + fields)</td></tr>
+<tr><td><code>http_postformurl$(c#, url$, form#)</code></td><td><code>http_postformurl$@#$#</code></td><td>POST URL-encoded form (text only)</td></tr>
+<tr><td><code>http_postformstr$(c#, url$, data$)</code></td><td><code>http_postformstr$@#$$</code></td><td>POST raw form string</td></tr>
+<tr><td><code>http_put$(c#, url$, body$)</code></td><td><code>http_put$@#$$</code></td><td>PUT with body</td></tr>
+<tr><td><code>http_putform$(c#, url$, form#)</code></td><td><code>http_putform$@#$#</code></td><td>PUT multipart form</td></tr>
+<tr><td><code>http_patch$(c#, url$, body$)</code></td><td><code>http_patch$@#$$</code></td><td>PATCH with body</td></tr>
+<tr><td><code>http_delete$(c#, url$)</code></td><td><code>http_delete$@#$</code></td><td>DELETE request</td></tr>
+<tr><td><code>http_head(c#, url$)</code></td><td><code>http_head@#$</code></td><td>HEAD request (returns status code)</td></tr>
+<tr><td><code>http_options$(c#, url$)</code></td><td><code>http_options$@#$</code></td><td>OPTIONS request</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://api.example.com&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_contenttype#</span>(client#, <span class="str">&quot;application/json&quot;</span>)
+
+<span class="cmt">&#x27; GET</span>
+<span class="kw">let</span> users$ = <span class="fn">http_get$</span>(client#, <span class="str">&quot;/api/users&quot;</span>)
+
+<span class="cmt">&#x27; POST</span>
+<span class="kw">let</span> body$ = <span class="str">&quot;{\&quot;</span>name\<span class="str">&quot;:\&quot;</span>John\<span class="str">&quot;,\&quot;</span>email\<span class="str">&quot;:\&quot;</span>john@test.com\<span class="str">&quot;}&quot;</span>
+<span class="kw">let</span> result$ = <span class="fn">http_post$</span>(client#, <span class="str">&quot;/api/users&quot;</span>, body$)
+
+<span class="cmt">&#x27; PUT</span>
+<span class="kw">let</span> update$ = <span class="fn">http_put$</span>(client#, <span class="str">&quot;/api/users/123&quot;</span>, <span class="str">&quot;{\&quot;</span>name\<span class="str">&quot;:\&quot;</span>Updated\<span class="str">&quot;}&quot;</span>)
+
+<span class="cmt">&#x27; DELETE</span>
+<span class="kw">let</span> del$ = <span class="fn">http_delete$</span>(client#, <span class="str">&quot;/api/users/123&quot;</span>)
+
+<span class="cmt">&#x27; HEAD</span>
+<span class="kw">let</span> status = <span class="fn">http_head</span>(client#, <span class="str">&quot;/api/resource&quot;</span>)
+<span class="kw">println</span> <span class="str">&quot;Content-Length: &quot;</span>; <span class="fn">http_contentlength</span>(client#)</pre></div></div>
+</section>
+
+<section class="doc-section" id="async">
+<h2>Asynchronous HTTP (Polling)</h2>
+<p>For mobile platforms. Functions return immediately &mdash; poll with <code>http_busy()</code> for completion.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_get_async(c#, url$)</code></td><td><code>http_get_async@#$</code></td><td>Start async GET</td></tr>
+<tr><td><code>http_post_async(c#, url$, body$)</code></td><td><code>http_post_async@#$$</code></td><td>Start async POST</td></tr>
+<tr><td><code>http_put_async(c#, url$, body$)</code></td><td><code>http_put_async@#$$</code></td><td>Start async PUT</td></tr>
+<tr><td><code>http_delete_async(c#, url$)</code></td><td><code>http_delete_async@#$</code></td><td>Start async DELETE</td></tr>
+<tr><td><code>http_patch_async(c#, url$, body$)</code></td><td><code>http_patch_async@#$$</code></td><td>Start async PATCH</td></tr>
+<tr><td><code>http_busy(c#)</code></td><td><code>http_busy@#</code></td><td>1 = request in progress, 0 = done</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; async_demo.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Recommended async pattern with timer polling</span>
+<span class="kw">let</span> client# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> timer# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Async Demo&quot;</span>)
+<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Ready&quot;</span>, <span class="num">10</span>, <span class="num">10</span>)
+<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Fetch&quot;</span>, <span class="num">10</span>, <span class="num">50</span>, <span class="num">120</span>, <span class="num">40</span>)
+<span class="fn">button_onclick#</span>(btn#, <span class="str">&quot;OnFetchClick&quot;</span>)
+
+timer# = <span class="fn">timer#</span>(frm#, <span class="num">100</span>)
+<span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
+<span class="fn">timer_ontimer#</span>(timer#, <span class="str">&quot;OnPollTimer&quot;</span>)
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnFetchClick</span>(sender#)
+    client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://httpbin.org&quot;</span>)
+    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Loading...&quot;</span>)
+    <span class="fn">http_get_async</span>(client#, <span class="str">&quot;/get&quot;</span>)
+    <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
+<span class="kw">end</span> <span class="kw">function</span>
+
+<span class="kw">function</span> <span class="fn">OnPollTimer</span>(sender#) <span class="kw">local</span> x
+    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
+        <span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+            <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Status: &quot;</span> + <span class="fn">str$</span>(<span class="fn">http_status</span>(client#)))
+        <span class="kw">else</span>
+            <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Error: &quot;</span> + <span class="fn">http_errormsg$</span>())
+        <span class="kw">end</span> <span class="kw">if</span>
+        <span class="kw">let</span> x = <span class="fn">http_free</span>(client#)
+    <span class="kw">end</span> <span class="kw">if</span>
+<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> On Android/iOS, always use async functions to avoid ANR (Application Not Responding). Desktop can use either sync or async.</div>
+</section>
+
+<section class="doc-section" id="response">
+<h2>Response Access</h2>
+<h3>Status &amp; Body</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_status(c#)</code></td><td><code>http_status@#</code></td><td>HTTP status code (200, 404, etc.)</td></tr>
+<tr><td><code>http_statustext$(c#)</code></td><td><code>http_statustext$@#</code></td><td>Status text ("OK", "Not Found", etc.)</td></tr>
+<tr><td><code>http_ok(c#)</code></td><td><code>http_ok@#</code></td><td>Success? (non-zero if 2xx)</td></tr>
+<tr><td><code>http_isredirect(c#)</code></td><td><code>http_isredirect@#</code></td><td>3xx redirect? (1/0)</td></tr>
+<tr><td><code>http_isclienterror(c#)</code></td><td><code>http_isclienterror@#</code></td><td>4xx client error? (1/0)</td></tr>
+<tr><td><code>http_isservererror(c#)</code></td><td><code>http_isservererror@#</code></td><td>5xx server error? (1/0)</td></tr>
+<tr><td><code>http_body$(c#)</code></td><td><code>http_body$@#</code></td><td>Response body as string</td></tr>
+<tr><td><code>http_bodybase64$(c#)</code></td><td><code>http_bodybase64$@#</code></td><td>Response body as Base64 (binary content)</td></tr>
+<tr><td><code>http_savebody(c#, path$)</code></td><td><code>http_savebody@#$</code></td><td>Save body to file</td></tr>
+</tbody></table></div>
+<h3>Response Headers</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_respheader$(c#, name$)</code></td><td><code>http_respheader$@#$</code></td><td>Get specific response header</td></tr>
+<tr><td><code>http_respheaders$(c#)</code></td><td><code>http_respheaders$@#</code></td><td>All response headers as text</td></tr>
+<tr><td><code>http_respheadercount(c#)</code></td><td><code>http_respheadercount@#</code></td><td>Number of response headers</td></tr>
+<tr><td><code>http_respheadername$(c#, idx)</code></td><td><code>http_respheadername$@#n</code></td><td>Header name by 0-based index</td></tr>
+<tr><td><code>http_respheadervalue$(c#, idx)</code></td><td><code>http_respheadervalue$@#n</code></td><td>Header value by 0-based index</td></tr>
+</tbody></table></div>
+<h3>Response Cookies &amp; Info</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_respcookie$(c#, name$)</code></td><td><code>http_respcookie$@#$</code></td><td>Get specific response cookie</td></tr>
+<tr><td><code>http_respcookies$(c#)</code></td><td><code>http_respcookies$@#</code></td><td>All response cookies as text</td></tr>
+<tr><td><code>http_respcookiecount(c#)</code></td><td><code>http_respcookiecount@#</code></td><td>Number of response cookies</td></tr>
+<tr><td><code>http_respcontenttype$(c#)</code></td><td><code>http_respcontenttype$@#</code></td><td>Response content type</td></tr>
+<tr><td><code>http_contentlength(c#)</code></td><td><code>http_contentlength@#</code></td><td>Response content length</td></tr>
+<tr><td><code>http_redirecturl$(c#)</code></td><td><code>http_redirecturl$@#</code></td><td>Redirect URL (3xx responses)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Status: &quot;</span>; <span class="fn">http_status</span>(client#); <span class="str">&quot; &quot;</span>; <span class="fn">http_statustext$</span>(client#)
+    <span class="kw">println</span> <span class="str">&quot;Body: &quot;</span>; <span class="fn">http_body$</span>(client#)
+    <span class="kw">println</span> <span class="str">&quot;Content-Type: &quot;</span>; <span class="fn">http_respcontenttype$</span>(client#)
+    
+    <span class="cmt">&#x27; Iterate headers</span>
+    <span class="kw">for</span> i = <span class="num">0</span> <span class="kw">to</span> <span class="fn">http_respheadercount</span>(client#) - <span class="num">1</span>
+        <span class="kw">println</span> <span class="fn">http_respheadername$</span>(client#, i); <span class="str">&quot;: &quot;</span>; <span class="fn">http_respheadervalue$</span>(client#, i)
+    <span class="kw">next</span>
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="fileops">
+<h2>File Operations</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_download(c#, url$, path$)</code></td><td><code>http_download@#$$</code></td><td>Download file (non-zero = success)</td></tr>
+<tr><td><code>http_upload$(c#, url$, path$)</code></td><td><code>http_upload$@#$$</code></td><td>Upload file as POST (raw body)</td></tr>
+<tr><td><code>http_uploadput$(c#, url$, path$)</code></td><td><code>http_uploadput$@#$$</code></td><td>Upload file as PUT (raw body)</td></tr>
+<tr><td><code>http_postfile$(c#, url$, field$, path$)</code></td><td><code>http_postfile$@#$$$</code></td><td>Upload as single-file multipart POST</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Download</span>
+<span class="kw">if</span> <span class="fn">http_download</span>(client#, <span class="str">&quot;/files/doc.pdf&quot;</span>, <span class="str">&quot;C:\downloads\doc.pdf&quot;</span>) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Downloaded!&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span>; <span class="fn">http_errormsg$</span>()
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Upload</span>
+<span class="kw">let</span> resp$ = <span class="fn">http_upload$</span>(client#, <span class="str">&quot;/upload&quot;</span>, <span class="str">&quot;C:\file.bin&quot;</span>)
+<span class="kw">let</span> resp$ = <span class="fn">http_postfile$</span>(client#, <span class="str">&quot;/upload&quot;</span>, <span class="str">&quot;file&quot;</span>, <span class="str">&quot;C:\docs\report.pdf&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="encoding">
+<h2>Encoding Utilities</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_urlencode$(text$)</code></td><td><code>http_urlencode$@$</code></td><td>URL-encode a string</td></tr>
+<tr><td><code>http_urldecode$(text$)</code></td><td><code>http_urldecode$@$</code></td><td>URL-decode a string</td></tr>
+<tr><td><code>http_htmlencode$(text$)</code></td><td><code>http_htmlencode$@$</code></td><td>HTML-encode (escape &lt; &gt; &amp; etc.)</td></tr>
+<tr><td><code>http_htmldecode$(text$)</code></td><td><code>http_htmldecode$@$</code></td><td>HTML-decode entities</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> enc$ = <span class="fn">http_urlencode$</span>(<span class="str">&quot;hello world &amp; more&quot;</span>)
+<span class="cmt">&#x27; &quot;hello%20world%20%26%20more&quot;</span>
+
+<span class="kw">let</span> dec$ = <span class="fn">http_urldecode$</span>(<span class="str">&quot;hello%20world&quot;</span>)
+<span class="cmt">&#x27; &quot;hello world&quot;</span>
+
+<span class="kw">let</span> html$ = <span class="fn">http_htmlencode$</span>(<span class="str">&quot;&lt;script&gt;alert(&#x27;hi&#x27;)&lt;/script&gt;&quot;</span>)
+<span class="cmt">&#x27; &quot;&amp;lt;script&amp;gt;alert(&#x27;hi&#x27;)&amp;lt;/script&amp;gt;&quot;</span>
+
+<span class="kw">let</span> back$ = <span class="fn">http_htmldecode$</span>(<span class="str">&quot;&amp;lt;p&amp;gt;&quot;</span>)
+<span class="cmt">&#x27; &quot;&lt;p&gt;&quot;</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="simple">
+<h2>Simple Functions</h2>
+<p>Quick one-off requests without creating a client.</p>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_simpleget$(url$)</code></td><td><code>http_simpleget$@$</code></td><td>Simple GET request</td></tr>
+<tr><td><code>http_simplepost$(url$, body$)</code></td><td><code>http_simplepost$@$$</code></td><td>Simple POST request</td></tr>
+<tr><td><code>http_simpledownload(url$, path$)</code></td><td><code>http_simpledownload@$$</code></td><td>Simple file download (1/0)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> response$ = <span class="fn">http_simpleget$</span>(<span class="str">&quot;https://api.example.com/data&quot;</span>)
+
+<span class="kw">let</span> body$ = <span class="str">&quot;{\&quot;</span>key\<span class="str">&quot;:\&quot;</span>value\<span class="str">&quot;}&quot;</span>
+<span class="kw">let</span> response$ = <span class="fn">http_simplepost$</span>(<span class="str">&quot;https://api.example.com/data&quot;</span>, body$)
+
+<span class="kw">let</span> ok = <span class="fn">http_simpledownload</span>(<span class="str">&quot;https://example.com/file.zip&quot;</span>, <span class="str">&quot;C:\file.zip&quot;</span>)</pre></div></div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>REST API Client (Desktop)</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; rest_client.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> api# = <span class="fn">http_client#</span>(<span class="str">&quot;https://jsonplaceholder.typicode.com&quot;</span>)
+<span class="kw">let</span> api# = <span class="fn">http_accept#</span>(api#, <span class="str">&quot;application/json&quot;</span>)
+
+<span class="cmt">&#x27; GET</span>
+<span class="kw">let</span> users$ = <span class="fn">http_get$</span>(api#, <span class="str">&quot;/users&quot;</span>)
+<span class="kw">if</span> <span class="fn">http_ok</span>(api#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Users: &quot;</span> + users$
+<span class="kw">end</span> <span class="kw">if</span>
+
+<span class="cmt">&#x27; POST</span>
+<span class="kw">let</span> newUser$ = <span class="str">&quot;{\&quot;</span>name\<span class="str">&quot;:\&quot;</span>John\<span class="str">&quot;,\&quot;</span>email\<span class="str">&quot;:\&quot;</span>john@test.com\<span class="str">&quot;}&quot;</span>
+<span class="kw">let</span> result$ = <span class="fn">http_post$</span>(api#, <span class="str">&quot;/users&quot;</span>, newUser$)
+<span class="kw">println</span> <span class="str">&quot;Created: &quot;</span> + result$
+
+<span class="kw">let</span> x = <span class="fn">http_free</span>(api#)</pre></div></div>
+<h3>File Upload with Form Fields</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; file_upload.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://upload.example.com&quot;</span>)
+<span class="kw">let</span> client# = <span class="fn">http_bearerauth#</span>(client#, myToken$)
+
+<span class="kw">let</span> form# = <span class="fn">http_form#</span>()
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;title&quot;</span>, <span class="str">&quot;Quarterly Report&quot;</span>)
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;department&quot;</span>, <span class="str">&quot;Finance&quot;</span>)
+<span class="kw">let</span> form# = <span class="fn">http_formfile#</span>(form#, <span class="str">&quot;document&quot;</span>, <span class="str">&quot;C:\Reports\Q4-2024.pdf&quot;</span>)
+
+<span class="kw">let</span> response$ = <span class="fn">http_postform$</span>(client#, <span class="str">&quot;/api/reports/upload&quot;</span>, form#)
+
+<span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Upload complete!&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span> + <span class="fn">stri$</span>(<span class="fn">http_status</span>(client#))
+<span class="kw">end</span> <span class="kw">if</span>
+
+<span class="kw">let</span> x = <span class="fn">http_formfree</span>(form#)
+<span class="kw">let</span> x = <span class="fn">http_free</span>(client#)</pre></div></div>
+<h3>Login with Session Cookie</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; session_login.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://app.example.com&quot;</span>)
+
+<span class="kw">let</span> form# = <span class="fn">http_form#</span>()
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;username&quot;</span>, <span class="str">&quot;john&quot;</span>)
+<span class="kw">let</span> form# = <span class="fn">http_formfield#</span>(form#, <span class="str">&quot;password&quot;</span>, <span class="str">&quot;secret123&quot;</span>)
+
+<span class="kw">let</span> response$ = <span class="fn">http_postformurl$</span>(client#, <span class="str">&quot;/login&quot;</span>, form#)
+
+<span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">let</span> sessionId$ = <span class="fn">http_respcookie$</span>(client#, <span class="str">&quot;session_id&quot;</span>)
+    <span class="kw">let</span> client# = <span class="fn">http_cookie#</span>(client#, <span class="str">&quot;session_id&quot;</span>, sessionId$)
+    
+    <span class="kw">let</span> data$ = <span class="fn">http_get$</span>(client#, <span class="str">&quot;/api/dashboard&quot;</span>)
+    <span class="kw">println</span> data$
+<span class="kw">end</span> <span class="kw">if</span>
+
+<span class="kw">let</span> x = <span class="fn">http_formfree</span>(form#)
+<span class="kw">let</span> x = <span class="fn">http_free</span>(client#)</pre></div></div>
+<h3>Mobile Async HTTP Tests</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; mobile_async.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Async HTTP demo for Android/iOS</span>
+<span class="kw">let</span> client# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> timer# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
+<span class="kw">let</span> testNum = <span class="num">0</span>
+
+<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Mobile HTTP Demo&quot;</span>)
+<span class="kw">let</span> memo# = <span class="fn">memo#</span>(frm#, <span class="num">10</span>, <span class="num">10</span>, <span class="num">380</span>, <span class="num">350</span>, <span class="str">&quot;&quot;</span>)
+<span class="kw">let</span> btnRun# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Run Tests&quot;</span>, <span class="num">10</span>, <span class="num">370</span>, <span class="num">120</span>, <span class="num">40</span>)
+<span class="fn">button_onclick#</span>(btnRun#, <span class="str">&quot;OnRunClick&quot;</span>)
+
+timer# = <span class="fn">timer#</span>(frm#, <span class="num">50</span>)
+<span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
+<span class="fn">timer_ontimer#</span>(timer#, <span class="str">&quot;OnPollTimer&quot;</span>)
+<span class="fn">form_show</span>(frm#)
+
+<span class="kw">function</span> <span class="fn">OnRunClick</span>(sender#)
+    <span class="fn">memo_clear#</span>(memo#)
+    <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Starting tests...&quot;</span>)
+    client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://httpbin.org&quot;</span>)
+    testNum = <span class="num">0</span>
+    <span class="fn">StartNextTest</span>()
+<span class="kw">end</span> <span class="kw">function</span>
+
+<span class="kw">function</span> <span class="fn">StartNextTest</span>()
+    testNum = testNum + <span class="num">1</span>
+    <span class="kw">if</span> testNum = <span class="num">1</span> <span class="kw">then</span>
+        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Test 1: GET...&quot;</span>)
+        <span class="fn">http_get_async</span>(client#, <span class="str">&quot;/get&quot;</span>)
+        <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
+    <span class="kw">else</span> <span class="kw">if</span> testNum = <span class="num">2</span> <span class="kw">then</span>
+        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Test 2: POST...&quot;</span>)
+        <span class="fn">http_post_async</span>(client#, <span class="str">&quot;/post&quot;</span>, <span class="str">&quot;{\&quot;</span>test\<span class="str">&quot;:true}&quot;</span>)
+        <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
+    <span class="kw">else</span>
+        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;All tests complete!&quot;</span>)
+        <span class="kw">let</span> x = <span class="fn">http_free</span>(client#)
+    <span class="kw">end</span> <span class="kw">if</span>
+<span class="kw">end</span> <span class="kw">function</span>
+
+<span class="kw">function</span> <span class="fn">OnPollTimer</span>(sender#)
+    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
+        <span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+            <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;  OK: &quot;</span> + <span class="fn">str$</span>(<span class="fn">http_status</span>(client#)))
+        <span class="kw">else</span>
+            <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;  FAIL: &quot;</span> + <span class="fn">http_errormsg$</span>())
+        <span class="kw">end</span> <span class="kw">if</span>
+        <span class="fn">StartNextTest</span>()
+    <span class="kw">end</span> <span class="kw">if</span>
+<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<h3>Error &amp; Client (8)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_error()</code></td><td><code>http_error@</code></td><td>Last error code</td></tr>
+<tr><td><code>http_errormsg$()</code></td><td><code>http_errormsg$@</code></td><td>Error message</td></tr>
+<tr><td><code>http_strerror$(n)</code></td><td><code>http_strerror$@n</code></td><td>Error code description</td></tr>
+<tr><td><code>http_clearerror()</code></td><td><code>http_clearerror@</code></td><td>Clear errors</td></tr>
+<tr><td><code>http_client#() / http_client#(url$)</code></td><td><code>http_client#@[/$]</code></td><td>Create client</td></tr>
+<tr><td><code>http_free(c#)</code></td><td><code>http_free@#</code></td><td>Free client</td></tr>
+<tr><td><code>http_reset#(c#)</code></td><td><code>http_reset#@#</code></td><td>Reset client</td></tr>
+</tbody></table></div>
+<h3>Config &amp; Setup (27)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_baseurl#/$ | http_timeout#/timeout</code></td><td><code>various</code></td><td>URL &amp; timeouts</td></tr>
+<tr><td><code>http_useragent# | contenttype# | accept#</code></td><td><code>@#$</code></td><td>Headers</td></tr>
+<tr><td><code>http_followredirects# | maxredirects# | validatessl#</code></td><td><code>@#n</code></td><td>Behavior</td></tr>
+<tr><td><code>http_param#/$, paramremove#, paramclear#</code></td><td><code>various</code></td><td>Query params (4)</td></tr>
+<tr><td><code>http_header#/$, headerremove#, headerclear#, headercount</code></td><td><code>various</code></td><td>Custom headers (5)</td></tr>
+<tr><td><code>http_basicauth# | bearerauth# | customauth# | clearauth#</code></td><td><code>various</code></td><td>Auth (4)</td></tr>
+<tr><td><code>http_cookie#/$, cookieremove#, cookieclear#, cookiecount</code></td><td><code>various</code></td><td>Cookies (5)</td></tr>
+<tr><td><code>http_proxy#, proxyauth#, clearproxy#</code></td><td><code>various</code></td><td>Proxy (3)</td></tr>
+</tbody></table></div>
+<h3>Form Data (10)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_form#()</code></td><td><code>http_form#@</code></td><td>Create form</td></tr>
+<tr><td><code>http_formfield#(f#, n$, v$)</code></td><td><code>http_formfield#@#$$</code></td><td>Add text field</td></tr>
+<tr><td><code>http_formfile#/filenamed#/filetype#</code></td><td><code>various</code></td><td>Add file (3 overloads)</td></tr>
+<tr><td><code>http_formfieldcount/filecount/formurlencoded$/formclear#/formfree</code></td><td><code>various</code></td><td>Utilities (5)</td></tr>
+</tbody></table></div>
+<h3>HTTP Methods (17)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_get$/post$/put$/patch$/delete$</code></td><td><code>various</code></td><td>Sync methods (5 core)</td></tr>
+<tr><td><code>http_postform$/postformurl$/postformstr$/putform$</code></td><td><code>various</code></td><td>Form methods (4)</td></tr>
+<tr><td><code>http_head/http_options$</code></td><td><code>various</code></td><td>HEAD &amp; OPTIONS (2)</td></tr>
+<tr><td><code>http_get/post/put/delete/patch_async</code></td><td><code>various</code></td><td>Async methods (5)</td></tr>
+<tr><td><code>http_busy(c#)</code></td><td><code>http_busy@#</code></td><td>Check async completion</td></tr>
+</tbody></table></div>
+<h3>Response (20), Files (4), Encoding (4), Simple (3)</h3>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>http_status/statustext$/ok/isredirect/isclienterror/isservererror</code></td><td><code>various</code></td><td>Status checks (6)</td></tr>
+<tr><td><code>http_body$/bodybase64$/savebody</code></td><td><code>various</code></td><td>Body access (3)</td></tr>
+<tr><td><code>http_respheader$/respheaders$/respheadercount/name$/value$</code></td><td><code>various</code></td><td>Response headers (5)</td></tr>
+<tr><td><code>http_respcookie$/respcookies$/respcookiecount</code></td><td><code>various</code></td><td>Response cookies (3)</td></tr>
+<tr><td><code>http_respcontenttype$/contentlength/redirecturl$</code></td><td><code>various</code></td><td>Other info (3)</td></tr>
+<tr><td><code>http_download/upload$/uploadput$/postfile$</code></td><td><code>various</code></td><td>File ops (4)</td></tr>
+<tr><td><code>http_urlencode$/urldecode$/htmlencode$/htmldecode$</code></td><td><code>various</code></td><td>Encoding (4)</td></tr>
+<tr><td><code>http_simpleget$/simplepost$/simpledownload</code></td><td><code>various</code></td><td>No-client shortcuts (3)</td></tr>
+</tbody></table></div>
+<p><em>92 functions across 15 categories.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

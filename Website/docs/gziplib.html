@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GzipLib &mdash; Plan9Basic Documentation</title>
+<meta name="description" content="Plan9Basic GzipLib: 10 functions for GZIP/deflate compression of strings and files with multiple compression levels.">
+<link rel="icon" type="image/png" href="../assets/img/launcher-48.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.info-box, .warning-box {
+  padding: 1rem 1.2rem; margin: 1rem 0;
+  border-left: 3px solid var(--accent-dim);
+  background: var(--accent-subtle);
+  font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary);
+}
+.info-box strong, .warning-box strong { color: var(--accent); }
+.warning-box { border-left-color: #cc8800; background: rgba(204,136,0,0.06); }
+.warning-box strong { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html#docs">Docs</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+</header>
+
+
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <a href="../index.html">&larr; Back to Plan9Basic</a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">GzipLib</div>
+    <span class="sidebar-link" style="color:var(--text-dim);cursor:default;font-size:0.7em;">10 functions</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a href="#overview" class="sidebar-link">Overview</a>
+    <a href="#errors" class="sidebar-link">Error Handling</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Functions</div>
+    <a href="#strings" class="sidebar-link">String Compression</a>
+    <a href="#files" class="sidebar-link">File Compression</a>
+    <a href="#utility" class="sidebar-link">Utility</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reference</div>
+    <a href="#examples" class="sidebar-link">Examples</a>
+    <a href="#notes" class="sidebar-link">Technical Notes</a>
+    <a href="#quick-ref" class="sidebar-link">Quick Reference</a>
+  </div>
+
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="layout">
+<main class="content">
+
+<section class="doc-section" id="overview">
+<h2>GzipLib &mdash; GZIP/Deflate Compression</h2>
+<p>Compress and decompress data using the GZIP/deflate algorithm. Ideal for compressing single data streams (strings or files) &mdash; widely used in web protocols, file storage, and data transmission. 10 functions.</p>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Count</th><th>Description</th></tr></thead><tbody>
+<tr><td>Error Handling</td><td>1</td><td>gziperror</td></tr>
+<tr><td>String Compression</td><td>3</td><td>gzip$, gzipex$, gunzip$</td></tr>
+<tr><td>File Compression</td><td>3</td><td>gzipfile, gzipfileex, gunzipfile</td></tr>
+<tr><td>Utility</td><td>3</td><td>gzipratio, gzipsize, gzipcsize</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>Description</th></tr></thead><tbody>
+<tr><td>Compression Levels</td><td>1 (fastest) to 9 (best), default 6</td></tr>
+<tr><td>String Output</td><td>Compressed strings are Base64-encoded for text-safe handling</td></tr>
+<tr><td>File Format</td><td>Creates/reads ZLib-compressed .gz files</td></tr>
+<tr><td>UTF-8</td><td>String functions properly handle international characters</td></tr>
+<tr><td>Error Codes</td><td>6 error codes via <code>gziperror()</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="errors">
+<h2>Error Handling</h2>
+<p>All functions set an internal error code retrievable with <code>gziperror()</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Code</th><th>Constant</th><th>Description</th></tr></thead><tbody>
+<tr><td>0</td><td>ERR_NONE</td><td>No error</td></tr>
+<tr><td>1</td><td>ERR_COMPRESSION</td><td>Compression failed</td></tr>
+<tr><td>2</td><td>ERR_DECOMPRESSION</td><td>Decompression failed</td></tr>
+<tr><td>3</td><td>ERR_INVALID_ARGUMENT</td><td>Invalid argument (empty input where not allowed)</td></tr>
+<tr><td>4</td><td>ERR_FILE_ERROR</td><td>File read/write error</td></tr>
+<tr><td>5</td><td>ERR_INVALID_LEVEL</td><td>Invalid compression level (must be 1&ndash;9)</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>gziperror()</code></td><td><code>gziperror@</code></td><td>Error code from last GzipLib operation (0&ndash;5)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>compressed$ = <span class="fn">gzip$</span>(<span class="str">&quot;Hello World&quot;</span>)
+<span class="kw">if</span> <span class="fn">gziperror</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Compression failed: &quot;</span>; <span class="fn">gziperror</span>()
+<span class="kw">endif</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="strings">
+<h2>String Compression</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>gzip$(string$)</code></td><td><code>gzip$@$</code></td><td>Compress string with default level (6), returns Base64-encoded data</td></tr>
+<tr><td><code>gzipex$(string$, level)</code></td><td><code>gzipex$@$n</code></td><td>Compress with specific level (1&ndash;9), returns Base64-encoded data</td></tr>
+<tr><td><code>gunzip$(compressed$)</code></td><td><code>gunzip$@$</code></td><td>Decompress Base64-encoded GZIP data back to original string</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Default compression (level 6)</span>
+original$ = <span class="str">&quot;Hello World! This is a test string.&quot;</span>
+compressed$ = <span class="fn">gzip$</span>(original$)
+<span class="kw">println</span> <span class="str">&quot;Original: &quot;</span>; <span class="fn">len</span>(original$)
+<span class="kw">println</span> <span class="str">&quot;Compressed: &quot;</span>; <span class="fn">len</span>(compressed$)
+
+<span class="cmt">&#x27; Decompress and verify</span>
+restored$ = <span class="fn">gunzip$</span>(compressed$)
+<span class="kw">if</span> original$ = restored$ <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Round-trip successful!&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Compare compression levels</span>
+data$ = <span class="str">&quot;Lorem ipsum dolor sit amet, consectetur adipiscing elit...&quot;</span>
+
+fast$ = <span class="fn">gzipex$</span>(data$, <span class="num">1</span>)
+<span class="kw">println</span> <span class="str">&quot;Level 1 (fast): &quot;</span>; <span class="fn">len</span>(fast$); <span class="str">&quot; chars&quot;</span>
+
+best$ = <span class="fn">gzipex$</span>(data$, <span class="num">9</span>)
+<span class="kw">println</span> <span class="str">&quot;Level 9 (best): &quot;</span>; <span class="fn">len</span>(best$); <span class="str">&quot; chars&quot;</span></pre></div></div>
+<div class="table-wrap"><table><thead><tr><th>Level</th><th>Speed</th><th>Compression</th><th>Use Case</th></tr></thead><tbody>
+<tr><td>1</td><td>Fastest</td><td>Lowest</td><td>Real-time streaming, large volumes</td></tr>
+<tr><td>6</td><td>Balanced</td><td>Good</td><td>Default &mdash; general purpose</td></tr>
+<tr><td>9</td><td>Slowest</td><td>Best</td><td>Archival, bandwidth-critical</td></tr>
+</tbody></table></div>
+<div class="info-box"><strong>&#9432; Note:</strong> String compression functions return <strong>Base64-encoded</strong> data for safe handling in text formats (JSON, XML, databases). The actual compressed binary data is smaller than the Base64 representation.</div>
+</section>
+
+<section class="doc-section" id="files">
+<h2>File Compression</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>gzipfile(source$, dest$)</code></td><td><code>gzipfile@$$</code></td><td>Compress file to .gz with default level (1=success, 0=failure)</td></tr>
+<tr><td><code>gzipfileex(source$, dest$, level)</code></td><td><code>gzipfileex@$$n</code></td><td>Compress file with specific level 1&ndash;9 (1=success, 0=failure)</td></tr>
+<tr><td><code>gunzipfile(source$, dest$)</code></td><td><code>gunzipfile@$$</code></td><td>Decompress .gz file (1=success, 0=failure)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Compress a file (default level)</span>
+<span class="kw">if</span> <span class="fn">gzipfile</span>(<span class="str">&quot;document.txt&quot;</span>, <span class="str">&quot;document.txt.gz&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;File compressed!&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span>; <span class="fn">gziperror</span>()
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Compress with maximum compression</span>
+result = <span class="fn">gzipfileex</span>(<span class="str">&quot;largefile.dat&quot;</span>, <span class="str">&quot;largefile.dat.gz&quot;</span>, <span class="num">9</span>)
+<span class="kw">if</span> result = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Compressed with max compression&quot;</span>
+<span class="kw">endif</span>
+
+<span class="cmt">&#x27; Decompress</span>
+<span class="kw">if</span> <span class="fn">gunzipfile</span>(<span class="str">&quot;archive.txt.gz&quot;</span>, <span class="str">&quot;archive.txt&quot;</span>) = <span class="num">1</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;File decompressed!&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span>; <span class="fn">gziperror</span>()
+<span class="kw">endif</span></pre></div></div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> File operations set ERR_FILE_ERROR (4) if the source file cannot be read or the destination cannot be written. Always check <code>gziperror()</code> on failure.</div>
+</section>
+
+<section class="doc-section" id="utility">
+<h2>Utility Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>gzipratio(original$, compressed$)</code></td><td><code>gzipratio@$$</code></td><td>Compression ratio (compressed/original). &lt;1.0 = compression, &gt;1.0 = expansion</td></tr>
+<tr><td><code>gzipsize(string$)</code></td><td><code>gzipsize@$</code></td><td>Size in bytes of string (UTF-8 encoded)</td></tr>
+<tr><td><code>gzipcsize(compressed$)</code></td><td><code>gzipcsize@$</code></td><td>Actual compressed size in bytes (before Base64 encoding)</td></tr>
+</tbody></table></div>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>text$ = <span class="str">&quot;The quick brown fox jumps over the lazy dog. &quot;</span>
+text$ = text$ + text$ + text$ + text$
+
+compressed$ = <span class="fn">gzip$</span>(text$)
+
+<span class="kw">println</span> <span class="str">&quot;Original size:   &quot;</span>; <span class="fn">gzipsize</span>(text$); <span class="str">&quot; bytes&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Compressed size: &quot;</span>; <span class="fn">gzipcsize</span>(compressed$); <span class="str">&quot; bytes&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Base64 length:   &quot;</span>; <span class="fn">len</span>(compressed$); <span class="str">&quot; chars&quot;</span>
+
+ratio = <span class="fn">gzipratio</span>(text$, compressed$)
+<span class="kw">println</span> <span class="str">&quot;Ratio: &quot;</span>; ratio
+<span class="kw">println</span> <span class="str">&quot;Space saved: &quot;</span>; <span class="fn">int</span>((<span class="num">1</span> - ratio) * <span class="num">100</span>); <span class="str">&quot;%&quot;</span></pre></div></div>
+<div class="info-box"><strong>&#9432; Note:</strong> <code>gzipcsize()</code> reports the actual binary compressed size, which is smaller than the Base64 string length. Use this for accurate compression statistics.</div>
+</section>
+
+<section class="doc-section" id="examples">
+<h2>Complete Examples</h2>
+<h3>Basic String Compression</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; string_compress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Basic string compression with verification</span>
+<span class="kw">println</span> <span class="str">&quot;=== GZIP String Compression ===&quot;</span>
+
+original$ = <span class="str">&quot;The quick brown fox jumps over the lazy dog. &quot;</span>
+original$ = original$ + original$ + original$ + original$
+
+<span class="kw">println</span> <span class="str">&quot;Original length: &quot;</span>; <span class="fn">len</span>(original$)
+
+compressed$ = <span class="fn">gzip$</span>(original$)
+<span class="kw">if</span> <span class="fn">gziperror</span>() &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;Error: &quot;</span>; <span class="fn">gziperror</span>()
+    <span class="kw">end</span>
+<span class="kw">endif</span>
+
+<span class="kw">println</span> <span class="str">&quot;Compressed (Base64): &quot;</span>; <span class="fn">len</span>(compressed$)
+<span class="kw">println</span> <span class="str">&quot;Actual compressed: &quot;</span>; <span class="fn">gzipcsize</span>(compressed$); <span class="str">&quot; bytes&quot;</span>
+
+ratio = <span class="fn">gzipratio</span>(original$, compressed$)
+<span class="kw">println</span> <span class="str">&quot;Ratio: &quot;</span>; ratio
+<span class="kw">println</span> <span class="str">&quot;Space saved: &quot;</span>; <span class="fn">int</span>((<span class="num">1</span> - ratio) * <span class="num">100</span>); <span class="str">&quot;%&quot;</span>
+
+restored$ = <span class="fn">gunzip$</span>(compressed$)
+<span class="kw">if</span> original$ = restored$ <span class="kw">then</span>
+    <span class="kw">println</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">println</span> <span class="str">&quot;Verification: SUCCESS&quot;</span>
+<span class="kw">else</span>
+    <span class="kw">println</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">println</span> <span class="str">&quot;Verification: FAILED&quot;</span>
+<span class="kw">endif</span></pre></div></div>
+<h3>File Compression Utility</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; file_compress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Interactive file compression</span>
+<span class="kw">let</span> filename$ = <span class="str">&quot;&quot;</span>
+
+<span class="kw">function</span> <span class="fn">onFilename$</span>(result$)
+    <span class="kw">if</span> result$ = <span class="str">&quot;&quot;</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;No filename provided.&quot;</span>
+        <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">endif</span>
+    <span class="kw">if</span> <span class="fn">fileexists</span>(result$, <span class="num">0</span>) = <span class="num">0</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;File not found: &quot;</span>; result$
+        <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+    <span class="kw">endif</span>
+    filename$ = result$
+    <span class="kw">input</span> <span class="str">&quot;Compression&quot;</span>, <span class="str">&quot;Level (1-9, default 6):&quot;</span>, <span class="str">&quot;6&quot;</span>, onLevel$
+    <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">function</span> <span class="fn">onLevel$</span>(result$) <span class="kw">local</span> level, outfile$
+    <span class="kw">if</span> result$ = <span class="str">&quot;&quot;</span> <span class="kw">then</span>
+        level = <span class="num">6</span>
+    <span class="kw">else</span>
+        level = <span class="fn">val</span>(result$)
+        <span class="kw">if</span> level &lt; <span class="num">1</span> <span class="kw">or</span> level &gt; <span class="num">9</span> <span class="kw">then</span>
+            level = <span class="num">6</span>
+        <span class="kw">endif</span>
+    <span class="kw">endif</span>
+    
+    outfile$ = filename$ + <span class="str">&quot;.gz&quot;</span>
+    <span class="kw">println</span> <span class="str">&quot;Compressing &quot;</span>; filename$; <span class="str">&quot; -&gt; &quot;</span>; outfile$
+    <span class="kw">println</span> <span class="str">&quot;Level: &quot;</span>; level
+    
+    <span class="kw">if</span> <span class="fn">gzipfileex</span>(filename$, outfile$, level) = <span class="num">1</span> <span class="kw">then</span>
+        <span class="kw">println</span> <span class="str">&quot;Success!&quot;</span>
+    <span class="kw">else</span>
+        <span class="kw">println</span> <span class="str">&quot;Failed: &quot;</span>; <span class="fn">gziperror</span>()
+    <span class="kw">endif</span>
+    <span class="kw">return</span> <span class="str">&quot;&quot;</span>
+<span class="kw">endfunction</span>
+
+<span class="kw">println</span> <span class="str">&quot;=== File Compression ===&quot;</span>
+<span class="kw">input</span> <span class="str">&quot;Compress&quot;</span>, <span class="str">&quot;File to compress:&quot;</span>, <span class="str">&quot;&quot;</span>, onFilename$</pre></div></div>
+<h3>Compress JSON Data</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; compress_json.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Compress JSON for storage/transmission</span>
+<span class="kw">println</span> <span class="str">&quot;=== Compress JSON ===&quot;</span>
+
+json# = <span class="fn">json_object#</span>()
+<span class="fn">json_sets#</span>(json#, <span class="str">&quot;name&quot;</span>, <span class="str">&quot;John Doe&quot;</span>)
+<span class="fn">json_setn#</span>(json#, <span class="str">&quot;age&quot;</span>, <span class="num">30</span>)
+<span class="fn">json_sets#</span>(json#, <span class="str">&quot;email&quot;</span>, <span class="str">&quot;john@example.com&quot;</span>)
+<span class="fn">json_sets#</span>(json#, <span class="str">&quot;city&quot;</span>, <span class="str">&quot;New York&quot;</span>)
+
+jsonStr$ = <span class="fn">json_stringify$</span>(json#)
+<span class="kw">println</span> <span class="str">&quot;JSON: &quot;</span>; jsonStr$
+
+compressed$ = <span class="fn">gzip$</span>(jsonStr$)
+
+<span class="kw">println</span> <span class="str">&quot;Original: &quot;</span>; <span class="fn">gzipsize</span>(jsonStr$); <span class="str">&quot; bytes&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Compressed: &quot;</span>; <span class="fn">gzipcsize</span>(compressed$); <span class="str">&quot; bytes&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Base64 for transmission:&quot;</span>
+<span class="kw">println</span> compressed$</pre></div></div>
+<h3>Batch File Compression</h3>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; batch_compress.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Compress multiple files</span>
+<span class="kw">println</span> <span class="str">&quot;=== Batch Compression ===&quot;</span>
+
+files# = <span class="fn">sdim#</span>(<span class="num">5</span>)
+files#$[<span class="num">1</span>] = <span class="str">&quot;readme.txt&quot;</span>
+files#$[<span class="num">2</span>] = <span class="str">&quot;data.csv&quot;</span>
+files#$[<span class="num">3</span>] = <span class="str">&quot;config.ini&quot;</span>
+files#$[<span class="num">4</span>] = <span class="str">&quot;log.txt&quot;</span>
+files#$[<span class="num">5</span>] = <span class="str">&quot;notes.md&quot;</span>
+
+successCount = <span class="num">0</span>
+failCount = <span class="num">0</span>
+
+<span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span> <span class="num">5</span>
+    filename$ = files#$[i]
+    <span class="kw">if</span> <span class="fn">fileexists</span>(filename$, <span class="num">0</span>) = <span class="num">1</span> <span class="kw">then</span>
+        outfile$ = filename$ + <span class="str">&quot;.gz&quot;</span>
+        <span class="kw">if</span> <span class="fn">gzipfile</span>(filename$, outfile$) = <span class="num">1</span> <span class="kw">then</span>
+            <span class="kw">println</span> <span class="str">&quot;OK:   &quot;</span>; filename$
+            successCount = successCount + <span class="num">1</span>
+        <span class="kw">else</span>
+            <span class="kw">println</span> <span class="str">&quot;FAIL: &quot;</span>; filename$; <span class="str">&quot; (Error: &quot;</span>; <span class="fn">gziperror</span>(); <span class="str">&quot;)&quot;</span>
+            failCount = failCount + <span class="num">1</span>
+        <span class="kw">endif</span>
+    <span class="kw">else</span>
+        <span class="kw">println</span> <span class="str">&quot;SKIP: &quot;</span>; filename$; <span class="str">&quot; (not found)&quot;</span>
+    <span class="kw">endif</span>
+<span class="kw">next</span>
+
+<span class="kw">println</span> <span class="str">&quot;&quot;</span>
+<span class="kw">println</span> <span class="str">&quot;Done: &quot;</span>; successCount; <span class="str">&quot; compressed, &quot;</span>; failCount; <span class="str">&quot; failed&quot;</span></pre></div></div>
+</section>
+
+<section class="doc-section" id="notes">
+<h2>Technical Notes</h2>
+<div class="table-wrap"><table><thead><tr><th>Topic</th><th>Details</th></tr></thead><tbody>
+<tr><td>Base64 encoding</td><td>String functions return Base64-encoded data for safe use in text formats. Actual compressed bytes are ~33% smaller than the Base64 string length.</td></tr>
+<tr><td>Compression levels</td><td>1 = fastest/largest, 6 = default/balanced, 9 = best/slowest. Differences are most noticeable on large data.</td></tr>
+<tr><td>Memory</td><td>Large strings or files may require significant memory during compression/decompression.</td></tr>
+<tr><td>File format</td><td><code>gzipfile</code> / <code>gunzipfile</code> create/read ZLib-compressed files compatible with standard GZIP utilities.</td></tr>
+<tr><td>UTF-8</td><td>String functions use UTF-8 encoding, properly handling international characters.</td></tr>
+<tr><td>Small data</td><td>Very small strings may actually <em>expand</em> after compression (ratio &gt; 1.0) due to compression overhead.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="doc-section" id="quick-ref">
+<h2>Quick Reference</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>gziperror()</code></td><td><code>gziperror@</code></td><td>Last error code (0&ndash;5)</td></tr>
+<tr><td><code>gzip$(string$)</code></td><td><code>gzip$@$</code></td><td>Compress string (default level 6, Base64 output)</td></tr>
+<tr><td><code>gzipex$(string$, level)</code></td><td><code>gzipex$@$n</code></td><td>Compress with level 1&ndash;9 (Base64 output)</td></tr>
+<tr><td><code>gunzip$(compressed$)</code></td><td><code>gunzip$@$</code></td><td>Decompress Base64 GZIP data to string</td></tr>
+<tr><td><code>gzipfile(src$, dst$)</code></td><td><code>gzipfile@$$</code></td><td>Compress file to .gz (1/0)</td></tr>
+<tr><td><code>gzipfileex(src$, dst$, level)</code></td><td><code>gzipfileex@$$n</code></td><td>Compress file with level (1/0)</td></tr>
+<tr><td><code>gunzipfile(src$, dst$)</code></td><td><code>gunzipfile@$$</code></td><td>Decompress .gz file (1/0)</td></tr>
+<tr><td><code>gzipratio(orig$, comp$)</code></td><td><code>gzipratio@$$</code></td><td>Compression ratio (&lt;1.0 = compressed)</td></tr>
+<tr><td><code>gzipsize(string$)</code></td><td><code>gzipsize@$</code></td><td>UTF-8 byte size of string</td></tr>
+<tr><td><code>gzipcsize(compressed$)</code></td><td><code>gzipcsize@$</code></td><td>Actual compressed byte size (before Base64)</td></tr>
+</tbody></table></div>
+<p><em>10 functions across 4 categories.</em></p>
+</section>
+
+</main>
+</div>
+
+
+</body>
+</html>

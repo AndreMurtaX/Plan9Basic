@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan9Basic Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME SYSTEM (shared with main site)
+   ============================================================ */
+:root {
+  --font-retro: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Space Grotesk', sans-serif;
+  --scanline-opacity: 0.03;
+  --transition: 0.3s ease;
+  --sidebar-w: 280px;
+}
+
+[data-theme="green"] {
+  --bg-primary: #040804; --bg-secondary: #081008; --bg-card: #0b160b; --bg-terminal: #020602;
+  --text-primary: #33ff33; --text-secondary: #22aa22; --text-dim: #116611;
+  --accent: #00ff41; --accent-dim: #00aa2a; --accent-subtle: rgba(0,255,65,0.06);
+  --glow-color: rgba(51,255,51,0.15); --glow-strong: rgba(51,255,51,0.35);
+  --border: #1a3a1a;
+  --keyword-color: #66ff66; --string-color: #88ffaa; --number-color: #aaffcc; --comment-color: #338833;
+  --mascot-filter: none;
+}
+[data-theme="amber"] {
+  --bg-primary: #080600; --bg-secondary: #100c06; --bg-card: #18120a; --bg-terminal: #060400;
+  --text-primary: #ffbb33; --text-secondary: #cc8800; --text-dim: #885500;
+  --accent: #ffcc00; --accent-dim: #aa8800; --accent-subtle: rgba(255,204,0,0.06);
+  --glow-color: rgba(255,187,51,0.15); --glow-strong: rgba(255,187,51,0.35);
+  --border: #3a2a1a;
+  --keyword-color: #ffdd66; --string-color: #ffcc88; --number-color: #ffddaa; --comment-color: #886633;
+  --mascot-filter: hue-rotate(30deg) saturate(0.8);
+}
+[data-theme="blue"] {
+  --bg-primary: #040610; --bg-secondary: #080e1e; --bg-card: #0c1428; --bg-terminal: #020410;
+  --text-primary: #33bbff; --text-secondary: #2288cc; --text-dim: #115588;
+  --accent: #00ccff; --accent-dim: #0088aa; --accent-subtle: rgba(0,204,255,0.06);
+  --glow-color: rgba(51,187,255,0.15); --glow-strong: rgba(51,187,255,0.35);
+  --border: #1a2a3a;
+  --keyword-color: #66ccff; --string-color: #88ddff; --number-color: #aaeeff; --comment-color: #336688;
+  --mascot-filter: hue-rotate(180deg) saturate(0.9);
+}
+[data-theme="pink"] {
+  --bg-primary: #0c040c; --bg-secondary: #160818; --bg-card: #1e0c20; --bg-terminal: #080208;
+  --text-primary: #ff66cc; --text-secondary: #cc3399; --text-dim: #882266;
+  --accent: #ff44bb; --accent-dim: #aa2288; --accent-subtle: rgba(255,68,187,0.06);
+  --glow-color: rgba(255,102,204,0.15); --glow-strong: rgba(255,102,204,0.35);
+  --border: #3a1a3a;
+  --keyword-color: #ff88dd; --string-color: #ffaaee; --number-color: #ffbbee; --comment-color: #883366;
+  --mascot-filter: hue-rotate(330deg);
+}
+[data-theme="white"] {
+  --bg-primary: #0c0c16; --bg-secondary: #121226; --bg-card: #18182e; --bg-terminal: #080812;
+  --text-primary: #e0e0e8; --text-secondary: #a0a0b0; --text-dim: #606070;
+  --accent: #ffffff; --accent-dim: #aaaaaa; --accent-subtle: rgba(224,224,232,0.04);
+  --glow-color: rgba(224,224,232,0.08); --glow-strong: rgba(224,224,232,0.18);
+  --border: #2a2a3a;
+  --keyword-color: #ffffff; --string-color: #ccddee; --number-color: #bbccdd; --comment-color: #666680;
+  --mascot-filter: saturate(0.3) brightness(1.1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; scroll-padding-top: 70px; }
+
+body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-mono); line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+::selection { background: var(--text-primary); color: var(--bg-primary); }
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition), text-shadow var(--transition); }
+a:hover { color: var(--text-primary); text-shadow: 0 0 10px var(--glow-color); }
+
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,var(--scanline-opacity)) 2px, rgba(0,0,0,var(--scanline-opacity)) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(4,8,4,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  height: 56px; display: flex; align-items: center; padding: 0 1.5rem;
+  transition: background var(--transition);
+}
+
+.topbar-logo {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--glow-strong);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.topbar-logo-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+.topbar-icon {
+  width: 26px; height: 26px; border-radius: 4px;
+  filter: drop-shadow(0 0 6px var(--glow-strong)) var(--mascot-filter);
+}
+.topbar-name {
+  font-family: var(--font-retro); font-size: 0.55rem;
+  color: var(--accent); letter-spacing: 2px;
+}
+.topbar-nav {
+  margin-left: auto; display: flex; align-items: center; gap: 1.2rem;
+}
+.topbar-nav a {
+  color: var(--text-secondary); font-size: 0.75rem; text-decoration: none;
+  transition: color var(--transition);
+}
+.topbar-nav a:hover { color: var(--accent); }
+
+.topbar-breadcrumb {
+  font-size: 0.7rem; color: var(--text-dim); margin-left: 1.2rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.topbar-breadcrumb a { color: var(--text-dim); }
+.topbar-breadcrumb a:hover { color: var(--accent); }
+.topbar-breadcrumb .sep { color: var(--border); }
+
+.topbar-right {
+  margin-left: auto; display: flex; align-items: center; gap: 1rem;
+}
+
+.theme-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font-retro);
+  font-size: 0.45rem; padding: 0.2rem 0.5rem; cursor: pointer;
+  transition: all var(--transition); letter-spacing: 1px;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow-color); }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 1rem; cursor: pointer;
+  padding: 0.2rem 0.5rem; transition: all var(--transition);
+}
+.sidebar-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.layout {
+  display: flex; margin-top: 56px; min-height: calc(100vh - 56px);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--bg-secondary); border-right: 1px solid var(--border);
+  position: fixed; top: 56px; bottom: 0; left: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 1.5rem 0; z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+.sidebar-title {
+  font-family: var(--font-retro); font-size: 0.45rem;
+  color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+  padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 0 8px var(--glow-color);
+}
+
+.sidebar-section {
+  padding: 0.3rem 0;
+}
+.sidebar-section-title {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0.6rem 1.2rem 0.3rem;
+}
+
+.sidebar-link {
+  display: block; padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+  font-size: 0.75rem; color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.sidebar-link:hover {
+  color: var(--text-primary); background: var(--accent-subtle);
+  border-left-color: var(--accent-dim); text-shadow: none;
+}
+.sidebar-link.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: var(--accent-subtle);
+  text-shadow: 0 0 6px var(--glow-color);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 2.5rem 3rem 5rem;
+  max-width: 900px;
+}
+
+.doc-hero {
+  margin-bottom: 3rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-hero-label {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.doc-hero h1 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1rem;
+}
+.doc-hero p {
+  font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;
+  max-width: 650px;
+}
+.doc-version {
+  display: inline-block; font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent-dim); border: 1px solid var(--accent-dim);
+  padding: 0.2rem 0.6rem; margin-top: 1rem; letter-spacing: 1px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.doc-section {
+  margin-bottom: 3.5rem; padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section:last-child { border-bottom: none; }
+
+.doc-section h2 {
+  font-family: var(--font-retro);
+  font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--glow-color);
+  line-height: 2.2; margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+  padding-top: 0.5rem;
+}
+
+.doc-section h3 {
+  font-family: var(--font-retro);
+  font-size: 0.5rem;
+  color: var(--text-primary);
+  line-height: 2; margin: 2rem 0 1rem;
+  letter-spacing: 0.5px;
+}
+
+.doc-section h4 {
+  font-family: var(--font-mono); font-weight: 600;
+  font-size: 0.88rem; color: var(--text-primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.doc-section p {
+  font-size: 0.88rem; color: var(--text-secondary);
+  line-height: 1.85; margin-bottom: 1rem;
+}
+
+.doc-section ul, .doc-section ol {
+  padding-left: 1.5rem; margin-bottom: 1rem;
+}
+.doc-section li {
+  font-size: 0.85rem; color: var(--text-secondary);
+  line-height: 1.8; margin-bottom: 0.3rem;
+}
+.doc-section li code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem; font-size: 0.82rem; color: var(--accent);
+}
+
+.doc-section strong { color: var(--text-primary); }
+.doc-section em { color: var(--accent); font-style: normal; text-shadow: 0 0 4px var(--glow-color); }
+
+/* Inline code */
+.doc-section code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem; font-size: 0.82rem;
+  color: var(--keyword-color); font-family: var(--font-mono);
+}
+
+/* ============================================================
+   CODE BLOCKS (terminal style)
+   ============================================================ */
+.code-block {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  border-radius: 8px; margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--glow-color), inset 0 0 40px rgba(0,0,0,0.4);
+}
+.code-titlebar {
+  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  padding: 0 0 0 0.8rem; display: flex; align-items: center; height: 26px;
+}
+.code-titlebar-title {
+  font-size: 0.5rem; color: var(--text-dim); font-family: var(--font-mono); flex: 1;
+}
+.code-titlebar-controls {
+  display: flex; align-items: center; gap: 0.1rem; margin-left: auto;
+}
+.code-titlebar-btn {
+  width: 24px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-dim);
+  background: transparent; border: none; cursor: default;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.code-titlebar-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.code-titlebar-btn.close:hover { background: #e81123; color: #fff; }
+
+.code-body {
+  padding: 1rem 1.2rem; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;
+  color: var(--text-secondary);
+}
+.code-body pre { margin: 0; white-space: pre; }
+
+.kw { color: var(--keyword-color); font-weight: 600; }
+.str { color: var(--string-color); }
+.num { color: var(--number-color); }
+.cmt { color: var(--comment-color); font-style: italic; }
+.fn { color: var(--accent); }
+.op { color: var(--text-primary); }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.doc-table {
+  width: 100%; border-collapse: collapse;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.doc-table th {
+  font-family: var(--font-retro); font-size: 0.4rem;
+  color: var(--accent); text-align: left;
+  padding: 0.7rem 0.8rem; border-bottom: 2px solid var(--accent-dim);
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg-secondary);
+}
+.doc-table td {
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-secondary); vertical-align: top;
+}
+.doc-table tr:hover td { background: var(--accent-subtle); }
+.doc-table td code {
+  background: var(--bg-terminal); border: 1px solid var(--border);
+  padding: 0.05rem 0.3rem; font-size: 0.78rem; color: var(--keyword-color);
+}
+
+/* ============================================================
+   CALLOUT BOXES
+   ============================================================ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+  background: var(--bg-card); padding: 1rem 1.2rem;
+  margin: 1rem 0 1.5rem; font-size: 0.82rem;
+}
+.callout-label {
+  font-family: var(--font-retro); font-size: 0.38rem;
+  color: var(--accent); letter-spacing: 2px; margin-bottom: 0.5rem;
+  display: block;
+}
+.callout p { margin-bottom: 0.5rem; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.warning { border-left-color: #ffcc00; }
+.callout.warning .callout-label { color: #ffcc00; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.doc-footer {
+  margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--text-dim);
+}
+.doc-footer a { color: var(--text-dim); }
+.doc-footer a:hover { color: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  .content { padding: 2rem 2rem 4rem; }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px; min-width: 280px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-toggle { display: block; }
+  .content { margin-left: 0; padding: 1.5rem 1rem 4rem; }
+  .topbar-breadcrumb { display: none; }
+  .code-body { font-size: 0.72rem; }
+}
+
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+<style>
+.landing-hero {
+    text-align: center;
+    padding: 5rem 1rem 1rem;
+    border-bottom: 1px solid var(--color);
+    margin-bottom: 2rem;
+}
+.landing-hero h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px var(--color);
+}
+.landing-hero .subtitle {
+    opacity: 0.7;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+.landing-hero .stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+.landing-hero .stat {
+    text-align: center;
+}
+.landing-hero .stat-num {
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px var(--color);
+}
+.landing-hero .stat-label {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+.cat-title {
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--color);
+    opacity: 0.8;
+    font-size: 1.1rem;
+}
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.lib-card {
+    display: block;
+    border: 1px solid var(--color);
+    border-radius: 6px;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--color);
+    transition: all 0.2s;
+    background: rgba(0,0,0,0.3);
+}
+.lib-card:hover {
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 15px var(--color);
+    transform: translateY(-2px);
+}
+.card-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.card-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 0.3rem; }
+.card-desc { font-size: 0.85rem; opacity: 0.7; line-height: 1.4; }
+.landing-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+}
+.footer-note {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color);
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
+/* Extended libraries section */
+.section-divider {
+    display: flex; align-items: center; gap: 1rem;
+    margin: 3rem 0 1.5rem; padding-top: 2rem;
+    border-top: 2px solid var(--border);
+}
+.section-divider-line { flex: 1; height: 1px; background: var(--border); }
+.section-divider-label {
+    font-family: var(--font-retro); font-size: 0.55rem;
+    color: var(--accent-dim); letter-spacing: 3px; text-transform: uppercase;
+    white-space: nowrap; text-shadow: 0 0 12px var(--glow-color);
+}
+.section-intro {
+    font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+    margin-bottom: 2rem; max-width: 700px;
+}
+
+/* Pending (coming soon) card variant */
+.lib-card.pending {
+    opacity: 0.35; pointer-events: none; cursor: default;
+}
+.lib-card.pending:hover {
+    transform: none; box-shadow: none;
+    background: var(--bg-card);
+}
+
+/* Compact chip grid for effects/transitions */
+.chip-grid {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    margin-bottom: 1.5rem;
+}
+.lib-chip {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.65rem; font-size: 0.72rem;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text-dim); text-decoration: none;
+    transition: all var(--transition);
+}
+.lib-chip:hover {
+    color: var(--accent); border-color: var(--accent-dim);
+    box-shadow: 0 0 8px var(--glow-color);
+}
+.lib-chip.pending {
+    opacity: 0.35; pointer-events: none;
+}
+.lib-chip .chip-icon { font-size: 0.65rem; }
+
+/* Subcategory label within a section */
+.sub-label {
+    font-size: 0.75rem; color: var(--text-secondary); margin: 1.2rem 0 0.5rem;
+    font-weight: 600; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+.sub-label .sub-count {
+    font-size: 0.6rem; color: var(--text-dim);
+    padding: 0.1rem 0.4rem; border: 1px solid var(--border); border-radius: 3px;
+    font-weight: normal;
+}
+</style>
+</head>
+<body>
+<div class="scanline-overlay"></div>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="../index.html" class="topbar-logo">
+    <img src="../assets/img/launcher-48.png" alt="" class="topbar-icon">
+    <span class="topbar-name">Plan9Basic</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="../index.html">Home</a>
+    <a href="language-reference.html">Language</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav>
+</header>
+
+<div class="landing-hero">
+    <h1>&gt; Plan9Basic_</h1>
+    <div class="subtitle">Library &amp; Language Reference Documentation</div>
+    <div class="stats">
+        <div class="stat"><div class="stat-num">122</div><div class="stat-label">Libraries</div></div>
+        <div class="stat"><div class="stat-num">600+</div><div class="stat-label">Core Functions</div></div>
+        <div class="stat"><div class="stat-num">6</div><div class="stat-label">Platforms</div></div>
+    </div>
+</div>
+
+<div class="landing-content">
+<h2 class="cat-title">Language</h2>
+<div class="card-grid">
+<a href="language-reference.html" class="lib-card">
+  <div class="card-icon">📖</div>
+  <div class="card-name">Language Reference</div>
+  <div class="card-desc">Complete syntax, control flow, data types, operators, and variable scoping rules.</div>
+</a>
+</div>
+<h2 class="cat-title">Core</h2>
+<div class="card-grid">
+<a href="stdlib.html" class="lib-card">
+  <div class="card-icon">⚡</div>
+  <div class="card-name">StdLib</div>
+  <div class="card-desc">Standard functions: print, type conversion, math basics, clipboard, and error handling.</div>
+</a>
+<a href="strlib.html" class="lib-card">
+  <div class="card-icon">🔤</div>
+  <div class="card-name">StrLib</div>
+  <div class="card-desc">75 string functions: manipulation, search, formatting, encoding, and locale support.</div>
+</a>
+<a href="numlib.html" class="lib-card">
+  <div class="card-icon">🔢</div>
+  <div class="card-name">NumLib</div>
+  <div class="card-desc">34 numeric functions: math, trigonometry, rounding, random, and bitwise operations.</div>
+</a>
+<a href="datetimelib.html" class="lib-card">
+  <div class="card-icon">📅</div>
+  <div class="card-name">DateTimeLib</div>
+  <div class="card-desc">66 date/time functions: creation, formatting, arithmetic, and component extraction.</div>
+</a>
+<a href="arraylib.html" class="lib-card">
+  <div class="card-icon">📦</div>
+  <div class="card-name">ArrayLib</div>
+  <div class="card-desc">Array creation, access, manipulation, sorting, and conversion.</div>
+</a>
+<a href="dictlib.html" class="lib-card">
+  <div class="card-icon">📋</div>
+  <div class="card-name">DictLib</div>
+  <div class="card-desc">Dictionary (key-value) creation, access, iteration, and serialization.</div>
+</a>
+<a href="strlistlib.html" class="lib-card">
+  <div class="card-icon">📝</div>
+  <div class="card-name">StrListLib</div>
+  <div class="card-desc">66 string list functions: collections, file I/O, CSV parsing, key-value pairs, sorting, events.</div>
+</a>
+<a href="syslib.html" class="lib-card">
+  <div class="card-icon">🖥️</div>
+  <div class="card-name">SysLib</div>
+  <div class="card-desc">43 system functions: files, directories, environment, processes, and shell commands.</div>
+</a>
+</div>
+<h2 class="cat-title">Data</h2>
+<div class="card-grid">
+<a href="jsonlib.html" class="lib-card">
+  <div class="card-icon">📄</div>
+  <div class="card-name">JsonLib</div>
+  <div class="card-desc">57 JSON functions: parse, create, modify, path navigation, and serialization.</div>
+</a>
+<a href="configlib.html" class="lib-card">
+  <div class="card-icon">⚙️</div>
+  <div class="card-name">ConfigLib</div>
+  <div class="card-desc">31 INI-based config functions: persistent settings, sections, enumeration.</div>
+</a>
+<a href="regexlib.html" class="lib-card">
+  <div class="card-icon">🔍</div>
+  <div class="card-name">RegexLib</div>
+  <div class="card-desc">28 regex functions: match, find, replace, split, capture groups.</div>
+</a>
+<a href="sqlitelib.html" class="lib-card">
+  <div class="card-icon">🗄️</div>
+  <div class="card-name">SQLiteLib</div>
+  <div class="card-desc">55+ SQLite database functions: CRUD, JSON integration, transactions, introspection.</div>
+</a>
+<a href="base64lib.html" class="lib-card">
+  <div class="card-icon">🔐</div>
+  <div class="card-name">Base64Lib</div>
+  <div class="card-desc">Base64 encoding/decoding for strings and files.</div>
+</a>
+<a href="gziplib.html" class="lib-card">
+  <div class="card-icon">📦</div>
+  <div class="card-name">GzipLib</div>
+  <div class="card-desc">Gzip compression/decompression for strings and files.</div>
+</a>
+<a href="ziplib.html" class="lib-card">
+  <div class="card-icon">🗜️</div>
+  <div class="card-name">ZipLib</div>
+  <div class="card-desc">15 ZIP archive functions: create, read, add, extract, browse, and quick compress.</div>
+</a>
+</div>
+<h2 class="cat-title">Network</h2>
+<div class="card-grid">
+<a href="httplib.html" class="lib-card">
+  <div class="card-icon">🌐</div>
+  <div class="card-name">HttpLib</div>
+  <div class="card-desc">~92 HTTP client functions: REST, forms, auth, async, cookies, file transfer.</div>
+</a>
+</div>
+<h2 class="cat-title">System</h2>
+<div class="card-grid">
+<a href="ioutilslib.html" class="lib-card">
+  <div class="card-icon">📁</div>
+  <div class="card-name">IOUtilsLib</div>
+  <div class="card-desc">64 file/directory I/O functions with cross-platform support.</div>
+</a>
+<a href="platforminfolib.html" class="lib-card">
+  <div class="card-icon">💻</div>
+  <div class="card-name">PlatformInfoLib</div>
+  <div class="card-desc">Platform detection: OS, architecture, screen, and device information.</div>
+</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXTENDED LIBRARIES
+     ═══════════════════════════════════════════════════════════ -->
+
+<div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">Extended Libraries</div>
+    <div class="section-divider-line"></div>
+</div>
+<p class="section-intro">
+    Beyond the core libraries, Plan9Basic includes an extensive set of GUI, animation, and visual effects libraries &mdash; enabling applets to build rich interfaces, animate elements, and apply visual transformations to controls. Documentation for these libraries is being developed progressively.
+</p>
+
+<h2 class="cat-title">GUI &mdash; Forms &amp; Controls</h2>
+<div class="card-grid">
+<a href="gui/formlib.html" class="lib-card">
+  <div class="card-icon">🪟</div>
+  <div class="card-name">FormLib</div>
+  <div class="card-desc">Window/form creation, sizing, positioning, events, and modal dialogs.</div>
+</a>
+<a href="gui/buttonlib.html" class="lib-card">
+  <div class="card-icon">🔘</div>
+  <div class="card-name">ButtonLib</div>
+  <div class="card-desc">Push buttons with text, styling, click events, and state management.</div>
+</a>
+<a href="gui/labellib.html" class="lib-card">
+  <div class="card-icon">🏷️</div>
+  <div class="card-name">LabelLib</div>
+  <div class="card-desc">Text labels with font, color, alignment, and auto-sizing support.</div>
+</a>
+<a href="gui/editlib.html" class="lib-card">
+  <div class="card-icon">✏️</div>
+  <div class="card-name">EditLib</div>
+  <div class="card-desc">Single-line text input with validation, placeholder, and events.</div>
+</a>
+<a href="gui/memolib.html" class="lib-card">
+  <div class="card-icon">📝</div>
+  <div class="card-name">MemoLib</div>
+  <div class="card-desc">Multi-line text editor with scrollbars, word wrap, and line access.</div>
+</a>
+<a href="gui/checkboxlib.html" class="lib-card">
+  <div class="card-icon">☑️</div>
+  <div class="card-name">CheckBoxLib</div>
+  <div class="card-desc">Checkbox controls with checked/unchecked state and change events.</div>
+</a>
+<a href="gui/radiobuttonlib.html" class="lib-card">
+  <div class="card-icon">🔵</div>
+  <div class="card-name">RadioButtonLib</div>
+  <div class="card-desc">Radio buttons with mutual exclusion groups and selection events.</div>
+</a>
+<a href="gui/comboboxlib.html" class="lib-card">
+  <div class="card-icon">📋</div>
+  <div class="card-name">ComboBoxLib</div>
+  <div class="card-desc">Drop-down combo boxes with item lists and selection handling.</div>
+</a>
+<a href="gui/listboxlib.html" class="lib-card">
+  <div class="card-icon">📜</div>
+  <div class="card-name">ListBoxLib</div>
+  <div class="card-desc">Scrollable list boxes with item management and selection modes.</div>
+</a>
+<a href="gui/imagelib.html" class="lib-card">
+  <div class="card-icon">🖼️</div>
+  <div class="card-name">ImageLib</div>
+  <div class="card-desc">Image display from file/URL, scaling, rotation, and bitmap operations.</div>
+</a>
+<a href="gui/stringgridlib.html" class="lib-card">
+  <div class="card-icon">📊</div>
+  <div class="card-name">StringGridLib</div>
+  <div class="card-desc">Tabular data grid with rows, columns, cell editing, and scrolling.</div>
+</a>
+<a href="gui/panellib.html" class="lib-card">
+  <div class="card-icon">🔲</div>
+  <div class="card-name">PanelLib</div>
+  <div class="card-desc">Container panels for grouping and organizing controls.</div>
+</a>
+<a href="gui/layoutlib.html" class="lib-card">
+  <div class="card-icon">📐</div>
+  <div class="card-name">LayoutLib</div>
+  <div class="card-desc">Layout management for automatic control arrangement and flow.</div>
+</a>
+<a href="gui/scrollboxlib.html" class="lib-card">
+  <div class="card-icon">📜</div>
+  <div class="card-name">ScrollBoxLib</div>
+  <div class="card-desc">Vertically-scrolling container with full alignment support, scroll bar control, and content size queries.</div>
+</a>
+<a href="gui/switchlib.html" class="lib-card">
+  <div class="card-icon">🔀</div>
+  <div class="card-name">SwitchLib</div>
+  <div class="card-desc">Toggle switch controls with on/off state and events.</div>
+</a>
+<a href="gui/progressbarlib.html" class="lib-card">
+  <div class="card-icon">📶</div>
+  <div class="card-name">ProgressBarLib</div>
+  <div class="card-desc">Progress indicators with min/max, value, and orientation control.</div>
+</a>
+<a href="gui/trackbarlib.html" class="lib-card">
+  <div class="card-icon">🎚️</div>
+  <div class="card-name">TrackBarLib</div>
+  <div class="card-desc">Slider/trackbar controls for numeric range selection.</div>
+</a>
+<a href="gui/speedbuttonlib.html" class="lib-card">
+  <div class="card-icon">⚡</div>
+  <div class="card-name">SpeedButtonLib</div>
+  <div class="card-desc">Toolbar-style speed buttons with glyph support and toggle state.</div>
+</a>
+<a href="gui/calloutrectanglelib.html" class="lib-card">
+  <div class="card-icon">💬</div>
+  <div class="card-name">CalloutRectangleLib</div>
+  <div class="card-desc">Callout/tooltip shapes with configurable arrow position.</div>
+</a>
+<a href="gui/timerlib.html" class="lib-card">
+  <div class="card-icon">⏱️</div>
+  <div class="card-name">TimerLib</div>
+  <div class="card-desc">Timer controls with interval, enable/disable, and tick callbacks.</div>
+</a>
+<a href="gui/mediaplayerlib.html" class="lib-card">
+  <div class="card-icon">🎬</div>
+  <div class="card-name">MediaPlayerLib</div>
+  <div class="card-desc">Audio/video playback with transport controls and media events.</div>
+</a>
+</div>
+
+<h2 class="cat-title">GUI &mdash; Shapes &amp; Drawing</h2>
+<div class="card-grid">
+<a href="gui/rectanglelib.html" class="lib-card">
+  <div class="card-icon">▬</div>
+  <div class="card-name">RectangleLib</div>
+  <div class="card-desc">Rectangle shapes with fill, stroke, corners, and opacity.</div>
+</a>
+<a href="gui/roundrectlib.html" class="lib-card">
+  <div class="card-icon">▢</div>
+  <div class="card-name">RoundRectLib</div>
+  <div class="card-desc">Rounded rectangles with configurable corner radius.</div>
+</a>
+<a href="gui/circlelib.html" class="lib-card">
+  <div class="card-icon">●</div>
+  <div class="card-name">CircleLib</div>
+  <div class="card-desc">Circle shapes with fill, stroke, and positioning.</div>
+</a>
+<a href="gui/ellipselib.html" class="lib-card">
+  <div class="card-icon">⬮</div>
+  <div class="card-name">EllipseLib</div>
+  <div class="card-desc">Ellipse shapes with independent width/height radii.</div>
+</a>
+<a href="gui/arclib.html" class="lib-card">
+  <div class="card-icon">◠</div>
+  <div class="card-name">ArcLib</div>
+  <div class="card-desc">Arc shapes with configurable start and end angles.</div>
+</a>
+<a href="gui/linelib.html" class="lib-card">
+  <div class="card-icon">╲</div>
+  <div class="card-name">LineLib</div>
+  <div class="card-desc">Line drawing between two points with stroke styling.</div>
+</a>
+<a href="gui/pathlib.html" class="lib-card">
+  <div class="card-icon">〰️</div>
+  <div class="card-name">PathLib</div>
+  <div class="card-desc">Vector paths with move, line, curve, and close commands.</div>
+</a>
+<a href="gui/pielib.html" class="lib-card">
+  <div class="card-icon">◔</div>
+  <div class="card-name">PieLib</div>
+  <div class="card-desc">Pie/sector shapes with start and end angles, fill, and stroke.</div>
+</a>
+</div>
+
+<h2 class="cat-title">Animations</h2>
+<div class="sub-label">Property Animations <span class="sub-count">6 libraries</span></div>
+<div class="card-grid">
+<a href="gui/animations/floatanimationlib.html" class="lib-card">
+  <div class="card-icon">🔄</div>
+  <div class="card-name">FloatAnimationLib</div>
+  <div class="card-desc">Animate numeric properties (position, size, opacity) over time.</div>
+</a>
+<a href="gui/animations/intanimationlib.html" class="lib-card">
+  <div class="card-icon">🔢</div>
+  <div class="card-name">IntAnimationLib</div>
+  <div class="card-desc">Animate integer properties with step-based transitions.</div>
+</a>
+<a href="gui/animations/coloranimationlib.html" class="lib-card">
+  <div class="card-icon">🎨</div>
+  <div class="card-name">ColorAnimationLib</div>
+  <div class="card-desc">Animate color transitions with smooth interpolation.</div>
+</a>
+<a href="gui/animations/rectanimationlib.html" class="lib-card">
+  <div class="card-icon">📐</div>
+  <div class="card-name">RectAnimationLib</div>
+  <div class="card-desc">Animate rectangle bounds (position + size combined).</div>
+</a>
+<a href="gui/animations/pathanimationlib.html" class="lib-card">
+  <div class="card-icon">🛤️</div>
+  <div class="card-name">PathAnimationLib</div>
+  <div class="card-desc">Animate objects along vector paths with easing.</div>
+</a>
+<a href="gui/animations/bitmaplistanimationlib.html" class="lib-card">
+  <div class="card-icon">🎞️</div>
+  <div class="card-name">BitmapListAnimationLib</div>
+  <div class="card-desc">Frame-by-frame sprite animation from bitmap sequences.</div>
+</a>
+</div>
+
+<h2 class="cat-title">Visual Effects</h2>
+<div class="sub-label">Image &amp; Filter Effects <span class="sub-count">41 libraries</span></div>
+<div class="chip-grid">
+<a href="gui/effects/affinetransformeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> AffineTransform</a>
+<a href="gui/effects/bandedswirleffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> BandedSwirl</a>
+<a href="gui/effects/bandseffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Bands</a>
+<a href="gui/effects/beveleffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Bevel</a>
+<a href="gui/effects/bloomeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Bloom</a>
+<a href="gui/effects/blureffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Blur</a>
+<a href="gui/effects/boxblureffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> BoxBlur</a>
+<a href="gui/effects/colorkeyalphaeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> ColorKeyAlpha</a>
+<a href="gui/effects/contrasteffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Contrast</a>
+<a href="gui/effects/cropeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Crop</a>
+<a href="gui/effects/directionalblureffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> DirectionalBlur</a>
+<a href="gui/effects/embosseffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Emboss</a>
+<a href="gui/effects/filleffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Fill</a>
+<a href="gui/effects/fillrgbeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> FillRGB</a>
+<a href="gui/effects/gaussianblureffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> GaussianBlur</a>
+<a href="gui/effects/gloomeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Gloom</a>
+<a href="gui/effects/gloweffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Glow</a>
+<a href="gui/effects/hueadjusteffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> HueAdjust</a>
+<a href="gui/effects/innergloweffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> InnerGlow</a>
+<a href="gui/effects/inverteffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Invert</a>
+<a href="gui/effects/magnifyeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Magnify</a>
+<a href="gui/effects/masktoalphaeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> MaskToAlpha</a>
+<a href="gui/effects/monochromeeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Monochrome</a>
+<a href="gui/effects/normalblendeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> NormalBlend</a>
+<a href="gui/effects/papersketcheffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> PaperSketch</a>
+<a href="gui/effects/pencilstrokeeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> PencilStroke</a>
+<a href="gui/effects/perspectivetransformeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> PerspectiveTransform</a>
+<a href="gui/effects/pincheffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Pinch</a>
+<a href="gui/effects/pixelateeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Pixelate</a>
+<a href="gui/effects/radialblureffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> RadialBlur</a>
+<a href="gui/effects/reflectioneffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Reflection</a>
+<a href="gui/effects/rippleeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Ripple</a>
+<a href="gui/effects/sepiaeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Sepia</a>
+<a href="gui/effects/shadoweffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Shadow</a>
+<a href="gui/effects/sharpeneffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Sharpen</a>
+<a href="gui/effects/smoothmagnifyeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> SmoothMagnify</a>
+<a href="gui/effects/swirleffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Swirl</a>
+<a href="gui/effects/tilereffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Tiler</a>
+<a href="gui/effects/tooneffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Toon</a>
+<a href="gui/effects/waveeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Wave</a>
+<a href="gui/effects/wrapeffectlib.html" class="lib-chip"><span class="chip-icon">◇</span> Wrap</a>
+</div>
+
+<div class="sub-label">Transition Effects <span class="sub-count">23 libraries</span></div>
+<div class="chip-grid">
+<a href="gui/effects/bandedswirltransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> BandedSwirl</a>
+<a href="gui/effects/blindtransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Blind</a>
+<a href="gui/effects/bloodtransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Blood</a>
+<a href="gui/effects/blurtransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Blur</a>
+<a href="gui/effects/brighttransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Bright</a>
+<a href="gui/effects/circletransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Circle</a>
+<a href="gui/effects/crumpletransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Crumple</a>
+<a href="gui/effects/dissolvetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Dissolve</a>
+<a href="gui/effects/droptransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Drop</a>
+<a href="gui/effects/fadetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Fade</a>
+<a href="gui/effects/linetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Line</a>
+<a href="gui/effects/magnifytransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Magnify</a>
+<a href="gui/effects/pixelatetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Pixelate</a>
+<a href="gui/effects/rippletransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Ripple</a>
+<a href="gui/effects/rotatecrumpletransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> RotateCrumple</a>
+<a href="gui/effects/saturatetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Saturate</a>
+<a href="gui/effects/shapetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Shape</a>
+<a href="gui/effects/slidetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Slide</a>
+<a href="gui/effects/swipetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Swipe</a>
+<a href="gui/effects/swirltransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Swirl</a>
+<a href="gui/effects/watertransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Water</a>
+<a href="gui/effects/wavetransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Wave</a>
+<a href="gui/effects/wiggletransitioneffectlib.html" class="lib-chip"><span class="chip-icon">▹</span> Wiggle</a>
+</div>
+
+<h2 class="cat-title">Artificial Intelligence</h2>
+<div class="card-grid">
+<a href="ai/ailib.html" class="lib-card">
+  <div class="card-icon">🤖</div>
+  <div class="card-name">AILib</div>
+  <div class="card-desc">45 LLM functions: provider-agnostic client, chat, streaming, conversation history, token tracking, and multi-provider support (Claude, GPT, Gemini, Ollama, and more).</div>
+</a>
+<a href="ai/raglib.html" class="lib-card">
+  <div class="card-icon">📚</div>
+  <div class="card-name">RAGLib</div>
+  <div class="card-desc">13 RAG functions: knowledge base indexing, semantic retrieval, budget-aware search, and document lookup for AI-assisted applets.</div>
+</a>
+</div>
+
+<div class="footer-note">
+    Plan9Basic &copy; 2025 &mdash; Modern BASIC for everyone.
+</div>
+</div>
+
+<div class="theme-selector">
+    <button class="theme-btn" data-theme="green" style="background:#00ff41" title="Green"></button>
+    <button class="theme-btn" data-theme="amber" style="background:#ffb000" title="Amber"></button>
+    <button class="theme-btn" data-theme="blue" style="background:#00d4ff" title="Blue"></button>
+    <button class="theme-btn" data-theme="pink" style="background:#ff6ec7" title="Pink"></button>
+    <button class="theme-btn" data-theme="white" style="background:#e0e0e0" title="White"></button>
+</div>
+
+<script>
+// Theme
+const themes=['green','amber','blue','pink','white'];
+let ti=0;
+function cycleTheme(){
+  ti=(ti+1)%themes.length;
+  document.documentElement.setAttribute('data-theme',themes[ti]);
+  document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
+  localStorage.setItem('p9t',themes[ti]);
+}
+const st=localStorage.getItem('p9t');
+if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
+
+// Sidebar toggle (mobile) - guard for pages without sidebar
+const sidebar=document.getElementById('sidebar');
+const overlay=document.getElementById('sidebarOverlay');
+const toggle=document.getElementById('sidebarToggle');
+if(toggle&&sidebar&&overlay){
+toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+}
+
+// Active sidebar link on scroll
+const sections=document.querySelectorAll('.doc-section');
+const sidebarLinks=document.querySelectorAll('.sidebar-link');
+if(sidebarLinks.length>0){
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      sidebarLinks.forEach(l=>l.classList.remove('active'));
+      const active=document.querySelector('.sidebar-link[href="#'+e.target.id+'"]');
+      if(active)active.classList.add('active');
+    }
+  });
+},{threshold:0.1,rootMargin:'-80px 0px -60% 0px'});
+sections.forEach(s=>observer.observe(s));
+
+// Close sidebar on link click (mobile)
+sidebarLinks.forEach(l=>l.addEventListener('click',()=>{
+  if(window.innerWidth<=768&&sidebar){sidebar.classList.remove('open');overlay.classList.remove('show');}
+}));
+}
+</script>
+</body>
+</html>

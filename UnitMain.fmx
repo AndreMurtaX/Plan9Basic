@@ -1,0 +1,414 @@
+object frmMain: TfrmMain
+  Left = 0
+  Top = 0
+  Caption = 'Plan9 BASIC'
+  ClientHeight = 600
+  ClientWidth = 900
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnCloseQuery = FormCloseQuery
+  OnDestroy = FormDestroy
+  OnKeyUp = FormKeyUp
+  OnResize = FormResize
+  OnVirtualKeyboardShown = FormVirtualKeyboardShown
+  OnVirtualKeyboardHidden = FormVirtualKeyboardHidden
+  DesignerMasterStyle = 0
+  object LayoutMain: TLayout
+    Align = Client
+    Size.Width = 900.000000000000000000
+    Size.Height = 600.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object RectBackground: TRectangle
+      Align = Client
+      Fill.Color = xFF0A0A0A
+      Size.Width = 900.000000000000000000
+      Size.Height = 600.000000000000000000
+      Size.PlatformDefault = False
+      Stroke.Kind = None
+      object LayoutHeader: TLayout
+        Align = Top
+        Size.Width = 900.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        object lblTitle: TLabel
+          Align = Left
+          StyledSettings = []
+          Margins.Left = 10.000000000000000000
+          Position.X = 10.000000000000000000
+          Size.Width = 180.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Family = 'Consolas'
+          TextSettings.Font.Size = 14.000000000000000000
+          TextSettings.FontColor = claLime
+          Text = 'Plan9 BASIC v1.0'
+          TabOrder = 0
+        end
+        object lblFKeys: TLabel
+          Align = Client
+          StyledSettings = []
+          Size.Width = 710.000000000000000000
+          Size.Height = 32.000000000000000000
+          Size.PlatformDefault = False
+          TextSettings.Font.Family = 'Consolas'
+          TextSettings.Font.Size = 10.000000000000000000
+          TextSettings.FontColor = xFF00AA00
+          TextSettings.HorzAlign = Center
+          Text = 'F1=Help F2=Save F3=Load F5=Run F7=Mode F8=Theme F9=Files'
+          TabOrder = 1
+        end
+      end
+      object LayoutToolbar: TLayout
+        Align = Top
+        Position.Y = 32.000000000000000000
+        Size.Width = 900.000000000000000000
+        Size.Height = 44.000000000000000000
+        Size.PlatformDefault = False
+        object RectToolbarBackground: TRectangle
+          Align = Client
+          Fill.Color = xFF1A1A1A
+          Size.Width = 900.000000000000000000
+          Size.Height = 44.000000000000000000
+          Size.PlatformDefault = False
+          Stroke.Kind = None
+          object FlowToolbar: TFlowLayout
+            Align = Top
+            Size.Width = 900.000000000000000000
+            Size.Height = 44.000000000000000000
+            Size.PlatformDefault = False
+            Justify = Left
+            JustifyLastLine = Left
+            FlowDirection = LeftToRight
+            object btnNew: TSpeedButton
+              StyledSettings = []
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'NEW'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnNewClick
+            end
+            object btnLoad: TSpeedButton
+              StyledSettings = []
+              Position.X = 60.000000000000000000
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'LOAD'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnLoadClick
+            end
+            object btnSave: TSpeedButton
+              StyledSettings = []
+              Position.X = 120.000000000000000000
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'SAVE'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnSaveClick
+            end
+            object btnRun: TSpeedButton
+              StyledSettings = []
+              Position.X = 180.000000000000000000
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'RUN'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnRunClick
+            end
+            object btnMode: TSpeedButton
+              StyledSettings = []
+              Position.X = 240.000000000000000000
+              Size.Width = 70.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'MODE'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnModeClick
+            end
+            object btnTheme: TSpeedButton
+              StyledSettings = []
+              Position.X = 310.000000000000000000
+              Size.Width = 70.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'THEME'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnThemeClick
+            end
+            object btnFiles: TSpeedButton
+              StyledSettings = []
+              Position.X = 380.000000000000000000
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'FILES'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnFilesClick
+            end
+            object btnHelp: TSpeedButton
+              StyledSettings = []
+              Position.X = 440.000000000000000000
+              Size.Width = 60.000000000000000000
+              Size.Height = 44.000000000000000000
+              Size.PlatformDefault = False
+              Text = 'HELP'
+              TextSettings.Font.Family = 'Consolas'
+              TextSettings.Font.Size = 11.000000000000000000
+              TextSettings.FontColor = claLime
+              OnClick = btnHelpClick
+            end
+          end
+        end
+      end
+      object LayoutConsole: TLayout
+        Align = Client
+        Margins.Left = 5.000000000000000000
+        Margins.Top = 2.000000000000000000
+        Margins.Right = 5.000000000000000000
+        Margins.Bottom = 2.000000000000000000
+        Size.Width = 890.000000000000000000
+        Size.Height = 460.000000000000000000
+        Size.PlatformDefault = False
+        object RectConsoleBackground: TRectangle
+          Align = Client
+          Fill.Color = xFF0A0A0A
+          Size.Width = 890.000000000000000000
+          Size.Height = 460.000000000000000000
+          Size.PlatformDefault = False
+          Stroke.Color = xFF333333
+          object Console: TMemo
+            Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+            DataDetectorTypes = []
+            ReadOnly = True
+            StyledSettings = []
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 14.000000000000000000
+            TextSettings.FontColor = claLime
+            Align = Client
+            Margins.Left = 5.000000000000000000
+            Margins.Top = 5.000000000000000000
+            Margins.Right = 5.000000000000000000
+            Margins.Bottom = 5.000000000000000000
+            Size.Width = 880.000000000000000000
+            Size.Height = 450.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+            Viewport.Width = 876.000000000000000000
+            Viewport.Height = 446.000000000000000000
+          end
+        end
+      end
+      object LayoutEditor: TLayout
+        Align = Client
+        Margins.Left = 5.000000000000000000
+        Margins.Top = 2.000000000000000000
+        Margins.Right = 5.000000000000000000
+        Margins.Bottom = 2.000000000000000000
+        Size.Width = 890.000000000000000000
+        Size.Height = 434.000000000000000000
+        Size.PlatformDefault = False
+        Visible = False
+        object RectEditorBackground: TRectangle
+          Align = Client
+          Fill.Color = xFF0A0A0A
+          Size.Width = 890.000000000000000000
+          Size.Height = 434.000000000000000000
+          Size.PlatformDefault = False
+          Stroke.Color = xFF333333
+          object LayoutLineNumbers: TLayout
+            Align = Left
+            Size.Width = 50.000000000000000000
+            Size.Height = 434.000000000000000000
+            Size.PlatformDefault = False
+            object RectLineNumbers: TRectangle
+              Align = Client
+              Fill.Color = xFF151515
+              Size.Width = 50.000000000000000000
+              Size.Height = 434.000000000000000000
+              Size.PlatformDefault = False
+              Stroke.Kind = None
+              object memoLineNumbers: TMemo
+                Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+                DataDetectorTypes = []
+                ReadOnly = True
+                ShowScrollBars = False
+                StyledSettings = []
+                TextSettings.Font.Family = 'Consolas'
+                TextSettings.Font.Size = 14.000000000000000000
+                TextSettings.FontColor = xFF666666
+                TextSettings.HorzAlign = Trailing
+                Align = Client
+                Margins.Top = 5.000000000000000000
+                Margins.Right = 5.000000000000000000
+                Margins.Bottom = 5.000000000000000000
+                Size.Width = 45.000000000000000000
+                Size.Height = 424.000000000000000000
+                Size.PlatformDefault = False
+                TabOrder = 0
+                Viewport.Width = 45.000000000000000000
+                Viewport.Height = 424.000000000000000000
+              end
+            end
+          end
+          object Editor: TMemo
+            Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+            DataDetectorTypes = []
+            StyledSettings = []
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 14.000000000000000000
+            TextSettings.FontColor = claLime
+            OnChange = EditorChange
+            Align = Client
+            Margins.Top = 5.000000000000000000
+            Margins.Right = 5.000000000000000000
+            Margins.Bottom = 5.000000000000000000
+            Size.Width = 835.000000000000000000
+            Size.Height = 424.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 1
+            OnViewportPositionChange = EditorViewportPositionChange
+            Viewport.Width = 835.000000000000000000
+            Viewport.Height = 424.000000000000000000
+          end
+        end
+      end
+      object LayoutInput: TLayout
+        Align = Bottom
+        Position.Y = 564.000000000000000000
+        Size.Width = 900.000000000000000000
+        Size.Height = 36.000000000000000000
+        Size.PlatformDefault = False
+        object RectInputBackground: TRectangle
+          Align = Client
+          Fill.Color = xFF0A0A0A
+          Size.Width = 900.000000000000000000
+          Size.Height = 36.000000000000000000
+          Size.PlatformDefault = False
+          Stroke.Color = xFF333333
+          object lblPrompt: TLabel
+            Align = Left
+            StyledSettings = []
+            Size.Width = 25.000000000000000000
+            Size.Height = 36.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 14.000000000000000000
+            TextSettings.FontColor = claLime
+            TextSettings.HorzAlign = Center
+            Text = '>'
+            TabOrder = 0
+          end
+          object edtCommand: TEdit
+            Touch.InteractiveGestures = [LongTap, DoubleTap]
+            Align = Client
+            TabOrder = 1
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 14.000000000000000000
+            TextSettings.FontColor = claLime
+            Margins.Top = 5.000000000000000000
+            Margins.Right = 5.000000000000000000
+            Margins.Bottom = 5.000000000000000000
+            Size.Width = 870.000000000000000000
+            Size.Height = 26.000000000000000000
+            Size.PlatformDefault = False
+            StyledSettings = []
+            OnKeyUp = edtCommandKeyUp
+          end
+        end
+      end
+      object LayoutStatus: TLayout
+        Align = Bottom
+        Position.Y = 540.000000000000000000
+        Size.Width = 900.000000000000000000
+        Size.Height = 24.000000000000000000
+        Size.PlatformDefault = False
+        object RectStatusBackground: TRectangle
+          Align = Client
+          Fill.Color = xFF1A1A1A
+          Size.Width = 900.000000000000000000
+          Size.Height = 24.000000000000000000
+          Size.PlatformDefault = False
+          Stroke.Kind = None
+          object lblStatusMode: TLabel
+            Align = Left
+            StyledSettings = []
+            Margins.Left = 10.000000000000000000
+            Position.X = 10.000000000000000000
+            Size.Width = 100.000000000000000000
+            Size.Height = 24.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 11.000000000000000000
+            TextSettings.FontColor = claLime
+            Text = 'COMMAND'
+            TabOrder = 0
+          end
+          object lblStatusFile: TLabel
+            Align = Client
+            StyledSettings = []
+            Margins.Left = 10.000000000000000000
+            Margins.Right = 10.000000000000000000
+            Size.Width = 550.000000000000000000
+            Size.Height = 24.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 11.000000000000000000
+            TextSettings.FontColor = xFF00AA00
+            Text = '[No file]'
+            TabOrder = 1
+          end
+          object lblStatusLines: TLabel
+            Align = Right
+            StyledSettings = []
+            Margins.Right = 10.000000000000000000
+            Position.X = 770.000000000000000000
+            Size.Width = 120.000000000000000000
+            Size.Height = 24.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 11.000000000000000000
+            TextSettings.FontColor = xFF00AA00
+            TextSettings.HorzAlign = Trailing
+            Text = '0 lines'
+            TabOrder = 2
+          end
+          object lblStatusTheme: TLabel
+            Align = Right
+            StyledSettings = []
+            Margins.Right = 10.000000000000000000
+            Position.X = 680.000000000000000000
+            Size.Width = 80.000000000000000000
+            Size.Height = 24.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Consolas'
+            TextSettings.Font.Size = 11.000000000000000000
+            TextSettings.FontColor = xFF00AA00
+            TextSettings.HorzAlign = Trailing
+            Text = 'GREEN'
+            TabOrder = 3
+          end
+        end
+      end
+    end
+  end
+end
