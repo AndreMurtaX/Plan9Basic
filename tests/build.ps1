@@ -71,7 +71,8 @@ New-Item -ItemType Directory -Force $dcuDir | Out-Null
 # The .dpr references project units by relative path, so the compiler has to run
 # from the tests directory. Implicit units (TimerLib, pulled in by exec.pas) are
 # resolved through the search path below.
-$searchPath = '..;..\Libs;..\Libs\GUI;..\Libs\GUI\Effects;..\Libs\GUI\Animations;..\utils'
+$searchPath = '..;..\Libs;..\Libs\GUI;..\Libs\GUI\Effects;..\Libs\GUI\Animations;..\utils;' +
+              '..\engine;..\engine\Libs;..\engine\Libs\GUI;..\engine\Libs\AI;..\engine\utils'
 
 Push-Location $here
 try {
