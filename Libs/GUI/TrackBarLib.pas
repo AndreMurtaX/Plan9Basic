@@ -101,7 +101,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasTrackBar = class(TTrackBar)
@@ -253,7 +253,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasTrackBar) then
+    if not(IsHandleOf(P, TBasTrackBar)) then
     begin
       SetError(ERR_INVALID_TRACKBAR, FuncName + ': Invalid object');
       Exit();
@@ -349,6 +349,7 @@ end;
 constructor TBasTrackBar.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   OnPresentationNameChoosing := ChoosePresentationName;
 
@@ -376,6 +377,7 @@ end;
 
 destructor TBasTrackBar.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

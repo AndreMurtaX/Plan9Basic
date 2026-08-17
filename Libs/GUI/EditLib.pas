@@ -14,7 +14,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Edit,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasEdit = class(TEdit)
@@ -153,7 +153,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasEdit) then
+    if not(IsHandleOf(P, TBasEdit)) then
     begin
       SetError(ERR_INVALID_EDIT, FuncName + ': Invalid object');
       Exit();
@@ -321,6 +321,7 @@ end;
 constructor TBasEdit.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnChangeTrackingFunc := '';
   FOnTypingFunc := '';
@@ -346,6 +347,7 @@ end;
 
 destructor TBasEdit.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

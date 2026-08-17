@@ -20,7 +20,7 @@ interface
 
 uses
   System.SysUtils, System.Generics.Collections, System.Math,
-  exec, UnitGC;
+  exec, UnitGC, HandleRegistry;
 
 type
   // Dictionary type enumeration for runtime type checking
@@ -31,6 +31,11 @@ type
   protected
     FDictType: TBasDictType;
   public
+    //See the note in ArrayLib: these two hooks cover every creation and
+    //destruction path without touching each descendant's constructor.
+    procedure AfterConstruction(); override;
+    procedure BeforeDestruction(); override;
+
     property DictType: TBasDictType read FDictType;
     function GetCount: Integer; virtual; abstract;
     function ContainsKey(const key: String): Boolean; virtual; abstract;
@@ -127,7 +132,7 @@ begin
   if p = nil then
     raise Exception.CreateFmt('%s: Null dictionary pointer', [funcName]);
 
-  if not (TObject(p) is TBasDictBase) then
+  if not (IsHandleOf(p, TBasDictBase)) then
     raise Exception.CreateFmt('%s: Invalid dictionary object', [funcName]);
 
   base := TBasDictBase(p);
@@ -140,13 +145,25 @@ begin
   if p = nil then
     raise Exception.CreateFmt('%s: Null dictionary pointer', [funcName]);
 
-  if not (TObject(p) is TBasDictBase) then
+  if not (IsHandleOf(p, TBasDictBase)) then
     raise Exception.CreateFmt('%s: Invalid dictionary object', [funcName]);
 end;
 
 {------------------------------------------------------------------------------
   TBasNumericDict - Numeric dictionary implementation
 ------------------------------------------------------------------------------}
+
+procedure TBasDictBase.AfterConstruction();
+begin
+  inherited AfterConstruction();
+  RegisterHandle(Self);
+end;
+
+procedure TBasDictBase.BeforeDestruction();
+begin
+  UnregisterHandle(Self);
+  inherited BeforeDestruction();
+end;
 
 constructor TBasNumericDict.Create();
 begin

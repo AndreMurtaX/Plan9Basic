@@ -115,7 +115,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math, System.Math.Vectors,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasPath = class(TPath)
@@ -279,7 +279,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasPath) then
+    if not (IsHandleOf(P, TBasPath)) then
     begin
       SetError(ERR_INVALID_PATH, FuncName + ': Invalid path object');
       Exit;
@@ -495,6 +495,7 @@ end;
 constructor TBasPath.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -527,6 +528,7 @@ end;
 
 destructor TBasPath.Destroy;
 begin
+  UnregisterHandle(Self);
   DisconnectEvents;
   inherited Destroy;
 end;

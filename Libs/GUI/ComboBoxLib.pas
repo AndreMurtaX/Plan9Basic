@@ -77,7 +77,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.ListBox,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasComboBox = class(TComboBox)
@@ -218,7 +218,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasComboBox) then
+    if not(IsHandleOf(P, TBasComboBox)) then
     begin
       SetError(ERR_INVALID_COMBOBOX, FuncName + ': Invalid object');
       Exit();
@@ -311,6 +311,7 @@ end;
 constructor TBasComboBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -335,6 +336,7 @@ end;
 
 destructor TBasComboBox.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

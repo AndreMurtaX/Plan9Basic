@@ -87,7 +87,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Controls, FMX.Ani, FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasBitmapListAnimation = class(TBitmapListAnimation)
@@ -159,7 +159,7 @@ begin
     SetError(ERR_NIL_ANIMATION, FuncName + ': animation is nil');
     Exit;
   end;
-  if not (TObject(P) is TBasBitmapListAnimation) then
+  if not (IsHandleOf(P, TBasBitmapListAnimation)) then
   begin
     SetError(ERR_INVALID_PROPERTY, FuncName + ': invalid animation object');
     Exit;
@@ -174,6 +174,7 @@ end;
 constructor TBasBitmapListAnimation.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnFinishFunc := '';
   FOnProcessFunc := '';
   FBasicEngine := nil;
@@ -182,6 +183,7 @@ end;
 
 destructor TBasBitmapListAnimation.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

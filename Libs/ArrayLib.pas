@@ -44,7 +44,7 @@ interface
 
 uses
   System.SysUtils, System.Math,
-  exec, UnitGC;
+  exec, UnitGC, HandleRegistry;
 
 type
   // Dynamic array type for dimensions (consistent usage)
@@ -59,6 +59,13 @@ type
     FArrayType: TBasArrayType;
     FDimensions: TIntegerDynArray;
   public
+    //Registration lives in AfterConstruction/BeforeDestruction rather than in
+    //a constructor pair, because the descendants each declare their own
+    //Create(const dims) and none declares a destructor. These two hooks run
+    //for every instance on every creation and destruction path.
+    procedure AfterConstruction(); override;
+    procedure BeforeDestruction(); override;
+
     property ArrayType: TBasArrayType read FArrayType;
     property Dimensions: TIntegerDynArray read FDimensions;
     function GetDimensionCount: Integer;
@@ -102,6 +109,18 @@ const
 {------------------------------------------------------------------------------
   TBasArrayBase - Base class implementation
 ------------------------------------------------------------------------------}
+
+procedure TBasArrayBase.AfterConstruction();
+begin
+  inherited AfterConstruction();
+  RegisterHandle(Self);
+end;
+
+procedure TBasArrayBase.BeforeDestruction();
+begin
+  UnregisterHandle(Self);
+  inherited BeforeDestruction();
+end;
 
 function TBasArrayBase.GetDimensionCount: Integer;
 begin
@@ -228,7 +247,7 @@ begin
   if p = nil then
     raise Exception.CreateFmt('%s: Null array pointer', [funcName]);
 
-  if not (TObject(p) is TBasArrayBase) then
+  if not (IsHandleOf(p, TBasArrayBase)) then
     raise Exception.CreateFmt('%s: Invalid array object', [funcName]);
 
   base := TBasArrayBase(p);
@@ -555,7 +574,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('ndims: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('ndims: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -578,7 +597,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('ubound: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('ubound: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -604,7 +623,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('lbound: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('lbound: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -630,7 +649,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('arraysize: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('arraysize: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -652,7 +671,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('arraytype: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('arraytype: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -674,7 +693,7 @@ begin
   if Args[0].p = nil then
     raise Exception.Create('arraytypename$: Null array pointer');
 
-  if not (TObject(Args[0].p) is TBasArrayBase) then
+  if not (IsHandleOf(Args[0].p, TBasArrayBase)) then
     raise Exception.Create('arraytypename$: Invalid array object');
 
   base := TBasArrayBase(Args[0].p);
@@ -701,10 +720,11 @@ begin
   if Args[0].p = nil then
     Exit;
 
-  // Validate it's an array object
-  obj := TObject(Args[0].p);
-  if not (obj is TBasArrayBase) then
+  // Validate it's an array object. The registry answers from the pointer
+  // value, so an address the BASIC program invented is never dereferenced.
+  if not IsHandleOf(Args[0].p, TBasArrayBase) then
     raise Exception.Create('arr_free: Invalid array pointer');
+  obj := TObject(Args[0].p);
 
   // Remove from garbage collector using pointer address as tag
   // This matches the tag used when the array was created

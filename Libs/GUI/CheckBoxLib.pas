@@ -92,7 +92,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasCheckBox = class(TCheckBox)
@@ -235,7 +235,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasCheckBox) then
+    if not(IsHandleOf(P, TBasCheckBox)) then
     begin
       SetError(ERR_INVALID_CHECKBOX, FuncName + ': Invalid object');
       Exit();
@@ -326,6 +326,7 @@ end;
 constructor TBasCheckBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -355,6 +356,7 @@ end;
 
 destructor TBasCheckBox.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

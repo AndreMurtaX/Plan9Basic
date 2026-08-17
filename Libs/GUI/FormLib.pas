@@ -82,7 +82,7 @@ uses
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Dialogs,
   FMX.Platform, FMX.Styles, FMX.StdCtrls,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   // Forward declaration
@@ -281,7 +281,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasForm) then
+    if not (IsHandleOf(P, TBasForm)) then
     begin
       SetError(ERR_INVALID_FORM, FuncName + ': Invalid form object');
       Exit();
@@ -316,6 +316,7 @@ begin
   // Use CreateNew for runtime form creation without DFM resources
   // This is essential for cross-platform dynamic form creation
   inherited CreateNew(AOwner);
+  RegisterHandle(Self);
 
   // Initialize callback function names
   FOnShowFunc := '';
@@ -346,6 +347,7 @@ end;
 
 destructor TBasForm.Destroy;
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy;
 end;

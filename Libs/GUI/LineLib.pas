@@ -48,7 +48,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasLine = class(TLine)
@@ -210,7 +210,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasLine) then
+    if not (IsHandleOf(P, TBasLine)) then
     begin
       SetError(ERR_INVALID_LINE, FuncName + ': Invalid line object');
       Exit;
@@ -422,6 +422,7 @@ end;
 constructor TBasLine.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -453,6 +454,7 @@ end;
 
 destructor TBasLine.Destroy;
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy;
 end;

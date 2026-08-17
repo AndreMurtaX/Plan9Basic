@@ -56,7 +56,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Generics.Collections,
   FMX.Types,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasTimer = class(TTimer)
@@ -137,7 +137,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasTimer) then
+    if not (IsHandleOf(P, TBasTimer)) then
     begin
       SetError(ERR_INVALID_TIMER, FuncName + ': Invalid object');
       Exit();
@@ -164,6 +164,7 @@ end;
 constructor TBasTimer.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   FOnTimerFunc := '';
   FBasicEngine := nil;
@@ -176,6 +177,7 @@ end;
 
 destructor TBasTimer.Destroy();
 begin
+  UnregisterHandle(Self);
   // Disable timer and clear event handler before destruction
   // This deregisters from the platform timer service
   Enabled := False;

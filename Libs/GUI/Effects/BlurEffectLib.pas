@@ -64,7 +64,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Effects,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasBlurEffect = class(TBlurEffect)
@@ -113,7 +113,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
     Exit;
   end;
-  if not (TObject(P) is TBasBlurEffect) then
+  if not (IsHandleOf(P, TBasBlurEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName + ': invalid blur effect object');
     Exit;
@@ -144,6 +144,7 @@ end;
 constructor TBasBlurEffect.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   // Default values
   Softness := 0.4; // FireMonkey default
   Enabled := True;
@@ -151,6 +152,7 @@ end;
 
 destructor TBasBlurEffect.Destroy();
 begin
+  UnregisterHandle(Self);
   inherited Destroy();
 end;
 

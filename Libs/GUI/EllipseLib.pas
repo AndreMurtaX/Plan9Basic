@@ -27,7 +27,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasEllipse = class;
@@ -178,7 +178,7 @@ begin
     Exit;
   end;
   try
-    if not (TObject(P) is TBasEllipse) then
+    if not (IsHandleOf(P, TBasEllipse)) then
     begin
       SetError(ERR_INVALID_ELLIPSE, FuncName + ': Invalid ellipse object');
       Exit;
@@ -367,6 +367,7 @@ end;
 constructor TBasEllipse.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnClickFunc := '';
   FOnDblClickFunc := '';
   FOnMouseDownFunc := '';
@@ -384,6 +385,7 @@ end;
 
 destructor TBasEllipse.Destroy;
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

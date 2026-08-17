@@ -81,7 +81,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasProgressBar = class(TProgressBar)
@@ -209,7 +209,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasProgressBar) then
+    if not(IsHandleOf(P, TBasProgressBar)) then
     begin
       SetError(ERR_INVALID_PROGRESSBAR, FuncName + ': Invalid object');
       Exit();
@@ -305,6 +305,7 @@ end;
 constructor TBasProgressBar.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   OnPresentationNameChoosing := ChoosePresentationName;
 
@@ -326,6 +327,7 @@ end;
 
 destructor TBasProgressBar.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

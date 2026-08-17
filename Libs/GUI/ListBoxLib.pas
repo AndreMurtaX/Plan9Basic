@@ -92,7 +92,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.ListBox,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasListBox = class(TListBox)
@@ -242,7 +242,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasListBox) then
+    if not(IsHandleOf(P, TBasListBox)) then
     begin
       SetError(ERR_INVALID_LISTBOX, FuncName + ': Invalid object');
       Exit();
@@ -318,6 +318,7 @@ end;
 constructor TBasListBox.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnItemClickFunc := '';
   FOnClickFunc := '';
@@ -343,6 +344,7 @@ end;
 
 destructor TBasListBox.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

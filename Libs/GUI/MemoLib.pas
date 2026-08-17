@@ -23,7 +23,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Memo,
   FMX.Controls.Presentation, FMX.Text, FMX.ScrollBox,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasMemo = class(TMemo)
@@ -157,7 +157,7 @@ begin
     Exit;
   end;
   try
-    if not(TObject(P) is TBasMemo) then
+    if not(IsHandleOf(P, TBasMemo)) then
     begin
       SetError(ERR_INVALID_MEMO, FuncName + ': Invalid object');
       Exit;
@@ -269,6 +269,7 @@ end;
 constructor TBasMemo.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnChangeTrackingFunc := '';
   FOnEnterFunc := '';
@@ -295,6 +296,7 @@ end;
 
 destructor TBasMemo.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

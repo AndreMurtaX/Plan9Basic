@@ -120,7 +120,7 @@ uses
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   // Forward declaration
@@ -295,7 +295,7 @@ begin
 
   // Use try-except because "is" operator can crash on invalid pointers
   try
-    if not (TObject(P) is TBasPanel) then
+    if not (IsHandleOf(P, TBasPanel)) then
     begin
       SetError(ERR_INVALID_PANEL, FuncName + ': Invalid panel object');
       Exit;
@@ -444,6 +444,7 @@ end;
 constructor TBasPanel.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   // Initialize callback function names
   FOnClickFunc := '';
@@ -471,6 +472,7 @@ end;
 
 destructor TBasPanel.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

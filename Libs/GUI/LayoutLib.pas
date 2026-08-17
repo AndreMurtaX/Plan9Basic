@@ -104,7 +104,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Layouts,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   // Forward declaration
@@ -283,7 +283,7 @@ begin
 
   // Use try-except because "is" operator can crash on invalid pointers
   try
-    if not (TObject(P) is TBasLayout) then
+    if not (IsHandleOf(P, TBasLayout)) then
     begin
       SetError(ERR_INVALID_LAYOUT, FuncName + ': Invalid layout object');
       Exit;
@@ -432,6 +432,7 @@ end;
 constructor TBasLayout.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   // Initialize callback function names
   FOnClickFunc := '';
@@ -457,6 +458,7 @@ end;
 
 destructor TBasLayout.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

@@ -52,7 +52,7 @@ uses
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Grid,
   FMX.Grid.Style, FMX.Controls.Presentation, FMX.ScrollBox,
   FMX.Presentation.Factory, FMX.Platform,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasStringGrid = class(TStringGrid)
@@ -251,7 +251,7 @@ begin
     Exit();
   end;
   try
-    if not(TObject(P) is TBasStringGrid) then
+    if not(IsHandleOf(P, TBasStringGrid)) then
     begin
       SetError(ERR_INVALID_GRID, FuncName + ': Invalid object');
       Exit();
@@ -410,6 +410,7 @@ end;
 constructor TBasStringGrid.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   FOnCellClickFunc := '';
   FOnCellDblClickFunc := '';
@@ -436,6 +437,7 @@ end;
 
 destructor TBasStringGrid.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

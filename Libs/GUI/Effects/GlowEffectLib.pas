@@ -58,7 +58,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Effects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasGlowEffect = class(TGlowEffect)
@@ -108,7 +108,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
     Exit;
   end;
-  if not (TObject(P) is TBasGlowEffect) then
+  if not (IsHandleOf(P, TBasGlowEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName + ': invalid glow effect object');
     Exit;
@@ -139,6 +139,7 @@ end;
 constructor TBasGlowEffect.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   // Set sensible defaults for visible glow
   Softness := 4.0;
   GlowColor := TAlphaColorRec.Yellow;
@@ -148,6 +149,7 @@ end;
 
 destructor TBasGlowEffect.Destroy();
 begin
+  UnregisterHandle(Self);
   inherited Destroy();
 end;
 

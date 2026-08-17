@@ -85,7 +85,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Ani, FMX.Graphics, FMX.Objects, FMX.Controls,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasPathAnimation = class(TPathAnimation)
@@ -156,7 +156,7 @@ begin
     SetError(ERR_NIL_ANIMATION, FuncName + ': animation is nil');
     Exit;
   end;
-  if not (TObject(P) is TBasPathAnimation) then
+  if not (IsHandleOf(P, TBasPathAnimation)) then
   begin
     SetError(ERR_INVALID_PROPERTY, FuncName + ': invalid animation object');
     Exit;
@@ -171,6 +171,7 @@ end;
 constructor TBasPathAnimation.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnFinishFunc := '';
   FOnProcessFunc := '';
   FBasicEngine := nil;
@@ -180,6 +181,7 @@ end;
 
 destructor TBasPathAnimation.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

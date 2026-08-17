@@ -108,7 +108,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasRadioButton = class(TRadioButton)
@@ -251,7 +251,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasRadioButton) then
+    if not(IsHandleOf(P, TBasRadioButton)) then
     begin
       SetError(ERR_INVALID_RADIOBUTTON, FuncName + ': Invalid object');
       Exit();
@@ -342,6 +342,7 @@ end;
 constructor TBasRadioButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnChangeFunc := '';
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -371,6 +372,7 @@ end;
 
 destructor TBasRadioButton.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

@@ -91,7 +91,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasSwitch = class(TSwitch)
@@ -241,7 +241,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasSwitch) then
+    if not(IsHandleOf(P, TBasSwitch)) then
     begin
       SetError(ERR_INVALID_SWITCH, FuncName + ': Invalid object');
       Exit();
@@ -337,6 +337,7 @@ end;
 constructor TBasSwitch.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   OnPresentationNameChoosing := ChoosePresentationName;
 
@@ -364,6 +365,7 @@ end;
 
 destructor TBasSwitch.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

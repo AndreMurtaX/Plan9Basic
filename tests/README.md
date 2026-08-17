@@ -93,5 +93,25 @@ comparar: `if dict_haskey(d#, "k") <> 0 then ...`.
 | `10_strlist.bas` | StrListLib |
 | `11_encoding.bas` | Base64Lib, GzipLib, RegexLib |
 | `12_fileio.bas` | IOUtilsLib e o round-trip de `savetext$`/`opentext$` |
+| `13_global_limit.bas` | 513 globais (o teto) ainda compila e roda |
+| `14_handle_registry.bas` | ponteiro forjado, discriminação de classe, revogação |
+
+## Suíte negativa
+
+`negative/` contém programas que o engine **tem** que rejeitar. São rodados com
+`--expect-fail`, onde o veredito é invertido: passar limpo é falha. `build.ps1`
+roda as duas suítes quando nenhum `-Path` é informado.
+
+| Arquivo | Deve ser rejeitado porque |
+|---|---|
+| `01_too_many_globals.bas` | 520 globais, acima do teto de 513 |
+| `02_fabricated_array_handle.bas` | ponteiro inventado passado ao ArrayLib |
+| `03_fabricated_dict_handle.bas` | idem para DictLib |
+| `04_fabricated_arr_free.bas` | idem para `arr_free` |
+
+Nos três últimos o que importa é *como* falha: a mensagem tem que ser o
+diagnóstico da própria biblioteca, e não uma access violation. A validação
+passou a consultar o `HandleRegistry` pelo valor do ponteiro em vez de
+dereferenciá-lo — no Android e no Linux o dereference matava o processo.
 
 Arquivos de trabalho dos testes são escritos em `bin/`, que não é versionado.

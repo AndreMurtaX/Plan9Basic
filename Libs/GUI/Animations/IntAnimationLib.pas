@@ -85,7 +85,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Ani,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasIntAnimation = class(TIntAnimation)
@@ -155,7 +155,7 @@ begin
     SetError(ERR_NIL_ANIMATION, FuncName + ': animation is nil');
     Exit;
   end;
-  if not (TObject(P) is TBasIntAnimation) then
+  if not (IsHandleOf(P, TBasIntAnimation)) then
   begin
     SetError(ERR_INVALID_PROPERTY, FuncName + ': invalid animation object');
     Exit;
@@ -170,6 +170,7 @@ end;
 constructor TBasIntAnimation.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnFinishFunc := '';
   FOnProcessFunc := '';
   FBasicEngine := nil;
@@ -179,6 +180,7 @@ end;
 
 destructor TBasIntAnimation.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

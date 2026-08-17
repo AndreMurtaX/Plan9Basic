@@ -78,7 +78,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasImage = class(TImage)
@@ -237,7 +237,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasImage) then
+    if not (IsHandleOf(P, TBasImage)) then
     begin
       SetError(ERR_INVALID_IMAGE, FuncName + ': Invalid image object');
       Exit();
@@ -389,6 +389,7 @@ end;
 constructor TBasImage.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   FOnClickFunc := '';
   FOnDblClickFunc := '';
@@ -415,6 +416,7 @@ end;
 
 destructor TBasImage.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

@@ -105,7 +105,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasSpeedButton = class(TSpeedButton)
@@ -221,7 +221,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TBasSpeedButton) then
+    if not(IsHandleOf(P, TBasSpeedButton)) then
     begin
       SetError(ERR_INVALID_SPEEDBUTTON, FuncName + ': Invalid object');
       Exit();
@@ -317,6 +317,7 @@ end;
 constructor TBasSpeedButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnClickFunc := '';
   FOnMouseDownFunc := '';
   FOnMouseUpFunc := '';
@@ -335,6 +336,7 @@ end;
 
 destructor TBasSpeedButton.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

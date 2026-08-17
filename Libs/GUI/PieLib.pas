@@ -16,7 +16,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasPie = class(TPie)
@@ -170,7 +170,7 @@ begin
     SetError(ERR_INVALID_PIE, FuncName + ': Nil pie pointer');
     Exit;
   end;
-  if not(TObject(P) is TBasPie) then
+  if not(IsHandleOf(P, TBasPie)) then
   begin
     SetError(ERR_INVALID_PIE, FuncName + ': Not a pie object');
     Exit;
@@ -345,6 +345,7 @@ end;
 constructor TBasPie.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   FOnClickFunc := '';
   FOnDblClickFunc := '';
   FOnMouseDownFunc := '';
@@ -366,6 +367,7 @@ end;
 
 destructor TBasPie.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

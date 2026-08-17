@@ -93,7 +93,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Controls, FMX.Media, FMX.Objects, FMX.Layouts,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   {****************************************************************************
@@ -315,7 +315,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasMediaPlayer) then
+    if not (IsHandleOf(P, TBasMediaPlayer)) then
     begin
       SetError(ERR_INVALID_PLAYER, FuncName + ': Invalid object type');
       Exit();
@@ -338,7 +338,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasMediaPlayerControl) then
+    if not (IsHandleOf(P, TBasMediaPlayerControl)) then
     begin
       SetError(ERR_INVALID_CONTROL, FuncName + ': Invalid object type');
       Exit();
@@ -505,6 +505,7 @@ end;
 constructor TBasMediaPlayer.Create();
 begin
   inherited Create();
+  RegisterHandle(Self);
   FMediaPlayer := TMediaPlayer.Create(nil);
   FOnEndFunc := '';
   FOnStateChangedFunc := '';
@@ -523,6 +524,7 @@ end;
 
 destructor TBasMediaPlayer.Destroy();
 begin
+  UnregisterHandle(Self);
   FTimer.Enabled := False;
   FTimer.Free();
   FMediaPlayer.Free();
@@ -770,6 +772,7 @@ end;
 constructor TBasMediaPlayerControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   // Create the inner media player control that will render video
   FMediaPlayerControl := TMediaPlayerControl.Create(Self);
@@ -819,6 +822,7 @@ end;
 
 destructor TBasMediaPlayerControl.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   FTimer.Enabled := False;
   // Unlink before freeing

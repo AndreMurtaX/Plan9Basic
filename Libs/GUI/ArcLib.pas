@@ -120,7 +120,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   // Forward declaration
@@ -313,7 +313,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TBasArc) then
+    if not (IsHandleOf(P, TBasArc)) then
     begin
       SetError(ERR_INVALID_ARC, FuncName + ': Invalid arc object');
       Exit;
@@ -505,6 +505,7 @@ end;
 constructor TBasArc.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
 
   // Initialize callback function names
   FOnClickFunc := '';
@@ -530,6 +531,7 @@ end;
 
 destructor TBasArc.Destroy();
 begin
+  UnregisterHandle(Self);
   DisconnectEvents();
   inherited Destroy();
 end;

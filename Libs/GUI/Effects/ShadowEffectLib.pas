@@ -58,7 +58,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Effects,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   TBasShadowEffect = class(TShadowEffect)
@@ -108,7 +108,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
     Exit();
   end;
-  if not (TObject(P) is TBasShadowEffect) then
+  if not (IsHandleOf(P, TBasShadowEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName + ': invalid shadow effect object');
     Exit();
@@ -162,6 +162,7 @@ end;
 constructor TBasShadowEffect.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  RegisterHandle(Self);
   // Set sensible defaults
   Distance := 3;
   Direction := 45;
@@ -173,6 +174,7 @@ end;
 
 destructor TBasShadowEffect.Destroy();
 begin
+  UnregisterHandle(Self);
   inherited Destroy();
 end;
 
