@@ -150,7 +150,7 @@ Cinco frentes, em ordem de retorno esperado.
 |---|---|---|---|
 | 1 | **Fundação de engenharia** | Versionamento, `.gitignore`, organização em disco | ✅ Concluída em 2026-08-17 |
 | 4 | **Testes** | Runner headless de `.bas` com asserts | ✅ Concluída em 2026-08-17 |
-| 3 | **Segurança de runtime** | Handles opacos por registry; guarda no limite de globais | ✅ Concluída em 2026-08-17 (menos a política de erro) |
+| 3 | **Segurança de runtime** | Handles opacos por registry; política de erro; guarda no limite de globais | ✅ Concluída em 2026-08-17 |
 | 2 | **Unificar o engine** | Uma única cópia de `exec`/`parser`/`lexer`/`basic`, consumida pelo IDE e pelo AppletRunner | ⚠️ Aguardando decisão de topologia — ver §8 |
 | 5 | **Colapsar boilerplate GUI** | Gerar os wrappers a partir de descritores, ou substituir por camada RTTI genérica | Pendente — ver §9 |
 
@@ -159,10 +159,10 @@ sem suíte executável, refatorar o engine ou as bibliotecas é trabalho no escu
 Ela já se pagou — encontrou dois defeitos reais durante a própria construção
 (§7).
 
-Restou de fora da frente 3 a **política de erro** no lugar dos ~234
-`try..except end`. Os dois itens que causavam corrupção de memória e crash duro
-foram resolvidos; o `except end` silencioso é degradação de diagnóstico, não
-perda de integridade, e é o item de maior volume dos três.
+A frente 3 saiu completa: guarda de globais, handles opacos e política de erro.
+O volume real do `except end` silencioso era **1.675 blocos**, não os 234 que
+esta análise estimou — a contagem original usava um padrão mais estreito e não
+alcançava a forma multilinha, que é a dominante.
 
 À parte do técnico, há uma discussão de produto pendente: o IDE console, o AppletRunner e o site sugerem uma direção de distribuição de applets que vale explicitar antes de fixar prioridades.
 
@@ -257,6 +257,25 @@ sequer o `try/except` em volta.
 
 Ponteiro forjado passado a `ndims`, `dict_count` ou `arr_free` agora produz o
 diagnóstico da própria biblioteca com a linha exata, em vez de access violation.
+
+### Frente 3 — política de erro
+
+1.675 blocos `try ... except end;` em 25 bibliotecas engoliam a exceção sem
+sequer registrar no `lastError` do módulo. Passam a registrar, mantendo o fluxo
+de controle: o acessor continua retornando normalmente, mas a falha fica visível
+pelos acessores de erro que cada lib já expõe.
+
+O rótulo é o nome que o programa BASIC usa, extraído da chamada de validação de
+handle que quase toda função já faz — `ValidateMemo(Args[0].P, 'memo_text#')`
+vira `SetError(ERR_OPERATION_FAILED, 'memo_text#: ' + E.Message)`. Dos 1.675
+sítios, 1.673 receberam o nome BASIC correto; 2 em `AILib` estavam em métodos de
+classe sem essa chamada e receberam o nome do método.
+
+Dois sítios em `RectAnimationLib` continuam silenciosos de propósito: são
+caminho de teardown, onde a única ação sensata é continuar desempilhando, e
+`SetError` é declarado depois deles na unidade.
+
+`SQLiteLib` ficou de fora: não segue o padrão de constantes de erro das demais.
 
 ### Defeitos encontrados pela suíte
 
