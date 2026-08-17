@@ -151,7 +151,7 @@ Cinco frentes, em ordem de retorno esperado.
 | 1 | **Fundação de engenharia** | Versionamento, `.gitignore`, organização em disco | ✅ Concluída em 2026-08-17 |
 | 4 | **Testes** | Runner headless de `.bas` com asserts | ✅ Concluída em 2026-08-17 |
 | 3 | **Segurança de runtime** | Handles opacos por registry; política de erro; guarda no limite de globais | ✅ Concluída em 2026-08-17 |
-| 2 | **Unificar o engine** | Uma única cópia de `exec`/`parser`/`lexer`/`basic`, consumida pelo IDE e pelo AppletRunner | ⚠️ Aguardando decisão de topologia — ver §8 |
+| 2 | **Unificar o engine** | Uma única cópia de `exec`/`parser`/`lexer`/`basic`, consumida pelo IDE e pelo AppletRunner | ✅ Concluída em 2026-08-17 |
 | 5 | **Colapsar boilerplate GUI** | Gerar os wrappers a partir de descritores, ou substituir por camada RTTI genérica | Pendente — ver §9 |
 
 A frente 4 foi executada primeiro por ser pré-requisito prático das demais:
@@ -300,33 +300,51 @@ caminho de teardown, onde a única ação sensata é continuar desempilhando, e
 
 ---
 
-## 8. Frente 2 — decisão pendente de topologia
+## 8. Registro da frente 2
 
-A divergência que esta análise previu **materializou-se durante este trabalho**.
-Antes, as duas cópias do engine diferiam apenas na linha de copyright:
+Executada em 2026-08-17, logo depois das frentes 4 e 3.
 
-| Unidade | Divergência antes | Depois das correções |
+A divergência que esta análise previu tinha acabado de se materializar: até as
+correções de segurança, as duas cópias diferiam apenas no cabeçalho de licença
+(**zero divergência de código** em 22 unidades); depois delas, `exec.pas`
+divergia em 45 linhas e `parser.pas` em 19, com o AppletRunner — que executa
+applets distribuídos — ficando com a corrupção de memória e o dereference de
+ponteiro arbitrário.
+
+**Solução adotada:** repositório próprio para o engine, consumido como submódulo
+pelos dois hospedeiros.
+
+| Repositório | Visibilidade | Papel |
 |---|---|---|
-| `exec.pas` | 2 linhas (copyright) | 45 linhas |
-| `parser.pas` | 2 linhas (copyright) | 19 linhas |
+| [`AndreMurtaX/Plan9BasicEngine`](https://github.com/AndreMurtaX/Plan9BasicEngine) | público | núcleo + biblioteca padrão (23 unidades) |
+| `AndreMurtaX/Plan9Basic` | privado | IDE — consome em `engine/` |
+| `AndreMurtaX/Plan9BasicAppletRunner` | público | runner — consome em `engine/` |
 
-Ou seja: `C:\Dev\Plan9BasicAppletRunner` continua com a corrupção de memória no
-limite de globais, e com `TObject(P) is TBasXxx` em `ArrayLib` e `TimerLib`. É o
-projeto que **executa applets distribuídos** — a superfície mais exposta, e o
-repositório público.
+Fundir tudo num repositório só estava bloqueado pela diferença de visibilidade;
+o engine é MIT pelos próprios cabeçalhos, então publicá-lo à parte é coerente.
 
-Portar as correções à mão resolveria o sintoma e perpetuaria a causa. A decisão
-real é de topologia, e ela esbarra num fato: o repositório principal é
-**privado** e o AppletRunner é **público**.
+**O que foi para o engine:** núcleo (`basic`, `exec`, `lexer`, `parser`,
+`UnitUtils`), `utils/UnitGC`, `utils/HandleRegistry`, `Libs/GUI/TimerLib`
+(dependência de `exec.pas`), as 12 bibliotecas não-GUI que o runner usa e as 3
+de IA. Cabeçalho MIT normalizado em todas — 14 não tinham, e 9 traziam o
+placeholder `[Your Name]`.
 
-| Opção | Como fica | Custo |
-|---|---|---|
-| **Submódulo** — extrair `exec`/`parser`/`lexer`/`basic`/`UnitUtils`/`utils` para um repo `Plan9BasicEngine` público, consumido pelos dois | Uma cópia de verdade; o engine é MIT pelos próprios cabeçalhos, então publicá-lo é coerente | Atrito de submódulo no dia a dia (clone, update, commit em dois lugares) |
-| **Repo único, dois `.dpr`** | O mais simples de operar | **Bloqueado** pela diferença de visibilidade: exigiria tornar tudo público ou tudo privado |
-| **Diretórios irmãos com caminho relativo** (`..\Plan9Basic\exec.pas`) | Zero ferramental | Clone do repo público fica quebrado para terceiros |
+**O que ficou no IDE:** as 34 bibliotecas GUI restantes, os 64 efeitos,
+`DictLib`, `StrListLib`, `RegexLib`, `GzipLib`, `IOUtilsLib` e `SQLiteLib`.
 
-Recomendação: submódulo. Mas é decisão de fluxo de trabalho, e por isso não foi
-executada.
+Caminhos atualizados no `.dpr` **e** no `.dproj` dos dois projetos — o `.dproj`
+lista cada unidade individualmente, e esquecê-lo quebraria o build pelo IDE.
+
+**Verificação:** IDE compila (147.701 linhas), runner compila (27.752), 338
+asserções e a suíte negativa verdes, e a divergência entre as duas árvores caiu
+para **zero linha** nas cinco unidades do núcleo. Um clone novo com
+`--recurse-submodules` compila igual.
+
+**Pendência descoberta na verificação:** `Plan9BasicApplet.res` não é versionado
+(`*.res` no `.gitignore`), então um clone limpo só compila depois de abrir o
+projeto uma vez no RAD Studio, que regenera o arquivo. Lacuna pré-existente, não
+introduzida aqui, mas incômoda num repositório público cujo objetivo é que
+terceiros consigam compilar.
 
 ---
 
