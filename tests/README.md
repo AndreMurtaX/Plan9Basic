@@ -40,7 +40,7 @@ janelas precisam do modo GUI abaixo.
 ## Modo GUI
 
 ```powershell
-.	estsuild.ps1 -Run -Gui
+.\tests\build.ps1 -Run -Gui
 ```
 
 Registra também as bibliotecas FMX e roda `tests\gui\`. **Nenhuma janela é
