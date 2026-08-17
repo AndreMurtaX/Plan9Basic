@@ -139,6 +139,7 @@ implementation
 const
   LINE_GC_TAG = 'BASIC_LINE';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_LINE = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1096,6 +1097,8 @@ begin
   try
     Result.n := LineTypeToInt(TBasLine(Args[0].p).LineType);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_linetype: ' + E.Message);
   end;
 end;
 
@@ -1108,6 +1111,8 @@ begin
   try
     TBasLine(Args[0].p).LineType := IntToLineType(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_linetype#: ' + E.Message);
   end;
 end;
 
@@ -1121,6 +1126,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasLine(Args[0].p).Stroke.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_stroke$: ' + E.Message);
   end;
 end;
 
@@ -1134,6 +1141,8 @@ begin
     TBasLine(Args[0].p).Stroke.Kind := TBrushKind.Solid;
     TBasLine(Args[0].p).Stroke.Color := TUtils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_stroke#: ' + E.Message);
   end;
 end;
 
@@ -1146,6 +1155,8 @@ begin
   try
     TBasLine(Args[0].p).Stroke.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokenone#: ' + E.Message);
   end;
 end;
 
@@ -1158,6 +1169,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Stroke.Thickness;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokethickness: ' + E.Message);
   end;
 end;
 
@@ -1170,6 +1183,8 @@ begin
   try
     TBasLine(Args[0].p).Stroke.Thickness := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokethickness#: ' + E.Message);
   end;
 end;
 
@@ -1182,6 +1197,8 @@ begin
   try
     Result.n := StrokeDashToInt(TBasLine(Args[0].p).Stroke.Dash);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokedash: ' + E.Message);
   end;
 end;
 
@@ -1194,6 +1211,8 @@ begin
   try
     TBasLine(Args[0].p).Stroke.Dash := IntToStrokeDash(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokedash#: ' + E.Message);
   end;
 end;
 
@@ -1206,6 +1225,8 @@ begin
   try
     Result.n := StrokeCapToInt(TBasLine(Args[0].p).Stroke.Cap);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokecap: ' + E.Message);
   end;
 end;
 
@@ -1218,6 +1239,8 @@ begin
   try
     TBasLine(Args[0].p).Stroke.Cap := IntToStrokeCap(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokecap#: ' + E.Message);
   end;
 end;
 
@@ -1230,6 +1253,8 @@ begin
   try
     Result.n := StrokeJoinToInt(TBasLine(Args[0].p).Stroke.Join);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokejoin: ' + E.Message);
   end;
 end;
 
@@ -1242,6 +1267,8 @@ begin
   try
     TBasLine(Args[0].p).Stroke.Join := IntToStrokeJoin(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_strokejoin#: ' + E.Message);
   end;
 end;
 
@@ -1255,6 +1282,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_x: ' + E.Message);
   end;
 end;
 
@@ -1267,6 +1296,8 @@ begin
   try
     TBasLine(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_x#: ' + E.Message);
   end;
 end;
 
@@ -1279,6 +1310,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_y: ' + E.Message);
   end;
 end;
 
@@ -1291,6 +1324,8 @@ begin
   try
     TBasLine(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_y#: ' + E.Message);
   end;
 end;
 
@@ -1303,6 +1338,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_width: ' + E.Message);
   end;
 end;
 
@@ -1315,6 +1352,8 @@ begin
   try
     TBasLine(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_width#: ' + E.Message);
   end;
 end;
 
@@ -1327,6 +1366,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_height: ' + E.Message);
   end;
 end;
 
@@ -1339,6 +1380,8 @@ begin
   try
     TBasLine(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_height#: ' + E.Message);
   end;
 end;
 
@@ -1354,6 +1397,8 @@ begin
     TBasLine(Args[0].p).Width := Args[3].n;
     TBasLine(Args[0].p).Height := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1367,6 +1412,8 @@ begin
     TBasLine(Args[0].p).Width := Args[1].n;
     TBasLine(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_size#: ' + E.Message);
   end;
 end;
 
@@ -1380,6 +1427,8 @@ begin
     TBasLine(Args[0].p).Position.X := Args[1].n;
     TBasLine(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_move#: ' + E.Message);
   end;
 end;
 
@@ -1393,6 +1442,8 @@ begin
   try
     Result.n := AlignToInt(TBasLine(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_align: ' + E.Message);
   end;
 end;
 
@@ -1405,6 +1456,8 @@ begin
   try
     TBasLine(Args[0].p).Align := IntToAlign(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_align#: ' + E.Message);
   end;
 end;
 
@@ -1418,6 +1471,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1430,6 +1485,8 @@ begin
   try
     TBasLine(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1442,6 +1499,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_margintop: ' + E.Message);
   end;
 end;
 
@@ -1454,6 +1513,8 @@ begin
   try
     TBasLine(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1466,6 +1527,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginright: ' + E.Message);
   end;
 end;
 
@@ -1478,6 +1541,8 @@ begin
   try
     TBasLine(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1490,6 +1555,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1502,6 +1569,8 @@ begin
   try
     TBasLine(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1517,6 +1586,8 @@ begin
     TBasLine(Args[0].p).Margins.Right := Args[3].n;
     TBasLine(Args[0].p).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_margins#: ' + E.Message);
   end;
 end;
 
@@ -1532,6 +1603,8 @@ begin
     TBasLine(Args[0].p).Margins.Right := Args[1].n;
     TBasLine(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_margin#: ' + E.Message);
   end;
 end;
 
@@ -1548,6 +1621,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_visible: ' + E.Message);
   end;
 end;
 
@@ -1560,6 +1635,8 @@ begin
   try
     TBasLine(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_visible#: ' + E.Message);
   end;
 end;
 
@@ -1575,6 +1652,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_enabled: ' + E.Message);
   end;
 end;
 
@@ -1587,6 +1666,8 @@ begin
   try
     TBasLine(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1599,6 +1680,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_opacity: ' + E.Message);
   end;
 end;
 
@@ -1611,6 +1694,8 @@ begin
   try
     TBasLine(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1626,6 +1711,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_hittest: ' + E.Message);
   end;
 end;
 
@@ -1638,6 +1725,8 @@ begin
   try
     TBasLine(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1651,6 +1740,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_tag: ' + E.Message);
   end;
 end;
 
@@ -1663,6 +1754,8 @@ begin
   try
     TBasLine(Args[0].p).Tag := Round(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_tag#: ' + E.Message);
   end;
 end;
 
@@ -1675,6 +1768,8 @@ begin
   try
     Result.n := TBasLine(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_rotation: ' + E.Message);
   end;
 end;
 
@@ -1687,6 +1782,8 @@ begin
   try
     TBasLine(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_rotation#: ' + E.Message);
   end;
 end;
 
@@ -1700,6 +1797,8 @@ begin
   try
     Result.p := TBasLine(Args[0].p).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_parent#: ' + E.Message);
   end;
 end;
 
@@ -1713,6 +1812,8 @@ begin
   try
     TBasLine(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_parent#: ' + E.Message);
   end;
 end;
 
@@ -1725,6 +1826,8 @@ begin
   try
     TBasLine(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1737,6 +1840,8 @@ begin
   try
     TBasLine(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -1750,6 +1855,8 @@ begin
   try
     TBasLine(Args[0].p).Repaint;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -1763,6 +1870,8 @@ begin
   try
     TBasLine(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onclick#: ' + E.Message);
   end;
 end;
 
@@ -1775,6 +1884,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onclick$: ' + E.Message);
   end;
 end;
 
@@ -1787,6 +1898,8 @@ begin
   try
     TBasLine(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -1799,6 +1912,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -1811,6 +1926,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -1823,6 +1940,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -1835,6 +1954,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -1847,6 +1968,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -1859,6 +1982,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -1871,6 +1996,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -1883,6 +2010,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -1895,6 +2024,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -1907,6 +2038,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -1919,6 +2052,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -1931,6 +2066,8 @@ begin
   try
     TBasLine(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -1943,6 +2080,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -1955,6 +2094,8 @@ begin
   try
     TBasLine(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onresize#: ' + E.Message);
   end;
 end;
 
@@ -1967,6 +2108,8 @@ begin
   try
     Result.s := TBasLine(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_onresize$: ' + E.Message);
   end;
 end;
 
@@ -1998,6 +2141,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'line_clearcallbacks#: ' + E.Message);
   end;
 end;
 

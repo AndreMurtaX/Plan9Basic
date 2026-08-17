@@ -194,6 +194,7 @@ implementation
 const
   BUTTON_GC_TAG = 'BASIC_BUTTON';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_BUTTON = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1144,7 +1145,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_text$') then Exit();
-  try Result.s := TBasButton(Args[0].p).Text; except end;
+  try Result.s := TBasButton(Args[0].p).Text; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_text$: ' + E.Message); end;
 end;
 
 function p_button_text_set(var Args: array of TAsmData): TAsmData;
@@ -1153,7 +1154,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_text#') then Exit();
-  try TBasButton(Args[0].p).Text := Args[1].s; except end;
+  try TBasButton(Args[0].p).Text := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_text#: ' + E.Message); end;
 end;
 
 // Font properties
@@ -1163,7 +1164,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_fontfamily$') then Exit();
-  try Result.s := TBasButton(Args[0].p).TextSettings.Font.Family; except end;
+  try Result.s := TBasButton(Args[0].p).TextSettings.Font.Family; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontfamily$: ' + E.Message); end;
 end;
 
 function p_button_fontfamily_set(var Args: array of TAsmData): TAsmData;
@@ -1175,7 +1176,7 @@ begin
   try
     TBasButton(Args[0].p).StyledSettings := TBasButton(Args[0].p).StyledSettings - [TStyledSetting.Family];
     TBasButton(Args[0].p).TextSettings.Font.Family := Args[1].s;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontfamily#: ' + E.Message); end;
 end;
 
 function n_button_fontsize_get(var Args: array of TAsmData): TAsmData;
@@ -1184,7 +1185,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_fontsize') then Exit();
-  try Result.n := TBasButton(Args[0].p).TextSettings.Font.Size; except end;
+  try Result.n := TBasButton(Args[0].p).TextSettings.Font.Size; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontsize: ' + E.Message); end;
 end;
 
 function p_button_fontsize_set(var Args: array of TAsmData): TAsmData;
@@ -1196,7 +1197,7 @@ begin
   try
     TBasButton(Args[0].p).StyledSettings := TBasButton(Args[0].p).StyledSettings - [TStyledSetting.Size];
     TBasButton(Args[0].p).TextSettings.Font.Size := Args[1].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontsize#: ' + E.Message); end;
 end;
 
 function s_button_fontcolor_get(var Args: array of TAsmData): TAsmData;
@@ -1205,7 +1206,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_fontcolor$') then Exit();
-  try Result.s := TUtils.AlphaColorToStr(TBasButton(Args[0].p).TextSettings.FontColor); except end;
+  try Result.s := TUtils.AlphaColorToStr(TBasButton(Args[0].p).TextSettings.FontColor); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontcolor$: ' + E.Message); end;
 end;
 
 function p_button_fontcolor_set(var Args: array of TAsmData): TAsmData;
@@ -1217,7 +1218,7 @@ begin
   try
     TBasButton(Args[0].p).StyledSettings := TBasButton(Args[0].p).StyledSettings - [TStyledSetting.FontColor];
     TBasButton(Args[0].p).TextSettings.FontColor := TUtils.ColorToAlphaColor(Args[1].s);
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_fontcolor#: ' + E.Message); end;
 end;
 
 function n_button_bold_get(var Args: array of TAsmData): TAsmData;
@@ -1231,7 +1232,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_bold: ' + E.Message); end;
 end;
 
 function p_button_bold_set(var Args: array of TAsmData): TAsmData;
@@ -1248,7 +1249,7 @@ begin
     else
       TBasButton(Args[0].p).TextSettings.Font.Style :=
         TBasButton(Args[0].p).TextSettings.Font.Style - [TFontStyle.fsBold];
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_bold#: ' + E.Message); end;
 end;
 
 function n_button_italic_get(var Args: array of TAsmData): TAsmData;
@@ -1262,7 +1263,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_italic: ' + E.Message); end;
 end;
 
 function p_button_italic_set(var Args: array of TAsmData): TAsmData;
@@ -1279,7 +1280,7 @@ begin
     else
       TBasButton(Args[0].p).TextSettings.Font.Style :=
         TBasButton(Args[0].p).TextSettings.Font.Style - [TFontStyle.fsItalic];
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_italic#: ' + E.Message); end;
 end;
 
 function n_button_underline_get(var Args: array of TAsmData): TAsmData;
@@ -1293,7 +1294,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_underline: ' + E.Message); end;
 end;
 
 function p_button_underline_set(var Args: array of TAsmData): TAsmData;
@@ -1310,7 +1311,7 @@ begin
     else
       TBasButton(Args[0].p).TextSettings.Font.Style :=
         TBasButton(Args[0].p).TextSettings.Font.Style - [TFontStyle.fsUnderline];
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_underline#: ' + E.Message); end;
 end;
 
 function n_button_strikeout_get(var Args: array of TAsmData): TAsmData;
@@ -1324,7 +1325,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_strikeout: ' + E.Message); end;
 end;
 
 function p_button_strikeout_set(var Args: array of TAsmData): TAsmData;
@@ -1341,7 +1342,7 @@ begin
     else
       TBasButton(Args[0].p).TextSettings.Font.Style :=
         TBasButton(Args[0].p).TextSettings.Font.Style - [TFontStyle.fsStrikeOut];
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_strikeout#: ' + E.Message); end;
 end;
 
 // Modal Result
@@ -1351,7 +1352,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_modalresult') then Exit();
-  try Result.n := ModalResultToInt(TBasButton(Args[0].p).ModalResult); except end;
+  try Result.n := ModalResultToInt(TBasButton(Args[0].p).ModalResult); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_modalresult: ' + E.Message); end;
 end;
 
 function p_button_modalresult_set(var Args: array of TAsmData): TAsmData;
@@ -1360,7 +1361,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_modalresult#') then Exit();
-  try TBasButton(Args[0].p).ModalResult := IntToModalResult(Trunc(Args[1].n)); except end;
+  try TBasButton(Args[0].p).ModalResult := IntToModalResult(Trunc(Args[1].n)); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_modalresult#: ' + E.Message); end;
 end;
 
 // Default button
@@ -1375,7 +1376,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_default: ' + E.Message); end;
 end;
 
 function p_button_default_set(var Args: array of TAsmData): TAsmData;
@@ -1384,7 +1385,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_default#') then Exit();
-  try TBasButton(Args[0].p).Default := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).Default := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_default#: ' + E.Message); end;
 end;
 
 // Cancel button
@@ -1399,7 +1400,7 @@ begin
       Result.n := 1
     else
       Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_cancel: ' + E.Message); end;
 end;
 
 function p_button_cancel_set(var Args: array of TAsmData): TAsmData;
@@ -1408,7 +1409,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_cancel#') then Exit();
-  try TBasButton(Args[0].p).Cancel := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).Cancel := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_cancel#: ' + E.Message); end;
 end;
 
 // Position and Size
@@ -1418,7 +1419,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_x') then Exit();
-  try Result.n := TBasButton(Args[0].p).Position.X; except end;
+  try Result.n := TBasButton(Args[0].p).Position.X; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_x: ' + E.Message); end;
 end;
 
 function p_button_x_set(var Args: array of TAsmData): TAsmData;
@@ -1427,7 +1428,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_x#') then Exit();
-  try TBasButton(Args[0].p).Position.X := Args[1].n; except end;
+  try TBasButton(Args[0].p).Position.X := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_x#: ' + E.Message); end;
 end;
 
 function n_button_y_get(var Args: array of TAsmData): TAsmData;
@@ -1436,7 +1437,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_y') then Exit();
-  try Result.n := TBasButton(Args[0].p).Position.Y; except end;
+  try Result.n := TBasButton(Args[0].p).Position.Y; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_y: ' + E.Message); end;
 end;
 
 function p_button_y_set(var Args: array of TAsmData): TAsmData;
@@ -1445,7 +1446,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_y#') then Exit();
-  try TBasButton(Args[0].p).Position.Y := Args[1].n; except end;
+  try TBasButton(Args[0].p).Position.Y := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_y#: ' + E.Message); end;
 end;
 
 function n_button_width_get(var Args: array of TAsmData): TAsmData;
@@ -1454,7 +1455,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_width') then Exit();
-  try Result.n := TBasButton(Args[0].p).Width; except end;
+  try Result.n := TBasButton(Args[0].p).Width; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_width: ' + E.Message); end;
 end;
 
 function p_button_width_set(var Args: array of TAsmData): TAsmData;
@@ -1463,7 +1464,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_width#') then Exit();
-  try TBasButton(Args[0].p).Width := Args[1].n; except end;
+  try TBasButton(Args[0].p).Width := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_width#: ' + E.Message); end;
 end;
 
 function n_button_height_get(var Args: array of TAsmData): TAsmData;
@@ -1472,7 +1473,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_height') then Exit();
-  try Result.n := TBasButton(Args[0].p).Height; except end;
+  try Result.n := TBasButton(Args[0].p).Height; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_height: ' + E.Message); end;
 end;
 
 function p_button_height_set(var Args: array of TAsmData): TAsmData;
@@ -1481,7 +1482,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_height#') then Exit();
-  try TBasButton(Args[0].p).Height := Args[1].n; except end;
+  try TBasButton(Args[0].p).Height := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_height#: ' + E.Message); end;
 end;
 
 function p_button_bounds_set(var Args: array of TAsmData): TAsmData;
@@ -1492,7 +1493,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_bounds#') then Exit();
   try
     TBasButton(Args[0].p).SetBounds(Args[1].n, Args[2].n, Args[3].n, Args[4].n);
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_bounds#: ' + E.Message); end;
 end;
 
 function p_button_move_set(var Args: array of TAsmData): TAsmData;
@@ -1504,7 +1505,7 @@ begin
   try
     TBasButton(Args[0].p).Position.X := Args[1].n;
     TBasButton(Args[0].p).Position.Y := Args[2].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_move#: ' + E.Message); end;
 end;
 
 function p_button_size_set(var Args: array of TAsmData): TAsmData;
@@ -1516,7 +1517,7 @@ begin
   try
     TBasButton(Args[0].p).Width := Args[1].n;
     TBasButton(Args[0].p).Height := Args[2].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_size#: ' + E.Message); end;
 end;
 
 // Alignment
@@ -1526,7 +1527,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_align') then Exit();
-  try Result.n := AlignToInt(TBasButton(Args[0].p).Align); except end;
+  try Result.n := AlignToInt(TBasButton(Args[0].p).Align); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_align: ' + E.Message); end;
 end;
 
 function p_button_align_set(var Args: array of TAsmData): TAsmData;
@@ -1535,7 +1536,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_align#') then Exit();
-  try TBasButton(Args[0].p).Align := IntToAlign(Trunc(Args[1].n)); except end;
+  try TBasButton(Args[0].p).Align := IntToAlign(Trunc(Args[1].n)); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_align#: ' + E.Message); end;
 end;
 
 // Margins
@@ -1545,7 +1546,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginleft') then Exit();
-  try Result.n := TBasButton(Args[0].p).Margins.Left; except end;
+  try Result.n := TBasButton(Args[0].p).Margins.Left; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginleft: ' + E.Message); end;
 end;
 
 function p_button_marginleft_set(var Args: array of TAsmData): TAsmData;
@@ -1554,7 +1555,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginleft#') then Exit();
-  try TBasButton(Args[0].p).Margins.Left := Args[1].n; except end;
+  try TBasButton(Args[0].p).Margins.Left := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginleft#: ' + E.Message); end;
 end;
 
 function n_button_margintop_get(var Args: array of TAsmData): TAsmData;
@@ -1563,7 +1564,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_margintop') then Exit();
-  try Result.n := TBasButton(Args[0].p).Margins.Top; except end;
+  try Result.n := TBasButton(Args[0].p).Margins.Top; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_margintop: ' + E.Message); end;
 end;
 
 function p_button_margintop_set(var Args: array of TAsmData): TAsmData;
@@ -1572,7 +1573,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_margintop#') then Exit();
-  try TBasButton(Args[0].p).Margins.Top := Args[1].n; except end;
+  try TBasButton(Args[0].p).Margins.Top := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_margintop#: ' + E.Message); end;
 end;
 
 function n_button_marginright_get(var Args: array of TAsmData): TAsmData;
@@ -1581,7 +1582,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginright') then Exit();
-  try Result.n := TBasButton(Args[0].p).Margins.Right; except end;
+  try Result.n := TBasButton(Args[0].p).Margins.Right; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginright: ' + E.Message); end;
 end;
 
 function p_button_marginright_set(var Args: array of TAsmData): TAsmData;
@@ -1590,7 +1591,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginright#') then Exit();
-  try TBasButton(Args[0].p).Margins.Right := Args[1].n; except end;
+  try TBasButton(Args[0].p).Margins.Right := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginright#: ' + E.Message); end;
 end;
 
 function n_button_marginbottom_get(var Args: array of TAsmData): TAsmData;
@@ -1599,7 +1600,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginbottom') then Exit();
-  try Result.n := TBasButton(Args[0].p).Margins.Bottom; except end;
+  try Result.n := TBasButton(Args[0].p).Margins.Bottom; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginbottom: ' + E.Message); end;
 end;
 
 function p_button_marginbottom_set(var Args: array of TAsmData): TAsmData;
@@ -1608,7 +1609,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_marginbottom#') then Exit();
-  try TBasButton(Args[0].p).Margins.Bottom := Args[1].n; except end;
+  try TBasButton(Args[0].p).Margins.Bottom := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_marginbottom#: ' + E.Message); end;
 end;
 
 function p_button_margins_set(var Args: array of TAsmData): TAsmData;
@@ -1622,7 +1623,7 @@ begin
     TBasButton(Args[0].p).Margins.Top := Args[2].n;
     TBasButton(Args[0].p).Margins.Right := Args[3].n;
     TBasButton(Args[0].p).Margins.Bottom := Args[4].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_margins#: ' + E.Message); end;
 end;
 
 function p_button_margin_set(var Args: array of TAsmData): TAsmData;
@@ -1636,7 +1637,7 @@ begin
     TBasButton(Args[0].p).Margins.Top := Args[1].n;
     TBasButton(Args[0].p).Margins.Right := Args[1].n;
     TBasButton(Args[0].p).Margins.Bottom := Args[1].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_margin#: ' + E.Message); end;
 end;
 
 // Visibility and state
@@ -1648,7 +1649,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_visible') then Exit();
   try
     if TBasButton(Args[0].p).Visible then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_visible: ' + E.Message); end;
 end;
 
 function p_button_visible_set(var Args: array of TAsmData): TAsmData;
@@ -1657,7 +1658,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_visible#') then Exit();
-  try TBasButton(Args[0].p).Visible := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).Visible := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_visible#: ' + E.Message); end;
 end;
 
 function n_button_enabled_get(var Args: array of TAsmData): TAsmData;
@@ -1668,7 +1669,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_enabled') then Exit();
   try
     if TBasButton(Args[0].p).Enabled then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_enabled: ' + E.Message); end;
 end;
 
 function p_button_enabled_set(var Args: array of TAsmData): TAsmData;
@@ -1677,7 +1678,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_enabled#') then Exit();
-  try TBasButton(Args[0].p).Enabled := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).Enabled := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_enabled#: ' + E.Message); end;
 end;
 
 function n_button_opacity_get(var Args: array of TAsmData): TAsmData;
@@ -1686,7 +1687,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_opacity') then Exit();
-  try Result.n := TBasButton(Args[0].p).Opacity; except end;
+  try Result.n := TBasButton(Args[0].p).Opacity; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_opacity: ' + E.Message); end;
 end;
 
 function p_button_opacity_set(var Args: array of TAsmData): TAsmData;
@@ -1695,7 +1696,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_opacity#') then Exit();
-  try TBasButton(Args[0].p).Opacity := Args[1].n; except end;
+  try TBasButton(Args[0].p).Opacity := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_opacity#: ' + E.Message); end;
 end;
 
 // Focus
@@ -1707,7 +1708,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_isfocused') then Exit();
   try
     if TBasButton(Args[0].p).IsFocused then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_isfocused: ' + E.Message); end;
 end;
 
 function p_button_setfocus(var Args: array of TAsmData): TAsmData;
@@ -1716,7 +1717,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_setfocus#') then Exit();
-  try TBasButton(Args[0].p).SetFocus; except end;
+  try TBasButton(Args[0].p).SetFocus; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_setfocus#: ' + E.Message); end;
 end;
 
 function p_button_resetfocus(var Args: array of TAsmData): TAsmData;
@@ -1725,7 +1726,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_resetfocus#') then Exit();
-  try TBasButton(Args[0].p).ResetFocus; except end;
+  try TBasButton(Args[0].p).ResetFocus; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_resetfocus#: ' + E.Message); end;
 end;
 
 function n_button_taborder_get(var Args: array of TAsmData): TAsmData;
@@ -1734,7 +1735,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_taborder') then Exit();
-  try Result.n := TBasButton(Args[0].p).TabOrder; except end;
+  try Result.n := TBasButton(Args[0].p).TabOrder; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_taborder: ' + E.Message); end;
 end;
 
 function p_button_taborder_set(var Args: array of TAsmData): TAsmData;
@@ -1743,7 +1744,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_taborder#') then Exit();
-  try TBasButton(Args[0].p).TabOrder := Trunc(Args[1].n); except end;
+  try TBasButton(Args[0].p).TabOrder := Trunc(Args[1].n); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_taborder#: ' + E.Message); end;
 end;
 
 function n_button_canfocus_get(var Args: array of TAsmData): TAsmData;
@@ -1754,7 +1755,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_canfocus') then Exit();
   try
     if TBasButton(Args[0].p).CanFocus then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_canfocus: ' + E.Message); end;
 end;
 
 function p_button_canfocus_set(var Args: array of TAsmData): TAsmData;
@@ -1763,7 +1764,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_canfocus#') then Exit();
-  try TBasButton(Args[0].p).CanFocus := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).CanFocus := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_canfocus#: ' + E.Message); end;
 end;
 
 // Tag
@@ -1773,7 +1774,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_tag') then Exit();
-  try Result.n := TBasButton(Args[0].p).Tag; except end;
+  try Result.n := TBasButton(Args[0].p).Tag; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_tag: ' + E.Message); end;
 end;
 
 function p_button_tag_set(var Args: array of TAsmData): TAsmData;
@@ -1782,7 +1783,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_tag#') then Exit();
-  try TBasButton(Args[0].p).Tag := Trunc(Args[1].n); except end;
+  try TBasButton(Args[0].p).Tag := Trunc(Args[1].n); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_tag#: ' + E.Message); end;
 end;
 
 // HitTest
@@ -1794,7 +1795,7 @@ begin
   if not ValidateButton(Args[0].p, 'button_hittest') then Exit();
   try
     if TBasButton(Args[0].p).HitTest then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_hittest: ' + E.Message); end;
 end;
 
 function p_button_hittest_set(var Args: array of TAsmData): TAsmData;
@@ -1803,7 +1804,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_hittest#') then Exit();
-  try TBasButton(Args[0].p).HitTest := (Args[1].n <> 0); except end;
+  try TBasButton(Args[0].p).HitTest := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_hittest#: ' + E.Message); end;
 end;
 
 // DragMode
@@ -1820,7 +1821,7 @@ begin
     else
       Result.n := 0;
     end;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_dragmode: ' + E.Message); end;
 end;
 
 function p_button_dragmode_set(var Args: array of TAsmData): TAsmData;
@@ -1834,7 +1835,7 @@ begin
       TBasButton(Args[0].p).DragMode := TDragMode.dmManual
     else
       TBasButton(Args[0].p).DragMode := TDragMode.dmAutomatic;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_dragmode#: ' + E.Message); end;
 end;
 
 // Parent
@@ -1844,7 +1845,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_parent#') then Exit();
-  try Result.p := Pointer(TBasButton(Args[0].p).Parent); except end;
+  try Result.p := Pointer(TBasButton(Args[0].p).Parent); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_parent#: ' + E.Message); end;
 end;
 
 function p_button_parent_set(var Args: array of TAsmData): TAsmData;
@@ -1854,7 +1855,7 @@ begin
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_parent#') then Exit();
   if not ValidateParent(Args[1].p, 'button_parent#') then Exit();
-  try TBasButton(Args[0].p).Parent := TFmxObject(Args[1].p); except end;
+  try TBasButton(Args[0].p).Parent := TFmxObject(Args[1].p); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_parent#: ' + E.Message); end;
 end;
 
 function p_button_bringtofront(var Args: array of TAsmData): TAsmData;
@@ -1863,7 +1864,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_bringtofront#') then Exit();
-  try TBasButton(Args[0].p).BringToFront; except end;
+  try TBasButton(Args[0].p).BringToFront; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_bringtofront#: ' + E.Message); end;
 end;
 
 function p_button_sendtoback(var Args: array of TAsmData): TAsmData;
@@ -1872,7 +1873,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_sendtoback#') then Exit();
-  try TBasButton(Args[0].p).SendToBack; except end;
+  try TBasButton(Args[0].p).SendToBack; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_sendtoback#: ' + E.Message); end;
 end;
 
 // Event Callback Get/Set Functions
@@ -1883,7 +1884,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onclick#') then Exit();
-  try TBasButton(Args[0].p).OnClickFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnClickFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onclick#: ' + E.Message); end;
 end;
 
 function s_button_onclick_get(var Args: array of TAsmData): TAsmData;
@@ -1892,7 +1893,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onclick$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnClickFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnClickFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onclick$: ' + E.Message); end;
 end;
 
 function p_button_onenter_set(var Args: array of TAsmData): TAsmData;
@@ -1901,7 +1902,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onenter#') then Exit();
-  try TBasButton(Args[0].p).OnEnterFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnEnterFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onenter#: ' + E.Message); end;
 end;
 
 function s_button_onenter_get(var Args: array of TAsmData): TAsmData;
@@ -1910,7 +1911,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onenter$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnEnterFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnEnterFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onenter$: ' + E.Message); end;
 end;
 
 function p_button_onexit_set(var Args: array of TAsmData): TAsmData;
@@ -1919,7 +1920,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onexit#') then Exit();
-  try TBasButton(Args[0].p).OnExitFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnExitFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onexit#: ' + E.Message); end;
 end;
 
 function s_button_onexit_get(var Args: array of TAsmData): TAsmData;
@@ -1928,7 +1929,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onexit$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnExitFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnExitFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onexit$: ' + E.Message); end;
 end;
 
 function p_button_onkeydown_set(var Args: array of TAsmData): TAsmData;
@@ -1937,7 +1938,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onkeydown#') then Exit();
-  try TBasButton(Args[0].p).OnKeyDownFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnKeyDownFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onkeydown#: ' + E.Message); end;
 end;
 
 function s_button_onkeydown_get(var Args: array of TAsmData): TAsmData;
@@ -1946,7 +1947,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onkeydown$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnKeyDownFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnKeyDownFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onkeydown$: ' + E.Message); end;
 end;
 
 function p_button_onkeyup_set(var Args: array of TAsmData): TAsmData;
@@ -1955,7 +1956,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onkeyup#') then Exit();
-  try TBasButton(Args[0].p).OnKeyUpFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnKeyUpFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onkeyup#: ' + E.Message); end;
 end;
 
 function s_button_onkeyup_get(var Args: array of TAsmData): TAsmData;
@@ -1964,7 +1965,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onkeyup$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnKeyUpFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnKeyUpFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onkeyup$: ' + E.Message); end;
 end;
 
 function p_button_onmousedown_set(var Args: array of TAsmData): TAsmData;
@@ -1973,7 +1974,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmousedown#') then Exit();
-  try TBasButton(Args[0].p).OnMouseDownFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnMouseDownFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmousedown#: ' + E.Message); end;
 end;
 
 function s_button_onmousedown_get(var Args: array of TAsmData): TAsmData;
@@ -1982,7 +1983,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmousedown$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnMouseDownFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnMouseDownFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmousedown$: ' + E.Message); end;
 end;
 
 function p_button_onmouseup_set(var Args: array of TAsmData): TAsmData;
@@ -1991,7 +1992,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseup#') then Exit();
-  try TBasButton(Args[0].p).OnMouseUpFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnMouseUpFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseup#: ' + E.Message); end;
 end;
 
 function s_button_onmouseup_get(var Args: array of TAsmData): TAsmData;
@@ -2000,7 +2001,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseup$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnMouseUpFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnMouseUpFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseup$: ' + E.Message); end;
 end;
 
 function p_button_onmousemove_set(var Args: array of TAsmData): TAsmData;
@@ -2009,7 +2010,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmousemove#') then Exit();
-  try TBasButton(Args[0].p).OnMouseMoveFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnMouseMoveFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmousemove#: ' + E.Message); end;
 end;
 
 function s_button_onmousemove_get(var Args: array of TAsmData): TAsmData;
@@ -2018,7 +2019,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmousemove$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnMouseMoveFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnMouseMoveFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmousemove$: ' + E.Message); end;
 end;
 
 function p_button_onmouseenter_set(var Args: array of TAsmData): TAsmData;
@@ -2027,7 +2028,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseenter#') then Exit();
-  try TBasButton(Args[0].p).OnMouseEnterFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnMouseEnterFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseenter#: ' + E.Message); end;
 end;
 
 function s_button_onmouseenter_get(var Args: array of TAsmData): TAsmData;
@@ -2036,7 +2037,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseenter$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnMouseEnterFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnMouseEnterFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseenter$: ' + E.Message); end;
 end;
 
 function p_button_onmouseleave_set(var Args: array of TAsmData): TAsmData;
@@ -2045,7 +2046,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseleave#') then Exit();
-  try TBasButton(Args[0].p).OnMouseLeaveFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnMouseLeaveFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseleave#: ' + E.Message); end;
 end;
 
 function s_button_onmouseleave_get(var Args: array of TAsmData): TAsmData;
@@ -2054,7 +2055,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onmouseleave$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnMouseLeaveFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnMouseLeaveFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onmouseleave$: ' + E.Message); end;
 end;
 
 function p_button_onresize_set(var Args: array of TAsmData): TAsmData;
@@ -2063,7 +2064,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onresize#') then Exit();
-  try TBasButton(Args[0].p).OnResizeFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnResizeFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onresize#: ' + E.Message); end;
 end;
 
 function s_button_onresize_get(var Args: array of TAsmData): TAsmData;
@@ -2072,7 +2073,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_onresize$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnResizeFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnResizeFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_onresize$: ' + E.Message); end;
 end;
 
 // Drag & Drop event callbacks
@@ -2082,7 +2083,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragenter#') then Exit();
-  try TBasButton(Args[0].p).OnDragEnterFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnDragEnterFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragenter#: ' + E.Message); end;
 end;
 
 function s_button_ondragenter_get(var Args: array of TAsmData): TAsmData;
@@ -2091,7 +2092,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragenter$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnDragEnterFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnDragEnterFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragenter$: ' + E.Message); end;
 end;
 
 function p_button_ondragover_set(var Args: array of TAsmData): TAsmData;
@@ -2100,7 +2101,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragover#') then Exit();
-  try TBasButton(Args[0].p).OnDragOverFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnDragOverFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragover#: ' + E.Message); end;
 end;
 
 function s_button_ondragover_get(var Args: array of TAsmData): TAsmData;
@@ -2109,7 +2110,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragover$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnDragOverFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnDragOverFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragover$: ' + E.Message); end;
 end;
 
 function p_button_ondragdrop_set(var Args: array of TAsmData): TAsmData;
@@ -2118,7 +2119,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragdrop#') then Exit();
-  try TBasButton(Args[0].p).OnDragDropFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnDragDropFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragdrop#: ' + E.Message); end;
 end;
 
 function s_button_ondragdrop_get(var Args: array of TAsmData): TAsmData;
@@ -2127,7 +2128,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragdrop$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnDragDropFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnDragDropFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragdrop$: ' + E.Message); end;
 end;
 
 function p_button_ondragleave_set(var Args: array of TAsmData): TAsmData;
@@ -2136,7 +2137,7 @@ begin
   Result.p := Args[0].p;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragleave#') then Exit();
-  try TBasButton(Args[0].p).OnDragLeaveFunc := Args[1].s; except end;
+  try TBasButton(Args[0].p).OnDragLeaveFunc := Args[1].s; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragleave#: ' + E.Message); end;
 end;
 
 function s_button_ondragleave_get(var Args: array of TAsmData): TAsmData;
@@ -2145,7 +2146,7 @@ begin
   Result.p := nil;
   Result.s := '';
   if not ValidateButton(Args[0].p, 'button_ondragleave$') then Exit();
-  try Result.s := TBasButton(Args[0].p).OnDragLeaveFunc; except end;
+  try Result.s := TBasButton(Args[0].p).OnDragLeaveFunc; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'button_ondragleave$: ' + E.Message); end;
 end;
 
 function p_button_clearcallbacks(var Args: array of TAsmData): TAsmData;
@@ -2174,6 +2175,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'button_clearcallbacks#: ' + E.Message);
   end;
 end;
 

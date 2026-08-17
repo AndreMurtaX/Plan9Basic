@@ -208,6 +208,7 @@ const
 
   // Error codes
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_FORM = 1;
   ERR_INVALID_PROPERTY = 2;
   ERR_INVALID_VALUE = 3;
@@ -1157,6 +1158,8 @@ begin
     TBasForm(Args[0].p).Close;
     Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_close: ' + E.Message);
   end;
 end;
 
@@ -1177,6 +1180,8 @@ begin
     TBasForm(Args[0].p).Show;
     Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_show: ' + E.Message);
   end;
 end;
 
@@ -1249,6 +1254,8 @@ begin
     TBasForm(Args[0].p).Hide;
     Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_hide: ' + E.Message);
   end;
 end;
 
@@ -1265,6 +1272,8 @@ begin
     if TBasForm(Args[0].p).Visible then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_visible: ' + E.Message);
   end;
 end;
 
@@ -1280,6 +1289,8 @@ begin
   try
     TBasForm(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_visible#: ' + E.Message);
   end;
 end;
 
@@ -1299,6 +1310,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).Caption;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_caption$: ' + E.Message);
   end;
 end;
 
@@ -1314,6 +1327,8 @@ begin
   try
     TBasForm(Args[0].p).Caption := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_caption#: ' + E.Message);
   end;
 end;
 
@@ -1333,6 +1348,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_left: ' + E.Message);
   end;
 end;
 
@@ -1348,6 +1365,8 @@ begin
   try
     TBasForm(Args[0].p).Left := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_left#: ' + E.Message);
   end;
 end;
 
@@ -1363,6 +1382,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_top: ' + E.Message);
   end;
 end;
 
@@ -1378,6 +1399,8 @@ begin
   try
     TBasForm(Args[0].p).Top := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_top#: ' + E.Message);
   end;
 end;
 
@@ -1393,6 +1416,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_width: ' + E.Message);
   end;
 end;
 
@@ -1408,6 +1433,8 @@ begin
   try
     TBasForm(Args[0].p).Width := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_width#: ' + E.Message);
   end;
 end;
 
@@ -1423,6 +1450,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_height: ' + E.Message);
   end;
 end;
 
@@ -1438,6 +1467,8 @@ begin
   try
     TBasForm(Args[0].p).Height := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_height#: ' + E.Message);
   end;
 end;
 
@@ -1458,6 +1489,8 @@ begin
       Trunc(Args[4].n)
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1474,6 +1507,8 @@ begin
     TBasForm(Args[0].p).Width := Trunc(Args[1].n);
     TBasForm(Args[0].p).Height := Trunc(Args[2].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_size#: ' + E.Message);
   end;
 end;
 
@@ -1490,6 +1525,8 @@ begin
     TBasForm(Args[0].p).Left := Trunc(Args[1].n);
     TBasForm(Args[0].p).Top := Trunc(Args[2].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_move#: ' + E.Message);
   end;
 end;
 
@@ -1522,6 +1559,8 @@ begin
       Frm.Top := Trunc((Screen.Height - Frm.Height) / 2);
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_center#: ' + E.Message);
   end;
 end;
 
@@ -1541,6 +1580,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Constraints.MinWidth;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_minwidth: ' + E.Message);
   end;
 end;
 
@@ -1556,6 +1597,8 @@ begin
   try
     TBasForm(Args[0].p).Constraints.MinWidth := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_minwidth#: ' + E.Message);
   end;
 end;
 
@@ -1571,6 +1614,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Constraints.MinHeight;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_minheight: ' + E.Message);
   end;
 end;
 
@@ -1586,6 +1631,8 @@ begin
   try
     TBasForm(Args[0].p).Constraints.MinHeight := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_minheight#: ' + E.Message);
   end;
 end;
 
@@ -1601,6 +1648,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Constraints.MaxWidth;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_maxwidth: ' + E.Message);
   end;
 end;
 
@@ -1616,6 +1665,8 @@ begin
   try
     TBasForm(Args[0].p).Constraints.MaxWidth := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_maxwidth#: ' + E.Message);
   end;
 end;
 
@@ -1631,6 +1682,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Constraints.MaxHeight;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_maxheight: ' + E.Message);
   end;
 end;
 
@@ -1646,6 +1699,8 @@ begin
   try
     TBasForm(Args[0].p).Constraints.MaxHeight := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_maxheight#: ' + E.Message);
   end;
 end;
 
@@ -1667,6 +1722,8 @@ begin
     Frm.Constraints.MaxWidth := Trunc(Args[3].n);
     Frm.Constraints.MaxHeight := Trunc(Args[4].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_constraints#: ' + E.Message);
   end;
 end;
 
@@ -1686,6 +1743,8 @@ begin
   try
     Result.n := Ord(TBasForm(Args[0].p).Position);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_position: ' + E.Message);
   end;
 end;
 
@@ -1705,6 +1764,8 @@ begin
     if (Mode >= 0) and (Mode <= Ord(High(TFormPosition))) then
       TBasForm(Args[0].p).Position := TFormPosition(Mode);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_position#: ' + E.Message);
   end;
 end;
 
@@ -1724,6 +1785,8 @@ begin
   try
     Result.n := Ord(TBasForm(Args[0].p).WindowState);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_windowstate: ' + E.Message);
   end;
 end;
 
@@ -1743,6 +1806,8 @@ begin
     if (State >= 0) and (State <= 2) then
       TBasForm(Args[0].p).WindowState := TWindowState(State);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_windowstate#: ' + E.Message);
   end;
 end;
 
@@ -1758,6 +1823,8 @@ begin
   try
     TBasForm(Args[0].p).WindowState := TWindowState.wsMaximized;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_maximize#: ' + E.Message);
   end;
 end;
 
@@ -1773,6 +1840,8 @@ begin
   try
     TBasForm(Args[0].p).WindowState := TWindowState.wsMinimized;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_minimize#: ' + E.Message);
   end;
 end;
 
@@ -1788,6 +1857,8 @@ begin
   try
     TBasForm(Args[0].p).WindowState := TWindowState.wsNormal;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_restore#: ' + E.Message);
   end;
 end;
 
@@ -1807,6 +1878,8 @@ begin
   try
     Result.n := Ord(TBasForm(Args[0].p).BorderStyle);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_borderstyle: ' + E.Message);
   end;
 end;
 
@@ -1826,6 +1899,8 @@ begin
     if (Style >= 0) and (Style <= Ord(High(TFmxFormBorderStyle))) then
       TBasForm(Args[0].p).BorderStyle := TFmxFormBorderStyle(Style);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_borderstyle#: ' + E.Message);
   end;
 end;
 
@@ -1846,6 +1921,8 @@ begin
     if TBasForm(Args[0].p).FullScreen then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_fullscreen: ' + E.Message);
   end;
 end;
 
@@ -1861,6 +1938,8 @@ begin
   try
     TBasForm(Args[0].p).FullScreen := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_fullscreen#: ' + E.Message);
   end;
 end;
 
@@ -1878,6 +1957,8 @@ begin
     if TBasForm(Args[0].p).FormStyle = TFormStyle.StayOnTop then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_stayontop: ' + E.Message);
   end;
 end;
 
@@ -1897,6 +1978,8 @@ begin
     else
       TBasForm(Args[0].p).FormStyle := TFormStyle.Normal;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_stayontop#: ' + E.Message);
   end;
 end;
 
@@ -1913,6 +1996,8 @@ begin
     if TBasForm(Args[0].p).ShowFullScreenIcon then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_showfullscreenicon: ' + E.Message);
   end;
 end;
 
@@ -1928,6 +2013,8 @@ begin
   try
     TBasForm(Args[0].p).ShowFullScreenIcon := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_showfullscreenicon#: ' + E.Message);
   end;
 end;
 
@@ -1947,6 +2034,8 @@ begin
   try
     Result.s := AlphaColorToStr(TBasForm(Args[0].p).Fill.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_fill$: ' + E.Message);
   end;
 end;
 
@@ -1964,6 +2053,8 @@ begin
     TBasForm(Args[0].p).Fill.Color := TUtils.ColorToAlphaColor(Args[1].s);
     TBasForm(Args[0].p).Invalidate();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_fill#: ' + E.Message);
   end;
 end;
 
@@ -1984,6 +2075,8 @@ begin
     if TBasForm(Args[0].p).Transparency then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_transparency: ' + E.Message);
   end;
 end;
 
@@ -1999,6 +2092,8 @@ begin
   try
     TBasForm(Args[0].p).Transparency := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_transparency#: ' + E.Message);
   end;
 end;
 
@@ -2019,6 +2114,8 @@ begin
     if TBasForm(Args[0].p).Active then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_active: ' + E.Message);
   end;
 end;
 
@@ -2034,6 +2131,8 @@ begin
   try
     TBasForm(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2049,6 +2148,8 @@ begin
   try
     TBasForm(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2065,6 +2166,8 @@ begin
     // In FMX, use Activate to bring form to focus
     TBasForm(Args[0].p).Activate;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_setfocus#: ' + E.Message);
   end;
 end;
 
@@ -2084,6 +2187,8 @@ begin
   try
     Result.n := Ord(TBasForm(Args[0].p).CloseActionValue);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_closeaction: ' + E.Message);
   end;
 end;
 
@@ -2103,6 +2208,8 @@ begin
     if (Action >= 0) and (Action <= 3) then
       TBasForm(Args[0].p).CloseActionValue := TCloseAction(Action);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_closeaction#: ' + E.Message);
   end;
 end;
 
@@ -2119,6 +2226,8 @@ begin
     if TBasForm(Args[0].p).AllowClose then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_allowclose: ' + E.Message);
   end;
 end;
 
@@ -2134,6 +2243,8 @@ begin
   try
     TBasForm(Args[0].p).AllowClose := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_allowclose#: ' + E.Message);
   end;
 end;
 
@@ -2153,6 +2264,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).ModalResult;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_modalresult: ' + E.Message);
   end;
 end;
 
@@ -2168,6 +2281,8 @@ begin
   try
     TBasForm(Args[0].p).ModalResult := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_modalresult#: ' + E.Message);
   end;
 end;
 
@@ -2187,6 +2302,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).ClientWidth;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_clientwidth: ' + E.Message);
   end;
 end;
 
@@ -2202,6 +2319,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).ClientHeight;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_clientheight: ' + E.Message);
   end;
 end;
 
@@ -2221,6 +2340,8 @@ begin
   try
     TBasForm(Args[0].p).Invalidate;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -2247,6 +2368,8 @@ begin
     // For simplicity, returning 0 - implement if needed for specific use cases
     Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_handle: ' + E.Message);
   end;
   {$ENDIF}
 end;
@@ -2267,6 +2390,8 @@ begin
   try
     Result.n := Ord(TBasForm(Args[0].p).FormStyle);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_formstyle: ' + E.Message);
   end;
 end;
 
@@ -2286,6 +2411,8 @@ begin
     if (Style >= 0) and (Style <= Ord(High(TFormStyle))) then
       TBasForm(Args[0].p).FormStyle := TFormStyle(Style);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_formstyle#: ' + E.Message);
   end;
 end;
 
@@ -2312,6 +2439,8 @@ begin
     else
       Result.n := Screen.Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'n_form_screenwidth: ' + E.Message);
   end;
 end;
 
@@ -2334,6 +2463,8 @@ begin
     else
       Result.n := Screen.Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'n_form_screenheight: ' + E.Message);
   end;
 end;
 
@@ -2352,6 +2483,8 @@ begin
     else
       Result.n := 1.0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'n_form_screenscale: ' + E.Message);
   end;
 end;
 
@@ -2369,6 +2502,8 @@ begin
     if TPlatformServices.Current.SupportsPlatformService(IFMXScreenService, ScreenService) then
       Result.n := Ord(ScreenService.GetScreenOrientation);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'n_form_screenorientation: ' + E.Message);
   end;
 end;
 
@@ -2388,6 +2523,8 @@ begin
   try
     TBasForm(Args[0].p).OnShowFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onshow#: ' + E.Message);
   end;
 end;
 
@@ -2403,6 +2540,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnShowFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onshow$: ' + E.Message);
   end;
 end;
 
@@ -2418,6 +2557,8 @@ begin
   try
     TBasForm(Args[0].p).OnHideFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onhide#: ' + E.Message);
   end;
 end;
 
@@ -2433,6 +2574,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnHideFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onhide$: ' + E.Message);
   end;
 end;
 
@@ -2448,6 +2591,8 @@ begin
   try
     TBasForm(Args[0].p).OnCloseFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onclose#: ' + E.Message);
   end;
 end;
 
@@ -2463,6 +2608,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnCloseFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onclose$: ' + E.Message);
   end;
 end;
 
@@ -2478,6 +2625,8 @@ begin
   try
     TBasForm(Args[0].p).OnCloseQueryFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onclosequery#: ' + E.Message);
   end;
 end;
 
@@ -2493,6 +2642,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnCloseQueryFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onclosequery$: ' + E.Message);
   end;
 end;
 
@@ -2508,6 +2659,8 @@ begin
   try
     TBasForm(Args[0].p).OnActivateFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onactivate#: ' + E.Message);
   end;
 end;
 
@@ -2523,6 +2676,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnActivateFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onactivate$: ' + E.Message);
   end;
 end;
 
@@ -2538,6 +2693,8 @@ begin
   try
     TBasForm(Args[0].p).OnDeactivateFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_ondeactivate#: ' + E.Message);
   end;
 end;
 
@@ -2553,6 +2710,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnDeactivateFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_ondeactivate$: ' + E.Message);
   end;
 end;
 
@@ -2568,6 +2727,8 @@ begin
   try
     TBasForm(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2583,6 +2744,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2598,6 +2761,8 @@ begin
   try
     TBasForm(Args[0].p).OnPaintFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onpaint#: ' + E.Message);
   end;
 end;
 
@@ -2613,6 +2778,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnPaintFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onpaint$: ' + E.Message);
   end;
 end;
 
@@ -2628,6 +2795,8 @@ begin
   try
     TBasForm(Args[0].p).OnKeyDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onkeydown#: ' + E.Message);
   end;
 end;
 
@@ -2643,6 +2812,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnKeyDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onkeydown$: ' + E.Message);
   end;
 end;
 
@@ -2658,6 +2829,8 @@ begin
   try
     TBasForm(Args[0].p).OnKeyUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onkeyup#: ' + E.Message);
   end;
 end;
 
@@ -2673,6 +2846,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnKeyUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onkeyup$: ' + E.Message);
   end;
 end;
 
@@ -2688,6 +2863,8 @@ begin
   try
     TBasForm(Args[0].p).OnFocusChangedFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onfocuschanged#: ' + E.Message);
   end;
 end;
 
@@ -2703,6 +2880,8 @@ begin
   try
     Result.s := TBasForm(Args[0].p).OnFocusChangedFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_onfocuschanged$: ' + E.Message);
   end;
 end;
 
@@ -2733,6 +2912,8 @@ begin
     Frm.OnVirtualKeyboardShownFunc := '';
     Frm.OnVirtualKeyboardHiddenFunc := '';
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_clearcallbacks#: ' + E.Message);
   end;
 end;
 
@@ -2752,6 +2933,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Padding.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_padding: ' + E.Message);
   end;
 end;
 
@@ -2775,6 +2958,8 @@ begin
     Frm.Padding.Right := P;
     Frm.Padding.Bottom := P;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_padding#: ' + E.Message);
   end;
 end;
 
@@ -2796,6 +2981,8 @@ begin
     Frm.Padding.Right := Args[3].n;
     Frm.Padding.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_paddings#: ' + E.Message);
   end;
 end;
 
@@ -2815,6 +3002,8 @@ begin
   try
     Result.n := TBasForm(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_tag: ' + E.Message);
   end;
 end;
 
@@ -2830,6 +3019,8 @@ begin
   try
     TBasForm(Args[0].p).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'form_tag#: ' + E.Message);
   end;
 end;
 

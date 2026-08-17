@@ -206,6 +206,7 @@ implementation
 const
   PATH_GC_TAG = 'BASIC_PATH';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_PATH = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1175,6 +1176,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).Data.Data;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_data$: ' + E.Message);
   end;
 end;
 
@@ -1205,6 +1208,8 @@ begin
   try
     TBasPath(Args[0].p).Data.MoveTo(PointF(Args[1].n, Args[2].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_moveto#: ' + E.Message);
   end;
 end;
 
@@ -1217,6 +1222,8 @@ begin
   try
     TBasPath(Args[0].p).Data.LineTo(PointF(Args[1].n, Args[2].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_lineto#: ' + E.Message);
   end;
 end;
 
@@ -1229,6 +1236,8 @@ begin
   try
     TBasPath(Args[0].p).Data.HLineTo(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_hlineto#: ' + E.Message);
   end;
 end;
 
@@ -1241,6 +1250,8 @@ begin
   try
     TBasPath(Args[0].p).Data.VLineTo(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_vlineto#: ' + E.Message);
   end;
 end;
 
@@ -1257,6 +1268,8 @@ begin
       PointF(Args[5].n, Args[6].n)   // End point
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_curveto#: ' + E.Message);
   end;
 end;
 
@@ -1272,6 +1285,8 @@ begin
       PointF(Args[3].n, Args[4].n)   // End point
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_smoothcurveto#: ' + E.Message);
   end;
 end;
 
@@ -1287,6 +1302,8 @@ begin
       PointF(Args[3].n, Args[4].n)   // End point
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_quadcurveto#: ' + E.Message);
   end;
 end;
 
@@ -1299,6 +1316,8 @@ begin
   try
     TBasPath(Args[0].p).Data.ClosePath;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_closepath#: ' + E.Message);
   end;
 end;
 
@@ -1311,6 +1330,8 @@ begin
   try
     TBasPath(Args[0].p).Data.Clear;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_clear#: ' + E.Message);
   end;
 end;
 
@@ -1330,6 +1351,8 @@ begin
     R := RectF(Args[1].n, Args[2].n, Args[1].n + Args[3].n, Args[2].n + Args[4].n);
     TBasPath(Args[0].p).Data.AddRectangle(R, Args[5].n, Args[6].n, AllCorners);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_addrectangle#: ' + E.Message);
   end;
 end;
 
@@ -1345,6 +1368,8 @@ begin
     R := RectF(Args[1].n, Args[2].n, Args[1].n + Args[3].n, Args[2].n + Args[4].n);
     TBasPath(Args[0].p).Data.AddEllipse(R);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_addellipse#: ' + E.Message);
   end;
 end;
 
@@ -1362,6 +1387,8 @@ begin
       Args[6].n                       // Sweep angle
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_addarc#: ' + E.Message);
   end;
 end;
 
@@ -1381,6 +1408,8 @@ begin
     M := TMatrix.CreateScaling(Args[1].n, Args[2].n);
     TBasPath(Args[0].p).Data.ApplyMatrix(M);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_scale#: ' + E.Message);
   end;
 end;
 
@@ -1396,6 +1425,8 @@ begin
     M := TMatrix.CreateTranslation(Args[1].n, Args[2].n);
     TBasPath(Args[0].p).Data.ApplyMatrix(M);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_translate#: ' + E.Message);
   end;
 end;
 
@@ -1411,6 +1442,8 @@ begin
     M := TMatrix.CreateRotation(DegToRad(Args[1].n));
     TBasPath(Args[0].p).Data.ApplyMatrix(M);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_rotate#: ' + E.Message);
   end;
 end;
 
@@ -1427,6 +1460,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.Count;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_pointcount: ' + E.Message);
   end;
 end;
 
@@ -1439,6 +1474,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.LastPoint.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_lastx: ' + E.Message);
   end;
 end;
 
@@ -1451,6 +1488,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.LastPoint.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_lasty: ' + E.Message);
   end;
 end;
 
@@ -1463,6 +1502,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.GetBounds.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_boundsx: ' + E.Message);
   end;
 end;
 
@@ -1475,6 +1516,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.GetBounds.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_boundsy: ' + E.Message);
   end;
 end;
 
@@ -1487,6 +1530,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.GetBounds.Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_boundswidth: ' + E.Message);
   end;
 end;
 
@@ -1499,6 +1544,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Data.GetBounds.Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_boundsheight: ' + E.Message);
   end;
 end;
 
@@ -1515,6 +1562,8 @@ begin
   try
     Result.n := WrapModeToInt(TBasPath(Args[0].p).WrapMode);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_wrapmode: ' + E.Message);
   end;
 end;
 
@@ -1527,6 +1576,8 @@ begin
   try
     TBasPath(Args[0].p).WrapMode := IntToWrapMode(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_wrapmode#: ' + E.Message);
   end;
 end;
 
@@ -1543,6 +1594,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasPath(Args[0].p).Fill.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_fill$: ' + E.Message);
   end;
 end;
 
@@ -1556,6 +1609,8 @@ begin
     TBasPath(Args[0].p).Fill.Kind := TBrushKind.Solid;
     TBasPath(Args[0].p).Fill.Color := TUtils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_fill#: ' + E.Message);
   end;
 end;
 
@@ -1568,6 +1623,8 @@ begin
   try
     TBasPath(Args[0].p).Fill.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_fillnone#: ' + E.Message);
   end;
 end;
 
@@ -1584,6 +1641,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasPath(Args[0].p).Stroke.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_stroke$: ' + E.Message);
   end;
 end;
 
@@ -1597,6 +1656,8 @@ begin
     TBasPath(Args[0].p).Stroke.Kind := TBrushKind.Solid;
     TBasPath(Args[0].p).Stroke.Color := TUtils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_stroke#: ' + E.Message);
   end;
 end;
 
@@ -1609,6 +1670,8 @@ begin
   try
     TBasPath(Args[0].p).Stroke.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokenone#: ' + E.Message);
   end;
 end;
 
@@ -1621,6 +1684,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Stroke.Thickness;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokethickness: ' + E.Message);
   end;
 end;
 
@@ -1633,6 +1698,8 @@ begin
   try
     TBasPath(Args[0].p).Stroke.Thickness := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokethickness#: ' + E.Message);
   end;
 end;
 
@@ -1645,6 +1712,8 @@ begin
   try
     Result.n := StrokeDashToInt(TBasPath(Args[0].p).Stroke.Dash);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokedash: ' + E.Message);
   end;
 end;
 
@@ -1657,6 +1726,8 @@ begin
   try
     TBasPath(Args[0].p).Stroke.Dash := IntToStrokeDash(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokedash#: ' + E.Message);
   end;
 end;
 
@@ -1669,6 +1740,8 @@ begin
   try
     Result.n := StrokeCapToInt(TBasPath(Args[0].p).Stroke.Cap);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokecap: ' + E.Message);
   end;
 end;
 
@@ -1681,6 +1754,8 @@ begin
   try
     TBasPath(Args[0].p).Stroke.Cap := IntToStrokeCap(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokecap#: ' + E.Message);
   end;
 end;
 
@@ -1693,6 +1768,8 @@ begin
   try
     Result.n := StrokeJoinToInt(TBasPath(Args[0].p).Stroke.Join);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokejoin: ' + E.Message);
   end;
 end;
 
@@ -1705,6 +1782,8 @@ begin
   try
     TBasPath(Args[0].p).Stroke.Join := IntToStrokeJoin(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_strokejoin#: ' + E.Message);
   end;
 end;
 
@@ -1721,6 +1800,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_x: ' + E.Message);
   end;
 end;
 
@@ -1733,6 +1814,8 @@ begin
   try
     TBasPath(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_x#: ' + E.Message);
   end;
 end;
 
@@ -1745,6 +1828,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_y: ' + E.Message);
   end;
 end;
 
@@ -1757,6 +1842,8 @@ begin
   try
     TBasPath(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_y#: ' + E.Message);
   end;
 end;
 
@@ -1769,6 +1856,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_width: ' + E.Message);
   end;
 end;
 
@@ -1781,6 +1870,8 @@ begin
   try
     TBasPath(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_width#: ' + E.Message);
   end;
 end;
 
@@ -1793,6 +1884,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_height: ' + E.Message);
   end;
 end;
 
@@ -1805,6 +1898,8 @@ begin
   try
     TBasPath(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_height#: ' + E.Message);
   end;
 end;
 
@@ -1820,6 +1915,8 @@ begin
     TBasPath(Args[0].p).Width := Args[3].n;
     TBasPath(Args[0].p).Height := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1833,6 +1930,8 @@ begin
     TBasPath(Args[0].p).Width := Args[1].n;
     TBasPath(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_size#: ' + E.Message);
   end;
 end;
 
@@ -1846,6 +1945,8 @@ begin
     TBasPath(Args[0].p).Position.X := Args[1].n;
     TBasPath(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_move#: ' + E.Message);
   end;
 end;
 
@@ -1862,6 +1963,8 @@ begin
   try
     Result.n := AlignToInt(TBasPath(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_align: ' + E.Message);
   end;
 end;
 
@@ -1874,6 +1977,8 @@ begin
   try
     TBasPath(Args[0].p).Align := IntToAlign(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_align#: ' + E.Message);
   end;
 end;
 
@@ -1890,6 +1995,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1902,6 +2009,8 @@ begin
   try
     TBasPath(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1914,6 +2023,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_margintop: ' + E.Message);
   end;
 end;
 
@@ -1926,6 +2037,8 @@ begin
   try
     TBasPath(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1938,6 +2051,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginright: ' + E.Message);
   end;
 end;
 
@@ -1950,6 +2065,8 @@ begin
   try
     TBasPath(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1962,6 +2079,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1974,6 +2093,8 @@ begin
   try
     TBasPath(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1989,6 +2110,8 @@ begin
     TBasPath(Args[0].p).Margins.Right := Args[3].n;
     TBasPath(Args[0].p).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_margins#: ' + E.Message);
   end;
 end;
 
@@ -2004,6 +2127,8 @@ begin
     TBasPath(Args[0].p).Margins.Right := Args[1].n;
     TBasPath(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_margin#: ' + E.Message);
   end;
 end;
 
@@ -2023,6 +2148,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_visible: ' + E.Message);
   end;
 end;
 
@@ -2035,6 +2162,8 @@ begin
   try
     TBasPath(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_visible#: ' + E.Message);
   end;
 end;
 
@@ -2050,6 +2179,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_enabled: ' + E.Message);
   end;
 end;
 
@@ -2062,6 +2193,8 @@ begin
   try
     TBasPath(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_enabled#: ' + E.Message);
   end;
 end;
 
@@ -2074,6 +2207,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_opacity: ' + E.Message);
   end;
 end;
 
@@ -2086,6 +2221,8 @@ begin
   try
     TBasPath(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_opacity#: ' + E.Message);
   end;
 end;
 
@@ -2101,6 +2238,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_hittest: ' + E.Message);
   end;
 end;
 
@@ -2113,6 +2252,8 @@ begin
   try
     TBasPath(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_hittest#: ' + E.Message);
   end;
 end;
 
@@ -2129,6 +2270,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_tag: ' + E.Message);
   end;
 end;
 
@@ -2141,6 +2284,8 @@ begin
   try
     TBasPath(Args[0].p).Tag := Round(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_tag#: ' + E.Message);
   end;
 end;
 
@@ -2153,6 +2298,8 @@ begin
   try
     Result.n := TBasPath(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_rotation: ' + E.Message);
   end;
 end;
 
@@ -2165,6 +2312,8 @@ begin
   try
     TBasPath(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_rotation#: ' + E.Message);
   end;
 end;
 
@@ -2181,6 +2330,8 @@ begin
   try
     Result.p := TBasPath(Args[0].p).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_parent#: ' + E.Message);
   end;
 end;
 
@@ -2194,6 +2345,8 @@ begin
   try
     TBasPath(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_parent#: ' + E.Message);
   end;
 end;
 
@@ -2206,6 +2359,8 @@ begin
   try
     TBasPath(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2218,6 +2373,8 @@ begin
   try
     TBasPath(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2234,6 +2391,8 @@ begin
   try
     TBasPath(Args[0].p).Repaint;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -2250,6 +2409,8 @@ begin
   try
     TBasPath(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2262,6 +2423,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2274,6 +2437,8 @@ begin
   try
     TBasPath(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2286,6 +2451,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2298,6 +2465,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2310,6 +2479,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2322,6 +2493,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2334,6 +2507,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2346,6 +2521,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2358,6 +2535,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2370,6 +2549,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2382,6 +2563,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2394,6 +2577,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2406,6 +2591,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2418,6 +2605,8 @@ begin
   try
     TBasPath(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2430,6 +2619,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2442,6 +2633,8 @@ begin
   try
     TBasPath(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2454,6 +2647,8 @@ begin
   try
     Result.s := TBasPath(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2485,6 +2680,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'path_clearcallbacks#: ' + E.Message);
   end;
 end;
 

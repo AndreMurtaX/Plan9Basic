@@ -180,6 +180,7 @@ implementation
 const
   SPEEDBUTTON_GC_TAG = 'BASIC_SPEEDBUTTON';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_SPEEDBUTTON = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -965,6 +966,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).Text;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_text$: ' + E.Message);
   end;
 end;
 
@@ -977,6 +980,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Text := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_text#: ' + E.Message);
   end;
 end;
 
@@ -990,6 +995,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).TextSettings.Font.Family;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontfamily$: ' + E.Message);
   end;
 end;
 
@@ -1006,6 +1013,8 @@ begin
       TextSettings.Font.Family := Args[1].s;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontfamily#: ' + E.Message);
   end;
 end;
 
@@ -1018,6 +1027,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).TextSettings.Font.Size;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontsize: ' + E.Message);
   end;
 end;
 
@@ -1034,6 +1045,8 @@ begin
       TextSettings.Font.Size := Args[1].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontsize#: ' + E.Message);
   end;
 end;
 
@@ -1046,6 +1059,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasSpeedButton(Args[0].p).TextSettings.FontColor);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontcolor$: ' + E.Message);
   end;
 end;
 
@@ -1062,6 +1077,8 @@ begin
       TextSettings.FontColor := TUtils.ColorToAlphaColor(Args[1].s);
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_fontcolor#: ' + E.Message);
   end;
 end;
 
@@ -1077,6 +1094,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_bold: ' + E.Message);
   end;
 end;
 
@@ -1096,6 +1115,8 @@ begin
         TextSettings.Font.Style := TextSettings.Font.Style - [TFontStyle.fsBold];
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_bold#: ' + E.Message);
   end;
 end;
 
@@ -1111,6 +1132,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_italic: ' + E.Message);
   end;
 end;
 
@@ -1130,6 +1153,8 @@ begin
         TextSettings.Font.Style := TextSettings.Font.Style - [TFontStyle.fsItalic];
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_italic#: ' + E.Message);
   end;
 end;
 
@@ -1145,6 +1170,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_underline: ' + E.Message);
   end;
 end;
 
@@ -1164,6 +1191,8 @@ begin
         TextSettings.Font.Style := TextSettings.Font.Style - [TFontStyle.fsUnderline];
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_underline#: ' + E.Message);
   end;
 end;
 
@@ -1179,6 +1208,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_strikeout: ' + E.Message);
   end;
 end;
 
@@ -1198,6 +1229,8 @@ begin
         TextSettings.Font.Style := TextSettings.Font.Style - [TFontStyle.fsStrikeOut];
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_strikeout#: ' + E.Message);
   end;
 end;
 
@@ -1214,6 +1247,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).GroupIndex;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_groupindex: ' + E.Message);
   end;
 end;
 
@@ -1226,6 +1261,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).GroupIndex := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_groupindex#: ' + E.Message);
   end;
 end;
 
@@ -1241,6 +1278,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_stayspressed: ' + E.Message);
   end;
 end;
 
@@ -1253,6 +1292,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).StaysPressed := Trunc(Args[1].n) <> 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_stayspressed#: ' + E.Message);
   end;
 end;
 
@@ -1268,6 +1309,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_down: ' + E.Message);
   end;
 end;
 
@@ -1280,6 +1323,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).IsPressed := Trunc(Args[1].n) <> 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_down#: ' + E.Message);
   end;
 end;
 
@@ -1293,6 +1338,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_x: ' + E.Message);
   end;
 end;
 
@@ -1305,6 +1352,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_x#: ' + E.Message);
   end;
 end;
 
@@ -1317,6 +1366,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_y: ' + E.Message);
   end;
 end;
 
@@ -1329,6 +1380,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_y#: ' + E.Message);
   end;
 end;
 
@@ -1341,6 +1394,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_width: ' + E.Message);
   end;
 end;
 
@@ -1353,6 +1408,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_width#: ' + E.Message);
   end;
 end;
 
@@ -1365,6 +1422,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_height: ' + E.Message);
   end;
 end;
 
@@ -1377,6 +1436,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_height#: ' + E.Message);
   end;
 end;
 
@@ -1395,6 +1456,8 @@ begin
       Height := Args[4].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1411,6 +1474,8 @@ begin
       Position.Y := Args[2].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_move#: ' + E.Message);
   end;
 end;
 
@@ -1427,6 +1492,8 @@ begin
       Height := Args[2].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_size#: ' + E.Message);
   end;
 end;
 
@@ -1440,6 +1507,8 @@ begin
   try
     Result.n := AlignToInt(TBasSpeedButton(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_align: ' + E.Message);
   end;
 end;
 
@@ -1452,6 +1521,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_align#: ' + E.Message);
   end;
 end;
 
@@ -1465,6 +1536,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1477,6 +1550,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1489,6 +1564,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_margintop: ' + E.Message);
   end;
 end;
 
@@ -1501,6 +1578,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1513,6 +1592,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginright: ' + E.Message);
   end;
 end;
 
@@ -1525,6 +1606,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1537,6 +1620,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1549,6 +1634,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1567,6 +1654,8 @@ begin
       Bottom := Args[4].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_margins#: ' + E.Message);
   end;
 end;
 
@@ -1585,6 +1674,8 @@ begin
       Bottom := Args[1].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_margin#: ' + E.Message);
   end;
 end;
 
@@ -1601,6 +1692,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_visible: ' + E.Message);
   end;
 end;
 
@@ -1613,6 +1706,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Visible := Trunc(Args[1].n) <> 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_visible#: ' + E.Message);
   end;
 end;
 
@@ -1628,6 +1723,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_enabled: ' + E.Message);
   end;
 end;
 
@@ -1640,6 +1737,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Enabled := Trunc(Args[1].n) <> 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1652,6 +1751,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_opacity: ' + E.Message);
   end;
 end;
 
@@ -1664,6 +1765,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1677,6 +1780,8 @@ begin
   try
     Result.n := TBasSpeedButton(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_tag: ' + E.Message);
   end;
 end;
 
@@ -1689,6 +1794,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_tag#: ' + E.Message);
   end;
 end;
 
@@ -1705,6 +1812,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_hittest: ' + E.Message);
   end;
 end;
 
@@ -1717,6 +1826,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).HitTest := Trunc(Args[1].n) <> 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1733,6 +1844,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_dragmode: ' + E.Message);
   end;
 end;
 
@@ -1748,6 +1861,8 @@ begin
     else
       TBasSpeedButton(Args[0].p).DragMode := TDragMode.dmManual;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_dragmode#: ' + E.Message);
   end;
 end;
 
@@ -1761,6 +1876,8 @@ begin
   try
     Result.p := Pointer(TBasSpeedButton(Args[0].p).Parent);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_parent#: ' + E.Message);
   end;
 end;
 
@@ -1774,6 +1891,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_parent#: ' + E.Message);
   end;
 end;
 
@@ -1786,6 +1905,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).BringToFront();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1798,6 +1919,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).SendToBack();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -1811,6 +1934,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onclick#: ' + E.Message);
   end;
 end;
 
@@ -1823,6 +1948,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onclick$: ' + E.Message);
   end;
 end;
 
@@ -1835,6 +1962,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -1847,6 +1976,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -1859,6 +1990,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -1871,6 +2004,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -1883,6 +2018,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -1895,6 +2032,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -1907,6 +2046,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -1919,6 +2060,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -1931,6 +2074,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -1943,6 +2088,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -1955,6 +2102,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onresize#: ' + E.Message);
   end;
 end;
 
@@ -1967,6 +2116,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_onresize$: ' + E.Message);
   end;
 end;
 
@@ -1980,6 +2131,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnDragEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragenter#: ' + E.Message);
   end;
 end;
 
@@ -1992,6 +2145,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnDragEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragenter$: ' + E.Message);
   end;
 end;
 
@@ -2004,6 +2159,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnDragOverFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragover#: ' + E.Message);
   end;
 end;
 
@@ -2016,6 +2173,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnDragOverFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragover$: ' + E.Message);
   end;
 end;
 
@@ -2028,6 +2187,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnDragDropFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragdrop#: ' + E.Message);
   end;
 end;
 
@@ -2040,6 +2201,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnDragDropFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragdrop$: ' + E.Message);
   end;
 end;
 
@@ -2052,6 +2215,8 @@ begin
   try
     TBasSpeedButton(Args[0].p).OnDragLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragleave#: ' + E.Message);
   end;
 end;
 
@@ -2064,6 +2229,8 @@ begin
   try
     Result.s := TBasSpeedButton(Args[0].p).OnDragLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_ondragleave$: ' + E.Message);
   end;
 end;
 
@@ -2090,6 +2257,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'speedbutton_clearcallbacks#: ' + E.Message);
   end;
 end;
 

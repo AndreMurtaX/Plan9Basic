@@ -140,6 +140,7 @@ implementation
 const
   // Error codes
   ERR_NONE            = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_SB      = 1;
   ERR_INVALID_PARENT  = 2;
   ERR_INVALID_VALUE   = 3;
@@ -410,7 +411,7 @@ function n_scrollbox_x_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_x') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Position.X; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Position.X; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_x: ' + E.Message); end;
 end;
 
 // scrollbox_y(sb#) - Get Y position
@@ -418,7 +419,7 @@ function n_scrollbox_y_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_y') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Position.Y; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Position.Y; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_y: ' + E.Message); end;
 end;
 
 // scrollbox_move#(sb#, x, y) - Set position
@@ -429,7 +430,7 @@ begin
   try
     TVertScrollBox(Args[0].p).Position.X := Args[1].n;
     TVertScrollBox(Args[0].p).Position.Y := Args[2].n;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_move#: ' + E.Message); end;
 end;
 
 // scrollbox_width(sb#) - Get width
@@ -437,7 +438,7 @@ function n_scrollbox_width_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_width') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Width; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Width; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_width: ' + E.Message); end;
 end;
 
 // scrollbox_width#(sb#, w) - Set width
@@ -445,7 +446,7 @@ function p_scrollbox_width_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_width#') then Exit;
-  try TVertScrollBox(Args[0].p).Width := Args[1].n; except end;
+  try TVertScrollBox(Args[0].p).Width := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_width#: ' + E.Message); end;
 end;
 
 // scrollbox_height(sb#) - Get height
@@ -453,7 +454,7 @@ function n_scrollbox_height_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_height') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Height; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Height; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_height: ' + E.Message); end;
 end;
 
 // scrollbox_height#(sb#, h) - Set height
@@ -461,7 +462,7 @@ function p_scrollbox_height_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_height#') then Exit;
-  try TVertScrollBox(Args[0].p).Height := Args[1].n; except end;
+  try TVertScrollBox(Args[0].p).Height := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_height#: ' + E.Message); end;
 end;
 
 //==============================================================================
@@ -473,7 +474,7 @@ function n_scrollbox_align_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_align') then Exit;
-  try Result.n := AlignToInt(TVertScrollBox(Args[0].p).Align); except end;
+  try Result.n := AlignToInt(TVertScrollBox(Args[0].p).Align); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_align: ' + E.Message); end;
 end;
 
 // scrollbox_align#(sb#, a) - Set alignment
@@ -481,7 +482,7 @@ function p_scrollbox_align_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_align#') then Exit;
-  try TVertScrollBox(Args[0].p).Align := IntToAlign(Trunc(Args[1].n)); except end;
+  try TVertScrollBox(Args[0].p).Align := IntToAlign(Trunc(Args[1].n)); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_align#: ' + E.Message); end;
 end;
 
 //==============================================================================
@@ -495,7 +496,7 @@ begin
   if not ValidateScrollBox(Args[0].p, 'scrollbox_visible') then Exit;
   try
     if TVertScrollBox(Args[0].p).Visible then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_visible: ' + E.Message); end;
 end;
 
 // scrollbox_visible#(sb#, v) - Set visibility
@@ -503,7 +504,7 @@ function p_scrollbox_visible_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_visible#') then Exit;
-  try TVertScrollBox(Args[0].p).Visible := (Args[1].n <> 0); except end;
+  try TVertScrollBox(Args[0].p).Visible := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_visible#: ' + E.Message); end;
 end;
 
 // scrollbox_opacity(sb#) - Get opacity
@@ -511,7 +512,7 @@ function n_scrollbox_opacity_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_opacity') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Opacity; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Opacity; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_opacity: ' + E.Message); end;
 end;
 
 // scrollbox_opacity#(sb#, o) - Set opacity
@@ -519,7 +520,7 @@ function p_scrollbox_opacity_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_opacity#') then Exit;
-  try TVertScrollBox(Args[0].p).Opacity := Args[1].n; except end;
+  try TVertScrollBox(Args[0].p).Opacity := Args[1].n; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_opacity#: ' + E.Message); end;
 end;
 
 //==============================================================================
@@ -531,7 +532,7 @@ function n_scrollbox_tag_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_tag') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).Tag; except end;
+  try Result.n := TVertScrollBox(Args[0].p).Tag; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_tag: ' + E.Message); end;
 end;
 
 // scrollbox_tag#(sb#, t) - Set tag
@@ -539,7 +540,7 @@ function p_scrollbox_tag_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_tag#') then Exit;
-  try TVertScrollBox(Args[0].p).Tag := Trunc(Args[1].n); except end;
+  try TVertScrollBox(Args[0].p).Tag := Trunc(Args[1].n); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_tag#: ' + E.Message); end;
 end;
 
 //==============================================================================
@@ -553,7 +554,7 @@ begin
   if not ValidateScrollBox(Args[0].p, 'scrollbox_showscrollbars') then Exit;
   try
     if TVertScrollBox(Args[0].p).ShowScrollBars then Result.n := 1 else Result.n := 0;
-  except end;
+  except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_showscrollbars: ' + E.Message); end;
 end;
 
 // scrollbox_showscrollbars#(sb#, v) - Show or hide scroll bars
@@ -561,7 +562,7 @@ function p_scrollbox_showscrollbars_set(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := Args[0].p; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_showscrollbars#') then Exit;
-  try TVertScrollBox(Args[0].p).ShowScrollBars := (Args[1].n <> 0); except end;
+  try TVertScrollBox(Args[0].p).ShowScrollBars := (Args[1].n <> 0); except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_showscrollbars#: ' + E.Message); end;
 end;
 
 // scrollbox_contentwidth(sb#) - Get scrollable content width
@@ -569,7 +570,7 @@ function n_scrollbox_contentwidth_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_contentwidth') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).ContentBounds.Width; except end;
+  try Result.n := TVertScrollBox(Args[0].p).ContentBounds.Width; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_contentwidth: ' + E.Message); end;
 end;
 
 // scrollbox_contentheight(sb#) - Get scrollable content height
@@ -577,7 +578,7 @@ function n_scrollbox_contentheight_get(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := 0; Result.p := nil; Result.s := '';
   if not ValidateScrollBox(Args[0].p, 'scrollbox_contentheight') then Exit;
-  try Result.n := TVertScrollBox(Args[0].p).ContentBounds.Height; except end;
+  try Result.n := TVertScrollBox(Args[0].p).ContentBounds.Height; except on E: Exception do SetError(ERR_OPERATION_FAILED, 'scrollbox_contentheight: ' + E.Message); end;
 end;
 
 //==============================================================================

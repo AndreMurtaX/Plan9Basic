@@ -111,6 +111,7 @@ var
 
 const
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_NIL_ANIMATION = 1;
   ERR_INVALID_PROPERTY = 2;
   ERR_INVALID_VALUE = 3;
@@ -186,6 +187,8 @@ begin
   try
     if FAniX <> nil then begin FAniX.OnFinish := nil; FAniX.OnProcess := nil; end;
   except
+    //Teardown path: the only sane action is to keep unwinding. SetError is
+    //also declared further down this unit and is not in scope here.
   end;
 
   // We don't own the animations (FParentControl does), so don't free them
@@ -224,6 +227,8 @@ begin
       FAniX.OnProcess := nil;
     end;
   except
+    //Teardown path: the only sane action is to keep unwinding. SetError is
+    //also declared further down this unit and is not in scope here.
   end;
   FOnFinishFunc := '';
   FOnProcessFunc := '';

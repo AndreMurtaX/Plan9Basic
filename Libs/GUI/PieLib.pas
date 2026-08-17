@@ -105,6 +105,7 @@ implementation
 const
   PIE_GC_TAG = 'BASIC_PIE';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_PIE = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1079,6 +1080,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).StartAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_startangle: ' + E.Message);
   end;
 end;
 
@@ -1092,6 +1095,8 @@ begin
   try
     TBasPie(Args[0].P).StartAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_startangle#: ' + E.Message);
   end;
 end;
 
@@ -1105,6 +1110,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).EndAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_endangle: ' + E.Message);
   end;
 end;
 
@@ -1118,6 +1125,8 @@ begin
   try
     TBasPie(Args[0].P).EndAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_endangle#: ' + E.Message);
   end;
 end;
 
@@ -1132,6 +1141,8 @@ begin
     TBasPie(Args[0].P).StartAngle := Args[1].n;
     TBasPie(Args[0].P).EndAngle := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_angles#: ' + E.Message);
   end;
 end;
 
@@ -1146,6 +1157,8 @@ begin
   try
     Result.S := TUtils.AlphaColorToStr(TBasPie(Args[0].P).Fill.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_fill$: ' + E.Message);
   end;
 end;
 
@@ -1160,6 +1173,8 @@ begin
     TBasPie(Args[0].P).Fill.Color := TUtils.ColorToAlphaColor(Args[1].S);
     TBasPie(Args[0].P).Fill.Kind := TBrushKind.Solid;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_fill#: ' + E.Message);
   end;
 end;
 
@@ -1173,6 +1188,8 @@ begin
   try
     TBasPie(Args[0].P).Fill.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_fillnone#: ' + E.Message);
   end;
 end;
 
@@ -1187,6 +1204,8 @@ begin
   try
     Result.S := TUtils.AlphaColorToStr(TBasPie(Args[0].P).Stroke.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_stroke$: ' + E.Message);
   end;
 end;
 
@@ -1201,6 +1220,8 @@ begin
     TBasPie(Args[0].P).Stroke.Color := TUtils.ColorToAlphaColor(Args[1].S);
     TBasPie(Args[0].P).Stroke.Kind := TBrushKind.Solid;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_stroke#: ' + E.Message);
   end;
 end;
 
@@ -1214,6 +1235,8 @@ begin
   try
     TBasPie(Args[0].P).Stroke.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokenone#: ' + E.Message);
   end;
 end;
 
@@ -1227,6 +1250,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Stroke.Thickness;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokethickness: ' + E.Message);
   end;
 end;
 
@@ -1240,6 +1265,8 @@ begin
   try
     TBasPie(Args[0].P).Stroke.Thickness := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokethickness#: ' + E.Message);
   end;
 end;
 
@@ -1253,6 +1280,8 @@ begin
   try
     Result.n := StrokeDashToInt(TBasPie(Args[0].P).Stroke.Dash);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokedash: ' + E.Message);
   end;
 end;
 
@@ -1266,6 +1295,8 @@ begin
   try
     TBasPie(Args[0].P).Stroke.Dash := IntToStrokeDash(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokedash#: ' + E.Message);
   end;
 end;
 
@@ -1279,6 +1310,8 @@ begin
   try
     Result.n := StrokeCapToInt(TBasPie(Args[0].P).Stroke.Cap);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokecap: ' + E.Message);
   end;
 end;
 
@@ -1292,6 +1325,8 @@ begin
   try
     TBasPie(Args[0].P).Stroke.Cap := IntToStrokeCap(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokecap#: ' + E.Message);
   end;
 end;
 
@@ -1305,6 +1340,8 @@ begin
   try
     Result.n := StrokeJoinToInt(TBasPie(Args[0].P).Stroke.Join);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokejoin: ' + E.Message);
   end;
 end;
 
@@ -1318,6 +1355,8 @@ begin
   try
     TBasPie(Args[0].P).Stroke.Join := IntToStrokeJoin(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_strokejoin#: ' + E.Message);
   end;
 end;
 
@@ -1332,6 +1371,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_x: ' + E.Message);
   end;
 end;
 
@@ -1345,6 +1386,8 @@ begin
   try
     TBasPie(Args[0].P).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_x#: ' + E.Message);
   end;
 end;
 
@@ -1358,6 +1401,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_y: ' + E.Message);
   end;
 end;
 
@@ -1371,6 +1416,8 @@ begin
   try
     TBasPie(Args[0].P).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_y#: ' + E.Message);
   end;
 end;
 
@@ -1384,6 +1431,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_width: ' + E.Message);
   end;
 end;
 
@@ -1397,6 +1446,8 @@ begin
   try
     TBasPie(Args[0].P).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_width#: ' + E.Message);
   end;
 end;
 
@@ -1410,6 +1461,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_height: ' + E.Message);
   end;
 end;
 
@@ -1423,6 +1476,8 @@ begin
   try
     TBasPie(Args[0].P).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_height#: ' + E.Message);
   end;
 end;
 
@@ -1436,6 +1491,8 @@ begin
   try
     TBasPie(Args[0].P).SetBounds(Args[1].n, Args[2].n, Args[3].n, Args[4].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1450,6 +1507,8 @@ begin
     TBasPie(Args[0].P).Width := Args[1].n;
     TBasPie(Args[0].P).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_size#: ' + E.Message);
   end;
 end;
 
@@ -1464,6 +1523,8 @@ begin
     TBasPie(Args[0].P).Position.X := Args[1].n;
     TBasPie(Args[0].P).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_move#: ' + E.Message);
   end;
 end;
 
@@ -1478,6 +1539,8 @@ begin
   try
     Result.n := AlignToInt(TBasPie(Args[0].P).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_align: ' + E.Message);
   end;
 end;
 
@@ -1491,6 +1554,8 @@ begin
   try
     TBasPie(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_align#: ' + E.Message);
   end;
 end;
 
@@ -1505,6 +1570,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1518,6 +1585,8 @@ begin
   try
     TBasPie(Args[0].P).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1531,6 +1600,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_margintop: ' + E.Message);
   end;
 end;
 
@@ -1544,6 +1615,8 @@ begin
   try
     TBasPie(Args[0].P).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1557,6 +1630,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginright: ' + E.Message);
   end;
 end;
 
@@ -1570,6 +1645,8 @@ begin
   try
     TBasPie(Args[0].P).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1583,6 +1660,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1596,6 +1675,8 @@ begin
   try
     TBasPie(Args[0].P).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1612,6 +1693,8 @@ begin
     TBasPie(Args[0].P).Margins.Right := Args[3].n;
     TBasPie(Args[0].P).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_margins#: ' + E.Message);
   end;
 end;
 
@@ -1628,6 +1711,8 @@ begin
     TBasPie(Args[0].P).Margins.Right := Args[1].n;
     TBasPie(Args[0].P).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_margin#: ' + E.Message);
   end;
 end;
 
@@ -1645,6 +1730,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_visible: ' + E.Message);
   end;
 end;
 
@@ -1658,6 +1745,8 @@ begin
   try
     TBasPie(Args[0].P).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_visible#: ' + E.Message);
   end;
 end;
 
@@ -1674,6 +1763,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_enabled: ' + E.Message);
   end;
 end;
 
@@ -1687,6 +1778,8 @@ begin
   try
     TBasPie(Args[0].P).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1700,6 +1793,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_opacity: ' + E.Message);
   end;
 end;
 
@@ -1713,6 +1808,8 @@ begin
   try
     TBasPie(Args[0].P).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1729,6 +1826,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_hittest: ' + E.Message);
   end;
 end;
 
@@ -1742,6 +1841,8 @@ begin
   try
     TBasPie(Args[0].P).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1756,6 +1857,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_tag: ' + E.Message);
   end;
 end;
 
@@ -1769,6 +1872,8 @@ begin
   try
     TBasPie(Args[0].P).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_tag#: ' + E.Message);
   end;
 end;
 
@@ -1782,6 +1887,8 @@ begin
   try
     Result.n := TBasPie(Args[0].P).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_rotation: ' + E.Message);
   end;
 end;
 
@@ -1795,6 +1902,8 @@ begin
   try
     TBasPie(Args[0].P).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_rotation#: ' + E.Message);
   end;
 end;
 
@@ -1809,6 +1918,8 @@ begin
   try
     Result.P := TBasPie(Args[0].P).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_parent#: ' + E.Message);
   end;
 end;
 
@@ -1824,6 +1935,8 @@ begin
   try
     TBasPie(Args[0].P).Parent := TFmxObject(Args[1].P);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_parent#: ' + E.Message);
   end;
 end;
 
@@ -1837,6 +1950,8 @@ begin
   try
     TBasPie(Args[0].P).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1850,6 +1965,8 @@ begin
   try
     TBasPie(Args[0].P).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -1864,6 +1981,8 @@ begin
   try
     TBasPie(Args[0].P).Repaint;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -1878,6 +1997,8 @@ begin
   try
     TBasPie(Args[0].P).OnClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onclick#: ' + E.Message);
   end;
 end;
 
@@ -1891,6 +2012,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onclick$: ' + E.Message);
   end;
 end;
 
@@ -1904,6 +2027,8 @@ begin
   try
     TBasPie(Args[0].P).OnDblClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -1917,6 +2042,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -1930,6 +2057,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseDownFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -1943,6 +2072,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -1956,6 +2087,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseUpFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -1969,6 +2102,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -1982,6 +2117,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseMoveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -1995,6 +2132,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2008,6 +2147,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseEnterFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2021,6 +2162,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2034,6 +2177,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseLeaveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2047,6 +2192,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2060,6 +2207,8 @@ begin
   try
     TBasPie(Args[0].P).OnMouseWheelFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2073,6 +2222,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2086,6 +2237,8 @@ begin
   try
     TBasPie(Args[0].P).OnResizeFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2099,6 +2252,8 @@ begin
   try
     Result.S := TBasPie(Args[0].P).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2129,6 +2284,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'pie_clearcallbacks#: ' + E.Message);
   end;
 end;
 

@@ -184,6 +184,7 @@ const
 
   // Error codes
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_LABEL = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1000,6 +1001,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).Text;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_text$: ' + E.Message);
   end;
 end;
 
@@ -1015,6 +1018,8 @@ begin
   try
     TBasLabel(Args[0].p).Text := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_text#: ' + E.Message);
   end;
 end;
 
@@ -1034,6 +1039,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).TextSettings.Font.Family;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontfamily$: ' + E.Message);
   end;
 end;
 
@@ -1052,6 +1059,8 @@ begin
     TBasLabel(Args[0].p).StyledSettings := [];
     TBasLabel(Args[0].p).TextSettings.Font.Family := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontfamily#: ' + E.Message);
   end;
 end;
 
@@ -1067,6 +1076,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).TextSettings.Font.Size;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontsize: ' + E.Message);
   end;
 end;
 
@@ -1085,6 +1096,8 @@ begin
     TBasLabel(Args[0].p).StyledSettings := [];
     TBasLabel(Args[0].p).TextSettings.Font.Size := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontsize#: ' + E.Message);
   end;
 end;
 
@@ -1100,6 +1113,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasLabel(Args[0].p).TextSettings.FontColor);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontcolor$: ' + E.Message);
   end;
 end;
 
@@ -1118,6 +1133,8 @@ begin
     TBasLabel(Args[0].p).StyledSettings := [];
     TBasLabel(Args[0].p).TextSettings.FontColor := Tutils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_fontcolor#: ' + E.Message);
   end;
 end;
 
@@ -1136,6 +1153,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_bold: ' + E.Message);
   end;
 end;
 
@@ -1161,6 +1180,8 @@ begin
       Exclude(Style, TFontStyle.fsBold);
     TBasLabel(Args[0].p).TextSettings.Font.Style := Style;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_bold#: ' + E.Message);
   end;
 end;
 
@@ -1179,6 +1200,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_italic: ' + E.Message);
   end;
 end;
 
@@ -1204,6 +1227,8 @@ begin
       Exclude(Style, TFontStyle.fsItalic);
     TBasLabel(Args[0].p).TextSettings.Font.Style := Style;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_italic#: ' + E.Message);
   end;
 end;
 
@@ -1222,6 +1247,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_underline: ' + E.Message);
   end;
 end;
 
@@ -1247,6 +1274,8 @@ begin
       Exclude(Style, TFontStyle.fsUnderline);
     TBasLabel(Args[0].p).TextSettings.Font.Style := Style;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_underline#: ' + E.Message);
   end;
 end;
 
@@ -1265,6 +1294,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_strikeout: ' + E.Message);
   end;
 end;
 
@@ -1290,6 +1321,8 @@ begin
       Exclude(Style, TFontStyle.fsStrikeOut);
     TBasLabel(Args[0].p).TextSettings.Font.Style := Style;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_strikeout#: ' + E.Message);
   end;
 end;
 
@@ -1309,6 +1342,8 @@ begin
   try
     Result.n := TextAlignToInt(TBasLabel(Args[0].p).TextSettings.HorzAlign);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_textalign: ' + E.Message);
   end;
 end;
 
@@ -1324,6 +1359,8 @@ begin
   try
     TBasLabel(Args[0].p).TextSettings.HorzAlign := IntToTextAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_textalign#: ' + E.Message);
   end;
 end;
 
@@ -1339,6 +1376,8 @@ begin
   try
     Result.n := TextAlignToInt(TBasLabel(Args[0].p).TextSettings.VertAlign);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_vertalign: ' + E.Message);
   end;
 end;
 
@@ -1354,6 +1393,8 @@ begin
   try
     TBasLabel(Args[0].p).TextSettings.VertAlign := IntToTextAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_vertalign#: ' + E.Message);
   end;
 end;
 
@@ -1376,6 +1417,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_wordwrap: ' + E.Message);
   end;
 end;
 
@@ -1391,6 +1434,8 @@ begin
   try
     TBasLabel(Args[0].p).TextSettings.WordWrap := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_wordwrap#: ' + E.Message);
   end;
 end;
 
@@ -1409,6 +1454,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_autosize: ' + E.Message);
   end;
 end;
 
@@ -1424,6 +1471,8 @@ begin
   try
     TBasLabel(Args[0].p).AutoSize := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_autosize#: ' + E.Message);
   end;
 end;
 
@@ -1443,6 +1492,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_x: ' + E.Message);
   end;
 end;
 
@@ -1458,6 +1509,8 @@ begin
   try
     TBasLabel(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_x#: ' + E.Message);
   end;
 end;
 
@@ -1473,6 +1526,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_y: ' + E.Message);
   end;
 end;
 
@@ -1488,6 +1543,8 @@ begin
   try
     TBasLabel(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_y#: ' + E.Message);
   end;
 end;
 
@@ -1503,6 +1560,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_width: ' + E.Message);
   end;
 end;
 
@@ -1518,6 +1577,8 @@ begin
   try
     TBasLabel(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_width#: ' + E.Message);
   end;
 end;
 
@@ -1533,6 +1594,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_height: ' + E.Message);
   end;
 end;
 
@@ -1548,6 +1611,8 @@ begin
   try
     TBasLabel(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_height#: ' + E.Message);
   end;
 end;
 
@@ -1563,6 +1628,8 @@ begin
   try
     TBasLabel(Args[0].p).SetBounds(Args[1].n, Args[2].n, Args[3].n, Args[4].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1579,6 +1646,8 @@ begin
     TBasLabel(Args[0].p).Position.X := Args[1].n;
     TBasLabel(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_move#: ' + E.Message);
   end;
 end;
 
@@ -1595,6 +1664,8 @@ begin
     TBasLabel(Args[0].p).Width := Args[1].n;
     TBasLabel(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_size#: ' + E.Message);
   end;
 end;
 
@@ -1614,6 +1685,8 @@ begin
   try
     Result.n := AlignToInt(TBasLabel(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_align: ' + E.Message);
   end;
 end;
 
@@ -1629,6 +1702,8 @@ begin
   try
     TBasLabel(Args[0].p).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_align#: ' + E.Message);
   end;
 end;
 
@@ -1648,6 +1723,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1663,6 +1740,8 @@ begin
   try
     TBasLabel(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1678,6 +1757,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_margintop: ' + E.Message);
   end;
 end;
 
@@ -1693,6 +1774,8 @@ begin
   try
     TBasLabel(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1708,6 +1791,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginright: ' + E.Message);
   end;
 end;
 
@@ -1723,6 +1808,8 @@ begin
   try
     TBasLabel(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1738,6 +1825,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1753,6 +1842,8 @@ begin
   try
     TBasLabel(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1774,6 +1865,8 @@ begin
       Bottom := Args[4].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_margins#: ' + E.Message);
   end;
 end;
 
@@ -1795,6 +1888,8 @@ begin
       Bottom := Args[1].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_margin#: ' + E.Message);
   end;
 end;
 
@@ -1817,6 +1912,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_visible: ' + E.Message);
   end;
 end;
 
@@ -1832,6 +1929,8 @@ begin
   try
     TBasLabel(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_visible#: ' + E.Message);
   end;
 end;
 
@@ -1850,6 +1949,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_enabled: ' + E.Message);
   end;
 end;
 
@@ -1865,6 +1966,8 @@ begin
   try
     TBasLabel(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1880,6 +1983,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_opacity: ' + E.Message);
   end;
 end;
 
@@ -1895,6 +2000,8 @@ begin
   try
     TBasLabel(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1913,6 +2020,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_hittest: ' + E.Message);
   end;
 end;
 
@@ -1928,6 +2037,8 @@ begin
   try
     TBasLabel(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1947,6 +2058,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_tag: ' + E.Message);
   end;
 end;
 
@@ -1962,6 +2075,8 @@ begin
   try
     TBasLabel(Args[0].p).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_tag#: ' + E.Message);
   end;
 end;
 
@@ -1977,6 +2092,8 @@ begin
   try
     Result.n := TBasLabel(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_rotation: ' + E.Message);
   end;
 end;
 
@@ -1992,6 +2109,8 @@ begin
   try
     TBasLabel(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_rotation#: ' + E.Message);
   end;
 end;
 
@@ -2011,6 +2130,8 @@ begin
   try
     Result.p := Pointer(TBasLabel(Args[0].p).Parent);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_parent#: ' + E.Message);
   end;
 end;
 
@@ -2027,6 +2148,8 @@ begin
   try
     TBasLabel(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_parent#: ' + E.Message);
   end;
 end;
 
@@ -2042,6 +2165,8 @@ begin
   try
     TBasLabel(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2057,6 +2182,8 @@ begin
   try
     TBasLabel(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2073,6 +2200,8 @@ begin
   try
     TBasLabel(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2085,6 +2214,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2097,6 +2228,8 @@ begin
   try
     TBasLabel(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2109,6 +2242,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2121,6 +2256,8 @@ begin
   try
     TBasLabel(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2133,6 +2270,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2145,6 +2284,8 @@ begin
   try
     TBasLabel(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2157,6 +2298,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2169,6 +2312,8 @@ begin
   try
     TBasLabel(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2181,6 +2326,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2193,6 +2340,8 @@ begin
   try
     TBasLabel(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2205,6 +2354,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2217,6 +2368,8 @@ begin
   try
     TBasLabel(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2229,6 +2382,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2241,6 +2396,8 @@ begin
   try
     TBasLabel(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2253,6 +2410,8 @@ begin
   try
     Result.s := TBasLabel(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2275,6 +2434,8 @@ begin
       OnResizeFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'label_clearcallbacks#: ' + E.Message);
   end;
 end;
 

@@ -63,6 +63,7 @@ const
 
 const
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_CLIENT = 1;
   ERR_INVALID_CONV = 2;
   ERR_INVALID_PROVIDER = 3;
@@ -1169,6 +1170,8 @@ begin
       end;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'TAIClient.ParseUsage: ' + E.Message);
   end;
   if Json <> nil then
     Json.Free();
@@ -1339,6 +1342,8 @@ begin
     try
       gEngine.ExecuteUserFunction(gOutput, Signature, Params, RetType, RetValue);
     except
+      on E: Exception do
+        SetError(ERR_OPERATION_FAILED, 'TAIClient.InvokeStreamCallback: ' + E.Message);
     end;
   end;
 end;

@@ -172,6 +172,7 @@ uses
 const
   IMAGE_GC_TAG = 'BASIC_IMAGE';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_IMAGE = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1199,6 +1200,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Bitmap.Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_bitmapwidth: ' + E.Message);
   end;
 end;
 
@@ -1211,6 +1214,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Bitmap.Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_bitmapheight: ' + E.Message);
   end;
 end;
 
@@ -1226,6 +1231,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_isempty: ' + E.Message);
   end;
 end;
 
@@ -1238,6 +1245,8 @@ begin
   try
     TBasImage(Args[0].p).Bitmap.Clear(TAlphaColorRec.Null);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_clear#: ' + E.Message);
   end;
 end;
 
@@ -1250,6 +1259,8 @@ begin
   try
     TBasImage(Args[0].p).Bitmap.Clear(TUtils.ColorToAlphaColor(Args[1].s));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_clear#: ' + E.Message);
   end;
 end;
 
@@ -1266,6 +1277,8 @@ begin
   try
     Result.n := WrapModeToInt(TBasImage(Args[0].p).WrapMode);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_wrapmode: ' + E.Message);
   end;
 end;
 
@@ -1278,6 +1291,8 @@ begin
   try
     TBasImage(Args[0].p).WrapMode := IntToWrapMode(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_wrapmode#: ' + E.Message);
   end;
 end;
 
@@ -1294,6 +1309,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_x: ' + E.Message);
   end;
 end;
 
@@ -1306,6 +1323,8 @@ begin
   try
     TBasImage(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_x#: ' + E.Message);
   end;
 end;
 
@@ -1318,6 +1337,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_y: ' + E.Message);
   end;
 end;
 
@@ -1330,6 +1351,8 @@ begin
   try
     TBasImage(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_y#: ' + E.Message);
   end;
 end;
 
@@ -1342,6 +1365,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_width: ' + E.Message);
   end;
 end;
 
@@ -1354,6 +1379,8 @@ begin
   try
     TBasImage(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_width#: ' + E.Message);
   end;
 end;
 
@@ -1366,6 +1393,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_height: ' + E.Message);
   end;
 end;
 
@@ -1378,6 +1407,8 @@ begin
   try
     TBasImage(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_height#: ' + E.Message);
   end;
 end;
 
@@ -1393,6 +1424,8 @@ begin
     TBasImage(Args[0].p).Width := Args[3].n;
     TBasImage(Args[0].p).Height := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1406,6 +1439,8 @@ begin
     TBasImage(Args[0].p).Width := Args[1].n;
     TBasImage(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_size#: ' + E.Message);
   end;
 end;
 
@@ -1419,6 +1454,8 @@ begin
     TBasImage(Args[0].p).Position.X := Args[1].n;
     TBasImage(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_move#: ' + E.Message);
   end;
 end;
 
@@ -1435,6 +1472,8 @@ begin
   try
     Result.n := AlignToInt(TBasImage(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_align: ' + E.Message);
   end;
 end;
 
@@ -1447,6 +1486,8 @@ begin
   try
     TBasImage(Args[0].p).Align := IntToAlign(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_align#: ' + E.Message);
   end;
 end;
 
@@ -1463,6 +1504,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1475,6 +1518,8 @@ begin
   try
     TBasImage(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1487,6 +1532,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_margintop: ' + E.Message);
   end;
 end;
 
@@ -1499,6 +1546,8 @@ begin
   try
     TBasImage(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1511,6 +1560,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginright: ' + E.Message);
   end;
 end;
 
@@ -1523,6 +1574,8 @@ begin
   try
     TBasImage(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1535,6 +1588,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1547,6 +1602,8 @@ begin
   try
     TBasImage(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1562,6 +1619,8 @@ begin
     TBasImage(Args[0].p).Margins.Right := Args[3].n;
     TBasImage(Args[0].p).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_margins#: ' + E.Message);
   end;
 end;
 
@@ -1577,6 +1636,8 @@ begin
     TBasImage(Args[0].p).Margins.Right := Args[1].n;
     TBasImage(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_margin#: ' + E.Message);
   end;
 end;
 
@@ -1596,6 +1657,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_visible: ' + E.Message);
   end;
 end;
 
@@ -1608,6 +1671,8 @@ begin
   try
     TBasImage(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_visible#: ' + E.Message);
   end;
 end;
 
@@ -1623,6 +1688,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_enabled: ' + E.Message);
   end;
 end;
 
@@ -1635,6 +1702,8 @@ begin
   try
     TBasImage(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1647,6 +1716,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_opacity: ' + E.Message);
   end;
 end;
 
@@ -1659,6 +1730,8 @@ begin
   try
     TBasImage(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1674,6 +1747,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_hittest: ' + E.Message);
   end;
 end;
 
@@ -1686,6 +1761,8 @@ begin
   try
     TBasImage(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1702,6 +1779,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_tag: ' + E.Message);
   end;
 end;
 
@@ -1714,6 +1793,8 @@ begin
   try
     TBasImage(Args[0].p).Tag := Round(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_tag#: ' + E.Message);
   end;
 end;
 
@@ -1726,6 +1807,8 @@ begin
   try
     Result.n := TBasImage(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_rotation: ' + E.Message);
   end;
 end;
 
@@ -1738,6 +1821,8 @@ begin
   try
     TBasImage(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_rotation#: ' + E.Message);
   end;
 end;
 
@@ -1754,6 +1839,8 @@ begin
   try
     Result.p := TBasImage(Args[0].p).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_parent#: ' + E.Message);
   end;
 end;
 
@@ -1767,6 +1854,8 @@ begin
   try
     TBasImage(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_parent#: ' + E.Message);
   end;
 end;
 
@@ -1779,6 +1868,8 @@ begin
   try
     TBasImage(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1791,6 +1882,8 @@ begin
   try
     TBasImage(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -1807,6 +1900,8 @@ begin
   try
     TBasImage(Args[0].p).Repaint;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -1823,6 +1918,8 @@ begin
   try
     TBasImage(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onclick#: ' + E.Message);
   end;
 end;
 
@@ -1835,6 +1932,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onclick$: ' + E.Message);
   end;
 end;
 
@@ -1847,6 +1946,8 @@ begin
   try
     TBasImage(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -1859,6 +1960,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -1871,6 +1974,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -1883,6 +1988,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -1895,6 +2002,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -1907,6 +2016,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -1919,6 +2030,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -1931,6 +2044,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -1943,6 +2058,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -1955,6 +2072,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -1967,6 +2086,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -1979,6 +2100,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -1991,6 +2114,8 @@ begin
   try
     TBasImage(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2003,6 +2128,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2015,6 +2142,8 @@ begin
   try
     TBasImage(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2027,6 +2156,8 @@ begin
   try
     Result.s := TBasImage(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2058,6 +2189,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'image_clearcallbacks#: ' + E.Message);
   end;
 end;
 

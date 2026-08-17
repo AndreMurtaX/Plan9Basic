@@ -108,6 +108,7 @@ implementation
 const
   EDIT_GC_TAG = 'BASIC_EDIT';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_EDIT = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1140,6 +1141,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).Text;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_text$: ' + E.Message);
   end;
 end;
 
@@ -1153,6 +1156,8 @@ begin
   try
     TBasEdit(Args[0].P).Text := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_text#: ' + E.Message);
   end;
 end;
 
@@ -1166,6 +1171,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).TextPrompt;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_prompt$: ' + E.Message);
   end;
 end;
 
@@ -1179,6 +1186,8 @@ begin
   try
     TBasEdit(Args[0].P).TextPrompt := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_prompt#: ' + E.Message);
   end;
 end;
 
@@ -1192,6 +1201,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).MaxLength;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_maxlength: ' + E.Message);
   end;
 end;
 
@@ -1206,6 +1217,8 @@ begin
   try
     TBasEdit(Args[0].P).MaxLength := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_maxlength#: ' + E.Message);
   end;
 end;
 
@@ -1221,6 +1234,8 @@ begin
   try
     Result.n := Length(TBasEdit(Args[0].P).Text);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_textlength: ' + E.Message);
   end;
 end;
 
@@ -1237,6 +1252,8 @@ begin
     if TBasEdit(Args[0].P).Password then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_password: ' + E.Message);
   end;
 end;
 
@@ -1251,6 +1268,8 @@ begin
   try
     TBasEdit(Args[0].P).Password := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_password#: ' + E.Message);
   end;
 end;
 
@@ -1267,6 +1286,8 @@ begin
     if TBasEdit(Args[0].P).ReadOnly then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_readonly: ' + E.Message);
   end;
 end;
 
@@ -1281,6 +1302,8 @@ begin
   try
     TBasEdit(Args[0].P).ReadOnly := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_readonly#: ' + E.Message);
   end;
 end;
 
@@ -1296,6 +1319,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).TextSettings.Font.Family;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontfamily$: ' + E.Message);
   end;
 end;
 
@@ -1310,6 +1335,8 @@ begin
   try
     TBasEdit(Args[0].P).TextSettings.Font.Family := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontfamily#: ' + E.Message);
   end;
 end;
 
@@ -1324,6 +1351,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).TextSettings.Font.Size;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontsize: ' + E.Message);
   end;
 end;
 
@@ -1338,6 +1367,8 @@ begin
   try
     TBasEdit(Args[0].P).TextSettings.Font.Size := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontsize#: ' + E.Message);
   end;
 end;
 
@@ -1352,6 +1383,8 @@ begin
   try
     Result.S := TUtils.AlphaColorToStr(TBasEdit(Args[0].P).TextSettings.FontColor);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontcolor$: ' + E.Message);
   end;
 end;
 
@@ -1366,6 +1399,8 @@ begin
   try
     TBasEdit(Args[0].P).TextSettings.FontColor := TUtils.ColorToAlphaColor(Args[1].S);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_fontcolor#: ' + E.Message);
   end;
 end;
 
@@ -1381,6 +1416,8 @@ begin
     if TFontStyle.fsBold in TBasEdit(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_bold: ' + E.Message);
   end;
 end;
 
@@ -1400,6 +1437,8 @@ begin
       TBasEdit(Args[0].P).TextSettings.Font.Style := TBasEdit(Args[0].P)
         .TextSettings.Font.Style - [TFontStyle.fsBold];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_bold#: ' + E.Message);
   end;
 end;
 
@@ -1415,6 +1454,8 @@ begin
     if TFontStyle.fsItalic in TBasEdit(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_italic: ' + E.Message);
   end;
 end;
 
@@ -1432,6 +1473,8 @@ begin
     else
       TBasEdit(Args[0].P).TextSettings.Font.Style := TBasEdit(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsItalic];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_italic#: ' + E.Message);
   end;
 end;
 
@@ -1448,6 +1491,8 @@ begin
     if TFontStyle.fsUnderline in TBasEdit(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_underline: ' + E.Message);
   end;
 end;
 
@@ -1466,6 +1511,8 @@ begin
     else
       TBasEdit(Args[0].P).TextSettings.Font.Style := TBasEdit(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsUnderline];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_underline#: ' + E.Message);
   end;
 end;
 
@@ -1482,6 +1529,8 @@ begin
     if TFontStyle.fsStrikeOut in TBasEdit(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_strikeout: ' + E.Message);
   end;
 end;
 
@@ -1500,6 +1549,8 @@ begin
     else
       TBasEdit(Args[0].P).TextSettings.Font.Style := TBasEdit(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsStrikeOut];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_strikeout#: ' + E.Message);
   end;
 end;
 
@@ -1514,6 +1565,8 @@ begin
   try
     Result.n := TextAlignToInt(TBasEdit(Args[0].P).TextSettings.HorzAlign);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_textalign: ' + E.Message);
   end;
 end;
 
@@ -1528,6 +1581,8 @@ begin
     TBasEdit(Args[0].P).TextSettings.HorzAlign :=
       IntToTextAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_textalign#: ' + E.Message);
   end;
 end;
 
@@ -1542,6 +1597,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).SelStart;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_selstart: ' + E.Message);
   end;
 end;
 
@@ -1555,6 +1612,8 @@ begin
   try
     TBasEdit(Args[0].P).SelStart := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_selstart#: ' + E.Message);
   end;
 end;
 
@@ -1568,6 +1627,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).SelLength;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_sellength: ' + E.Message);
   end;
 end;
 
@@ -1581,6 +1642,8 @@ begin
   try
     TBasEdit(Args[0].P).SelLength := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_sellength#: ' + E.Message);
   end;
 end;
 
@@ -1594,6 +1657,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).SelText;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_seltext$: ' + E.Message);
   end;
 end;
 
@@ -1607,6 +1672,8 @@ begin
   try
     TBasEdit(Args[0].P).SelectAll;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_selectall#: ' + E.Message);
   end;
 end;
 
@@ -1620,6 +1687,8 @@ begin
   try
     TBasEdit(Args[0].P).SelLength := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_clearselection#: ' + E.Message);
   end;
 end;
 
@@ -1634,6 +1703,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).CaretPosition;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_caretposition: ' + E.Message);
   end;
 end;
 
@@ -1647,6 +1718,8 @@ begin
   try
     TBasEdit(Args[0].P).CaretPosition := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_caretposition#: ' + E.Message);
   end;
 end;
 
@@ -1660,6 +1733,8 @@ begin
   try
     TBasEdit(Args[0].P).GoToTextEnd;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_gotoend#: ' + E.Message);
   end;
 end;
 
@@ -1673,6 +1748,8 @@ begin
   try
     TBasEdit(Args[0].P).GoToTextBegin;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_gotobegin#: ' + E.Message);
   end;
 end;
 
@@ -1687,6 +1764,8 @@ begin
   try
     TBasEdit(Args[0].P).CopyToClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_copy#: ' + E.Message);
   end;
 end;
 
@@ -1700,6 +1779,8 @@ begin
   try
     TBasEdit(Args[0].P).CutToClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_cut#: ' + E.Message);
   end;
 end;
 
@@ -1713,6 +1794,8 @@ begin
   try
     TBasEdit(Args[0].P).PasteFromClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_paste#: ' + E.Message);
   end;
 end;
 
@@ -1726,6 +1809,8 @@ begin
   try
     TBasEdit(Args[0].P).DeleteSelection;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_clear#: ' + E.Message);
   end;
 end;
 
@@ -1740,6 +1825,8 @@ begin
   try
     Result.n := KeyboardTypeToInt(TBasEdit(Args[0].P).KeyboardType);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_keyboardtype: ' + E.Message);
   end;
 end;
 
@@ -1753,6 +1840,8 @@ begin
   try
     TBasEdit(Args[0].P).KeyboardType := IntToKeyboardType(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_keyboardtype#: ' + E.Message);
   end;
 end;
 
@@ -1766,6 +1855,8 @@ begin
   try
     Result.n := ReturnKeyTypeToInt(TBasEdit(Args[0].P).ReturnKeyType);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_returnkeytype: ' + E.Message);
   end;
 end;
 
@@ -1779,6 +1870,8 @@ begin
   try
     TBasEdit(Args[0].P).ReturnKeyType := IntToReturnKeyType(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_returnkeytype#: ' + E.Message);
   end;
 end;
 
@@ -1793,6 +1886,8 @@ begin
     if TBasEdit(Args[0].P).CheckSpelling then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_checkspelling: ' + E.Message);
   end;
 end;
 
@@ -1806,6 +1901,8 @@ begin
   try
     TBasEdit(Args[0].P).CheckSpelling := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_checkspelling#: ' + E.Message);
   end;
 end;
 
@@ -1819,6 +1916,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).FilterChar;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_filterchar$: ' + E.Message);
   end;
 end;
 
@@ -1832,6 +1931,8 @@ begin
   try
     TBasEdit(Args[0].P).FilterChar := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_filterchar#: ' + E.Message);
   end;
 end;
 
@@ -1846,6 +1947,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_x: ' + E.Message);
   end;
 end;
 
@@ -1859,6 +1962,8 @@ begin
   try
     TBasEdit(Args[0].P).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_x#: ' + E.Message);
   end;
 end;
 
@@ -1872,6 +1977,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_y: ' + E.Message);
   end;
 end;
 
@@ -1885,6 +1992,8 @@ begin
   try
     TBasEdit(Args[0].P).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_y#: ' + E.Message);
   end;
 end;
 
@@ -1898,6 +2007,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_width: ' + E.Message);
   end;
 end;
 
@@ -1911,6 +2022,8 @@ begin
   try
     TBasEdit(Args[0].P).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_width#: ' + E.Message);
   end;
 end;
 
@@ -1924,6 +2037,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_height: ' + E.Message);
   end;
 end;
 
@@ -1937,6 +2052,8 @@ begin
   try
     TBasEdit(Args[0].P).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_height#: ' + E.Message);
   end;
 end;
 
@@ -1950,6 +2067,8 @@ begin
   try
     TBasEdit(Args[0].P).SetBounds(Args[1].n, Args[2].n, Args[3].n, Args[4].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1964,6 +2083,8 @@ begin
     TBasEdit(Args[0].P).Position.X := Args[1].n;
     TBasEdit(Args[0].P).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_move#: ' + E.Message);
   end;
 end;
 
@@ -1978,6 +2099,8 @@ begin
     TBasEdit(Args[0].P).Width := Args[1].n;
     TBasEdit(Args[0].P).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_size#: ' + E.Message);
   end;
 end;
 
@@ -1992,6 +2115,8 @@ begin
   try
     Result.n := AlignToInt(TBasEdit(Args[0].P).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_align: ' + E.Message);
   end;
 end;
 
@@ -2005,6 +2130,8 @@ begin
   try
     TBasEdit(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_align#: ' + E.Message);
   end;
 end;
 
@@ -2019,6 +2146,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_marginleft: ' + E.Message);
   end;
 end;
 
@@ -2032,6 +2161,8 @@ begin
   try
     TBasEdit(Args[0].P).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -2045,6 +2176,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_margintop: ' + E.Message);
   end;
 end;
 
@@ -2058,6 +2191,8 @@ begin
   try
     TBasEdit(Args[0].P).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_margintop#: ' + E.Message);
   end;
 end;
 
@@ -2074,6 +2209,8 @@ begin
     TBasEdit(Args[0].P).Margins.Right := Args[3].n;
     TBasEdit(Args[0].P).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_margins#: ' + E.Message);
   end;
 end;
 
@@ -2090,6 +2227,8 @@ begin
     TBasEdit(Args[0].P).Margins.Right := Args[1].n;
     TBasEdit(Args[0].P).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_margin#: ' + E.Message);
   end;
 end;
 
@@ -2105,6 +2244,8 @@ begin
     if TBasEdit(Args[0].P).Visible then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_visible: ' + E.Message);
   end;
 end;
 
@@ -2118,6 +2259,8 @@ begin
   try
     TBasEdit(Args[0].P).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_visible#: ' + E.Message);
   end;
 end;
 
@@ -2132,6 +2275,8 @@ begin
     if TBasEdit(Args[0].P).Enabled then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_enabled: ' + E.Message);
   end;
 end;
 
@@ -2145,6 +2290,8 @@ begin
   try
     TBasEdit(Args[0].P).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_enabled#: ' + E.Message);
   end;
 end;
 
@@ -2158,6 +2305,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_opacity: ' + E.Message);
   end;
 end;
 
@@ -2171,6 +2320,8 @@ begin
   try
     TBasEdit(Args[0].P).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_opacity#: ' + E.Message);
   end;
 end;
 
@@ -2186,6 +2337,8 @@ begin
     if TBasEdit(Args[0].P).IsFocused then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_isfocused: ' + E.Message);
   end;
 end;
 
@@ -2199,6 +2352,8 @@ begin
   try
     TBasEdit(Args[0].P).SetFocus;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_setfocus#: ' + E.Message);
   end;
 end;
 
@@ -2212,6 +2367,8 @@ begin
   try
     TBasEdit(Args[0].P).ResetFocus;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_resetfocus#: ' + E.Message);
   end;
 end;
 
@@ -2225,6 +2382,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).TabOrder;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_taborder: ' + E.Message);
   end;
 end;
 
@@ -2238,6 +2397,8 @@ begin
   try
     TBasEdit(Args[0].P).TabOrder := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_taborder#: ' + E.Message);
   end;
 end;
 
@@ -2252,6 +2413,8 @@ begin
   try
     Result.n := TBasEdit(Args[0].P).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_tag: ' + E.Message);
   end;
 end;
 
@@ -2265,6 +2428,8 @@ begin
   try
     TBasEdit(Args[0].P).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_tag#: ' + E.Message);
   end;
 end;
 
@@ -2279,6 +2444,8 @@ begin
   try
     Result.P := Pointer(TBasEdit(Args[0].P).Parent);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_parent#: ' + E.Message);
   end;
 end;
 
@@ -2294,6 +2461,8 @@ begin
   try
     TBasEdit(Args[0].P).Parent := TFmxObject(Args[1].P);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_parent#: ' + E.Message);
   end;
 end;
 
@@ -2307,6 +2476,8 @@ begin
   try
     TBasEdit(Args[0].P).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2320,6 +2491,8 @@ begin
   try
     TBasEdit(Args[0].P).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2334,6 +2507,8 @@ begin
   try
     TBasEdit(Args[0].P).OnChangeFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onchange#: ' + E.Message);
   end;
 end;
 
@@ -2347,6 +2522,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnChangeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onchange$: ' + E.Message);
   end;
 end;
 
@@ -2360,6 +2537,8 @@ begin
   try
     TBasEdit(Args[0].P).OnChangeTrackingFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onchangetracking#: ' + E.Message);
   end;
 end;
 
@@ -2373,6 +2552,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnChangeTrackingFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onchangetracking$: ' + E.Message);
   end;
 end;
 
@@ -2386,6 +2567,8 @@ begin
   try
     TBasEdit(Args[0].P).OnTypingFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ontyping#: ' + E.Message);
   end;
 end;
 
@@ -2399,6 +2582,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnTypingFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ontyping$: ' + E.Message);
   end;
 end;
 
@@ -2412,6 +2597,8 @@ begin
   try
     TBasEdit(Args[0].P).OnEnterFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onenter#: ' + E.Message);
   end;
 end;
 
@@ -2425,6 +2612,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onenter$: ' + E.Message);
   end;
 end;
 
@@ -2438,6 +2627,8 @@ begin
   try
     TBasEdit(Args[0].P).OnExitFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onexit#: ' + E.Message);
   end;
 end;
 
@@ -2451,6 +2642,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnExitFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onexit$: ' + E.Message);
   end;
 end;
 
@@ -2464,6 +2657,8 @@ begin
   try
     TBasEdit(Args[0].P).OnKeyDownFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onkeydown#: ' + E.Message);
   end;
 end;
 
@@ -2477,6 +2672,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnKeyDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onkeydown$: ' + E.Message);
   end;
 end;
 
@@ -2490,6 +2687,8 @@ begin
   try
     TBasEdit(Args[0].P).OnKeyUpFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onkeyup#: ' + E.Message);
   end;
 end;
 
@@ -2503,6 +2702,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnKeyUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onkeyup$: ' + E.Message);
   end;
 end;
 
@@ -2516,6 +2717,8 @@ begin
   try
     TBasEdit(Args[0].P).OnClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2529,6 +2732,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2542,6 +2747,8 @@ begin
   try
     TBasEdit(Args[0].P).OnDblClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2555,6 +2762,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2568,6 +2777,8 @@ begin
   try
     TBasEdit(Args[0].P).OnMouseDownFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2581,6 +2792,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2594,6 +2807,8 @@ begin
   try
     TBasEdit(Args[0].P).OnMouseUpFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2607,6 +2822,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2620,6 +2837,8 @@ begin
   try
     TBasEdit(Args[0].P).OnMouseMoveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2633,6 +2852,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2646,6 +2867,8 @@ begin
   try
     TBasEdit(Args[0].P).OnMouseEnterFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2659,6 +2882,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2672,6 +2897,8 @@ begin
   try
     TBasEdit(Args[0].P).OnMouseLeaveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2685,6 +2912,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2698,6 +2927,8 @@ begin
   try
     TBasEdit(Args[0].P).OnResizeFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2711,6 +2942,8 @@ begin
   try
     Result.S := TBasEdit(Args[0].P).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2725,6 +2958,8 @@ begin
   try
     TBasEdit(Args[0].p).OnDragEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragenter#: ' + E.Message);
   end;
 end;
 
@@ -2739,6 +2974,8 @@ begin
   try
     Result.s := TBasEdit(Args[0].p).OnDragEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragenter$: ' + E.Message);
   end;
 end;
 
@@ -2753,6 +2990,8 @@ begin
   try
     TBasEdit(Args[0].p).OnDragOverFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragover#: ' + E.Message);
   end;
 end;
 
@@ -2767,6 +3006,8 @@ begin
   try
     Result.s := TBasEdit(Args[0].p).OnDragOverFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragover$: ' + E.Message);
   end;
 end;
 
@@ -2781,6 +3022,8 @@ begin
   try
     TBasEdit(Args[0].p).OnDragDropFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragdrop#: ' + E.Message);
   end;
 end;
 
@@ -2795,6 +3038,8 @@ begin
   try
     Result.s := TBasEdit(Args[0].p).OnDragDropFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragdrop$: ' + E.Message);
   end;
 end;
 
@@ -2809,6 +3054,8 @@ begin
   try
     TBasEdit(Args[0].p).OnDragLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragleave#: ' + E.Message);
   end;
 end;
 
@@ -2823,6 +3070,8 @@ begin
   try
     Result.s := TBasEdit(Args[0].p).OnDragLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_ondragleave$: ' + E.Message);
   end;
 end;
 
@@ -2857,6 +3106,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'edit_clearcallbacks#: ' + E.Message);
   end;
 end;
 

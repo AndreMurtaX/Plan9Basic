@@ -219,6 +219,7 @@ const
 
   // Error codes
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_LAYOUT = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1303,6 +1304,8 @@ begin
   try
     Result.p := Pointer(TBasLayout(Args[0].p).Parent);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_parent#: ' + E.Message);
   end;
 end;
 
@@ -1319,6 +1322,8 @@ begin
   try
     TBasLayout(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_parent#: ' + E.Message);
   end;
 end;
 
@@ -1334,6 +1339,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).ChildrenCount;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_childcount: ' + E.Message);
   end;
 end;
 
@@ -1374,6 +1381,8 @@ begin
   try
     TBasLayout(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1389,6 +1398,8 @@ begin
   try
     TBasLayout(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -1408,6 +1419,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_x: ' + E.Message);
   end;
 end;
 
@@ -1423,6 +1436,8 @@ begin
   try
     TBasLayout(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_x#: ' + E.Message);
   end;
 end;
 
@@ -1438,6 +1453,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_y: ' + E.Message);
   end;
 end;
 
@@ -1453,6 +1470,8 @@ begin
   try
     TBasLayout(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_y#: ' + E.Message);
   end;
 end;
 
@@ -1468,6 +1487,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_width: ' + E.Message);
   end;
 end;
 
@@ -1483,6 +1504,8 @@ begin
   try
     TBasLayout(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_width#: ' + E.Message);
   end;
 end;
 
@@ -1498,6 +1521,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_height: ' + E.Message);
   end;
 end;
 
@@ -1513,6 +1538,8 @@ begin
   try
     TBasLayout(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_height#: ' + E.Message);
   end;
 end;
 
@@ -1533,6 +1560,8 @@ begin
       Args[4].n   // Height
     );
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1549,6 +1578,8 @@ begin
     TBasLayout(Args[0].p).Width := Args[1].n;
     TBasLayout(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_size#: ' + E.Message);
   end;
 end;
 
@@ -1565,6 +1596,8 @@ begin
     TBasLayout(Args[0].p).Position.X := Args[1].n;
     TBasLayout(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_move#: ' + E.Message);
   end;
 end;
 
@@ -1584,6 +1617,8 @@ begin
   try
     Result.n := AlignToInt(TBasLayout(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_align: ' + E.Message);
   end;
 end;
 
@@ -1599,6 +1634,8 @@ begin
   try
     TBasLayout(Args[0].p).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_align#: ' + E.Message);
   end;
 end;
 
@@ -1618,6 +1655,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1633,6 +1672,8 @@ begin
   try
     TBasLayout(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1648,6 +1689,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_margintop: ' + E.Message);
   end;
 end;
 
@@ -1663,6 +1706,8 @@ begin
   try
     TBasLayout(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1678,6 +1723,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginright: ' + E.Message);
   end;
 end;
 
@@ -1693,6 +1740,8 @@ begin
   try
     TBasLayout(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1708,6 +1757,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1723,6 +1774,8 @@ begin
   try
     TBasLayout(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1744,6 +1797,8 @@ begin
       Bottom := Args[4].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_margins#: ' + E.Message);
   end;
 end;
 
@@ -1765,6 +1820,8 @@ begin
       Bottom := Args[1].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_margin#: ' + E.Message);
   end;
 end;
 
@@ -1784,6 +1841,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Padding.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingleft: ' + E.Message);
   end;
 end;
 
@@ -1799,6 +1858,8 @@ begin
   try
     TBasLayout(Args[0].p).Padding.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingleft#: ' + E.Message);
   end;
 end;
 
@@ -1814,6 +1875,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Padding.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingtop: ' + E.Message);
   end;
 end;
 
@@ -1829,6 +1892,8 @@ begin
   try
     TBasLayout(Args[0].p).Padding.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingtop#: ' + E.Message);
   end;
 end;
 
@@ -1844,6 +1909,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Padding.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingright: ' + E.Message);
   end;
 end;
 
@@ -1859,6 +1926,8 @@ begin
   try
     TBasLayout(Args[0].p).Padding.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingright#: ' + E.Message);
   end;
 end;
 
@@ -1874,6 +1943,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Padding.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingbottom: ' + E.Message);
   end;
 end;
 
@@ -1889,6 +1960,8 @@ begin
   try
     TBasLayout(Args[0].p).Padding.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddingbottom#: ' + E.Message);
   end;
 end;
 
@@ -1910,6 +1983,8 @@ begin
       Bottom := Args[4].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_paddings#: ' + E.Message);
   end;
 end;
 
@@ -1931,6 +2006,8 @@ begin
       Bottom := Args[1].n;
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_padding#: ' + E.Message);
   end;
 end;
 
@@ -1953,6 +2030,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_visible: ' + E.Message);
   end;
 end;
 
@@ -1968,6 +2047,8 @@ begin
   try
     TBasLayout(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_visible#: ' + E.Message);
   end;
 end;
 
@@ -1986,6 +2067,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_enabled: ' + E.Message);
   end;
 end;
 
@@ -2001,6 +2084,8 @@ begin
   try
     TBasLayout(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_enabled#: ' + E.Message);
   end;
 end;
 
@@ -2016,6 +2101,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_opacity: ' + E.Message);
   end;
 end;
 
@@ -2031,6 +2118,8 @@ begin
   try
     TBasLayout(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_opacity#: ' + E.Message);
   end;
 end;
 
@@ -2049,6 +2138,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_clipchildren: ' + E.Message);
   end;
 end;
 
@@ -2064,6 +2155,8 @@ begin
   try
     TBasLayout(Args[0].p).ClipChildren := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_clipchildren#: ' + E.Message);
   end;
 end;
 
@@ -2082,6 +2175,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_hittest: ' + E.Message);
   end;
 end;
 
@@ -2097,6 +2192,8 @@ begin
   try
     TBasLayout(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_hittest#: ' + E.Message);
   end;
 end;
 
@@ -2115,6 +2212,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_locked: ' + E.Message);
   end;
 end;
 
@@ -2130,6 +2229,8 @@ begin
   try
     TBasLayout(Args[0].p).Locked := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_locked#: ' + E.Message);
   end;
 end;
 
@@ -2149,6 +2250,8 @@ begin
   try
     Result.n := TBasLayout(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_tag: ' + E.Message);
   end;
 end;
 
@@ -2164,6 +2267,8 @@ begin
   try
     TBasLayout(Args[0].p).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_tag#: ' + E.Message);
   end;
 end;
 
@@ -2183,6 +2288,8 @@ begin
   try
     TBasLayout(Args[0].p).InvalidateRect(TBasLayout(Args[0].p).LocalRect);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -2202,6 +2309,8 @@ begin
   try
     TBasLayout(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2217,6 +2326,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2232,6 +2343,8 @@ begin
   try
     TBasLayout(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2247,6 +2360,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2262,6 +2377,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2277,6 +2394,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2292,6 +2411,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2307,6 +2428,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2322,6 +2445,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2337,6 +2462,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2352,6 +2479,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2367,6 +2496,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2382,6 +2513,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2397,6 +2530,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2412,6 +2547,8 @@ begin
   try
     TBasLayout(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2427,6 +2564,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2442,6 +2581,8 @@ begin
   try
     TBasLayout(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2457,6 +2598,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2472,6 +2615,8 @@ begin
   try
     TBasLayout(Args[0].p).OnResizedFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onresized#: ' + E.Message);
   end;
 end;
 
@@ -2487,6 +2632,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnResizedFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onresized$: ' + E.Message);
   end;
 end;
 
@@ -2502,6 +2649,8 @@ begin
   try
     TBasLayout(Args[0].p).OnPaintFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onpaint#: ' + E.Message);
   end;
 end;
 
@@ -2517,6 +2666,8 @@ begin
   try
     Result.s := TBasLayout(Args[0].p).OnPaintFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_onpaint$: ' + E.Message);
   end;
 end;
 
@@ -2549,6 +2700,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'layout_clearcallbacks#: ' + E.Message);
   end;
 end;
 

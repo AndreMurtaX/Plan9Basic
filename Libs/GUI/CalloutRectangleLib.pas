@@ -189,6 +189,7 @@ implementation
 const
   CALLOUT_GC_TAG = 'BASIC_CALLOUT';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_CALLOUT = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1156,6 +1157,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).CalloutLength;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutlength: ' + E.Message);
   end;
 end;
 
@@ -1168,6 +1171,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).CalloutLength := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutlength#: ' + E.Message);
   end;
 end;
 
@@ -1180,6 +1185,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).CalloutWidth;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutwidth: ' + E.Message);
   end;
 end;
 
@@ -1192,6 +1199,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).CalloutWidth := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutwidth#: ' + E.Message);
   end;
 end;
 
@@ -1204,6 +1213,8 @@ begin
   try
     Result.n := CalloutPositionToInt(TBasCalloutRectangle(Args[0].p).CalloutPosition);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutposition: ' + E.Message);
   end;
 end;
 
@@ -1216,6 +1227,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).CalloutPosition := IntToCalloutPosition(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutposition#: ' + E.Message);
   end;
 end;
 
@@ -1228,6 +1241,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).CalloutOffset;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutoffset: ' + E.Message);
   end;
 end;
 
@@ -1240,6 +1255,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).CalloutOffset := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_calloutoffset#: ' + E.Message);
   end;
 end;
 
@@ -1256,6 +1273,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasCalloutRectangle(Args[0].p).Fill.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_fill$: ' + E.Message);
   end;
 end;
 
@@ -1269,6 +1288,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Fill.Kind := TBrushKind.Solid;
     TBasCalloutRectangle(Args[0].p).Fill.Color := TUtils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_fill#: ' + E.Message);
   end;
 end;
 
@@ -1281,6 +1302,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Fill.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_fillnone#: ' + E.Message);
   end;
 end;
 
@@ -1297,6 +1320,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasCalloutRectangle(Args[0].p).Stroke.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_stroke$: ' + E.Message);
   end;
 end;
 
@@ -1310,6 +1335,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Stroke.Kind := TBrushKind.Solid;
     TBasCalloutRectangle(Args[0].p).Stroke.Color := TUtils.ColorToAlphaColor(Args[1].s);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_stroke#: ' + E.Message);
   end;
 end;
 
@@ -1322,6 +1349,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Stroke.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokenone#: ' + E.Message);
   end;
 end;
 
@@ -1334,6 +1363,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Stroke.Thickness;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokethickness: ' + E.Message);
   end;
 end;
 
@@ -1346,6 +1377,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Stroke.Thickness := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokethickness#: ' + E.Message);
   end;
 end;
 
@@ -1358,6 +1391,8 @@ begin
   try
     Result.n := StrokeDashToInt(TBasCalloutRectangle(Args[0].p).Stroke.Dash);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokedash: ' + E.Message);
   end;
 end;
 
@@ -1370,6 +1405,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Stroke.Dash := IntToStrokeDash(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokedash#: ' + E.Message);
   end;
 end;
 
@@ -1382,6 +1419,8 @@ begin
   try
     Result.n := StrokeCapToInt(TBasCalloutRectangle(Args[0].p).Stroke.Cap);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokecap: ' + E.Message);
   end;
 end;
 
@@ -1394,6 +1433,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Stroke.Cap := IntToStrokeCap(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokecap#: ' + E.Message);
   end;
 end;
 
@@ -1406,6 +1447,8 @@ begin
   try
     Result.n := StrokeJoinToInt(TBasCalloutRectangle(Args[0].p).Stroke.Join);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokejoin: ' + E.Message);
   end;
 end;
 
@@ -1418,6 +1461,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Stroke.Join := IntToStrokeJoin(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_strokejoin#: ' + E.Message);
   end;
 end;
 
@@ -1434,6 +1479,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).XRadius;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_xradius: ' + E.Message);
   end;
 end;
 
@@ -1446,6 +1493,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).XRadius := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_xradius#: ' + E.Message);
   end;
 end;
 
@@ -1458,6 +1507,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).YRadius;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_yradius: ' + E.Message);
   end;
 end;
 
@@ -1470,6 +1521,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).YRadius := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_yradius#: ' + E.Message);
   end;
 end;
 
@@ -1483,6 +1536,8 @@ begin
     TBasCalloutRectangle(Args[0].p).XRadius := Args[1].n;
     TBasCalloutRectangle(Args[0].p).YRadius := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_corners#: ' + E.Message);
   end;
 end;
 
@@ -1499,6 +1554,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_x: ' + E.Message);
   end;
 end;
 
@@ -1511,6 +1568,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_x#: ' + E.Message);
   end;
 end;
 
@@ -1523,6 +1582,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_y: ' + E.Message);
   end;
 end;
 
@@ -1535,6 +1596,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_y#: ' + E.Message);
   end;
 end;
 
@@ -1547,6 +1610,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_width: ' + E.Message);
   end;
 end;
 
@@ -1559,6 +1624,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_width#: ' + E.Message);
   end;
 end;
 
@@ -1571,6 +1638,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_height: ' + E.Message);
   end;
 end;
 
@@ -1583,6 +1652,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_height#: ' + E.Message);
   end;
 end;
 
@@ -1598,6 +1669,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Width := Args[3].n;
     TBasCalloutRectangle(Args[0].p).Height := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1611,6 +1684,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Width := Args[1].n;
     TBasCalloutRectangle(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_size#: ' + E.Message);
   end;
 end;
 
@@ -1624,6 +1699,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Position.X := Args[1].n;
     TBasCalloutRectangle(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_move#: ' + E.Message);
   end;
 end;
 
@@ -1640,6 +1717,8 @@ begin
   try
     Result.n := AlignToInt(TBasCalloutRectangle(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_align: ' + E.Message);
   end;
 end;
 
@@ -1652,6 +1731,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Align := IntToAlign(Round(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_align#: ' + E.Message);
   end;
 end;
 
@@ -1668,6 +1749,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1680,6 +1763,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1692,6 +1777,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_margintop: ' + E.Message);
   end;
 end;
 
@@ -1704,6 +1791,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1716,6 +1805,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginright: ' + E.Message);
   end;
 end;
 
@@ -1728,6 +1819,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1740,6 +1833,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1752,6 +1847,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1767,6 +1864,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Margins.Right := Args[3].n;
     TBasCalloutRectangle(Args[0].p).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_margins#: ' + E.Message);
   end;
 end;
 
@@ -1782,6 +1881,8 @@ begin
     TBasCalloutRectangle(Args[0].p).Margins.Right := Args[1].n;
     TBasCalloutRectangle(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_margin#: ' + E.Message);
   end;
 end;
 
@@ -1801,6 +1902,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_visible: ' + E.Message);
   end;
 end;
 
@@ -1813,6 +1916,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_visible#: ' + E.Message);
   end;
 end;
 
@@ -1828,6 +1933,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_enabled: ' + E.Message);
   end;
 end;
 
@@ -1840,6 +1947,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1852,6 +1961,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_opacity: ' + E.Message);
   end;
 end;
 
@@ -1864,6 +1975,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1879,6 +1992,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_hittest: ' + E.Message);
   end;
 end;
 
@@ -1891,6 +2006,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1907,6 +2024,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_tag: ' + E.Message);
   end;
 end;
 
@@ -1919,6 +2038,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Tag := Round(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_tag#: ' + E.Message);
   end;
 end;
 
@@ -1931,6 +2052,8 @@ begin
   try
     Result.n := TBasCalloutRectangle(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_rotation: ' + E.Message);
   end;
 end;
 
@@ -1943,6 +2066,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_rotation#: ' + E.Message);
   end;
 end;
 
@@ -1959,6 +2084,8 @@ begin
   try
     Result.p := TBasCalloutRectangle(Args[0].p).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_parent#: ' + E.Message);
   end;
 end;
 
@@ -1972,6 +2099,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_parent#: ' + E.Message);
   end;
 end;
 
@@ -1984,6 +2113,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -1996,6 +2127,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2012,6 +2145,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).Repaint;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -2028,6 +2163,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2040,6 +2177,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2052,6 +2191,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2064,6 +2205,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2076,6 +2219,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2088,6 +2233,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2100,6 +2247,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2112,6 +2261,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2124,6 +2275,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2136,6 +2289,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2148,6 +2303,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2160,6 +2317,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2172,6 +2331,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2184,6 +2345,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2196,6 +2359,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2208,6 +2373,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2220,6 +2387,8 @@ begin
   try
     TBasCalloutRectangle(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2232,6 +2401,8 @@ begin
   try
     Result.s := TBasCalloutRectangle(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2263,6 +2434,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'callout_clearcallbacks#: ' + E.Message);
   end;
 end;
 

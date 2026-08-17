@@ -204,6 +204,7 @@ implementation
 const
   TRACKBAR_GC_TAG = 'BASIC_TRACKBAR';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_TRACKBAR = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -2789,6 +2790,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'trackbar_clearcallbacks#: ' + E.Message);
   end;
 end;
 

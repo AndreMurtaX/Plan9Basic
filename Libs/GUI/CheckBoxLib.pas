@@ -189,6 +189,7 @@ implementation
 const
   CHECKBOX_GC_TAG = 'BASIC_CHECKBOX';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_CHECKBOX = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1055,6 +1056,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ischecked: ' + E.Message);
   end;
 end;
 
@@ -1069,6 +1072,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ischecked#: ' + E.Message);
   end;
 end;
 
@@ -1086,6 +1091,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).Text;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_text$: ' + E.Message);
   end;
 end;
 
@@ -1100,6 +1107,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_text#: ' + E.Message);
   end;
 end;
 
@@ -1117,6 +1126,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).TextSettings.Font.Family;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_fontfamily$: ' + E.Message);
   end;
 end;
 
@@ -1131,6 +1142,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_fontfamily#: ' + E.Message);
   end;
 end;
 
@@ -1144,6 +1157,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).TextSettings.Font.Size;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_fontsize: ' + E.Message);
   end;
 end;
 
@@ -1158,6 +1173,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_fontsize#: ' + E.Message);
   end;
 end;
 
@@ -1171,6 +1188,8 @@ begin
     Result.s := '#' + IntToHex(TBasCheckBox(Args[0].p).TextSettings.FontColor, 8);
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_fontcolor$: ' + E.Message);
   end;
 end;
 
@@ -1212,6 +1231,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_bold: ' + E.Message);
   end;
 end;
 
@@ -1235,6 +1256,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_bold#: ' + E.Message);
   end;
 end;
 
@@ -1251,6 +1274,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_italic: ' + E.Message);
   end;
 end;
 
@@ -1274,6 +1299,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_italic#: ' + E.Message);
   end;
 end;
 
@@ -1290,6 +1317,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_underline: ' + E.Message);
   end;
 end;
 
@@ -1313,6 +1342,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_underline#: ' + E.Message);
   end;
 end;
 
@@ -1329,6 +1360,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_strikeout: ' + E.Message);
   end;
 end;
 
@@ -1352,6 +1385,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_strikeout#: ' + E.Message);
   end;
 end;
 
@@ -1369,6 +1404,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Position.X;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_x: ' + E.Message);
   end;
 end;
 
@@ -1383,6 +1420,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_x#: ' + E.Message);
   end;
 end;
 
@@ -1396,6 +1435,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Position.Y;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_y: ' + E.Message);
   end;
 end;
 
@@ -1410,6 +1451,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_y#: ' + E.Message);
   end;
 end;
 
@@ -1423,6 +1466,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Width;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_width: ' + E.Message);
   end;
 end;
 
@@ -1437,6 +1482,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_width#: ' + E.Message);
   end;
 end;
 
@@ -1450,6 +1497,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Height;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_height: ' + E.Message);
   end;
 end;
 
@@ -1464,6 +1513,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_height#: ' + E.Message);
   end;
 end;
 
@@ -1484,6 +1535,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1502,6 +1555,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_move#: ' + E.Message);
   end;
 end;
 
@@ -1520,6 +1575,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_size#: ' + E.Message);
   end;
 end;
 
@@ -1537,6 +1594,8 @@ begin
     Result.n := AlignToInt(TBasCheckBox(Args[0].p).Align);
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_align: ' + E.Message);
   end;
 end;
 
@@ -1551,6 +1610,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_align#: ' + E.Message);
   end;
 end;
 
@@ -1568,6 +1629,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Margins.Left;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1582,6 +1645,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1595,6 +1660,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Margins.Top;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_margintop: ' + E.Message);
   end;
 end;
 
@@ -1609,6 +1676,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1622,6 +1691,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Margins.Right;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginright: ' + E.Message);
   end;
 end;
 
@@ -1636,6 +1707,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1649,6 +1722,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Margins.Bottom;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1663,6 +1738,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1683,6 +1760,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_margins#: ' + E.Message);
   end;
 end;
 
@@ -1703,6 +1782,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_margin#: ' + E.Message);
   end;
 end;
 
@@ -1723,6 +1804,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_visible: ' + E.Message);
   end;
 end;
 
@@ -1737,6 +1820,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_visible#: ' + E.Message);
   end;
 end;
 
@@ -1753,6 +1838,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_enabled: ' + E.Message);
   end;
 end;
 
@@ -1767,6 +1854,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1780,6 +1869,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Opacity;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_opacity: ' + E.Message);
   end;
 end;
 
@@ -1794,6 +1885,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_opacity#: ' + E.Message);
   end;
 end;
 
@@ -1814,6 +1907,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_isfocused: ' + E.Message);
   end;
 end;
 
@@ -1828,6 +1923,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_setfocus#: ' + E.Message);
   end;
 end;
 
@@ -1842,6 +1939,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_resetfocus#: ' + E.Message);
   end;
 end;
 
@@ -1855,6 +1954,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).TabOrder;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_taborder: ' + E.Message);
   end;
 end;
 
@@ -1869,6 +1970,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_taborder#: ' + E.Message);
   end;
 end;
 
@@ -1885,6 +1988,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_canfocus: ' + E.Message);
   end;
 end;
 
@@ -1899,6 +2004,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_canfocus#: ' + E.Message);
   end;
 end;
 
@@ -1916,6 +2023,8 @@ begin
     Result.n := TBasCheckBox(Args[0].p).Tag;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_tag: ' + E.Message);
   end;
 end;
 
@@ -1930,6 +2039,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_tag#: ' + E.Message);
   end;
 end;
 
@@ -1950,6 +2061,8 @@ begin
       Result.n := 0;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_hittest: ' + E.Message);
   end;
 end;
 
@@ -1964,6 +2077,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_hittest#: ' + E.Message);
   end;
 end;
 
@@ -1981,6 +2096,8 @@ begin
     Result.n := Ord(TBasCheckBox(Args[0].p).DragMode);
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_dragmode: ' + E.Message);
   end;
 end;
 
@@ -1995,6 +2112,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_dragmode#: ' + E.Message);
   end;
 end;
 
@@ -2012,6 +2131,8 @@ begin
     Result.p := TBasCheckBox(Args[0].p).Parent;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_parent#: ' + E.Message);
   end;
 end;
 
@@ -2030,6 +2151,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_parent#: ' + E.Message);
   end;
 end;
 
@@ -2044,6 +2167,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2058,6 +2183,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2076,6 +2203,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onchange#: ' + E.Message);
   end;
 end;
 
@@ -2089,6 +2218,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnChangeFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onchange$: ' + E.Message);
   end;
 end;
 
@@ -2103,6 +2234,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2116,6 +2249,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnClickFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2130,6 +2265,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2143,6 +2280,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnDblClickFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2157,6 +2296,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onenter#: ' + E.Message);
   end;
 end;
 
@@ -2170,6 +2311,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnEnterFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onenter$: ' + E.Message);
   end;
 end;
 
@@ -2184,6 +2327,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onexit#: ' + E.Message);
   end;
 end;
 
@@ -2197,6 +2342,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnExitFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onexit$: ' + E.Message);
   end;
 end;
 
@@ -2211,6 +2358,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onkeydown#: ' + E.Message);
   end;
 end;
 
@@ -2224,6 +2373,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnKeyDownFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onkeydown$: ' + E.Message);
   end;
 end;
 
@@ -2238,6 +2389,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onkeyup#: ' + E.Message);
   end;
 end;
 
@@ -2251,6 +2404,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnKeyUpFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onkeyup$: ' + E.Message);
   end;
 end;
 
@@ -2265,6 +2420,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2278,6 +2435,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnMouseDownFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2292,6 +2451,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2305,6 +2466,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnMouseUpFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2319,6 +2482,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2332,6 +2497,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnMouseMoveFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2346,6 +2513,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2359,6 +2528,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnMouseEnterFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2373,6 +2544,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2386,6 +2559,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnMouseLeaveFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2400,6 +2575,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2413,6 +2590,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnResizeFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2427,6 +2606,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragenter#: ' + E.Message);
   end;
 end;
 
@@ -2440,6 +2621,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnDragEnterFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragenter$: ' + E.Message);
   end;
 end;
 
@@ -2454,6 +2637,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragover#: ' + E.Message);
   end;
 end;
 
@@ -2467,6 +2652,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnDragOverFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragover$: ' + E.Message);
   end;
 end;
 
@@ -2481,6 +2668,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragdrop#: ' + E.Message);
   end;
 end;
 
@@ -2494,6 +2683,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnDragDropFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragdrop$: ' + E.Message);
   end;
 end;
 
@@ -2508,6 +2699,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragleave#: ' + E.Message);
   end;
 end;
 
@@ -2521,6 +2714,8 @@ begin
     Result.s := TBasCheckBox(Args[0].p).OnDragLeaveFunc;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_ondragleave$: ' + E.Message);
   end;
 end;
 
@@ -2558,6 +2753,8 @@ begin
     Result.p := Args[0].p;
     ClearError();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'checkbox_clearcallbacks#: ' + E.Message);
   end;
 end;
 

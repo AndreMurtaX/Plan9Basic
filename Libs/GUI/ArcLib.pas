@@ -234,6 +234,7 @@ const
 
   // Error codes
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_ARC = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1342,6 +1343,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).StartAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_startangle: ' + E.Message);
   end;
 end;
 
@@ -1355,6 +1358,8 @@ begin
   try
     TBasArc(Args[0].p).StartAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_startangle#: ' + E.Message);
   end;
 end;
 
@@ -1368,6 +1373,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).EndAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_endangle: ' + E.Message);
   end;
 end;
 
@@ -1381,6 +1388,8 @@ begin
   try
     TBasArc(Args[0].p).EndAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_endangle#: ' + E.Message);
   end;
 end;
 
@@ -1395,6 +1404,8 @@ begin
     TBasArc(Args[0].p).StartAngle := Args[1].n;
     TBasArc(Args[0].p).EndAngle := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_angles#: ' + E.Message);
   end;
 end;
 
@@ -1412,6 +1423,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasArc(Args[0].p).Fill.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_fill$: ' + E.Message);
   end;
 end;
 
@@ -1426,6 +1439,8 @@ begin
     TBasArc(Args[0].p).Fill.Color := TUtils.ColorToAlphaColor(Args[1].s);
     TBasArc(Args[0].p).Fill.Kind := TBrushKind.Solid;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_fill#: ' + E.Message);
   end;
 end;
 
@@ -1439,6 +1454,8 @@ begin
   try
     TBasArc(Args[0].p).Fill.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_fillnone#: ' + E.Message);
   end;
 end;
 
@@ -1456,6 +1473,8 @@ begin
   try
     Result.s := TUtils.AlphaColorToStr(TBasArc(Args[0].p).Stroke.Color);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_stroke$: ' + E.Message);
   end;
 end;
 
@@ -1470,6 +1489,8 @@ begin
     TBasArc(Args[0].p).Stroke.Color := TUtils.ColorToAlphaColor(Args[1].s);
     TBasArc(Args[0].p).Stroke.Kind := TBrushKind.Solid;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_stroke#: ' + E.Message);
   end;
 end;
 
@@ -1483,6 +1504,8 @@ begin
   try
     TBasArc(Args[0].p).Stroke.Kind := TBrushKind.None;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokenone#: ' + E.Message);
   end;
 end;
 
@@ -1496,6 +1519,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Stroke.Thickness;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokethickness: ' + E.Message);
   end;
 end;
 
@@ -1509,6 +1534,8 @@ begin
   try
     TBasArc(Args[0].p).Stroke.Thickness := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokethickness#: ' + E.Message);
   end;
 end;
 
@@ -1522,6 +1549,8 @@ begin
   try
     Result.n := StrokeDashToInt(TBasArc(Args[0].p).Stroke.Dash);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokedash: ' + E.Message);
   end;
 end;
 
@@ -1535,6 +1564,8 @@ begin
   try
     TBasArc(Args[0].p).Stroke.Dash := IntToStrokeDash(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokedash#: ' + E.Message);
   end;
 end;
 
@@ -1548,6 +1579,8 @@ begin
   try
     Result.n := StrokeCapToInt(TBasArc(Args[0].p).Stroke.Cap);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokecap: ' + E.Message);
   end;
 end;
 
@@ -1561,6 +1594,8 @@ begin
   try
     TBasArc(Args[0].p).Stroke.Cap := IntToStrokeCap(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokecap#: ' + E.Message);
   end;
 end;
 
@@ -1574,6 +1609,8 @@ begin
   try
     Result.n := StrokeJoinToInt(TBasArc(Args[0].p).Stroke.Join);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokejoin: ' + E.Message);
   end;
 end;
 
@@ -1587,6 +1624,8 @@ begin
   try
     TBasArc(Args[0].p).Stroke.Join := IntToStrokeJoin(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_strokejoin#: ' + E.Message);
   end;
 end;
 
@@ -1604,6 +1643,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_x: ' + E.Message);
   end;
 end;
 
@@ -1617,6 +1658,8 @@ begin
   try
     TBasArc(Args[0].p).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_x#: ' + E.Message);
   end;
 end;
 
@@ -1630,6 +1673,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_y: ' + E.Message);
   end;
 end;
 
@@ -1643,6 +1688,8 @@ begin
   try
     TBasArc(Args[0].p).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_y#: ' + E.Message);
   end;
 end;
 
@@ -1656,6 +1703,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_width: ' + E.Message);
   end;
 end;
 
@@ -1669,6 +1718,8 @@ begin
   try
     TBasArc(Args[0].p).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_width#: ' + E.Message);
   end;
 end;
 
@@ -1682,6 +1733,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_height: ' + E.Message);
   end;
 end;
 
@@ -1695,6 +1748,8 @@ begin
   try
     TBasArc(Args[0].p).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_height#: ' + E.Message);
   end;
 end;
 
@@ -1711,6 +1766,8 @@ begin
     TBasArc(Args[0].p).Width := Args[3].n;
     TBasArc(Args[0].p).Height := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_bounds#: ' + E.Message);
   end;
 end;
 
@@ -1725,6 +1782,8 @@ begin
     TBasArc(Args[0].p).Width := Args[1].n;
     TBasArc(Args[0].p).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_size#: ' + E.Message);
   end;
 end;
 
@@ -1739,6 +1798,8 @@ begin
     TBasArc(Args[0].p).Position.X := Args[1].n;
     TBasArc(Args[0].p).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_move#: ' + E.Message);
   end;
 end;
 
@@ -1756,6 +1817,8 @@ begin
   try
     Result.n := AlignToInt(TBasArc(Args[0].p).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_align: ' + E.Message);
   end;
 end;
 
@@ -1769,6 +1832,8 @@ begin
   try
     TBasArc(Args[0].p).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_align#: ' + E.Message);
   end;
 end;
 
@@ -1786,6 +1851,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginleft: ' + E.Message);
   end;
 end;
 
@@ -1799,6 +1866,8 @@ begin
   try
     TBasArc(Args[0].p).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -1812,6 +1881,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_margintop: ' + E.Message);
   end;
 end;
 
@@ -1825,6 +1896,8 @@ begin
   try
     TBasArc(Args[0].p).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_margintop#: ' + E.Message);
   end;
 end;
 
@@ -1838,6 +1911,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginright: ' + E.Message);
   end;
 end;
 
@@ -1851,6 +1926,8 @@ begin
   try
     TBasArc(Args[0].p).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginright#: ' + E.Message);
   end;
 end;
 
@@ -1864,6 +1941,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -1877,6 +1956,8 @@ begin
   try
     TBasArc(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -1893,6 +1974,8 @@ begin
     TBasArc(Args[0].p).Margins.Right := Args[3].n;
     TBasArc(Args[0].p).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_margins#: ' + E.Message);
   end;
 end;
 
@@ -1909,6 +1992,8 @@ begin
     TBasArc(Args[0].p).Margins.Right := Args[1].n;
     TBasArc(Args[0].p).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_margin#: ' + E.Message);
   end;
 end;
 
@@ -1929,6 +2014,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_visible: ' + E.Message);
   end;
 end;
 
@@ -1942,6 +2029,8 @@ begin
   try
     TBasArc(Args[0].p).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_visible#: ' + E.Message);
   end;
 end;
 
@@ -1958,6 +2047,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_enabled: ' + E.Message);
   end;
 end;
 
@@ -1971,6 +2062,8 @@ begin
   try
     TBasArc(Args[0].p).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_enabled#: ' + E.Message);
   end;
 end;
 
@@ -1984,6 +2077,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_opacity: ' + E.Message);
   end;
 end;
 
@@ -1997,6 +2092,8 @@ begin
   try
     TBasArc(Args[0].p).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_opacity#: ' + E.Message);
   end;
 end;
 
@@ -2013,6 +2110,8 @@ begin
     else
       Result.n := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_hittest: ' + E.Message);
   end;
 end;
 
@@ -2026,6 +2125,8 @@ begin
   try
     TBasArc(Args[0].p).HitTest := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_hittest#: ' + E.Message);
   end;
 end;
 
@@ -2043,6 +2144,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_tag: ' + E.Message);
   end;
 end;
 
@@ -2056,6 +2159,8 @@ begin
   try
     TBasArc(Args[0].p).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_tag#: ' + E.Message);
   end;
 end;
 
@@ -2069,6 +2174,8 @@ begin
   try
     Result.n := TBasArc(Args[0].p).RotationAngle;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_rotation: ' + E.Message);
   end;
 end;
 
@@ -2082,6 +2189,8 @@ begin
   try
     TBasArc(Args[0].p).RotationAngle := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_rotation#: ' + E.Message);
   end;
 end;
 
@@ -2099,6 +2208,8 @@ begin
   try
     Result.p := TBasArc(Args[0].p).Parent;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_parent#: ' + E.Message);
   end;
 end;
 
@@ -2113,6 +2224,8 @@ begin
   try
     TBasArc(Args[0].p).Parent := TFmxObject(Args[1].p);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_parent#: ' + E.Message);
   end;
 end;
 
@@ -2126,6 +2239,8 @@ begin
   try
     TBasArc(Args[0].p).BringToFront();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2139,6 +2254,8 @@ begin
   try
     TBasArc(Args[0].p).SendToBack();
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2156,6 +2273,8 @@ begin
   try
     TBasArc(Args[0].p).InvalidateRect(TBasArc(Args[0].p).LocalRect);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_invalidate#: ' + E.Message);
   end;
 end;
 
@@ -2173,6 +2292,8 @@ begin
   try
     TBasArc(Args[0].p).OnClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2186,6 +2307,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2199,6 +2322,8 @@ begin
   try
     TBasArc(Args[0].p).OnDblClickFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2212,6 +2337,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2225,6 +2352,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseDownFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2238,6 +2367,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2251,6 +2382,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseUpFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2264,6 +2397,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2277,6 +2412,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseMoveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2290,6 +2427,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2303,6 +2442,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseEnterFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2316,6 +2457,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2329,6 +2472,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2342,6 +2487,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2355,6 +2502,8 @@ begin
   try
     TBasArc(Args[0].p).OnMouseWheelFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousewheel#: ' + E.Message);
   end;
 end;
 
@@ -2368,6 +2517,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnMouseWheelFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onmousewheel$: ' + E.Message);
   end;
 end;
 
@@ -2381,6 +2532,8 @@ begin
   try
     TBasArc(Args[0].p).OnResizeFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2394,6 +2547,8 @@ begin
   try
     Result.s := TBasArc(Args[0].p).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2426,6 +2581,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'arc_clearcallbacks#: ' + E.Message);
   end;
 end;
 

@@ -114,6 +114,7 @@ implementation
 const
   MEMO_GC_TAG = 'BASIC_MEMO';
   ERR_NONE = 0;
+  ERR_OPERATION_FAILED = 99; //failure recorded by a formerly silent except
   ERR_INVALID_MEMO = 1;
   ERR_INVALID_PARENT = 2;
   ERR_INVALID_VALUE = 3;
@@ -1040,6 +1041,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).Text;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_text$: ' + E.Message);
   end;
 end;
 
@@ -1055,6 +1058,8 @@ begin
   try
     TBasMemo(Args[0].P).Text := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_text#: ' + E.Message);
   end;
 end;
 
@@ -1070,6 +1075,8 @@ begin
   try
     Result.n := Length(TBasMemo(Args[0].P).Text);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_textlength: ' + E.Message);
   end;
 end;
 
@@ -1085,6 +1092,8 @@ begin
   try
     TBasMemo(Args[0].P).Lines.Clear;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_clear#: ' + E.Message);
   end;
 end;
 
@@ -1103,6 +1112,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Lines.Count;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_linecount: ' + E.Message);
   end;
 end;
 
@@ -1124,6 +1135,8 @@ begin
     else
       SetError(ERR_INDEX_BOUNDS, 'memo_line$: Index out of bounds');
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_line$: ' + E.Message);
   end;
 end;
 
@@ -1143,6 +1156,8 @@ begin
     else
       SetError(ERR_INDEX_BOUNDS, 'memo_line#: Index out of bounds');
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_line#: ' + E.Message);
   end;
 end;
 
@@ -1156,6 +1171,8 @@ begin
   try
     TBasMemo(Args[0].P).Lines.Add(Args[1].S);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_addline#: ' + E.Message);
   end;
 end;
 
@@ -1177,6 +1194,8 @@ begin
     else
       SetError(ERR_INDEX_BOUNDS, 'memo_insertline#: Index out of bounds');
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_insertline#: ' + E.Message);
   end;
 end;
 
@@ -1198,6 +1217,8 @@ begin
     else
       SetError(ERR_INDEX_BOUNDS, 'memo_deleteline#: Index out of bounds');
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_deleteline#: ' + E.Message);
   end;
 end;
 
@@ -1213,6 +1234,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).Lines.Text;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_lines$: ' + E.Message);
   end;
 end;
 
@@ -1228,6 +1251,8 @@ begin
   try
     TBasMemo(Args[0].P).Lines.Text := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_lines#: ' + E.Message);
   end;
 end;
 
@@ -1247,6 +1272,8 @@ begin
     if TBasMemo(Args[0].P).WordWrap then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_wordwrap: ' + E.Message);
   end;
 end;
 
@@ -1262,6 +1289,8 @@ begin
   try
     TBasMemo(Args[0].P).WordWrap := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_wordwrap#: ' + E.Message);
   end;
 end;
 
@@ -1278,6 +1307,8 @@ begin
     if TBasMemo(Args[0].P).ShowScrollBars then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_showscrollbars: ' + E.Message);
   end;
 end;
 
@@ -1293,6 +1324,8 @@ begin
   try
     TBasMemo(Args[0].P).ShowScrollBars := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_showscrollbars#: ' + E.Message);
   end;
 end;
 
@@ -1312,6 +1345,8 @@ begin
     if TBasMemo(Args[0].P).ReadOnly then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_readonly: ' + E.Message);
   end;
 end;
 
@@ -1327,6 +1362,8 @@ begin
   try
     TBasMemo(Args[0].P).ReadOnly := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_readonly#: ' + E.Message);
   end;
 end;
 
@@ -1345,6 +1382,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).TextSettings.Font.Family;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontfamily$: ' + E.Message);
   end;
 end;
 
@@ -1360,6 +1399,8 @@ begin
   try
     TBasMemo(Args[0].P).TextSettings.Font.Family := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontfamily#: ' + E.Message);
   end;
 end;
 
@@ -1375,6 +1416,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).TextSettings.Font.Size;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontsize: ' + E.Message);
   end;
 end;
 
@@ -1390,6 +1433,8 @@ begin
   try
     TBasMemo(Args[0].P).TextSettings.Font.Size := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontsize#: ' + E.Message);
   end;
 end;
 
@@ -1405,6 +1450,8 @@ begin
   try
     Result.S := TUtils.AlphaColorToStr(TBasMemo(Args[0].P).TextSettings.FontColor);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontcolor$: ' + E.Message);
   end;
 end;
 
@@ -1420,6 +1467,8 @@ begin
   try
     TBasMemo(Args[0].P).TextSettings.FontColor := TUtils.ColorToAlphaColor(Args[1].S);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_fontcolor#: ' + E.Message);
   end;
 end;
 
@@ -1436,6 +1485,8 @@ begin
     if TFontStyle.fsBold in TBasMemo(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_bold: ' + E.Message);
   end;
 end;
 
@@ -1454,6 +1505,8 @@ begin
     else
       TBasMemo(Args[0].P).TextSettings.Font.Style := TBasMemo(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsBold];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_bold#: ' + E.Message);
   end;
 end;
 
@@ -1470,6 +1523,8 @@ begin
     if TFontStyle.fsItalic in TBasMemo(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_italic: ' + E.Message);
   end;
 end;
 
@@ -1488,6 +1543,8 @@ begin
     else
       TBasMemo(Args[0].P).TextSettings.Font.Style := TBasMemo(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsItalic];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_italic#: ' + E.Message);
   end;
 end;
 
@@ -1504,6 +1561,8 @@ begin
     if TFontStyle.fsUnderline in TBasMemo(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_underline: ' + E.Message);
   end;
 end;
 
@@ -1522,6 +1581,8 @@ begin
     else
       TBasMemo(Args[0].P).TextSettings.Font.Style := TBasMemo(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsUnderline];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_underline#: ' + E.Message);
   end;
 end;
 
@@ -1538,6 +1599,8 @@ begin
     if TFontStyle.fsStrikeOut in TBasMemo(Args[0].P).TextSettings.Font.Style then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_strikeout: ' + E.Message);
   end;
 end;
 
@@ -1556,6 +1619,8 @@ begin
     else
       TBasMemo(Args[0].P).TextSettings.Font.Style := TBasMemo(Args[0].P).TextSettings.Font.Style - [TFontStyle.fsStrikeOut];
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_strikeout#: ' + E.Message);
   end;
 end;
 
@@ -1574,6 +1639,8 @@ begin
   try
     Result.n := TextAlignToInt(TBasMemo(Args[0].P).TextSettings.HorzAlign);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_textalign: ' + E.Message);
   end;
 end;
 
@@ -1590,6 +1657,8 @@ begin
     TBasMemo(Args[0].P).TextSettings.HorzAlign :=
       IntToTextAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_textalign#: ' + E.Message);
   end;
 end;
 
@@ -1608,6 +1677,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).SelStart;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_selstart: ' + E.Message);
   end;
 end;
 
@@ -1623,6 +1694,8 @@ begin
   try
     TBasMemo(Args[0].P).SelStart := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_selstart#: ' + E.Message);
   end;
 end;
 
@@ -1638,6 +1711,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).SelLength;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_sellength: ' + E.Message);
   end;
 end;
 
@@ -1653,6 +1728,8 @@ begin
   try
     TBasMemo(Args[0].P).SelLength := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_sellength#: ' + E.Message);
   end;
 end;
 
@@ -1668,6 +1745,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).SelText;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_seltext$: ' + E.Message);
   end;
 end;
 
@@ -1683,6 +1762,8 @@ begin
   try
     TBasMemo(Args[0].P).SelectAll;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_selectall#: ' + E.Message);
   end;
 end;
 
@@ -1698,6 +1779,8 @@ begin
   try
     TBasMemo(Args[0].P).SelLength := 0;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_clearselection#: ' + E.Message);
   end;
 end;
 
@@ -1716,6 +1799,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).CaretPosition.Line;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_caretpositionline: ' + E.Message);
   end;
 end;
 
@@ -1731,6 +1816,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).CaretPosition.Pos;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_caretpositionpos: ' + E.Message);
   end;
 end;
 
@@ -1751,6 +1838,8 @@ begin
   try
     TBasMemo(Args[0].P).CaretPosition := cpos;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_caretpositionline#: ' + E.Message);
   end;
 end;
 
@@ -1771,6 +1860,8 @@ begin
   try
     TBasMemo(Args[0].P).CaretPosition := cpos;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_caretpositionline#: ' + E.Message);
   end;
 end;
 
@@ -1786,6 +1877,8 @@ begin
   try
     TBasMemo(Args[0].P).GoToTextEnd;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_gotoend#: ' + E.Message);
   end;
 end;
 
@@ -1801,6 +1894,8 @@ begin
   try
     TBasMemo(Args[0].P).GoToTextBegin;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_gotobegin#: ' + E.Message);
   end;
 end;
 
@@ -1819,6 +1914,8 @@ begin
   try
     TBasMemo(Args[0].P).CopyToClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_copy#: ' + E.Message);
   end;
 end;
 
@@ -1834,6 +1931,8 @@ begin
   try
     TBasMemo(Args[0].P).CutToClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_cut#: ' + E.Message);
   end;
 end;
 
@@ -1849,6 +1948,8 @@ begin
   try
     TBasMemo(Args[0].P).PasteFromClipboard;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_paste#: ' + E.Message);
   end;
 end;
 
@@ -1864,6 +1965,8 @@ begin
   try
     TBasMemo(Args[0].P).DeleteSelection;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_deleteselection#: ' + E.Message);
   end;
 end;
 
@@ -1882,6 +1985,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Position.X;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_x: ' + E.Message);
   end;
 end;
 
@@ -1897,6 +2002,8 @@ begin
   try
     TBasMemo(Args[0].P).Position.X := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_x#: ' + E.Message);
   end;
 end;
 
@@ -1912,6 +2019,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Position.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_y: ' + E.Message);
   end;
 end;
 
@@ -1927,6 +2036,8 @@ begin
   try
     TBasMemo(Args[0].P).Position.Y := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_y#: ' + E.Message);
   end;
 end;
 
@@ -1942,6 +2053,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Width;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_width: ' + E.Message);
   end;
 end;
 
@@ -1957,6 +2070,8 @@ begin
   try
     TBasMemo(Args[0].P).Width := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_width#: ' + E.Message);
   end;
 end;
 
@@ -1972,6 +2087,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Height;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_height: ' + E.Message);
   end;
 end;
 
@@ -1987,6 +2104,8 @@ begin
   try
     TBasMemo(Args[0].P).Height := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_height#: ' + E.Message);
   end;
 end;
 
@@ -2002,6 +2121,8 @@ begin
   try
     TBasMemo(Args[0].P).SetBounds(Args[1].n, Args[2].n, Args[3].n, Args[4].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_bounds#: ' + E.Message);
   end;
 end;
 
@@ -2018,6 +2139,8 @@ begin
     TBasMemo(Args[0].P).Position.X := Args[1].n;
     TBasMemo(Args[0].P).Position.Y := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_move#: ' + E.Message);
   end;
 end;
 
@@ -2034,6 +2157,8 @@ begin
     TBasMemo(Args[0].P).Width := Args[1].n;
     TBasMemo(Args[0].P).Height := Args[2].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_size#: ' + E.Message);
   end;
 end;
 
@@ -2052,6 +2177,8 @@ begin
   try
     Result.n := AlignToInt(TBasMemo(Args[0].P).Align);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_align: ' + E.Message);
   end;
 end;
 
@@ -2067,6 +2194,8 @@ begin
   try
     TBasMemo(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_align#: ' + E.Message);
   end;
 end;
 
@@ -2085,6 +2214,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Margins.Left;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginleft: ' + E.Message);
   end;
 end;
 
@@ -2100,6 +2231,8 @@ begin
   try
     TBasMemo(Args[0].P).Margins.Left := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginleft#: ' + E.Message);
   end;
 end;
 
@@ -2115,6 +2248,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Margins.Top;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_margintop: ' + E.Message);
   end;
 end;
 
@@ -2130,6 +2265,8 @@ begin
   try
     TBasMemo(Args[0].P).Margins.Top := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_margintop#: ' + E.Message);
   end;
 end;
 
@@ -2145,6 +2282,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Margins.Right;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginright: ' + E.Message);
   end;
 end;
 
@@ -2160,6 +2299,8 @@ begin
   try
     TBasMemo(Args[0].P).Margins.Right := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginright#: ' + E.Message);
   end;
 end;
 
@@ -2175,6 +2316,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Margins.Bottom;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginbottom: ' + E.Message);
   end;
 end;
 
@@ -2190,6 +2333,8 @@ begin
   try
     TBasMemo(Args[0].P).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_marginbottom#: ' + E.Message);
   end;
 end;
 
@@ -2208,6 +2353,8 @@ begin
     TBasMemo(Args[0].P).Margins.Right := Args[3].n;
     TBasMemo(Args[0].P).Margins.Bottom := Args[4].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_margins#: ' + E.Message);
   end;
 end;
 
@@ -2226,6 +2373,8 @@ begin
     TBasMemo(Args[0].P).Margins.Right := Args[1].n;
     TBasMemo(Args[0].P).Margins.Bottom := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_margin#: ' + E.Message);
   end;
 end;
 
@@ -2245,6 +2394,8 @@ begin
     if TBasMemo(Args[0].P).Visible then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_visible: ' + E.Message);
   end;
 end;
 
@@ -2260,6 +2411,8 @@ begin
   try
     TBasMemo(Args[0].P).Visible := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_visible#: ' + E.Message);
   end;
 end;
 
@@ -2276,6 +2429,8 @@ begin
     if TBasMemo(Args[0].P).Enabled then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_enabled: ' + E.Message);
   end;
 end;
 
@@ -2291,6 +2446,8 @@ begin
   try
     TBasMemo(Args[0].P).Enabled := (Args[1].n <> 0);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_enabled#: ' + E.Message);
   end;
 end;
 
@@ -2306,6 +2463,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Opacity;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_opacity: ' + E.Message);
   end;
 end;
 
@@ -2321,6 +2480,8 @@ begin
   try
     TBasMemo(Args[0].P).Opacity := Args[1].n;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_opacity#: ' + E.Message);
   end;
 end;
 
@@ -2340,6 +2501,8 @@ begin
     if TBasMemo(Args[0].P).IsFocused then
       Result.n := 1;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_isfocused: ' + E.Message);
   end;
 end;
 
@@ -2355,6 +2518,8 @@ begin
   try
     TBasMemo(Args[0].P).SetFocus;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_setfocus#: ' + E.Message);
   end;
 end;
 
@@ -2370,6 +2535,8 @@ begin
   try
     TBasMemo(Args[0].P).ResetFocus;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_resetfocus#: ' + E.Message);
   end;
 end;
 
@@ -2385,6 +2552,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).TabOrder;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_taborder: ' + E.Message);
   end;
 end;
 
@@ -2400,6 +2569,8 @@ begin
   try
     TBasMemo(Args[0].P).TabOrder := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_taborder#: ' + E.Message);
   end;
 end;
 
@@ -2418,6 +2589,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).Tag;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_tag: ' + E.Message);
   end;
 end;
 
@@ -2433,6 +2606,8 @@ begin
   try
     TBasMemo(Args[0].P).Tag := Trunc(Args[1].n);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_tag#: ' + E.Message);
   end;
 end;
 
@@ -2451,6 +2626,8 @@ begin
   try
     Result.P := Pointer(TBasMemo(Args[0].P).Parent);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_parent#: ' + E.Message);
   end;
 end;
 
@@ -2468,6 +2645,8 @@ begin
   try
     TBasMemo(Args[0].P).Parent := TFmxObject(Args[1].P);
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_parent#: ' + E.Message);
   end;
 end;
 
@@ -2482,6 +2661,8 @@ begin
   try
     TBasMemo(Args[0].P).BringToFront;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_bringtofront#: ' + E.Message);
   end;
 end;
 
@@ -2497,6 +2678,8 @@ begin
   try
     TBasMemo(Args[0].P).SendToBack;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_sendtoback#: ' + E.Message);
   end;
 end;
 
@@ -2515,6 +2698,8 @@ begin
   try
     Result.n := TBasMemo(Args[0].P).ViewportPosition.Y;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_scrolltop: ' + E.Message);
   end;
 end;
 
@@ -2534,6 +2719,8 @@ begin
     VP.Y := Args[1].n;
     TBasMemo(Args[0].P).ViewportPosition := VP;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_scrolltop#: ' + E.Message);
   end;
 end;
 
@@ -2549,6 +2736,8 @@ begin
   try
     TBasMemo(Args[0].P).GoToTextEnd;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_scrolltoend#: ' + E.Message);
   end;
 end;
 
@@ -2567,6 +2756,8 @@ begin
   try
     TBasMemo(Args[0].P).OnChangeFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onchange#: ' + E.Message);
   end;
 end;
 
@@ -2582,6 +2773,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnChangeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onchange$: ' + E.Message);
   end;
 end;
 
@@ -2597,6 +2790,8 @@ begin
   try
     TBasMemo(Args[0].P).OnChangeTrackingFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onchangetracking#: ' + E.Message);
   end;
 end;
 
@@ -2612,6 +2807,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnChangeTrackingFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onchangetracking$: ' + E.Message);
   end;
 end;
 
@@ -2627,6 +2824,8 @@ begin
   try
     TBasMemo(Args[0].P).OnEnterFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onenter#: ' + E.Message);
   end;
 end;
 
@@ -2642,6 +2841,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onenter$: ' + E.Message);
   end;
 end;
 
@@ -2657,6 +2858,8 @@ begin
   try
     TBasMemo(Args[0].P).OnExitFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onexit#: ' + E.Message);
   end;
 end;
 
@@ -2672,6 +2875,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnExitFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onexit$: ' + E.Message);
   end;
 end;
 
@@ -2687,6 +2892,8 @@ begin
   try
     TBasMemo(Args[0].P).OnKeyDownFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onkeydown#: ' + E.Message);
   end;
 end;
 
@@ -2702,6 +2909,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnKeyDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onkeydown$: ' + E.Message);
   end;
 end;
 
@@ -2717,6 +2926,8 @@ begin
   try
     TBasMemo(Args[0].P).OnKeyUpFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onkeyup#: ' + E.Message);
   end;
 end;
 
@@ -2732,6 +2943,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnKeyUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onkeyup$: ' + E.Message);
   end;
 end;
 
@@ -2747,6 +2960,8 @@ begin
   try
     TBasMemo(Args[0].P).OnClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onclick#: ' + E.Message);
   end;
 end;
 
@@ -2762,6 +2977,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onclick$: ' + E.Message);
   end;
 end;
 
@@ -2777,6 +2994,8 @@ begin
   try
     TBasMemo(Args[0].P).OnDblClickFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondblclick#: ' + E.Message);
   end;
 end;
 
@@ -2792,6 +3011,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnDblClickFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondblclick$: ' + E.Message);
   end;
 end;
 
@@ -2807,6 +3028,8 @@ begin
   try
     TBasMemo(Args[0].P).OnMouseDownFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmousedown#: ' + E.Message);
   end;
 end;
 
@@ -2822,6 +3045,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnMouseDownFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmousedown$: ' + E.Message);
   end;
 end;
 
@@ -2837,6 +3062,8 @@ begin
   try
     TBasMemo(Args[0].P).OnMouseUpFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseup#: ' + E.Message);
   end;
 end;
 
@@ -2852,6 +3079,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnMouseUpFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseup$: ' + E.Message);
   end;
 end;
 
@@ -2867,6 +3096,8 @@ begin
   try
     TBasMemo(Args[0].P).OnMouseMoveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmousemove#: ' + E.Message);
   end;
 end;
 
@@ -2882,6 +3113,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnMouseMoveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmousemove$: ' + E.Message);
   end;
 end;
 
@@ -2897,6 +3130,8 @@ begin
   try
     TBasMemo(Args[0].P).OnMouseEnterFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseenter#: ' + E.Message);
   end;
 end;
 
@@ -2912,6 +3147,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnMouseEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseenter$: ' + E.Message);
   end;
 end;
 
@@ -2927,6 +3164,8 @@ begin
   try
     TBasMemo(Args[0].P).OnMouseLeaveFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseleave#: ' + E.Message);
   end;
 end;
 
@@ -2942,6 +3181,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnMouseLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onmouseleave$: ' + E.Message);
   end;
 end;
 
@@ -2957,6 +3198,8 @@ begin
   try
     TBasMemo(Args[0].P).OnResizeFunc := Args[1].S;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onresize#: ' + E.Message);
   end;
 end;
 
@@ -2972,6 +3215,8 @@ begin
   try
     Result.S := TBasMemo(Args[0].P).OnResizeFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_onresize$: ' + E.Message);
   end;
 end;
 
@@ -2986,6 +3231,8 @@ begin
   try
     TBasMemo(Args[0].p).OnDragEnterFunc := Args[1].s;
     except
+      on E: Exception do
+        SetError(ERR_OPERATION_FAILED, 'memo_ondragenter#: ' + E.Message);
     end;
 end;
 
@@ -3000,6 +3247,8 @@ begin
   try
     Result.s := TBasMemo(Args[0].p).OnDragEnterFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondragenter$: ' + E.Message);
   end;
 end;
 
@@ -3014,6 +3263,8 @@ begin
   try
     TBasMemo(Args[0].p).OnDragOverFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondragover#: ' + E.Message);
   end;
 end;
 
@@ -3028,6 +3279,8 @@ begin
   try
     Result.s := TBasMemo(Args[0].p).OnDragOverFunc;
     except
+      on E: Exception do
+        SetError(ERR_OPERATION_FAILED, 'memo_ondragover$: ' + E.Message);
     end;
 end;
 
@@ -3042,6 +3295,8 @@ begin
   try
     TBasMemo(Args[0].p).OnDragDropFunc := Args[1].s;
     except
+      on E: Exception do
+        SetError(ERR_OPERATION_FAILED, 'memo_ondragdrop#: ' + E.Message);
     end;
 end;
 
@@ -3056,6 +3311,8 @@ begin
   try
     Result.s := TBasMemo(Args[0].p).OnDragDropFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondragdrop$: ' + E.Message);
   end;
 end;
 
@@ -3070,6 +3327,8 @@ begin
   try
     TBasMemo(Args[0].p).OnDragLeaveFunc := Args[1].s;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondragleave#: ' + E.Message);
   end;
 end;
 
@@ -3084,6 +3343,8 @@ begin
   try
     Result.s := TBasMemo(Args[0].p).OnDragLeaveFunc;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_ondragleave$: ' + E.Message);
   end;
 end;
 
@@ -3119,6 +3380,8 @@ begin
       OnDragLeaveFunc := '';
     end;
   except
+    on E: Exception do
+      SetError(ERR_OPERATION_FAILED, 'memo_clearcallbacks#: ' + E.Message);
   end;
 end;
 
