@@ -10,6 +10,10 @@
 .PARAMETER Run
   Run the suite after a successful build.
 
+.PARAMETER Gui
+  Register the FMX libraries too, so the suite can exercise forms and controls.
+  Implies running tests\gui unless -Path says otherwise.
+
 .PARAMETER Smoke
   Passed through to the runner: only require that files compile and run,
   without demanding assertions. Use with -Path to exercise Examples\ or Demos\.
@@ -30,6 +34,7 @@
 param(
     [switch] $Run,
     [switch] $Smoke,
+    [switch] $Gui,
     [switch] $Verbose2,
     [string[]] $Path,
     [string] $Dcc
@@ -93,8 +98,10 @@ if (-not $Run) { exit 0 }
 
 $runArgs = @()
 if ($Smoke)    { $runArgs += '--smoke' }
+if ($Gui)      { $runArgs += '--gui' }
 if ($Verbose2) { $runArgs += '--verbose' }
 if ($Path)     { $runArgs += $Path }
+elseif ($Gui)  { $runArgs += 'gui' }
 
 Push-Location $here
 try {
@@ -104,7 +111,7 @@ try {
     # With no explicit -Path the default run covers both suites: suite\ must
     # pass, negative\ must be rejected. Skipping the negative half would let a
     # guard silently stop guarding.
-    if (-not $Path) {
+    if (-not $Path -and -not $Gui) {
         Write-Host ''
         & $exe --expect-fail 'negative'
         if ($LASTEXITCODE -ne 0) { $code = $LASTEXITCODE }

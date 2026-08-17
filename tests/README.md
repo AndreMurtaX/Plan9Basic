@@ -34,9 +34,43 @@ O runner ainda varre a saída em busca de linhas `[FAIL]` e `[ASSERT FAILED]`,
 porque vários exemplos reportam o próprio resultado imprimindo. Sem isso um
 arquivo que só imprime falhas passaria como verde.
 
-Só as bibliotecas não-GUI são registradas: os wrappers FMX precisam de um form
-e de um message loop, que não existem numa execução headless. Exemplos que
-criam janelas não rodam aqui.
+Por padrão só as bibliotecas não-GUI são registradas. Exemplos que criam
+janelas precisam do modo GUI abaixo.
+
+## Modo GUI
+
+```powershell
+.	estsuild.ps1 -Run -Gui
+```
+
+Registra também as bibliotecas FMX e roda `tests\gui\`. **Nenhuma janela é
+exibida**: `form#()` constrói o formulário e `form_show#()` é chamada separada,
+que as suítes nunca fazem. Isso deixa quase toda a superfície de propriedades
+dos controles conferível automaticamente.
+
+Entre arquivos o runner refaz o teardown na ordem documentada em
+`InitBASICEngine`: timers, formulários, engine, GC.
+
+As libs GUI **não levantam exceção** com handle inválido — registram em
+`xxx_error()`. Por isso a validação de handle é conferível dentro do próprio
+programa:
+
+```basic
+button_clearerror()
+r$ = button_text$(junk#)
+ok = 0
+if button_error() <> 0 then ok = 1
+assert_eq(ok, 1, "endereço inventado é recusado")
+```
+
+| Arquivo | Assunto |
+|---|---|
+| `gui/00_smoke.bas` | form e controle criados, propriedade com round-trip |
+| `gui/01_controls.bas` | um exemplar de cada tipo de controle |
+| `gui/02_handles.bas` | ponteiro forjado, nil, classe errada, handle liberado |
+
+`gui/02_handles.bas` é o que valida nas bibliotecas reais a troca do
+`TObject(P) is TBasXxx` pelo `HandleRegistry`.
 
 ## Escrevendo testes
 
