@@ -105,7 +105,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation, FMX.Text,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 type
   TBasButton = class(TButton)
@@ -234,14 +234,13 @@ begin
     Exit();
   end;
 
-  try
-    if not(TObject(P) is TBasButton) then
-    begin
-      SetError(ERR_INVALID_BUTTON, FuncName + ': Invalid object');
-      Exit();
-    end;
-  except
-    SetError(ERR_INVALID_BUTTON, FuncName + ': Invalid pointer');
+  //Registry lookup on the pointer value. The previous form was
+  //"TObject(P) is TBasButton" inside try/except, which dereferences whatever
+  //address the BASIC program supplied -- recoverable on Windows, a hard crash
+  //on Android and Linux, where SIGSEGV is not turned into an exception.
+  if not IsHandleOf(P, TBasButton) then
+  begin
+    SetError(ERR_INVALID_BUTTON, FuncName + ': Invalid or stale button handle');
     Exit();
   end;
 
@@ -377,6 +376,9 @@ end;
 constructor TBasButton.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  //Makes this instance a handle the BASIC side can be validated against
+  //without dereferencing the pointer it passes back in.
+  RegisterHandle(Self);
   FOnClickFunc := '';
   FOnEnterFunc := '';
   FOnExitFunc := '';
@@ -398,6 +400,9 @@ end;
 
 destructor TBasButton.Destroy();
 begin
+  //Must happen here and not in the library that created the button: FMX frees
+  //child controls through parent ownership, and the library never sees it.
+  UnregisterHandle(Self);
   DisconnectAllEvents();
   inherited Destroy();
 end;

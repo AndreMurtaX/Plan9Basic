@@ -17,7 +17,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Math,
-  exec, basic;
+  exec, basic, HandleRegistry;
 
 var
   AssertsPassed: Integer = 0;
@@ -203,6 +203,98 @@ begin
 end;
 
 //----------------------------------------------------------------------------
+// Probes for HandleRegistry
+//
+// The GUI libraries validate a BASIC pointer against the registry instead of
+// dereferencing it. That property cannot be exercised headlessly through the
+// GUI libraries themselves (they need a form and a message loop), so these
+// two throwaway classes stand in for them and let the suite check the rules
+// that matter: an unregistered address is never valid, a registered object is
+// valid only as its own class, and freeing it takes the handle away.
+//----------------------------------------------------------------------------
+
+type
+  TProbeA = class(TObject)
+  public
+    constructor Create();
+    destructor Destroy(); override;
+  end;
+
+  TProbeB = class(TObject)
+  public
+    constructor Create();
+    destructor Destroy(); override;
+  end;
+
+constructor TProbeA.Create();
+begin
+  inherited Create();
+  RegisterHandle(Self);
+end;
+
+destructor TProbeA.Destroy();
+begin
+  UnregisterHandle(Self);
+  inherited Destroy();
+end;
+
+constructor TProbeB.Create();
+begin
+  inherited Create();
+  RegisterHandle(Self);
+end;
+
+destructor TProbeB.Destroy();
+begin
+  UnregisterHandle(Self);
+  inherited Destroy();
+end;
+
+function t_probe_new_a(var Args: array of TAsmData): TAsmData;
+begin
+  Result.p := TProbeA.Create();
+end;
+
+function t_probe_new_b(var Args: array of TAsmData): TAsmData;
+begin
+  Result.p := TProbeB.Create();
+end;
+
+function t_probe_is_handle(var Args: array of TAsmData): TAsmData;
+begin
+  Result.n := Ord(IsHandle(Args[0].p));
+end;
+
+function t_probe_is_a(var Args: array of TAsmData): TAsmData;
+begin
+  Result.n := Ord(IsHandleOf(Args[0].p, TProbeA));
+end;
+
+function t_probe_is_b(var Args: array of TAsmData): TAsmData;
+begin
+  Result.n := Ord(IsHandleOf(Args[0].p, TProbeB));
+end;
+
+function t_probe_free(var Args: array of TAsmData): TAsmData;
+begin
+  Result.n := 0;
+  //Only free what the registry vouches for, otherwise this probe would itself
+  //dereference an arbitrary pointer -- exactly the bug it exists to test.
+  if IsHandle(Args[0].p) then
+  begin
+    TObject(Args[0].p).Free();
+    Result.n := 1;
+  end;
+end;
+
+function t_probe_count(var Args: array of TAsmData): TAsmData;
+begin
+  Result.n := 0;
+  if Assigned(Handles) then
+    Result.n := Handles.Count;
+end;
+
+//----------------------------------------------------------------------------
 // Registration
 //----------------------------------------------------------------------------
 
@@ -232,6 +324,15 @@ begin
   FnData.Entry := t_test_fail;        Lib.Add('test_fail@$', FnData);
   FnData.Entry := t_test_passed;      Lib.Add('test_passed@', FnData);
   FnData.Entry := t_test_failed;      Lib.Add('test_failed@', FnData);
+
+  //HandleRegistry probes
+  FnData.Entry := t_probe_new_a;      Lib.Add('probe_new_a#@', FnData);
+  FnData.Entry := t_probe_new_b;      Lib.Add('probe_new_b#@', FnData);
+  FnData.Entry := t_probe_is_handle;  Lib.Add('probe_is_handle@#', FnData);
+  FnData.Entry := t_probe_is_a;       Lib.Add('probe_is_a@#', FnData);
+  FnData.Entry := t_probe_is_b;       Lib.Add('probe_is_b@#', FnData);
+  FnData.Entry := t_probe_free;       Lib.Add('probe_free@#', FnData);
+  FnData.Entry := t_probe_count;      Lib.Add('probe_count@', FnData);
 end;
 
 procedure ResetTestState();

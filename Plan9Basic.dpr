@@ -11,6 +11,7 @@ uses
   UnitUtils in 'UnitUtils.pas',
   TranslationManager in 'utils\TranslationManager.pas',
   UnitGC in 'utils\UnitGC.pas',
+  HandleRegistry in 'utils\HandleRegistry.pas',
   BasicConsole in 'utils\BasicConsole.pas',
   ArrayLib in 'Libs\ArrayLib.pas',
   DateTimeLib in 'Libs\DateTimeLib.pas',

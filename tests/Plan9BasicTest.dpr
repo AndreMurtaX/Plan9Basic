@@ -39,6 +39,7 @@ uses
   parser in '..\parser.pas',
   basic in '..\basic.pas',
   UnitGC in '..\utils\UnitGC.pas',
+  HandleRegistry in '..\utils\HandleRegistry.pas',
   ArrayLib in '..\Libs\ArrayLib.pas',
   DateTimeLib in '..\Libs\DateTimeLib.pas',
   StdLib in '..\Libs\StdLib.pas',
