@@ -43,7 +43,7 @@ type
   TCompResult = (
     compOk, compLabel, compVariable, compFunction, compDupFunction, compDupVar,
     compFncParm, compUnbalancedIfElse, compUnbalancedCases, compMispCaseElse,
-    compMispElse, compMispElseIf
+    compMispElse, compMispElseIf, compTooManyVars
   );
 
   //User created functions
@@ -1287,6 +1287,8 @@ begin
   errCompStr[compUnbalancedIfElse] := 'Unbalanced ELSEIFTEST/ELSEIFBODY';
   errCompStr[compUnbalancedCases] := 'Unbalanced CASESTART/CASEEND';
   errCompStr[compMispCaseElse] := 'Misplaced CASE ELSE';
+  errCompStr[compTooManyVars] := 'Too many global variables (limit is ' +
+    IntToStr(MAXVARS - 2) + ')';
   //***** ATTENTION *****
   //The 'ERR ' string represents an assembly command
   errCompStr[compMispElse] := 'ERR "Misplaced ELSE"';
@@ -4852,7 +4854,20 @@ begin
       if varIndex >= 0 then
         FGlobalVars[varIndex] := s.ToLower()
       else
+      begin
+        //The index of a global is its position in this list, and that index is
+        //used directly to address HeapMem, which is a fixed array [0..MAXVARS].
+        //Range checking is enabled only in the Debug configuration, so without
+        //this guard a program with too many globals would silently corrupt
+        //memory in Release instead of failing to compile.
+        if FGlobalVars.Count > MAXVARS then
+        begin
+          errLine := i;
+          compResult := compTooManyVars;
+          Exit();
+        end;
         FGlobalVars.Add(s.ToLower()); //add new global var to the list
+      end;
     end;
   end;
 

@@ -250,6 +250,10 @@ type
     AuxStack: array[0 .. MAXSTACK] of TAsmData; //Auxiliary stack
     AuxStackTypes: array [0 .. MAXSTACK] of TExprKind; //Auxiliary stack types
     //auxiliary functions
+    //Validates an index into HeapMem before it is used. Locals and the stack
+    //already have guards (see fInitFunc); globals did not, and range checking
+    //is enabled only in the Debug configuration.
+    function GlobalIndexValid(Index: Integer): Boolean;
     procedure PushAsmData(const dt: TAsmData; st: TExprKind);
     function PopAsmData(checkType: TExprKind): TAsmData;
     procedure Pop();
@@ -1583,7 +1587,7 @@ begin
     StackMem[i].n := StackMem[i].n + StackMem[STKP].n;
     StackMem[STKP].n := StackMem[i].n
   end
-  else
+  else if GlobalIndexValid(i) then
   begin
     HeapMem[i].n := HeapMem[i].n + StackMem[STKP].n;
     StackMem[STKP].n := HeapMem[i].n;
@@ -2288,6 +2292,19 @@ begin
     PRG_IP := asmProg[PRG_IP].i - 1;
 end;
 
+//Guards a global variable index before it reaches HeapMem, which is a fixed
+//array [0..MAXVARS]. The compiler refuses programs with too many globals
+//(see TCompiler.EnumVarsFuncs), so reaching here means the assembly code was
+//not produced by that path — hand written or corrupted intermediate code.
+//Failing loudly beats corrupting adjacent memory in a Release build.
+function TExec.GlobalIndexValid(Index: Integer): Boolean;
+begin
+  Result := (Index >= 0) and (Index <= MAXVARS);
+  if not Result then
+    RTError(rteUserMessage, atkNull,
+      'Global variable index out of range: ' + IntToStr(Index));
+end;
+
 procedure TExec.fPopStore();
 var
   i: Integer;
@@ -2297,7 +2314,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     StackMem[BASEP + i + MAXLOCALS].n := dt.n //local
-  else
+  else if GlobalIndexValid(i) then
     HeapMem[i].n := dt.n; //global
 end;
 
@@ -2310,7 +2327,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     StackMem[BASEP + i + MAXLOCALS].p := dt.p //local
-  else
+  else if GlobalIndexValid(i) then
     HeapMem[i].p := dt.p; //global
 end;
 
@@ -2323,7 +2340,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     StackMem[BASEP + i + MAXLOCALS].s := dt.s //local
-  else
+  else if GlobalIndexValid(i) then
     HeapMem[i].s := dt.s; //global
 end;
 
@@ -2427,7 +2444,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     PushAsmData(StackMem[BASEP + i + MAXLOCALS], ekNumber) //local var
-  else
+  else if GlobalIndexValid(i) then
     PushAsmData(HeapMem[i], ekNumber); //global var
 end;
 
@@ -2508,7 +2525,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     PushAsmData(StackMem[BASEP + i + MAXLOCALS], ekPointer) //local var
-  else
+  else if GlobalIndexValid(i) then
     PushAsmData(HeapMem[i], ekPointer); //global var
 end;
 
@@ -2529,7 +2546,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     PushAsmData(StackMem[BASEP + i + MAXLOCALS], ekString)
-  else
+  else if GlobalIndexValid(i) then
     PushAsmData(HeapMem[i], ekString);
 end;
 
@@ -2561,7 +2578,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     StackMem[BASEP + i + MAXLOCALS].n := asmProg[DataStmts[ReadIdx].DataPos].n //local
-  else
+  else if GlobalIndexValid(i) then
     HeapMem[i].n := asmProg[DataStmts[ReadIdx].DataPos].n; //global
   Inc(ReadIdx);
 end;
@@ -2585,7 +2602,7 @@ begin
   i := asmProg[PRG_IP].i;
   if i < 0 then
     StackMem[BASEP + i + MAXLOCALS].s := StrPas(PChar(strConst) + asmProg[DataStmts[ReadIdx].DataPos].i) //local
-  else
+  else if GlobalIndexValid(i) then
     HeapMem[i].s := StrPas(PChar(strConst) + asmProg[DataStmts[ReadIdx].DataPos].i); //global
 
   Inc(ReadIdx);
@@ -2649,18 +2666,26 @@ begin
   Delete(StackMem[STKP].s, 1 + l - i, i);
 end;
 
+//The three accessors below are called by the host with an index it looked up
+//in GlobalVarNames. A stale or wrong index must not read outside HeapMem.
 function TExec.GetGlobalNum(const Index: Integer): Extended;
 begin
+  if (Index < 0) or (Index > MAXVARS) then
+    Exit(0);
   Result := HeapMem[Index].n;
 end;
 
 function TExec.GetGlobalPtr(const Index: Integer): Pointer;
 begin
+  if (Index < 0) or (Index > MAXVARS) then
+    Exit(nil);
   Result := HeapMem[Index].p;
 end;
 
 function TExec.GetGlobalStr(const Index: Integer): String;
 begin
+  if (Index < 0) or (Index > MAXVARS) then
+    Exit('');
   Result := HeapMem[Index].s;
 end;
 

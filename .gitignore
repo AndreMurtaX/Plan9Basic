@@ -68,6 +68,9 @@ Website/assets/devenv/
 # Third-party PDFs served by the site (~66 MB, not project source)
 Website/assets/ebooks/
 
+# ----- Test runner build output -----
+tests/bin/
+
 # ----- Miscellaneous -----
 *.bak
 *.tmp

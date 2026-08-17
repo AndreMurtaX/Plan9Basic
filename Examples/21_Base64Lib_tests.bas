@@ -386,7 +386,7 @@ testContent$ = "This is test file content for BASE64 encoding."
 testFilePath$ = "b64_test_input.txt"
 outputFilePath$ = "b64_test_output.txt"
 ' Save test content to file using savetext$
-saveResult$ = savetext$(testContent$, testFilePath$, "utf-8")
+saveResult$ = savetext$(testFilePath$, "utf-8", testContent$)
 ' Test encoding file
 encodedFile$ = b64encodefile$(testFilePath$)
 passed = 0

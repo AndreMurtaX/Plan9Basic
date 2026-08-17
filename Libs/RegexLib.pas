@@ -81,13 +81,27 @@ end;
 // regex_isvalid(pattern$) - Check if pattern is a valid regex
 // Returns: 1 if valid, 0 if invalid
 function p_regex_isvalid(var Args: Array of TAsmData): TAsmData;
+var
+  RE: TRegEx;
 begin
   Result.n := 0;
   Result.p := nil;
   Result.s := '';
 
+  //An empty pattern is legal (it matches at every position), but the
+  //underlying engine refuses to compile it, so it is answered directly.
+  if Args[0].s = '' then
+  begin
+    Result.n := 1;
+    Exit();
+  end;
+
   try
-    TRegEx.Create(Args[0].s);
+    RE := TRegEx.Create(Args[0].s);
+    //TRegEx.Create only stores the pattern; it does not compile it, so an
+    //invalid pattern raises nothing here. Running a match forces compilation,
+    //which is what actually validates the pattern.
+    RE.IsMatch('');
     Result.n := 1;
   except
     Result.n := 0;
@@ -97,13 +111,21 @@ end;
 // regex_error$(pattern$) - Get error message for invalid pattern
 // Returns: Empty string if valid, error message if invalid
 function p_regex_error(var Args: Array of TAsmData): TAsmData;
+var
+  RE: TRegEx;
 begin
   Result.n := 0;
   Result.p := nil;
   Result.s := '';
 
+  //See p_regex_isvalid: an empty pattern is legal but will not compile.
+  if Args[0].s = '' then
+    Exit();
+
   try
-    TRegEx.Create(Args[0].s);
+    RE := TRegEx.Create(Args[0].s);
+    //See p_regex_isvalid: compilation only happens on first use.
+    RE.IsMatch('');
     Result.s := '';  // Valid pattern
   except
     on E: Exception do
