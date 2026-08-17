@@ -149,12 +149,20 @@ Cinco frentes, em ordem de retorno esperado.
 | # | Frente | Objetivo | Status |
 |---|---|---|---|
 | 1 | **Fundação de engenharia** | Versionamento, `.gitignore`, organização em disco | ✅ Concluída em 2026-08-17 |
-| 2 | **Unificar o engine** | Uma única cópia de `exec`/`parser`/`lexer`/`basic`, consumida pelo IDE e pelo AppletRunner | Pendente |
-| 3 | **Segurança de runtime** | Handles opacos por registry; política de erro no lugar do `except end`; guarda no limite de globais | Pendente |
-| 4 | **Testes** | Runner headless de `.bas` com asserts, convertendo os 98 exemplos em suíte executável | Pendente |
-| 5 | **Colapsar boilerplate GUI** | Gerar os wrappers a partir de descritores, ou substituir por camada RTTI genérica | Pendente |
+| 4 | **Testes** | Runner headless de `.bas` com asserts | ✅ Concluída em 2026-08-17 |
+| 3 | **Segurança de runtime** | Handles opacos por registry; guarda no limite de globais | ✅ Concluída em 2026-08-17 (menos a política de erro) |
+| 2 | **Unificar o engine** | Uma única cópia de `exec`/`parser`/`lexer`/`basic`, consumida pelo IDE e pelo AppletRunner | ⚠️ Aguardando decisão de topologia — ver §8 |
+| 5 | **Colapsar boilerplate GUI** | Gerar os wrappers a partir de descritores, ou substituir por camada RTTI genérica | Pendente — ver §9 |
 
-A frente 4 é pré-requisito prático das frentes 2, 3 e 5: sem suíte executável, qualquer refatoração do engine ou das bibliotecas é feita no escuro.
+A frente 4 foi executada primeiro por ser pré-requisito prático das demais:
+sem suíte executável, refatorar o engine ou as bibliotecas é trabalho no escuro.
+Ela já se pagou — encontrou dois defeitos reais durante a própria construção
+(§7).
+
+Restou de fora da frente 3 a **política de erro** no lugar dos ~234
+`try..except end`. Os dois itens que causavam corrupção de memória e crash duro
+foram resolvidos; o `except end` silencioso é degradação de diagnóstico, não
+perda de integridade, e é o item de maior volume dos três.
 
 À parte do técnico, há uma discussão de produto pendente: o IDE console, o AppletRunner e o site sugerem uma direção de distribuição de applets que vale explicitar antes de fixar prioridades.
 
@@ -182,3 +190,140 @@ Executada em 2026-08-17.
 O projeto saiu do OneDrive para `C:\Dev`, o AppletRunner deixou de ser aninhado, e a pasta do projeto caiu de 3.363 MB para 622 MB. A cópia antiga do OneDrive foi preservada como backup, com `.git` renomeado para `.git.disabled` para impedir commit acidental na árvore errada.
 
 **Portabilidade verificada:** `.dproj`, `.dpr`, `.deployproj` e `.git/config` não contêm nenhum caminho absoluto — o projeto move-se sem ajuste. Carregam caminho absoluto apenas `Plan9Basic.dsk` (regenerável pelo IDE) e `.claude/settings.local.json` (regras de permissão locais).
+
+---
+
+## 7. Registro das frentes 4 e 3
+
+Executadas em 2026-08-17, sobre o commit `9f1215b`.
+
+### Ferramental descoberto
+
+O compilador de linha de comando (`dcc64.exe`, RAD Studio 37.0) compila os dois
+projetos sem nenhum setup de ambiente:
+
+| Projeto | Linhas | Tempo |
+|---|---|---|
+| `Plan9Basic.dpr` (IDE completo, FMX) | 144.244 | ~4,5 s |
+| `Plan9BasicApplet.dpr` (runner) | 27.280 | ~1,4 s |
+
+Isso é o que torna verificável qualquer refatoração daqui para frente, e é o que
+permitiu mexer em 37 bibliotecas com confiança.
+
+### Frente 4 — testes
+
+`tests/Plan9BasicTest.dpr` executa `.bas` sem IDE e sem UI, com engine e GC novos
+por arquivo. O engine já era headless-capaz: `exec.pas` referencia FMX, mas a
+flag `UnitGC.SkipProcessMessages` desliga o bombeamento de mensagens no caminho
+do PRINT, e o único outro `Application.ProcessMessages` só roda em pausa/
+breakpoint.
+
+- **322 asserções** em 15 arquivos, mais suíte negativa de 4 arquivos
+- Modo `--smoke` roda os `Examples/` existentes como rede de regressão: **24 dos
+  25 exemplos não-GUI** passam
+- A saída é varrida por `[FAIL]`, porque vários exemplos reportam o próprio
+  resultado imprimindo — sem isso, um arquivo que só imprime falhas passaria
+  como verde
+
+Detalhe da linguagem que moldou a suíte: expressão booleana só é válida dentro
+da condição de `IF`/`WHILE`/`UNTIL`. `assert_true(2 > 1)` não compila.
+
+### Frente 3 — limite de globais
+
+O índice de uma global endereça `HeapMem`, array fixo `[0..515]`, e range
+checking só está ligado na configuração Debug. O parser não checava o teto: em
+Release, um programa com mais de 513 globais corrompia memória em silêncio.
+
+Agora é erro de compilação com a linha exata, e os acessos a `HeapMem` no
+`exec` validam o índice. O limite está fixado nas duas pontas por teste: 513
+globais compila e roda, 514 é rejeitado.
+
+### Frente 3 — handles opacos
+
+`utils/HandleRegistry.pas`. Cada objeto entregue como handle se registra na
+construção junto com sua classe, e se remove na destruição. A validação virou
+consulta de dicionário pelo **valor** do ponteiro, comparando com a classe
+gravada no registro — o ponteiro do chamador nunca é seguido.
+
+O cancelamento do registro fica no destrutor, e não na biblioteca que criou o
+objeto, porque o FMX libera controles filhos por posse do pai e a biblioteca
+nunca vê essas liberações. Em `ArrayLib` e `DictLib`, cujas descendentes têm
+construtores próprios e nenhum destrutor, as classes base usam
+`AfterConstruction`/`BeforeDestruction`.
+
+Convertidas **37 classes** em 35 bibliotecas GUI mais `ArrayLib` e `DictLib`.
+Nenhum `TObject(P) is TBasXxx` resta. `arr_free` tinha o mesmo dereference sem
+sequer o `try/except` em volta.
+
+Ponteiro forjado passado a `ndims`, `dict_count` ou `arr_free` agora produz o
+diagnóstico da própria biblioteca com a linha exata, em vez de access violation.
+
+### Defeitos encontrados pela suíte
+
+1. **`RegexLib.regex_isvalid` / `regex_error$`** — usavam `TRegEx.Create`, que no
+   Delphi é preguiçoso e não compila o padrão. Todo padrão malformado era
+   reportado como válido. Corrigido forçando a compilação, com o padrão vazio
+   (que é regex legal) tratado à parte.
+2. **`Examples/21_Base64Lib_tests.bas`** — chamada de `savetext$` com argumentos
+   fora de ordem, que criava um arquivo de lixo com o conteúdo como nome.
+
+### Achados registrados, sem correção
+
+- **`savetext$`/`opentext$` não faz round-trip fiel**: passam por `TStringList`,
+  então o texto lido de volta ganha um CRLF no fim — 11 caracteres entram, 13
+  voltam. `file_writealltext`/`file_readalltext$` (IOUtilsLib) não têm o
+  problema. Comportamento fixado por teste em `suite/12_fileio.bas` para que
+  mudá-lo seja decisão, e não acidente.
+- **Ordem de argumentos inconsistente em StrLib**: `containsstr(texto$, parte$)`
+  mas `startsstr(prefixo$, texto$)` e `endsstr(sufixo$, texto$)`. Herdado do
+  `System.StrUtils` do Delphi, que é irregular. Documentado em
+  `suite/06_strings.bas`.
+
+---
+
+## 8. Frente 2 — decisão pendente de topologia
+
+A divergência que esta análise previu **materializou-se durante este trabalho**.
+Antes, as duas cópias do engine diferiam apenas na linha de copyright:
+
+| Unidade | Divergência antes | Depois das correções |
+|---|---|---|
+| `exec.pas` | 2 linhas (copyright) | 45 linhas |
+| `parser.pas` | 2 linhas (copyright) | 19 linhas |
+
+Ou seja: `C:\Dev\Plan9BasicAppletRunner` continua com a corrupção de memória no
+limite de globais, e com `TObject(P) is TBasXxx` em `ArrayLib` e `TimerLib`. É o
+projeto que **executa applets distribuídos** — a superfície mais exposta, e o
+repositório público.
+
+Portar as correções à mão resolveria o sintoma e perpetuaria a causa. A decisão
+real é de topologia, e ela esbarra num fato: o repositório principal é
+**privado** e o AppletRunner é **público**.
+
+| Opção | Como fica | Custo |
+|---|---|---|
+| **Submódulo** — extrair `exec`/`parser`/`lexer`/`basic`/`UnitUtils`/`utils` para um repo `Plan9BasicEngine` público, consumido pelos dois | Uma cópia de verdade; o engine é MIT pelos próprios cabeçalhos, então publicá-lo é coerente | Atrito de submódulo no dia a dia (clone, update, commit em dois lugares) |
+| **Repo único, dois `.dpr`** | O mais simples de operar | **Bloqueado** pela diferença de visibilidade: exigiria tornar tudo público ou tudo privado |
+| **Diretórios irmãos com caminho relativo** (`..\Plan9Basic\exec.pas`) | Zero ferramental | Clone do repo público fica quebrado para terceiros |
+
+Recomendação: submódulo. Mas é decisão de fluxo de trabalho, e por isso não foi
+executada.
+
+---
+
+## 9. Frente 5 — dimensionamento
+
+As 64 unidades de efeito somam **27.190 linhas**. Comparando duas quaisquer com
+os nomes normalizados, a diferença é pequena: `SepiaEffectLib` (362 linhas) e
+`InvertEffectLib` (313) diferem em 67 linhas, e boa parte disso é a própria
+diferença de tamanho — cerca de 82% idêntico.
+
+O caminho de menor risco é gerar essas unidades a partir de descritores
+(nome do efeito, classe FMX, lista de propriedades com tipo), mantendo a saída
+versionada para o diff continuar legível. A camada RTTI genérica elimina mais
+código, mas troca erro de compilação por erro de runtime num projeto que hoje
+não tem cobertura de teste na parte GUI — a suíte headless não alcança as libs
+FMX.
+
+Pré-requisito prático: alguma forma de exercitar as bibliotecas GUI
+automaticamente. Sem isso, colapsar 27 mil linhas é uma aposta.
