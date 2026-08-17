@@ -348,19 +348,68 @@ terceiros consigam compilar.
 
 ---
 
-## 9. Frente 5 — dimensionamento
+## 9. Frente 5 — pré-requisito pronto, escopo medido
 
-As 64 unidades de efeito somam **27.190 linhas**. Comparando duas quaisquer com
-os nomes normalizados, a diferença é pequena: `SepiaEffectLib` (362 linhas) e
-`InvertEffectLib` (313) diferem em 67 linhas, e boa parte disso é a própria
-diferença de tamanho — cerca de 82% idêntico.
+### Cobertura de teste para GUI — concluída
 
-O caminho de menor risco é gerar essas unidades a partir de descritores
-(nome do efeito, classe FMX, lista de propriedades com tipo), mantendo a saída
-versionada para o diff continuar legível. A camada RTTI genérica elimina mais
-código, mas troca erro de compilação por erro de runtime num projeto que hoje
-não tem cobertura de teste na parte GUI — a suíte headless não alcança as libs
-FMX.
+Era o bloqueio da frente 5, e está resolvido. O runner ganhou `--gui`, que
+registra as 102 bibliotecas FMX. **Nenhuma janela é exibida**: `form#()`
+constrói o formulário e `form_show#()` é uma chamada separada que as suítes
+nunca fazem, então quase toda a superfície de propriedades é conferível
+automaticamente.
 
-Pré-requisito prático: alguma forma de exercitar as bibliotecas GUI
-automaticamente. Sem isso, colapsar 27 mil linhas é uma aposta.
+- `gui/01_controls.bas` — um exemplar de cada tipo de controle
+- `gui/02_handles.bas` — valida nas bibliotecas **reais** a troca do
+  `TObject(P) is TBasXxx` pelo `HandleRegistry`: ponteiro forjado, nil, handle
+  de classe errada e handle já liberado. Até aqui isso só estava verificado por
+  compilação e por classes-sonda.
+- `gui/03_effects.bas` — **gerado** por `tests/gen_effects_suite.py` a partir de
+  descritores extraídos das próprias unidades: 338 asserções sobre 64 efeitos e
+  200 propriedades. A suíte confere os descritores contra o código atual, o que
+  os valida antes de qualquer tentativa de regerar as unidades a partir deles.
+
+371 asserções GUI, 709 no total.
+
+### O que a medição mostrou sobre gerar as unidades
+
+Os 284 setters das 64 unidades não são uniformes:
+
+| Forma | Setters | O que faz |
+|---|---|---|
+| uma linha | 126 | `Efeito.Prop := Args[1].n` |
+| cinco linhas | 64 | componente de `TPointF` (`Center.X`, `Center.Y`) |
+| duas a quatro linhas | 47 | clamp de faixa, conversão de escala |
+| seis ou mais | 40 | carga de target, bitmap, casos próprios |
+| nenhuma | 7 | setter vazio |
+
+Dois templates cobrem 190 dos 284 (67%). O terço restante é variado, e uma
+regeneração tem de reproduzir **todo** o comportamento, não a maior parte dele.
+
+### Achado registrado, sem correção
+
+O setter de `progress` nas 17 unidades de transição adivinha a escala:
+
+```pascal
+Value := Args[1].n;
+if Value <= 1.0 then Value := Value * 100;
+```
+
+A propriedade FMX é 0..100 e o getter divide por 100. Consequência:
+`progress#(e, 1)` significa **100%**, não 1%. Além da ambiguidade, o par de
+conversões através de um `Single` torna o round-trip lossy — o que motivou a
+tolerância na suíte gerada. Mudar isso quebraria applets existentes que se
+apoiem em qualquer das duas convenções, então fica como decisão.
+
+### Decisão pendente
+
+Duas saídas, com perfis de risco diferentes:
+
+| Caminho | Efeito | Custo |
+|---|---|---|
+| **Gerar as unidades a partir de descritores**, mantendo a saída versionada | mesmo comportamento em runtime, diff continua legível, erro segue em tempo de compilação | ~6 templates mais os casos próprios; o ganho encolhe conforme se persegue o terço irregular |
+| **Camada RTTI genérica** no lugar das 64 unidades | apaga ~27.000 linhas de fato | troca erro de compilação por erro de runtime, e muda a superfície de erro de um projeto que hoje entrega essas libs prontas |
+
+Vale registrar o contra-argumento: são 27.000 linhas de boilerplate que
+funcionam, agora cobertas por teste, e que ninguém edita. O custo de posse é
+baixo; o ganho é sobretudo ter menos código para ler.
+
