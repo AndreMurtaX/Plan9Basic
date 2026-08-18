@@ -93,7 +93,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Controls, FMX.Media, FMX.Objects, FMX.Layouts,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, GuiUtils;
 
 type
   {****************************************************************************
@@ -440,7 +440,7 @@ end;
 // Returns the full path of the saved temp file on success, or '' on failure.
 // The caller is responsible for tracking and deleting the file when done.
 //
-// Design mirrors TUtils.LoadImageFromWeb / TUtils.LoadFromWeb in UnitUtils:
+// Design mirrors TGuiUtils.LoadImageFromWeb / TUtils.LoadFromWeb in UnitUtils:
 //   httpCli.Get(url, memoryStream) → save stream → return local path
 //
 function DownloadMediaToTemp(const AURL: String): String;
@@ -465,7 +465,7 @@ begin
   TempName := Format('p9b_media_%s_%d%s', [FormatDateTime('yyyymmddhhnnsszzz', Now), Random(99999), Ext]);
   TempFile := TPath.Combine(TPath.GetTempPath, TempName);
 
-  // --- Download using the same pattern as TUtils.LoadImageFromWeb ---
+  // --- Download using the same pattern as TGuiUtils.LoadImageFromWeb ---
   httpCli := TNetHTTPClient.Create(nil);
   ms := TMemoryStream.Create();
   try

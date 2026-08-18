@@ -43,7 +43,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon, GuiUtils;
 
 procedure RegisterDissolveTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -260,8 +260,8 @@ begin
     // Check if URL or file path
     if (Pos('http://', LowerCase(Path)) = 1) or (Pos('https://', LowerCase(Path)) = 1) then
     begin
-      // Load from URL using TUtils.LoadImageFromWeb
-      if not TUtils.LoadImageFromWeb(Path, Effect.Target) then
+      // Load from URL using TGuiUtils.LoadImageFromWeb
+      if not TGuiUtils.LoadImageFromWeb(Path, Effect.Target) then
       begin
         SetError(ERR_LOAD_FAILED, 'dissolvetrans_loadtarget#: failed to load from URL');
         Exit;

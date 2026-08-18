@@ -29,6 +29,7 @@ uses
   GzipLib in 'Libs\GzipLib.pas',
   ZipLib in 'engine\Libs\ZipLib.pas',
   HttpLib in 'engine\Libs\HttpLib.pas',
+  GuiUtils in 'Libs\GUI\GuiUtils.pas',
   FormLib in 'Libs\GUI\FormLib.pas',
   LayoutLib in 'Libs\GUI\LayoutLib.pas',
   RectangleLib in 'Libs\GUI\RectangleLib.pas',

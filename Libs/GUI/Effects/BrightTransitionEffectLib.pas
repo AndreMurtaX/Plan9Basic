@@ -19,7 +19,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon, GuiUtils;
 
 procedure RegisterBrightTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -158,7 +158,7 @@ begin
   try
     Effect := TBrightTransitionEffect(Args[0].p); Path := Args[1].s;
     if (Pos('http://', LowerCase(Path)) = 1) or (Pos('https://', LowerCase(Path)) = 1) then
-    begin if not TUtils.LoadImageFromWeb(Path, Effect.Target) then begin SetError(ERR_LOAD_FAILED, 'brighttrans_loadtarget#: URL load failed'); Exit; end; end
+    begin if not TGuiUtils.LoadImageFromWeb(Path, Effect.Target) then begin SetError(ERR_LOAD_FAILED, 'brighttrans_loadtarget#: URL load failed'); Exit; end; end
     else begin if FileExists(Path) then Effect.Target.LoadFromFile(Path) else begin SetError(ERR_LOAD_FAILED, 'brighttrans_loadtarget#: file not found'); Exit; end; end;
     Result.p := Args[0].p;
   except on E: Exception do SetError(ERR_LOAD_FAILED, 'brighttrans_loadtarget#: ' + E.Message); end;

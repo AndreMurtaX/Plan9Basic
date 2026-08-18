@@ -78,7 +78,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, GuiUtils;
 
 type
   TBasImage = class(TImage)
@@ -1088,7 +1088,7 @@ begin
   try
     if IsWebUrl(FilePath) then
     begin
-      if not TUtils.LoadImageFromWeb(FilePath, TBasImage(Args[0].p).Bitmap) then
+      if not TGuiUtils.LoadImageFromWeb(FilePath, TBasImage(Args[0].p).Bitmap) then
       begin
         SetError(ERR_LOAD_FAILED, 'image_load: Failed to load from URL: ' + FilePath);
         Exit();
@@ -1126,7 +1126,7 @@ begin
   try
     if IsWebUrl(FilePath) then
     begin
-      if not TUtils.LoadImageFromWeb(FilePath, TBasImage(Args[0].p).Bitmap) then
+      if not TGuiUtils.LoadImageFromWeb(FilePath, TBasImage(Args[0].p).Bitmap) then
         SetError(ERR_LOAD_FAILED, 'image_load#: Failed to load from URL: ' + FilePath);
     end
     else

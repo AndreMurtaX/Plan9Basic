@@ -87,7 +87,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Controls, FMX.Ani, FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, GuiUtils;
 
 type
   TBasBitmapListAnimation = class(TBitmapListAnimation)
@@ -556,7 +556,7 @@ begin
       // First, try loading from web if it looks like a URL
       if IsWebUrl(FilePath) then
       begin
-        if TUtils.LoadImageFromWeb(FilePath, Bmp) then
+        if TGuiUtils.LoadImageFromWeb(FilePath, Bmp) then
           Loaded := True;
       end;
 

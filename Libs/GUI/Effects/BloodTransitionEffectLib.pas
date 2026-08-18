@@ -27,7 +27,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon, GuiUtils;
 
 procedure RegisterBloodTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -273,7 +273,7 @@ begin
     
     if (Pos('http://', LowerCase(Path)) = 1) or (Pos('https://', LowerCase(Path)) = 1) then
     begin
-      if not TUtils.LoadImageFromWeb(Path, Effect.Target) then
+      if not TGuiUtils.LoadImageFromWeb(Path, Effect.Target) then
       begin
         SetError(ERR_LOAD_FAILED, 'bloodtrans_loadtarget#: failed to load from URL');
         Exit;

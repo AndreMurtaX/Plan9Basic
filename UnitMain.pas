@@ -9,6 +9,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs,
   FMX.Memo.Types, FMX.Layouts, FMX.StdCtrls, FMX.ScrollBox, FMX.Memo,
   FMX.Controls.Presentation, FMX.Edit, FMX.Objects, FMX.DialogService,
+  FMX.DialogService.Async,
   FMX.Platform,
   {$IFDEF ANDROID}FMX.VirtualKeyboard.Android,{$ENDIF}
   System.Net.HttpClient, System.Net.URLClient, System.Threading,
@@ -267,6 +268,12 @@ type
 
 
   public
+    //Host side of the engine's three interactions with a person. The engine
+    //itself no longer knows FireMonkey; these are where the dialogs live.
+    procedure HostInput(const ACaption: String; const ALabels: array of String;
+                        const ADefaults: array of String; const ADone: TInputDoneProc);
+    procedure HostConfirm(const AMessage: String; const ADone: TConfirmDoneProc);
+    procedure HostYield();
     procedure InitBASICEngine();
     property Basic: TBasicEngine read FBasic;
     property Filename: string read FFilename write SetFilename;
@@ -2002,6 +2009,44 @@ begin
   Application.ProcessMessages();
 end;
 
+procedure TfrmMain.HostInput(const ACaption: String; const ALabels: array of String;
+  const ADefaults: array of String; const ADone: TInputDoneProc);
+var
+  Values: array of String;
+  I: Integer;
+begin
+  SetLength(Values, Length(ADefaults));
+  for I := 0 to High(ADefaults) do
+    Values[I] := ADefaults[I];
+
+  TDialogServiceAsync.InputQuery(ACaption, ALabels, Values,
+    procedure(const AResult: TModalResult; const AValues: array of string)
+    begin
+      ADone(AResult = mrOk, AValues);
+    end);
+end;
+
+procedure TfrmMain.HostConfirm(const AMessage: String; const ADone: TConfirmDoneProc);
+begin
+  //Timers belong to the host, so pausing them around a breakpoint is the
+  //host's job. The engine only asks the question.
+  TimerLib.PauseAllTimers();
+
+  TDialogServiceAsync.MessageDialog(AMessage, TMsgDlgType.mtConfirmation,
+    [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbYes, 0,
+    procedure(const AResult: TModalResult)
+    begin
+      if AResult <> mrNo then
+        TimerLib.ResumeAllTimers();
+      ADone(AResult <> mrNo);
+    end);
+end;
+
+procedure TfrmMain.HostYield();
+begin
+  Application.ProcessMessages();
+end;
+
 procedure TfrmMain.InitBASICEngine();
 begin
   // === CLEANUP ORDER IS CRITICAL ===
@@ -2030,6 +2075,9 @@ begin
   // 6. Create fresh engine
   FBasic := TBasicEngine.Create(); // Now it's OK.
   FBasic.ScriptTimeOut := 0;
+  FBasic.InputProc := HostInput;
+  FBasic.ConfirmProc := HostConfirm;
+  FBasic.YieldProc := HostYield;
 
   // Register all libraries
   ArrayLib.RegisterArrayFuncs(FBasic.Functions);

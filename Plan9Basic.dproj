@@ -5,10 +5,11 @@
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
-        <Platform Condition="'$(Platform)'==''">Linux64</Platform>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>693395</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>Plan9Basic.dpr</MainSource>
+        <ProjectName Condition="'$(ProjectName)'==''">Plan9Basic</ProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -357,6 +358,7 @@
         <DCCReference Include="Libs\GzipLib.pas"/>
         <DCCReference Include="engine\Libs\ZipLib.pas"/>
         <DCCReference Include="engine\Libs\HttpLib.pas"/>
+        <DCCReference Include="Libs\GUI\GuiUtils.pas"/>
         <DCCReference Include="Libs\GUI\FormLib.pas"/>
         <DCCReference Include="Libs\GUI\LayoutLib.pas"/>
         <DCCReference Include="Libs\GUI\RectangleLib.pas"/>
