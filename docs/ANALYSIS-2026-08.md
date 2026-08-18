@@ -366,6 +366,36 @@ program, so compiling it asks a question with no ambiguity in the answer. Every
 other check in this section spends most of its effort deciding what is even
 being claimed.
 
+### The same applets again, from the other copy
+
+Sweeping the tree for `.bas` found two more sets nobody compiles: `Examples/`
+with 98 files and `Demos/` with 9. `Demos/` was clean. `Examples/` failed on the
+same five files as the website, which is how it became clear that
+`Examples/NN_name.bas` is the source and the website carries the copy with the
+number stripped. The three fixes were applied there too, and both sets compile
+in full.
+
+Comparing the copies once they were both valid: **96 identical, two divergent,
+none orphaned**. So the copy step is real and mostly faithful. Both divergences
+were worth having found.
+
+**`Base64Lib_tests.bas` had the arguments of `savetext$` in different orders in
+the two copies**, and only one can be right. The implementation settles it --
+`SaveStr(filename, Enc, s)`, so the call is `savetext$(path$, encoding$,
+content$)` -- and `StrLib.md` documents exactly that. `Examples/` was right and
+the website's copy was wrong; both compile, since all three parameters are
+strings, which is why nothing caught it. Corrected against the implementation
+and confirmed by writing a file and reading it back.
+
+Note what that means for the type signature as a check: `savetext$@$$$` cannot
+distinguish a path from its contents. Everything this section does rests on
+types, and three strings in a row is where that runs out.
+
+**`ChuckNorrisFacts_Demo.bas` differs in content**: the website's copy is older,
+missing a section the source has, and carries a byte-order mark the source does
+not. Which copy is canonical is a workflow question rather than a defect, so it
+is left alone and named here.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

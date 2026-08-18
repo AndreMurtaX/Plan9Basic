@@ -7,7 +7,7 @@ println "=== SQLite Basic Example ==="
 println ""
 
 ' Create or open a database
-let db# = sql_open#(docsdir$() + "example.db")
+let db# = sql_open#(documentspath$() + "example.db")
 if PntToNum(db#) = 0 then
     println "ERROR: Failed to open database: " + sql_errormsg$()
     end

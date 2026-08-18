@@ -7,7 +7,7 @@ println "=== SQLite Transactions & Introspection Example ==="
 println ""
 
 ' Open database
-let db# = sql_open#(docsdir$() + "banking.db")
+let db# = sql_open#(documentspath$() + "banking.db")
 if PntToNum(db#) = 0 then
     println "ERROR: " + sql_errormsg$()
     end
@@ -211,8 +211,8 @@ sql_finalize(cursor#)
 ' Backup the database
 println ""
 println "Creating backup..."
-if sql_backup(db#, docsdir$() + "banking_backup.db") = 1 then
-    println "Backup created: " + docsdir$() + "banking_backup.db"
+if sql_backup(db#, documentspath$() + "banking_backup.db") = 1 then
+    println "Backup created: " + documentspath$() + "banking_backup.db"
 else
     println "Backup failed: " + sql_errormsg$()
 endif

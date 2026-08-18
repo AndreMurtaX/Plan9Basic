@@ -179,7 +179,7 @@ ShowInstructions:
   println "2. Export as PNG with frames in a grid layout"
   println ""
   println "3. Copy your PNG sprite sheet files to:"
-  println "   " + docsdir$()
+  println "   " + documentspath$()
   println "   Expected filenames: walk_cycle.png, character_idle.png, explosion.png"
   println ""
   println "4. Click 'Load...' button FIRST to load your sprite sheet"
@@ -209,7 +209,7 @@ endfunction
 function OnLoad1Click(sender#) local filePath$
   ' In a real app, you would use a file dialog
   ' For now, we'll use a hardcoded test path
-  filePath$ = docsdir$() + "walk_cycle.png"
+  filePath$ = documentspath$() + "walk_cycle.png"
 
   println "Attempting to load: " + filePath$
   bmplistani_loadspritesheet#(ani1#, filePath$)
@@ -220,7 +220,7 @@ function OnLoad1Click(sender#) local filePath$
   else
     label_text#(statusLbl#, "Load error: " + bmplistani_errormsg$())
     println "Load error: " + bmplistani_errormsg$()
-    println "Please copy walk_cycle.png to: " + docsdir$()
+    println "Please copy walk_cycle.png to: " + documentspath$()
   endif
 endfunction
 
@@ -250,7 +250,7 @@ function OnStop2Click(sender#)
 endfunction
 
 function OnLoad2Click(sender#) local filePath$
-  filePath$ = docsdir$() + "character_idle.png"
+  filePath$ = documentspath$() + "character_idle.png"
 
   println "Attempting to load: " + filePath$
   bmplistani_loadspritesheet#(ani2#, filePath$)
@@ -260,7 +260,7 @@ function OnLoad2Click(sender#) local filePath$
   else
     label_text#(statusLbl#, "Load error: " + bmplistani_errormsg$())
     println "Load error: " + bmplistani_errormsg$()
-    println "Please copy character_idle.png to: " + docsdir$()
+    println "Please copy character_idle.png to: " + documentspath$()
   endif
 endfunction
 
@@ -286,7 +286,7 @@ function OnReset3Click(sender#)
 endfunction
 
 function OnLoad3Click(sender#) local filePath$
-  filePath$ = docsdir$() + "explosion.png"
+  filePath$ = documentspath$() + "explosion.png"
 
   println "Attempting to load: " + filePath$
   bmplistani_loadspritesheet#(ani3#, filePath$)
@@ -296,7 +296,7 @@ function OnLoad3Click(sender#) local filePath$
   else
     label_text#(statusLbl#, "Load error: " + bmplistani_errormsg$())
     println "Load error: " + bmplistani_errormsg$()
-    println "Please copy explosion.png to: " + docsdir$()
+    println "Please copy explosion.png to: " + documentspath$()
   endif
 endfunction
 
