@@ -163,7 +163,7 @@ Five fronts, in order of expected return.
 | 4 | **Tests** | Headless `.bas` runner with assertions | Done 2026-08-17 |
 | 3 | **Runtime safety** | Opaque handles via registry; error policy; global limit guard | Done 2026-08-17 |
 | 2 | **Unify the engine** | One copy of `exec`/`parser`/`lexer`/`basic`, consumed by the IDE and the AppletRunner | Done 2026-08-17 |
-| 5 | **Collapse GUI boilerplate** | Generate the wrappers from descriptors, or replace them with a generic RTTI layer | Open — see section 9 |
+| 5 | **Collapse GUI boilerplate** | Share the effect libraries' plumbing; the property code is left alone | Partly done 2026-08-17 — see section 9 |
 
 Front 4 was executed first because it is the practical prerequisite for the
 others: without an executable suite, refactoring the engine or the libraries is
@@ -470,7 +470,36 @@ means **100%**, not 1%. Beyond the ambiguity, the pair of conversions through a
 tolerance. Changing this would break existing applets relying on either
 convention, so it stays a decision.
 
-### Options
+### Done: the shared plumbing
+
+The conservative option was taken. `Libs/GUI/Effects/EffectCommon.pas` now holds
+what was written out in all 64 units: the six shared error constants, the error
+slot, `SetError`, `ClearError`, `ValidateEffect`, `ValidateParent`, and the three
+trivial error accessors. Each library keeps its own `TEffectErrors` record, so
+`sepia_error()` stays independent from `bevel_error()`, and keeps one-line
+forwarders — which leaves the thousands of call sites in the property code
+untouched.
+
+26 of the 64 declare error codes beyond the shared six and keep their own
+`strerror`; the other 38 forward.
+
+**2,738 lines removed** from the effect libraries, 192 added in `EffectCommon`,
+net **2,546**. The IDE compiles 145,440 lines, down from 147,983.
+
+The one observable change: the message from a failed validation is now uniform.
+It used to vary between "invalid effect object", "invalid type", "not a TXxx"
+and plain "invalid" depending on the unit. Error codes are unchanged.
+
+Four units packed declarations and bodies onto single lines and were reformatted
+first, so one transformation could apply to all 64.
+
+That is less than the 5,000 to 9,000 estimated above. The estimate came from
+counting lines whose shape appears in at least 60 of the 64 units, and that
+count includes things no extraction can remove — `uses`, `begin`,
+`implementation`, the license header. The honest figure for shareable plumbing
+was always closer to 2,500.
+
+### Options still open for the property code
 
 | Path | Effect | Cost |
 |---|---|---|
