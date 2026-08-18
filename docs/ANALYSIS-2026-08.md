@@ -664,8 +664,18 @@ make that path worth taking.
 
 `CanPauseForHostDialog`, declared in `exec.pas`, reports whether the platform
 can deliver a modal answer to a calling thread that is already blocked — false
-on Android and iOS. Both hosts gate the assignment on it, so nothing on those
-platforms can park the VM in the first place.
+on Android and iOS.
+
+`fBreakpoint` consults it at the point of decision, so parking requires both
+someone to ask *and* a platform that can answer. On those targets `ExecStatus`
+never reaches `esIdle` whatever a host assigns, which is what turns the hang
+from avoided into impossible. The first cut of this fix left the check to the
+hosts alone, and that was too weak: anyone embedding the engine who wrote
+`Engine.ConfirmProc := Handler` without reading the note would have hung
+exactly as before, on information the engine held and never consulted.
+
+Both hosts still gate the assignment — a handler that will never be called is
+worth not installing — but the guarantee no longer rests on their remembering.
 
 And the unset path now carries the whole frame rather than the message alone:
 
