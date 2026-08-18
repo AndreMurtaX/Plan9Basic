@@ -15,7 +15,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 procedure RegisterWaveTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -55,7 +55,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName);
     Exit();
   end;
-  if not(TObject(P) is TWaveTransitionEffect) then
+  if not(IsHandleOf(P, TWaveTransitionEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName);
     Exit();
@@ -71,7 +71,7 @@ begin
     SetError(ERR_NIL_PARENT, FuncName);
     Exit();
   end;
-  if not(TObject(P) is TFmxObject) then
+  if not(IsHandleOf(P, TFmxObject)) then
   begin
     SetError(ERR_INVALID_PARENT, FuncName);
     Exit();
@@ -134,6 +134,10 @@ begin
     Effect.Parent := TFmxObject(Args[0].P);
     Effect.Enabled := True;
     //GC.Add(Effect, IntToStr(NativeInt(Effect)));
+    //Torna este efeito um handle validavel sem dereferenciar o
+    //ponteiro que o programa BASIC devolver. A baixa e automatica:
+    //o efeito pertence ao pai, e o registry escuta FreeNotification.
+    RegisterHandle(Effect);
     Result.P := Effect;
   except
     on E: Exception do

@@ -26,7 +26,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 procedure RegisterBlurTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -66,7 +66,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
     Exit;
   end;
-  if not (TObject(P) is TBlurTransitionEffect) then
+  if not (IsHandleOf(P, TBlurTransitionEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName + ': not a TBlurTransitionEffect');
     Exit;
@@ -82,7 +82,7 @@ begin
     SetError(ERR_NIL_PARENT, FuncName + ': parent is nil');
     Exit;
   end;
-  if not (TObject(P) is TFmxObject) then
+  if not (IsHandleOf(P, TFmxObject)) then
   begin
     SetError(ERR_INVALID_PARENT, FuncName + ': not a valid parent');
     Exit;
@@ -137,6 +137,10 @@ begin
     // Using GC caused Access Violations due to double-free when parent
     // controls were destroyed.
     //GC.Add(Effect, IntToStr(NativeInt(Effect)));
+    //Torna este efeito um handle validavel sem dereferenciar o
+    //ponteiro que o programa BASIC devolver. A baixa e automatica:
+    //o efeito pertence ao pai, e o registry escuta FreeNotification.
+    RegisterHandle(Effect);
     Result.p := Effect;
   except on E: Exception do SetError(ERR_INVALID_VALUE, 'blurtrans#: ' + E.Message); end;
 end;

@@ -236,7 +236,7 @@ begin
   end;
 
   //Registry lookup on the pointer value. The previous form was
-  //"TObject(P) is TBasButton" inside try/except, which dereferences whatever
+  //"IsHandleOf(P, TBasButton)" inside try/except, which dereferences whatever
   //address the BASIC program supplied -- recoverable on Windows, a hard crash
   //on Android and Linux, where SIGSEGV is not turned into an exception.
   if not IsHandleOf(P, TBasButton) then
@@ -260,7 +260,7 @@ begin
   end;
 
   try
-    if not(TObject(P) is TFmxObject) then
+    if not(IsHandleOf(P, TFmxObject)) then
     begin
       SetError(ERR_INVALID_PARENT, FuncName + ': Invalid object');
       Exit();

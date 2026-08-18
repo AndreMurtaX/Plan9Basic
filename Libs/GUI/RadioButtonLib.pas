@@ -274,7 +274,7 @@ begin
   end;
 
   try
-    if not((TObject(P) is TFmxObject) or (TObject(P) is TCommonCustomForm)) then
+    if not((IsHandleOf(P, TFmxObject)) or (IsHandleOf(P, TCommonCustomForm))) then
     begin
       SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent type');
       Exit();

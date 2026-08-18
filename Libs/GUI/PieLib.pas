@@ -187,7 +187,7 @@ begin
     SetError(ERR_INVALID_PARENT, FuncName + ': Nil parent pointer');
     Exit;
   end;
-  if not(TObject(P) is TFmxObject) then
+  if not(IsHandleOf(P, TFmxObject)) then
   begin
     SetError(ERR_INVALID_PARENT, FuncName + ': Not a valid parent object');
     Exit;

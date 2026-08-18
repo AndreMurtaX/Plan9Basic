@@ -40,7 +40,7 @@ uses
   FireDAC.Phys.SQLite, FireDAC.Stan.Param, FireDAC.Stan.Option,
   FireDAC.Stan.Error, FireDAC.Stan.Intf,
   FireDAC.UI.Intf, FireDAC.FMXUI.Wait,  // Required for FMX applications
-  exec, UnitGC, basic;
+  exec, UnitGC, basic, HandleRegistry;
 
 const
   SQL_GC_TAG = 'BASIC_SQLITE';
@@ -242,7 +242,7 @@ begin
     SetError(SQL_ERR_INVALID_CONN, FuncName + ': Null connection pointer');
     raise Exception.Create(lastErrorMsg);
   end;
-  if not (TObject(p) is TBasSqliteConn) then
+  if not (IsHandleOf(p, TBasSqliteConn)) then
   begin
     SetError(SQL_ERR_INVALID_CONN, FuncName + ': Invalid connection object');
     raise Exception.Create(lastErrorMsg);
@@ -256,7 +256,7 @@ begin
     SetError(SQL_ERR_INVALID_STMT, FuncName + ': Null statement pointer');
     raise Exception.Create(lastErrorMsg);
   end;
-  if not (TObject(p) is TBasSqliteStmt) then
+  if not (IsHandleOf(p, TBasSqliteStmt)) then
   begin
     SetError(SQL_ERR_INVALID_STMT, FuncName + ': Invalid statement object');
     raise Exception.Create(lastErrorMsg);

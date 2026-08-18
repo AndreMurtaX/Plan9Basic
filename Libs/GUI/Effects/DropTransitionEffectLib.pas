@@ -15,7 +15,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry;
 
 procedure RegisterDropTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -33,14 +33,14 @@ procedure ClearError; begin LastError := ERR_NONE; LastErrorMsg := ''; end;
 function ValidateEffect(P: Pointer; const FuncName: String): Boolean;
 begin Result := False;
   if P = nil then begin SetError(ERR_NIL_EFFECT, FuncName + ': nil'); Exit; end;
-  if not (TObject(P) is TDropTransitionEffect) then begin SetError(ERR_INVALID_EFFECT, FuncName + ': invalid'); Exit; end;
+  if not (IsHandleOf(P, TDropTransitionEffect)) then begin SetError(ERR_INVALID_EFFECT, FuncName + ': invalid'); Exit; end;
   Result := True;
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
 begin Result := False;
   if P = nil then begin SetError(ERR_NIL_PARENT, FuncName + ': nil'); Exit; end;
-  if not (TObject(P) is TFmxObject) then begin SetError(ERR_INVALID_PARENT, FuncName + ': invalid'); Exit; end;
+  if not (IsHandleOf(P, TFmxObject)) then begin SetError(ERR_INVALID_PARENT, FuncName + ': invalid'); Exit; end;
   Result := True;
 end;
 
@@ -70,6 +70,10 @@ begin Result.n := 0; Result.s := ''; Result.p := nil; ClearError;
     Effect.Parent := TFmxObject(Args[0].p);
     Effect.Enabled := True;
     //GC.Add(Effect, IntToStr(NativeInt(Effect)));
+    //Torna este efeito um handle validavel sem dereferenciar o
+    //ponteiro que o programa BASIC devolver. A baixa e automatica:
+    //o efeito pertence ao pai, e o registry escuta FreeNotification.
+    RegisterHandle(Effect);
     Result.p := Effect;
   except on E: Exception do SetError(ERR_INVALID_VALUE, E.Message); end;
 end;

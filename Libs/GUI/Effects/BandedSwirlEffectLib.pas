@@ -18,7 +18,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Controls, FMX.Filter.Effects,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 procedure RegisterBandedSwirlEffectFuncs(Lib: TFunctionsDictionary);
 
@@ -56,7 +56,7 @@ begin
     SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
     Exit;
   end;
-  if not (TObject(P) is TBandedSwirlEffect) then
+  if not (IsHandleOf(P, TBandedSwirlEffect)) then
   begin
     SetError(ERR_INVALID_EFFECT, FuncName + ': invalid effect object');
     Exit;
@@ -72,7 +72,7 @@ begin
     SetError(ERR_NIL_PARENT, FuncName + ': parent is nil');
     Exit;
   end;
-  if not (TObject(P) is TFmxObject) then
+  if not (IsHandleOf(P, TFmxObject)) then
   begin
     SetError(ERR_INVALID_PARENT, FuncName + ': invalid parent object');
     Exit;
@@ -156,6 +156,10 @@ begin
     // controls were destroyed.
     // UnitGC.GC.Add<TBandedSwirlEffect>(Effect, IntToStr(NativeInt(Effect)));
 
+    //Torna este efeito um handle validavel sem dereferenciar o
+    //ponteiro que o programa BASIC devolver. A baixa e automatica:
+    //o efeito pertence ao pai, e o registry escuta FreeNotification.
+    RegisterHandle(Effect);
     Result.p := Effect;
   except
     on E: Exception do

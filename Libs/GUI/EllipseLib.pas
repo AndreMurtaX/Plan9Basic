@@ -200,7 +200,7 @@ begin
     Exit;
   end;
   try
-    if not (TObject(P) is TFmxObject) then
+    if not (IsHandleOf(P, TFmxObject)) then
     begin
       SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent object');
       Exit;

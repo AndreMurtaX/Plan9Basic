@@ -130,7 +130,7 @@ uses
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Layouts,
   FMX.ScrollBox,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 // Library registration
 procedure RegisterScrollBoxFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine; OutP: TStrings);
@@ -199,7 +199,7 @@ begin
     Exit;
   end;
   try
-    if not (TObject(P) is TVertScrollBox) then
+    if not (IsHandleOf(P, TVertScrollBox)) then
     begin
       SetError(ERR_INVALID_SB, FuncName + ': Invalid scroll box object');
       Exit;
@@ -221,7 +221,7 @@ begin
     Exit;
   end;
   try
-    if not (TObject(P) is TFmxObject) then
+    if not (IsHandleOf(P, TFmxObject)) then
     begin
       SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent object');
       Exit;

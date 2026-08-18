@@ -321,7 +321,7 @@ begin
 
   // Parent can be TForm, TPanel, TLayout, or any TFmxObject
   try
-    if not (TObject(P) is TFmxObject) then
+    if not (IsHandleOf(P, TFmxObject)) then
     begin
       SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent object');
       Exit;
@@ -345,7 +345,7 @@ begin
   end;
 
   try
-    if not (TObject(P) is TFmxObject) then
+    if not (IsHandleOf(P, TFmxObject)) then
     begin
       SetError(ERR_INVALID_CONTROL, FuncName + ': Invalid control object');
       Exit;
