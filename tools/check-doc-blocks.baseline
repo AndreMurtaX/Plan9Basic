@@ -1,0 +1,22 @@
+New docs/AI/AILib.md#line 1, pos 15: Value expected
+New docs/AI/IntelligenceEngine_Spec.md#line 50, pos 1507: Arithmetic operator expected
+New docs/AI/P9EngineLib.md#line 7, pos 0: There is no function with such arguments: p9_engine#
+New docs/AI/P9EngineLib.md#line 9, pos 0: There is no function with such arguments: p9_engine#
+New docs/AI/SkillLib.md#line 1, pos 0: There is no function with such arguments: skill_engine#
+New docs/AI/SkillLib.md#line 5, pos 0: There is no function with such arguments: skill_engine#
+New docs/ArrayLib.md#line 1, pos 23: Value expected
+New docs/ArrayLib.md#line 1, pos 7: Pointer expected
+New docs/ArrayLib.md#line 5, pos 0: There is no function with such arguments: dim#
+New docs/StdLib.md#line 1, pos 1: Invalid instruction: "dateseparator"
+New docs/StdLib.md#line 1, pos 7: Pointer expected
+New docs/StdLib.md#line 2, pos 53: Pointer expected
+New docs/StrLib.md#line 5, pos 143: Value expected
+New docs/StrLib.md#line 9, pos 315: Value expected
+Website/docs/configlib.html#line 1, pos 0: Invalid instruction: "["
+Website/docs/gui/animations/pathanimationlib.html#line 2, pos 29: Invalid instruction: "M 0,100 L 400,100"
+Website/docs/gui/effects/perspectivetransformeffectlib.html#line 1, pos 0: Invalid instruction: "("
+Website/docs/language-reference.html#line 1, pos 43: Label expected
+Website/docs/language-reference.html#line 1, pos 44: Label expected
+Website/docs/language-reference.html#line 1, pos 52: Function name expected
+Website/docs/stdlib.html#line 1, pos 7: Pointer expected
+Website/docs/stdlib.html#line 2, pos 53: Pointer expected

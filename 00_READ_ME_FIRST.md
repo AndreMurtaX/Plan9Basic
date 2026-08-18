@@ -81,6 +81,16 @@ dcc64 Plan9Basic.dpr
 
 ### Checking the documentation against the code
 
+All of it, from one place:
+
+```bash
+python tools/check-all.py
+```
+
+Seven checks, one verdict, everything read-only. `--quick` skips the two that
+compile, which are most of the wall clock. The rest of this section explains
+what each of them asks; run them alone when one of them fails.
+
 The library surface is registered in exactly one place -- the `Lib.Add` calls
 that bind a native function to a signature -- and the reference pages under
 `New docs/` write their calls the same way, so the two can be compared:

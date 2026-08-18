@@ -39,6 +39,14 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNNER = os.path.join(ROOT, 'tests', 'bin', 'Plan9BasicTest.exe')
 
+# What is left after the filters is not zero and will not become zero: nine
+# blocks belong to an AI library that is documented but not built, and the rest
+# are illustrative -- obj# = createSomeObject() teaches a shape and names a
+# function nobody wrote. Those are recorded here so the check can answer the
+# only question worth asking of it: is there anything new?
+BASELINE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        'check-doc-blocks.baseline')
+
 SOURCES = [
     # The language tag is required. Made optional, the pattern treats a closing
     # fence as an opening one and returns the prose between two blocks as a
@@ -158,14 +166,38 @@ def main():
                     failures.append((current, why))
                 current = None
 
-        if failures:
-            print(f'\n{len(failures)} block(s) do not compile:\n')
-            for (rel, i), why in failures:
-                print(f'  {rel} block {i}')
+        # A block is identified by where it lives, not by its position, so that
+        # editing the prose around it does not read as a new failure.
+        seen = {f'{rel}#{why}' for (rel, _), why in failures}
+
+        if '--baseline' in sys.argv:
+            with open(BASELINE, 'w', encoding='utf-8', newline='\n') as f:
+                f.write('\n'.join(sorted(seen)) + '\n')
+            print(f'\nrecorded {len(seen)} known failure(s) as the baseline')
+            return 0
+
+        known = set()
+        if os.path.exists(BASELINE):
+            with open(BASELINE, encoding='utf-8') as f:
+                known = {l.strip() for l in f if l.strip()}
+
+        new = sorted(seen - known)
+        gone = sorted(known - seen)
+
+        if new:
+            print(f'\n{len(new)} block(s) newly failing to compile:\n')
+            for key in new:
+                rel, why = key.split('#', 1)
+                print(f'  {rel}')
                 print(f'    {why}')
-        else:
-            print('\nOK - every whole block compiles')
-        return 1 if failures else 0
+        if gone:
+            print(f'\n{len(gone)} known failure(s) no longer occur — '
+                  f'rerun with --baseline to record that:\n')
+            for key in gone:
+                print(f'  {key.split("#", 1)[0]}')
+        if not new and not gone:
+            print(f'\nOK - {len(seen)} known failure(s), nothing new')
+        return 1 if new else 0
     finally:
         if keep:
             print(f'\nkept: {work}')

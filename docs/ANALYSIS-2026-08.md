@@ -452,6 +452,33 @@ plausible wrong answer rather than a syntax error, which is why it cost a round.
 Worth stating as a rule: an edit that rewrites a regex should be applied
 directly, not through a shell that will interpret the backslashes on the way.
 
+### One entry point, and a baseline for what will not go to zero
+
+Six checks were written one at a time, each answering a question nobody had
+asked, and each ended up a script somebody has to remember. `tools/check-all.py`
+runs the lot for one verdict:
+
+| asks | of |
+|---|---|
+| does a documented function exist, and take what the page says | `check-docs.py` |
+| does it return what the page claims | the test suite |
+| does what a reader copies compile | `check-doc-blocks.py` |
+| do the files offered for download compile | the runner, over three directories |
+| does a link reach a file | `check-links.py` |
+| does the `#section` name anything | `check-anchors.py` |
+
+Joining them exposed a problem the individual scripts could hide.
+`check-doc-blocks.py` ends on 27 failures that are characterised and will not
+become zero -- nine belong to an AI library documented but not built, the rest
+are illustrative blocks naming functions nobody wrote. A check that is
+permanently red is the *cries wolf* failure in slow motion, so it now keeps a
+baseline of what is known and answers the only useful question: **is there
+anything new?** `--baseline` records the current set when the answer changes for
+a good reason.
+
+The generators stay out of `check-all.py`. `gen-doc-examples.py` and
+`--baseline` write files, and regenerating a fixture is a decision, not a check.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,
