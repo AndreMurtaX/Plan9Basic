@@ -173,7 +173,7 @@ Five fronts, in order of expected return.
 | 4 | **Tests** | Headless `.bas` runner with assertions | Done 2026-08-17 |
 | 3 | **Runtime safety** | Opaque handles via registry; error policy; global limit guard | Done 2026-08-17 |
 | 2 | **Unify the engine** | One copy of `exec`/`parser`/`lexer`/`basic`, consumed by the IDE and the AppletRunner | Done 2026-08-17 |
-| 5 | **Collapse GUI boilerplate** | Share the effect libraries' plumbing; the property code is left alone | Partly done 2026-08-17 — see section 9 |
+| 5 | **Collapse GUI boilerplate** | Shared plumbing extracted from the effect libraries and the control libraries; the property code and the event setters are left alone | Partly done 2026-08-18 — see section 9 |
 
 Front 4 was executed first because it is the practical prerequisite for the
 others: without an executable suite, refactoring the engine or the libraries is
@@ -524,6 +524,76 @@ sweeps were run across these libraries in a single session — the HandleRegistr
 conversion, the error policy, and the `ValidateParent` / `ValidateEffect`
 correction — each a matter of a script plus a build plus the suite. Duplication
 only costs a lot when the bulk change has to be made by hand.
+
+### Done: the control libraries' shared conversions
+
+The measurement above covered the 64 effect units, 24,888 lines. It never
+touched the other side of `Libs/GUI`, and that is where the weight sits:
+
+| | files | lines |
+|---|---|---|
+| `Effects/` | 65 | 24,888 |
+| `Animations/` | 6 | 7,264 |
+| controls | 29 | **74,317** |
+
+Seven helpers had been pasted into 27 control units, and had drifted:
+
+| helper | units | distinct variants |
+|---|---|---|
+| `SetError` | 28 | 1 — byte for byte |
+| `ClearError` | 28 | 2 |
+| `BuildShiftString` | 18 | 2 |
+| `MouseButtonToInt` | 23 | 3 |
+| `IntToAlign` / `AlignFromInt` | 27 | 5 — *under two different names* |
+| `AlignToInt` | 27 | 6 |
+| `ValidateParent` | 26 | 7 |
+
+`ValidateParent`'s seven variants proved to be wording and `Exit` versus
+`Exit()`. One group also tested `TCommonCustomForm` separately, which is
+redundant: in this Delphi, `TCommonCustomForm = class(TFmxObject, ...)`.
+
+The alignment pair was not cosmetic. It had split into three tiers, covering
+6, 7 or 20 of the `TAlignLayout` values depending on which unit the author
+copied from, so the same number meant different things:
+
+```basic
+rectangle_align#(r, 5)   ' MostTop
+button_align#(b, 5)      ' None, silently
+```
+
+The constants agreed everywhere; only the coverage differed. `ControlCommon.pas`
+now answers for all of them from one table. Each library keeps its own error
+slot and error codes, because code 1 names the library's own type, and
+`ValidateParent` stays as a short forwarder over `ParentIsValid` for the same
+reason — only the unit knows where to record the failure.
+
+**2,353 lines removed** across 27 units, 213 added. The IDE compiles 143,515
+lines, down from 145,645.
+
+`tests/gui/04_alignment.bas` is generated over 26 controls and 8 values chosen
+to cross the old tier boundaries: 208 assertions, taking the GUI suite to 588.
+
+### The bug that fell out of testing it
+
+That suite showed `ScrollBoxLib` failing every assertion, every call returning
+error 1. `ScrollBoxLib` never calls `RegisterHandle`. It creates a bare
+`TVertScrollBox` rather than a `TBasXxx` subclass, so it has no constructor of
+its own — which is exactly where every other library was hooked during the
+HandleRegistry conversion. Its validation was checking a registry the object had
+never been added to.
+
+**Every `scrollbox_*` function had been failing since that conversion.** The
+whole library was dead and nothing noticed, because the GUI suite covered
+`scrollbox` about as well as it covered alignment. Two `RegisterHandle` calls
+fix it; revocation needs nothing more, since `THandleRegistry.Add` wires
+`FreeNotification` for any `TComponent`.
+
+A sweep for the same shape — validates but never registers — found no others.
+
+### Still open
+
+The 407 event setters (`SetOnClickFunc` and relatives) are the next layer, left
+alone deliberately: one layer at a time, so the diff stays reviewable.
 
 ---
 

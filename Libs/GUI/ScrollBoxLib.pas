@@ -258,6 +258,11 @@ begin
   if not ValidateParent(Args[0].p, 'scrollbox#') then Exit;
   try
     SB        := TVertScrollBox.Create(nil);
+    //Without this every scrollbox_* call fails validation: the handle is
+    //checked against the registry, and an unregistered object is indis-
+    //tinguishable from a fabricated pointer. Revocation rides on the
+    //watcher's FreeNotification, since the parent is what frees this.
+    RegisterHandle(SB);
     SB.Parent := TFmxObject(Args[0].p);
     SB.Align  := TAlignLayout.Client;
     Result.p  := Pointer(SB);
@@ -282,6 +287,11 @@ begin
   if not ValidateParent(Args[0].p, 'scrollbox#') then Exit;
   try
     SB              := TVertScrollBox.Create(nil);
+    //Without this every scrollbox_* call fails validation: the handle is
+    //checked against the registry, and an unregistered object is indis-
+    //tinguishable from a fabricated pointer. Revocation rides on the
+    //watcher's FreeNotification, since the parent is what frees this.
+    RegisterHandle(SB);
     SB.Parent       := TFmxObject(Args[0].p);
     SB.Align        := TAlignLayout.None;
     SB.Position.X   := Args[1].n;
