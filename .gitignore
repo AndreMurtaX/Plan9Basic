@@ -81,3 +81,7 @@ tests/bin/
 *.tmp
 Thumbs.db
 .DS_Store
+
+# Python bytecode from the tools in tools/
+__pycache__/
+*.pyc

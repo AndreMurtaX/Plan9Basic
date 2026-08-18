@@ -479,6 +479,37 @@ a good reason.
 The generators stay out of `check-all.py`. `gen-doc-examples.py` and
 `--baseline` write files, and regenerating a fixture is a decision, not a check.
 
+### What a clone sees, which is not what this machine sees
+
+Every check above was written and run against a working tree that has files the
+repository does not. Cloning fresh and running them was the last unasked
+question, and it found three things.
+
+**`tools/__pycache__` was versioned.** Committed by a `git add -A` of my own.
+Removed and ignored.
+
+**The link checker failed for everyone but this machine.** The download buttons
+point at `Website/assets/devenv/`, built and placed at deploy, and two ebooks
+sit under an ignored path as well. Here the files exist and the links resolve;
+in a clone they do not, and the check called that a defect. It now asks git
+which targets are deliberately absent and reports those separately, so the
+verdict is the same in both places.
+
+Getting that right needed one more Windows detail. `git check-ignore --stdin`
+through a text-mode pipe receives every path but the last with a carriage
+return glued on, because Python rewrites the newlines on the way out; git
+matches anyway and answers with a quoted name that no longer compares equal to
+what was asked. NUL-separated bytes in both directions.
+
+**`check-docs.py` reports 51 findings in a clone and none here**, and that one
+is not a tool defect. `.gitignore` excludes `archive/`, so the 39 `p9_*` and
+`skill_*` functions exist on this machine and in no clone — while
+`New docs/AI/` documents them across three pages. That is the accumulated
+decision below, seen from the outside: **the documentation describes a library
+nobody can obtain.** `check-all.py` will stay red on a fresh clone until it is
+answered, which is correct: a red check with a named cause is an open question,
+not a false alarm.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

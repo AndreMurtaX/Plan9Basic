@@ -18,6 +18,7 @@ import re
 import sys
 import glob
 import os
+import subprocess
 from collections import defaultdict
 
 ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -58,6 +59,34 @@ def scan(files):
     return total, broken
 
 
+def ignored_by_git(paths):
+    """
+    Of these repository-relative paths, the ones git is told to ignore.
+
+    Two link targets are deliberately absent from the tree: the development
+    environment the download buttons point at, built and placed at deploy time,
+    and an archived library. A clone therefore cannot resolve them, and saying
+    so as a failure would make this check useless to everyone but the machine
+    that has the untracked files sitting there.
+
+    NUL-separated in both directions, and bytes rather than text. On Windows a
+    text-mode pipe rewrites the newlines being sent, so git receives every path
+    but the last with a carriage return glued to it, matches anyway, and answers
+    with a quoted name that no longer compares equal to what was asked.
+    """
+    if not paths:
+        return set()
+    try:
+        res = subprocess.run(['git', 'check-ignore', '-z', '--stdin'],
+                             input=b'\0'.join(p.encode('utf-8') for p in sorted(paths)),
+                             capture_output=True,
+                             cwd=os.path.dirname(ROOT))
+    except OSError:
+        return set()
+    return {norm(p.decode('utf-8', 'replace'))
+            for p in res.stdout.split(b'\0') if p}
+
+
 def resolve(target, base, files):
     """The path from base that reaches target, when exactly one file bears its name."""
     name = os.path.basename(target)
@@ -72,9 +101,27 @@ def main():
     files = every_file()
     total, broken = scan(files)
 
-    if not broken:
+    # Split off the targets git is told to ignore before judging anything.
+    wanted = {norm(os.path.join('Website', os.path.normpath(os.path.join(base, target))))
+              for base, target in broken}
+    ignored = ignored_by_git(wanted)
+    deploy, real = {}, {}
+    for key, pages in broken.items():
+        base, target = key
+        full = norm(os.path.join('Website', os.path.normpath(os.path.join(base, target))))
+        (deploy if full in ignored else real)[key] = pages
+
+    if deploy:
+        print(f'{sum(len(v) for v in deploy.values())} link(s) point at paths git '
+              f'ignores, produced at deploy time:')
+        for (base, target), pages in sorted(deploy.items()):
+            print(f'  {len(pages):3}x  "{target}"')
+        print()
+
+    if not real:
         print(f'{total} internal link(s), all resolve')
         return 0
+    broken = real
 
     print(f'{total} internal link(s), {sum(len(v) for v in broken.values())} '
           f'unresolved across {len(broken)} distinct path(s)\n')
