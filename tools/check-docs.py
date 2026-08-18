@@ -49,7 +49,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # way to notice it needs adding here.
 PLACEHOLDERS = {
     'function', 'name', 'name$', 'callback', 'handler', 'myfunc', 'func',
-    'funcname',
+    'funcname', 'functionname',
 }
 
 CODE_GLOBS = ['Libs/**/*.pas', 'engine/Libs/**/*.pas']
@@ -84,6 +84,11 @@ HTMLCALL = re.compile(
 # formatdatetime$(...) -- Not format$(value, ...)". The page is right and the
 # call is deliberately wrong, so a match a negation introduced is not a claim.
 NEGATED = re.compile(r'(?:not|never|instead of|rather than)\W{0,4}$', re.I)
+
+# Some pages state the signature outright, in the engine's own notation:
+#     **Signature:** `p9_ask$@#$`
+# That is the most exact claim a page can make, and it needs no inference.
+LITERALSIG = re.compile(r'`([a-z][a-z0-9_]*[$#]?@[n$#]*)`')
 
 NUMERIC = re.compile(r'^[-+]?(\d+\.?\d*|\.\d+)$')
 QUOTES = '"' + "'"
@@ -148,13 +153,45 @@ def arg_types(argstr):
     return out
 
 
+def strip_comments(src):
+    """
+    Pascal source with its comments removed, so a comment describing the
+    registration pattern is not read as a registration. One archived unit
+    explains itself with "extracts from Lib.Add('signature', ...) calls", which
+    the scanner used to report as a function named "signature".
+
+    Tracks string literals, because a comment marker inside one -- the // in a
+    URL -- opens no comment.
+    """
+    out, i, n = [], 0, len(src)
+    while i < n:
+        c = src[i]
+        if c == "'":                                   # string literal
+            j = i + 1
+            while j < n and src[j] != "'":
+                j += 1
+            out.append(src[i:j + 1]); i = j + 1
+        elif src.startswith('//', i):
+            while i < n and src[i] not in '\r\n':
+                i += 1
+        elif c == '{':
+            i = src.find('}', i)
+            i = n if i < 0 else i + 1
+        elif src.startswith('(*', i):
+            i = src.find('*)', i)
+            i = n if i < 0 else i + 2
+        else:
+            out.append(c); i += 1
+    return ''.join(out)
+
+
 def read_code():
     """Every signature the engine registers, and the names behind them."""
     sigs, variadic = set(), set()
     for pattern in CODE_GLOBS:
         for path in glob.glob(os.path.join(ROOT, pattern), recursive=True):
             with open(path, encoding='utf-8-sig', errors='replace') as f:
-                src = f.read()
+                src = strip_comments(f.read())
             sigs.update(m.group(1) for m in REGISTER.finditer(src))
             variadic.update(m.group(1).split('@')[0]
                             for m in VARIADIC.finditer(src))
@@ -178,6 +215,13 @@ def read_docs(pattern, kind):
             types = arg_types(m.group(2))
             key = name if types is None else f'{name}@{types}'
             claims[key].add(rel)
+        for m in LITERALSIG.finditer(text):
+            # A placeholder keeps its return-type suffix here -- the pages write
+            # `functionname#@#` -- so match with and without it.
+            bare = m.group(1).split('@')[0]
+            if bare in PLACEHOLDERS or bare.rstrip('$#') in PLACEHOLDERS:
+                continue
+            claims[m.group(1)].add(rel)
     return claims
 def check(claims, sigs, names, variadic):
     missing, mismatch = [], []

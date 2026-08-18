@@ -216,9 +216,41 @@ on the website, essentially all noise. Nine functions also build their signature
 at registration -- `Lib.Add('narr_get@#' + nStr, ...)`, one per array dimension
 -- so their arity cannot be read statically and is not checked.
 
-The remaining gap is coverage, not correctness: 27 registered names have no page
-on the website, 492 have none in `New docs/`. Reported, never a failure, on the
+### Two more registers, and a comment read as code
+
+Pages also state the signature outright, in the engine's own notation:
+
+    **Signature:** `p9_ask$@#$`
+
+That is the most exact claim a page can make and it was being ignored, which is
+why `New docs/` looked worse covered than it is. Reading it lifted that side
+from 89.1% to 93.2%.
+
+The scanner was also reading Pascal **comments** as registrations. One archived
+unit explains itself with *"extracts function registrations from
+`Lib.Add('signature', ...)` calls"*, and the surface gained a function named
+`signature`. Comments are stripped now, tracking string literals so a `//`
+inside a URL opens nothing.
+
+The remaining gap is coverage, not correctness: `New docs/` covers 93.2% of
+registered names and the website 99.1%. Reported, never a failure, on the
 principle that silence misleads nobody.
+
+### Accumulated for review: Libs/AI/archive/ is not in any build
+
+Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,
+`PromptAssembler`, `RAGDocGenerator`, `SkillEngine`, `SkillLib`, `ToolExecutor`
+— and **none is listed in any `.dpr`**. Not the IDE, not the applet runner, not
+the test runner. The 39 `p9_*` and `skill_*` functions they register are in no
+shipped binary.
+
+`New docs/AI/` documents them across three pages. The website does not, which is
+the difference between its 99.1% coverage and the markdown's 93.2%.
+
+Left exactly as found. Whether that is a feature parked mid-flight or one
+abandoned with its pages still standing is not a question a checker can answer,
+and the two answers point opposite ways: finish and register them, or retire the
+pages with the code.
 
 ---
 
