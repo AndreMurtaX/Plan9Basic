@@ -49,11 +49,21 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # way to notice it needs adding here.
 PLACEHOLDERS = {
     'function', 'name', 'name$', 'callback', 'handler', 'myfunc', 'func',
+    'funcname',
 }
 
 CODE_GLOBS = ['Libs/**/*.pas', 'engine/Libs/**/*.pas']
-REFERENCE = 'New docs'      # checked strictly
-HISTORY = 'Changelogs'      # scanned, never fails
+
+# Three generations of documentation describe the same surface. The first two
+# are checked; Changelogs/ is history, and a page describing what a release did
+# is not promising the function still exists.
+#
+#   (label, glob, how a call is written)
+REFERENCES = [
+    ('New docs', 'New docs/**/*.md', 'md'),
+    ('Website', 'Website/docs/**/*.html', 'html'),
+]
+HISTORY = ('Changelogs', 'Changelogs/**/*.md', 'md')
 
 REGISTER = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)'")
 # Nine functions register one signature per dimension, in a loop:
@@ -65,6 +75,15 @@ VARIADIC = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)' *\+")
 # One level of nesting, so a call used as an argument does not truncate the
 # match: json_getn(json_parse#("..."), "k") reads as two arguments, not one.
 DOCCALL = re.compile(r'`([a-z][a-z0-9_]*[$#]?)\(((?:[^`()]|\([^`()]*\))*)\)`')
+# The website writes the same thing inside <code>, so the two differ only in
+# what delimits the span.
+HTMLCALL = re.compile(
+    r'<code[^>]*>\s*([a-z][a-z0-9_]*[$#]?)\(((?:[^<()]|\([^<()]*\))*)\)\s*</code>')
+
+# Documentation also writes calls it is telling you NOT to make: "the syntax is
+# formatdatetime$(...) -- Not format$(value, ...)". The page is right and the
+# call is deliberately wrong, so a match a negation introduced is not a claim.
+NEGATED = re.compile(r'(?:not|never|instead of|rather than)\W{0,4}$', re.I)
 
 NUMERIC = re.compile(r'^[-+]?(\d+\.?\d*|\.\d+)$')
 QUOTES = '"' + "'"
@@ -98,10 +117,18 @@ def arg_types(argstr):
         asc(s$)     a named parameter, typed by its suffix
         asc("A")    a literal, typed by what it is
 
-    Returns None when the list is empty. That is not a claim of "takes no
-    arguments" -- prose says `arr_free()` to name the function, the way English
-    does -- so the caller checks only that the name exists.
+    Returns None when the list carries no arity to compare, and the caller then
+    checks only that the name exists. That covers two cases:
+
+        `arr_free()`                        prose naming the function
+        `arc#(parent#[, w, h] | [, x, y])`  a synopsis of the overloads
+
+    The second is a summary of several signatures at once, written with the
+    brackets and bars that notation uses. Reading it as one argument list
+    invents an overload nobody claimed.
     """
+    if any(c in argstr for c in '[]|') or '...' in argstr:
+        return None
     args = split_args(argstr)
     if not args:
         return None
@@ -134,23 +161,24 @@ def read_code():
     return sigs, {s.split('@')[0] for s in sigs}, variadic
 
 
-def read_docs(folder):
+def read_docs(pattern, kind):
     """Documented calls as signatures, each remembering where it was written."""
     claims = defaultdict(set)
-    base = os.path.join(ROOT, folder)
-    for path in glob.glob(os.path.join(base, '**', '*.md'), recursive=True):
+    rx = HTMLCALL if kind == 'html' else DOCCALL
+    for path in glob.glob(os.path.join(ROOT, pattern), recursive=True):
         rel = os.path.relpath(path, ROOT).replace('\\', '/')
         with open(path, encoding='utf-8', errors='replace') as f:
-            for m in DOCCALL.finditer(f.read()):
-                name = m.group(1)
-                if name in PLACEHOLDERS:
-                    continue
-                types = arg_types(m.group(2))
-                key = name if types is None else f'{name}@{types}'
-                claims[key].add(rel)
+            text = f.read()
+        for m in rx.finditer(text):
+            name = m.group(1)
+            if name in PLACEHOLDERS:
+                continue
+            if NEGATED.search(text[max(0, m.start() - 24):m.start()]):
+                continue
+            types = arg_types(m.group(2))
+            key = name if types is None else f'{name}@{types}'
+            claims[key].add(rel)
     return claims
-
-
 def check(claims, sigs, names, variadic):
     missing, mismatch = [], []
     for sig, where in sorted(claims.items()):
@@ -172,19 +200,30 @@ def main():
     show_undocumented = '--undocumented' in sys.argv
 
     sigs, names, variadic = read_code()
-    ref = read_docs(REFERENCE)
-    hist = read_docs(HISTORY)
 
-    missing, mismatch = check(ref, sigs, names, variadic)
-    documented = {s.split('@')[0] for s in ref}
+    claims = defaultdict(set)
+    missing, mismatch = [], []
+    per_source = []
+    for label, pattern, kind in REFERENCES:
+        found = read_docs(pattern, kind)
+        per_source.append((label, found))
+        for sig, where in found.items():
+            claims[sig] |= where
+    hist = read_docs(HISTORY[1], HISTORY[2])
+
+    missing, mismatch = check(claims, sigs, names, variadic)
+    documented = {s.split('@')[0] for s in claims}
     undocumented = sorted(names - documented)
 
     if not quiet:
         print(f'code       {len(sigs)} signatures, {len(names)} names')
-        print(f'{REFERENCE + "/":<11}{len(ref)} documented calls, '
-              f'{len(documented)} names, '
-              f'{100 * len(names & documented) / len(names):.1f}% covered')
-        print(f'{HISTORY + "/":<11}{len(hist)} documented calls (history, not checked)')
+        for label, found in per_source:
+            covered = {s.split('@')[0] for s in found} & names
+            print(f'{label + "/":<11}{len(found)} documented calls, '
+                  f'{len(covered)} names, '
+                  f'{100 * len(covered) / len(names):.1f}% covered')
+        print(f'{HISTORY[0] + "/":<11}{len(hist)} documented calls '
+              f'(history, not checked)')
         print()
 
         if missing:
