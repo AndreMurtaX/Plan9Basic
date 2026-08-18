@@ -1,4 +1,4 @@
-{******************************************************************************
+﻿{******************************************************************************
   Plan9Basic Interpreter Engine
 
   MIT License
@@ -55,7 +55,7 @@ interface
 uses
   System.SysUtils, System.UITypes, System.Classes,
   FMX.Types,
-  HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry;
 
 const
   //Alignment codes as seen from BASIC. The order follows TAlignLayout, and the
@@ -98,6 +98,21 @@ function MouseButtonToInt(Button: TMouseButton): Integer;
 //pointer#(n), and following it kills the process on Android and Linux.
 //On False, Msg carries the reason, for the caller to record in its own slot.
 function ParentIsValid(P: Pointer; const FuncName: String; out Msg: String): Boolean;
+
+//Runs a BASIC function as a callback, with the guards every control library had
+//written out around it: no reentry, an engine and an output to run against, and
+//a signature to call. Owner names the library in the error line, since by the
+//time a callback fails the stack no longer says which control raised it.
+//
+//GlobalCallbackBusy is what stops an event fired from inside a callback from
+//re-entering the VM, and SkipProcessMessages stops the callback from pumping
+//the message loop underneath its own caller.
+procedure RunCallback(Engine: TBasicEngine; Output: TStrings;
+                      const FuncSignature: String; const Args: array of TAsmData;
+                      const Owner: String);
+function RunCallbackWithResult(Engine: TBasicEngine; Output: TStrings;
+                      const FuncSignature: String; const Args: array of TAsmData;
+                      const Owner: String): TAsmData;
 
 implementation
 
@@ -205,6 +220,58 @@ begin
   end;
 
   Result := True;
+end;
+
+//Shared by RunCallback and RunCallbackWithResult: everything except what is
+//done with the return value.
+function CallbackCore(Engine: TBasicEngine; Output: TStrings;
+                      const FuncSignature: String; const Args: array of TAsmData;
+                      const Owner: String): TAsmData;
+var
+  CallArgs: array of TAsmData;
+  RetType: TExprKind;
+  i: Integer;
+begin
+  Result.n := 0;
+  Result.p := nil;
+  Result.s := '';
+
+  if UnitGC.GlobalCallbackBusy then Exit();
+  if not Assigned(Engine) then Exit();
+  if not Assigned(Output) then Exit();
+  if FuncSignature = '' then Exit();
+
+  UnitGC.GlobalCallbackBusy := True;
+  UnitGC.SkipProcessMessages := True;
+  try
+    SetLength(CallArgs, Length(Args));
+    for i := 0 to High(Args) do
+      CallArgs[i] := Args[i];
+    try
+      Engine.ExecuteUserFunction(Output, FuncSignature, CallArgs, RetType, Result);
+    except
+      on E: Exception do
+        Output.Add('*** ' + Owner + ' callback error in ' + FuncSignature +
+                   ': ' + E.Message);
+    end;
+  finally
+    UnitGC.SkipProcessMessages := False;
+    UnitGC.GlobalCallbackBusy := False;
+  end;
+end;
+
+procedure RunCallback(Engine: TBasicEngine; Output: TStrings;
+                      const FuncSignature: String; const Args: array of TAsmData;
+                      const Owner: String);
+begin
+  CallbackCore(Engine, Output, FuncSignature, Args, Owner);
+end;
+
+function RunCallbackWithResult(Engine: TBasicEngine; Output: TStrings;
+                      const FuncSignature: String; const Args: array of TAsmData;
+                      const Owner: String): TAsmData;
+begin
+  Result := CallbackCore(Engine, Output, FuncSignature, Args, Owner);
 end;
 
 end.

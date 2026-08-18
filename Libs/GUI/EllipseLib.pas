@@ -303,38 +303,9 @@ begin
 end;
 
 procedure TBasEllipse.ExecuteCallback(const FuncSignature: String; const Args: array of TAsmData);
-var
-  CallArgs: array of TAsmData;
-  RetType: TExprKind;
-  RetVal: TAsmData;
-  i: Integer;
 begin
-  if UnitGC.GlobalCallbackBusy then Exit();
-  if not Assigned(FBasicEngine) then Exit();
-  if not Assigned(FConsoleOutput) then Exit();
-  if FuncSignature = '' then Exit();
-
-  UnitGC.GlobalCallbackBusy := True;
-  UnitGC.SkipProcessMessages := True;
-  try
-    SetLength(CallArgs, Length(Args));
-    for i := 0 to High(Args) do
-      CallArgs[i] := Args[i];
-
-    try
-      FBasicEngine.ExecuteUserFunction(FConsoleOutput, FuncSignature, CallArgs, RetType, RetVal);
-    except
-      on E: Exception do
-      begin
-        FConsoleOutput.Add('*** Ellipse Event Callback Error ***');
-        FConsoleOutput.Add('Function: ' + FuncSignature);
-        FConsoleOutput.Add('Error: ' + E.Message);
-      end;
-    end;
-  finally
-    UnitGC.SkipProcessMessages := False;
-    UnitGC.GlobalCallbackBusy := False;
-  end;
+  ControlCommon.RunCallback(FBasicEngine, FConsoleOutput,
+                            FuncSignature, Args, 'Ellipse');
 end;
 
 //function TBasEllipse.ExecuteCallbackWithResult(const FuncSignature: String; const Args: array of TAsmData): TAsmData;

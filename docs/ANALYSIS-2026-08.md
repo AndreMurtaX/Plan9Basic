@@ -590,10 +590,67 @@ fix it; revocation needs nothing more, since `THandleRegistry.Add` wires
 
 A sweep for the same shape — validates but never registers — found no others.
 
-### Still open
+### The event layer: where collapsing stops being cheap
 
-The 407 event setters (`SetOnClickFunc` and relatives) are the next layer, left
-alone deliberately: one layer at a time, so the diff stays reviewable.
+The 407 event setters were the next layer, and measuring them changed the
+answer rather than confirming it.
+
+| | instances | shapes | lines |
+|---|---|---|---|
+| `SetOnXxxFunc` | 407 | effectively **1** | 3,206 |
+| `InternalOnXxx` | 405 | 93, over 16 signatures | 7,017 |
+
+The setters are the purest duplication in the whole tree — the two largest
+groups cover 95% and differ only by `Self.OnClick :=` versus `OnClick :=`, which
+is the same statement. And they cannot be shared:
+
+```pascal
+FOnClickFunc := Value;
+if Value <> '' then Self.OnClick := InternalOnClick else Self.OnClick := nil;
+```
+
+Every token that varies is an *identifier* — a field, an FMX property, a method.
+Delphi has no way to abstract over a property name at compile time, so the only
+routes are generating the units from descriptors or binding the property through
+RTTI at runtime. The helpers collapsed because they were functions over values;
+this does not, because it is names.
+
+That is the honest boundary of "collapse the boilerplate", and it is worth
+recording as a boundary rather than as a to-do.
+
+### Done anyway: the callback plumbing
+
+What the event layer *does* expose to sharing is the part that runs on values.
+`ExecuteCallback` and `ExecuteCallbackWithResult` were written out in all 27
+units, 1,650 lines in eight and nine near-identical shapes, differing only in
+the wording of the error line. They now forward to `ControlCommon.RunCallback`,
+which takes the engine, the output and an owner name:
+
+```pascal
+procedure TBasButton.ExecuteCallback(const FuncSignature: String;
+                                     const Args: array of TAsmData);
+begin
+  ControlCommon.RunCallback(FBasicEngine, FConsoleOutput,
+                            FuncSignature, Args, 'Button');
+end;
+```
+
+**1,452 lines removed.** The IDE compiles 142,130, down from 143,515. The one
+observable change is the error line, now uniform and carrying the failing
+signature, which not every previous version did.
+
+### Noted, not changed
+
+264 dispatchers pass `Pointer(Self)` to the BASIC callback and 141 pass
+`Sender`. For the events these libraries bind, FMX fires with `Sender = Self`,
+so no failure is known — but `Pointer(Self)` is unconditionally the handle the
+program registered the callback on, and `Sender` is whatever FMX supplies.
+Unifying on `Pointer(Self)` is the safer form; it is left alone here because it
+belongs with the dispatchers, not with the plumbing.
+
+The dispatch tails — the argument packing before the call — are the remaining
+shareable piece: 16 signatures, of which about ten carry weight. That would cut
+into the 7,017 lines, and is the next thing worth measuring.
 
 ---
 
