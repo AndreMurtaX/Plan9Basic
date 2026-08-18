@@ -1,4 +1,4 @@
-{******************************************************************************
+﻿{******************************************************************************
   Plan9BasicTest - headless test runner for Plan9Basic
 
   Compiles and executes .bas files with no IDE and no UI, then reports the
@@ -60,6 +60,7 @@ uses
   ZipLib in '..\engine\Libs\ZipLib.pas',
   IOUtilsLib in '..\Libs\IOUtilsLib.pas',
   HttpLib in '..\engine\Libs\HttpLib.pas',
+  ControlCommon in '..\Libs\GUI\ControlCommon.pas',
   FormLib in '..\Libs\GUI\FormLib.pas',
   LayoutLib in '..\Libs\GUI\LayoutLib.pas',
   RectangleLib in '..\Libs\GUI\RectangleLib.pas',

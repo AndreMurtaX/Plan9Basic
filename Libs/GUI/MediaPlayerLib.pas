@@ -93,7 +93,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections,
   FMX.Types, FMX.Forms, FMX.Controls, FMX.Media, FMX.Objects, FMX.Layouts,
-  basic, exec, UnitGC, HandleRegistry, GuiUtils;
+  basic, exec, UnitGC, HandleRegistry, GuiUtils, ControlCommon;
 
 type
   {****************************************************************************
@@ -265,23 +265,6 @@ const
   ERR_INVALID_CALLBACK = 9;
 
   // Align constants (same as other control libraries)
-  ALIGN_NONE = 0;
-  ALIGN_TOP = 1;
-  ALIGN_LEFT = 2;
-  ALIGN_RIGHT = 3;
-  ALIGN_BOTTOM = 4;
-  ALIGN_MOST_TOP = 5;
-  ALIGN_MOST_BOTTOM = 6;
-  ALIGN_MOST_LEFT = 7;
-  ALIGN_MOST_RIGHT = 8;
-  ALIGN_CLIENT = 9;
-  ALIGN_CONTENTS = 10;
-  ALIGN_CENTER = 11;
-  ALIGN_VERT_CENTER = 12;
-  ALIGN_HORZ_CENTER = 13;
-  ALIGN_HORIZONTAL = 14;
-  ALIGN_VERTICAL = 15;
-  ALIGN_SCALE = 16;
 
 var
   lastError: Integer;
@@ -381,54 +364,6 @@ begin
     TMediaState.Playing: Result := 2;
   else
     Result := 0;
-  end;
-end;
-
-function IntToAlign(Value: Integer): TAlignLayout;
-begin
-  case Value of
-    ALIGN_TOP: Result := TAlignLayout.Top;
-    ALIGN_LEFT: Result := TAlignLayout.Left;
-    ALIGN_RIGHT: Result := TAlignLayout.Right;
-    ALIGN_BOTTOM: Result := TAlignLayout.Bottom;
-    ALIGN_MOST_TOP: Result := TAlignLayout.MostTop;
-    ALIGN_MOST_BOTTOM: Result := TAlignLayout.MostBottom;
-    ALIGN_MOST_LEFT: Result := TAlignLayout.MostLeft;
-    ALIGN_MOST_RIGHT: Result := TAlignLayout.MostRight;
-    ALIGN_CLIENT: Result := TAlignLayout.Client;
-    ALIGN_CONTENTS: Result := TAlignLayout.Contents;
-    ALIGN_CENTER: Result := TAlignLayout.Center;
-    ALIGN_VERT_CENTER: Result := TAlignLayout.VertCenter;
-    ALIGN_HORZ_CENTER: Result := TAlignLayout.HorzCenter;
-    ALIGN_HORIZONTAL: Result := TAlignLayout.Horizontal;
-    ALIGN_VERTICAL: Result := TAlignLayout.Vertical;
-    ALIGN_SCALE: Result := TAlignLayout.Scale;
-  else
-    Result := TAlignLayout.None;
-  end;
-end;
-
-function AlignToInt(Value: TAlignLayout): Integer;
-begin
-  case Value of
-    TAlignLayout.Top: Result := ALIGN_TOP;
-    TAlignLayout.Left: Result := ALIGN_LEFT;
-    TAlignLayout.Right: Result := ALIGN_RIGHT;
-    TAlignLayout.Bottom: Result := ALIGN_BOTTOM;
-    TAlignLayout.MostTop: Result := ALIGN_MOST_TOP;
-    TAlignLayout.MostBottom: Result := ALIGN_MOST_BOTTOM;
-    TAlignLayout.MostLeft: Result := ALIGN_MOST_LEFT;
-    TAlignLayout.MostRight: Result := ALIGN_MOST_RIGHT;
-    TAlignLayout.Client: Result := ALIGN_CLIENT;
-    TAlignLayout.Contents: Result := ALIGN_CONTENTS;
-    TAlignLayout.Center: Result := ALIGN_CENTER;
-    TAlignLayout.VertCenter: Result := ALIGN_VERT_CENTER;
-    TAlignLayout.HorzCenter: Result := ALIGN_HORZ_CENTER;
-    TAlignLayout.Horizontal: Result := ALIGN_HORIZONTAL;
-    TAlignLayout.Vertical: Result := ALIGN_VERTICAL;
-    TAlignLayout.Scale: Result := ALIGN_SCALE;
-  else
-    Result := ALIGN_NONE;
   end;
 end;
 
@@ -2129,7 +2064,7 @@ begin
   if not ValidateControl(Args[0].p, 'media_ctrl_align#') then
     Exit();
 
-  TBasMediaPlayerControl(Args[0].p).Align := IntToAlign(Trunc(Args[1].n));
+  TBasMediaPlayerControl(Args[0].p).Align := AlignFromInt(Trunc(Args[1].n));
 end;
 
 // media_ctrl_align@# - Get alignment

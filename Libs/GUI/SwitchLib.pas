@@ -1,4 +1,4 @@
-unit SwitchLib;
+﻿unit SwitchLib;
 
 {******************************************************************************
   SwitchLib - Switch Control Library for Plan9Basic
@@ -91,7 +91,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.StdCtrls,
   FMX.Controls.Presentation,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, ControlCommon;
 
 type
   TBasSwitch = class(TSwitch)
@@ -202,13 +202,6 @@ const
   ERR_CREATE_FAILED = 4;
   ERR_INDEX_OUT_OF_RANGE = 5;
 
-  ALIGN_NONE = 0;
-  ALIGN_TOP = 1;
-  ALIGN_LEFT = 2;
-  ALIGN_RIGHT = 3;
-  ALIGN_BOTTOM = 4;
-  ALIGN_CLIENT = 9;
-  ALIGN_CENTER = 11;
 
 var
   lastError: Integer;
@@ -256,26 +249,14 @@ begin
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
+var
+  M: String;
 begin
-  Result := False;
-  if P = nil then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': Nil parent pointer');
-    Exit();
-  end;
-
-  try
-    if not((IsHandleOf(P, TFmxObject)) or (IsHandleOf(P, TCommonCustomForm))) then
-    begin
-      SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent type');
-      Exit();
-    end;
-  except
-    SetError(ERR_INVALID_PARENT, FuncName + ': Invalid parent pointer');
-    Exit();
-  end;
-
-  Result := True;
+  Result := ControlCommon.ParentIsValid(P, FuncName, M);
+  if Result then
+    ClearError()
+  else
+    SetError(ERR_INVALID_PARENT, M);
 end;
 
 function ShiftStateToString(Shift: TShiftState): String;
@@ -285,45 +266,6 @@ begin
   if ssAlt in Shift then Result := Result + 'A';
   if ssCtrl in Shift then Result := Result + 'C';
   if ssCommand in Shift then Result := Result + 'M';
-end;
-
-function MouseButtonToInt(Button: TMouseButton): Integer;
-begin
-  case Button of
-    TMouseButton.mbLeft: Result := 1;
-    TMouseButton.mbRight: Result := 2;
-    TMouseButton.mbMiddle: Result := 3;
-  else
-    Result := 0;
-  end;
-end;
-
-function AlignFromInt(Value: Integer): TAlignLayout;
-begin
-  case Value of
-    ALIGN_TOP: Result := TAlignLayout.Top;
-    ALIGN_LEFT: Result := TAlignLayout.Left;
-    ALIGN_RIGHT: Result := TAlignLayout.Right;
-    ALIGN_BOTTOM: Result := TAlignLayout.Bottom;
-    ALIGN_CLIENT: Result := TAlignLayout.Client;
-    ALIGN_CENTER: Result := TAlignLayout.Center;
-  else
-    Result := TAlignLayout.None;
-  end;
-end;
-
-function AlignToInt(Value: TAlignLayout): Integer;
-begin
-  case Value of
-    TAlignLayout.Top: Result := ALIGN_TOP;
-    TAlignLayout.Left: Result := ALIGN_LEFT;
-    TAlignLayout.Right: Result := ALIGN_RIGHT;
-    TAlignLayout.Bottom: Result := ALIGN_BOTTOM;
-    TAlignLayout.Client: Result := ALIGN_CLIENT;
-    TAlignLayout.Center: Result := ALIGN_CENTER;
-  else
-    Result := ALIGN_NONE;
-  end;
 end;
 
 procedure TBasSwitch.ChoosePresentationName(Sender: TObject; var PresenterName: string);

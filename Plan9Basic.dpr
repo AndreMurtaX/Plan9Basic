@@ -1,4 +1,4 @@
-program Plan9Basic;
+﻿program Plan9Basic;
 
 uses
   System.StartUpCopy,
@@ -30,6 +30,7 @@ uses
   ZipLib in 'engine\Libs\ZipLib.pas',
   HttpLib in 'engine\Libs\HttpLib.pas',
   GuiUtils in 'Libs\GUI\GuiUtils.pas',
+  ControlCommon in 'Libs\GUI\ControlCommon.pas',
   FormLib in 'Libs\GUI\FormLib.pas',
   LayoutLib in 'Libs\GUI\LayoutLib.pas',
   RectangleLib in 'Libs\GUI\RectangleLib.pas',

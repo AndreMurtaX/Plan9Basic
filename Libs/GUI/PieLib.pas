@@ -16,7 +16,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, ControlCommon;
 
 type
   TBasPie = class(TPie)
@@ -113,26 +113,6 @@ const
   ERR_INVALID_CALLBACK = 5;
   ERR_INVALID_COLOR = 6;
 
-  ALIGN_NONE = 0;
-  ALIGN_TOP = 1;
-  ALIGN_LEFT = 2;
-  ALIGN_RIGHT = 3;
-  ALIGN_BOTTOM = 4;
-  ALIGN_MOST_TOP = 5;
-  ALIGN_MOST_BOTTOM = 6;
-  ALIGN_MOST_LEFT = 7;
-  ALIGN_MOST_RIGHT = 8;
-  ALIGN_CLIENT = 9;
-  ALIGN_CONTENTS = 10;
-  ALIGN_CENTER = 11;
-  ALIGN_VERT_CENTER = 12;
-  ALIGN_HORZ_CENTER = 13;
-  ALIGN_HORIZONTAL = 14;
-  ALIGN_VERTICAL = 15;
-  ALIGN_SCALE = 16;
-  ALIGN_FIT = 17;
-  ALIGN_FIT_LEFT = 18;
-  ALIGN_FIT_RIGHT = 19;
 
   DASH_SOLID = 0;
   DASH_DASH = 1;
@@ -180,49 +160,14 @@ begin
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
+var
+  M: String;
 begin
-  Result := False;
-  if P = nil then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': Nil parent pointer');
-    Exit;
-  end;
-  if not(IsHandleOf(P, TFmxObject)) then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': Not a valid parent object');
-    Exit;
-  end;
-  Result := True;
-end;
-
-function BuildShiftString(Shift: TShiftState): String;
-begin
-  Result := '';
-  if ssShift in Shift then
-    Result := Result + 'S';
-  if ssCtrl in Shift then
-    Result := Result + 'C';
-  if ssAlt in Shift then
-    Result := Result + 'A';
-  if ssCommand in Shift then
-    Result := Result + 'M';
-  if ssLeft in Shift then
-    Result := Result + 'L';
-  if ssRight in Shift then
-    Result := Result + 'R';
-  if ssMiddle in Shift then
-    Result := Result + 'X';
-end;
-
-function MouseButtonToInt(Button: TMouseButton): Integer;
-begin
-  case Button of
-    TMouseButton.mbLeft: Result := 0;
-    TMouseButton.mbRight: Result := 1;
-    TMouseButton.mbMiddle: Result := 2;
+  Result := ControlCommon.ParentIsValid(P, FuncName, M);
+  if Result then
+    ClearError()
   else
-    Result := 0;
-  end;
+    SetError(ERR_INVALID_PARENT, M);
 end;
 
 function IntToStrokeDash(Value: Integer): TStrokeDash;
@@ -284,60 +229,6 @@ begin
     TStrokeJoin.Bevel: Result := JOIN_BEVEL;
   else
     Result := JOIN_MITER;
-  end;
-end;
-
-function IntToAlign(Value: Integer): TAlignLayout;
-begin
-  case Value of
-    ALIGN_TOP: Result := TAlignLayout.Top;
-    ALIGN_LEFT: Result := TAlignLayout.Left;
-    ALIGN_RIGHT: Result := TAlignLayout.Right;
-    ALIGN_BOTTOM: Result := TAlignLayout.Bottom;
-    ALIGN_MOST_TOP: Result := TAlignLayout.MostTop;
-    ALIGN_MOST_BOTTOM: Result := TAlignLayout.MostBottom;
-    ALIGN_MOST_LEFT: Result := TAlignLayout.MostLeft;
-    ALIGN_MOST_RIGHT: Result := TAlignLayout.MostRight;
-    ALIGN_CLIENT: Result := TAlignLayout.Client;
-    ALIGN_CONTENTS: Result := TAlignLayout.Contents;
-    ALIGN_CENTER: Result := TAlignLayout.Center;
-    ALIGN_VERT_CENTER: Result := TAlignLayout.VertCenter;
-    ALIGN_HORZ_CENTER: Result := TAlignLayout.HorzCenter;
-    ALIGN_HORIZONTAL: Result := TAlignLayout.Horizontal;
-    ALIGN_VERTICAL: Result := TAlignLayout.Vertical;
-    ALIGN_SCALE: Result := TAlignLayout.Scale;
-    ALIGN_FIT: Result := TAlignLayout.Fit;
-    ALIGN_FIT_LEFT: Result := TAlignLayout.FitLeft;
-    ALIGN_FIT_RIGHT: Result := TAlignLayout.FitRight;
-  else
-    Result := TAlignLayout.None;
-  end;
-end;
-
-function AlignToInt(Align: TAlignLayout): Integer;
-begin
-  case Align of
-    TAlignLayout.Top: Result := ALIGN_TOP;
-    TAlignLayout.Left: Result := ALIGN_LEFT;
-    TAlignLayout.Right: Result := ALIGN_RIGHT;
-    TAlignLayout.Bottom: Result := ALIGN_BOTTOM;
-    TAlignLayout.MostTop: Result := ALIGN_MOST_TOP;
-    TAlignLayout.MostBottom: Result := ALIGN_MOST_BOTTOM;
-    TAlignLayout.MostLeft: Result := ALIGN_MOST_LEFT;
-    TAlignLayout.MostRight: Result := ALIGN_MOST_RIGHT;
-    TAlignLayout.Client: Result := ALIGN_CLIENT;
-    TAlignLayout.Contents: Result := ALIGN_CONTENTS;
-    TAlignLayout.Center: Result := ALIGN_CENTER;
-    TAlignLayout.VertCenter: Result := ALIGN_VERT_CENTER;
-    TAlignLayout.HorzCenter: Result := ALIGN_HORZ_CENTER;
-    TAlignLayout.Horizontal: Result := ALIGN_HORIZONTAL;
-    TAlignLayout.Vertical: Result := ALIGN_VERTICAL;
-    TAlignLayout.Scale: Result := ALIGN_SCALE;
-    TAlignLayout.Fit: Result := ALIGN_FIT;
-    TAlignLayout.FitLeft: Result := ALIGN_FIT_LEFT;
-    TAlignLayout.FitRight: Result := ALIGN_FIT_RIGHT;
-  else
-    Result := ALIGN_NONE;
   end;
 end;
 
@@ -1552,7 +1443,7 @@ begin
   if not ValidatePie(Args[0].P, 'pie_align#') then
     Exit;
   try
-    TBasPie(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
+    TBasPie(Args[0].P).Align := AlignFromInt(Trunc(Args[1].n));
   except
     on E: Exception do
       SetError(ERR_OPERATION_FAILED, 'pie_align#: ' + E.Message);

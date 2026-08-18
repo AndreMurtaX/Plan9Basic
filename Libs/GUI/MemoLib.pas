@@ -1,4 +1,4 @@
-unit MemoLib;
+﻿unit MemoLib;
 
 { ******************************************************************************
   MemoLib - Multi-line Text Memo Control Library for Plan9Basic
@@ -23,7 +23,7 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Memo,
   FMX.Controls.Presentation, FMX.Text, FMX.ScrollBox,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, ControlCommon;
 
 type
   TBasMemo = class(TMemo)
@@ -120,13 +120,6 @@ const
   ERR_INVALID_VALUE = 3;
   ERR_CREATE_FAILED = 4;
   ERR_INDEX_BOUNDS = 5;
-  ALIGN_NONE = 0;
-  ALIGN_TOP = 1;
-  ALIGN_LEFT = 2;
-  ALIGN_RIGHT = 3;
-  ALIGN_BOTTOM = 4;
-  ALIGN_CLIENT = 9;
-  ALIGN_CENTER = 11;
   TEXT_ALIGN_LEADING = 0;
   TEXT_ALIGN_CENTER = 1;
   TEXT_ALIGN_TRAILING = 2;
@@ -172,55 +165,14 @@ begin
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
+var
+  M: String;
 begin
-  Result := False;
-  if P = nil then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': Nil pointer');
-    Exit;
-  end;
-  try
-    if not(IsHandleOf(P, TFmxObject)) then
-    begin
-      SetError(ERR_INVALID_PARENT, FuncName + ': Invalid object');
-      Exit;
-    end;
-  except
-    SetError(ERR_INVALID_PARENT, FuncName + ': Invalid pointer');
-    Exit;
-  end;
-  ClearError();
-  Result := True;
-end;
-
-function IntToAlign(Value: Integer): TAlignLayout;
-begin
-  case Value of
-    0: Result := TAlignLayout.None;
-    1: Result := TAlignLayout.Top;
-    2: Result := TAlignLayout.Left;
-    3: Result := TAlignLayout.Right;
-    4: Result := TAlignLayout.Bottom;
-    9: Result := TAlignLayout.Client;
-    11: Result := TAlignLayout.Center;
+  Result := ControlCommon.ParentIsValid(P, FuncName, M);
+  if Result then
+    ClearError()
   else
-    Result := TAlignLayout.None;
-  end;
-end;
-
-function AlignToInt(Value: TAlignLayout): Integer;
-begin
-  case Value of
-    TAlignLayout.None: Result := 0;
-    TAlignLayout.Top: Result := 1;
-    TAlignLayout.Left: Result := 2;
-    TAlignLayout.Right: Result := 3;
-    TAlignLayout.Bottom: Result := 4;
-    TAlignLayout.Client: Result := 9;
-    TAlignLayout.Center: Result := 11;
-  else
-    Result := 0;
-  end;
+    SetError(ERR_INVALID_PARENT, M);
 end;
 
 function IntToTextAlign(Value: Integer): TTextAlign;
@@ -240,28 +192,6 @@ begin
     TTextAlign.Leading: Result := 0;
     TTextAlign.Center: Result := 1;
     TTextAlign.Trailing: Result := 2;
-  else
-    Result := 0;
-  end;
-end;
-
-function BuildShiftString(Shift: TShiftState): String;
-begin
-  Result := '';
-  if ssShift in Shift then
-    Result := Result + 'S';
-  if ssCtrl in Shift then
-    Result := Result + 'C';
-  if ssAlt in Shift then
-    Result := Result + 'A';
-end;
-
-function MouseButtonToInt(Button: TMouseButton): Integer;
-begin
-  case Button of
-    TMouseButton.mbLeft: Result := 0;
-    TMouseButton.mbRight: Result := 1;
-    TMouseButton.mbMiddle: Result := 2;
   else
     Result := 0;
   end;
@@ -2192,7 +2122,7 @@ begin
     Exit();
 
   try
-    TBasMemo(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
+    TBasMemo(Args[0].P).Align := AlignFromInt(Trunc(Args[1].n));
   except
     on E: Exception do
       SetError(ERR_OPERATION_FAILED, 'memo_align#: ' + E.Message);

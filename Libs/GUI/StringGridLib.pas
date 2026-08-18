@@ -1,4 +1,4 @@
-unit StringGridLib;
+﻿unit StringGridLib;
 
 { ******************************************************************************
   StringGridLib - StringGrid Control Library for Plan9Basic
@@ -52,7 +52,7 @@ uses
   FMX.Types, FMX.Forms, FMX.Graphics, FMX.Controls, FMX.Grid,
   FMX.Grid.Style, FMX.Controls.Presentation, FMX.ScrollBox,
   FMX.Presentation.Factory, FMX.Platform,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, ControlCommon;
 
 type
   TBasStringGrid = class(TStringGrid)
@@ -205,13 +205,6 @@ const
   COL_PROGRESS = 7;
   COL_TIME = 8;
 
-  ALIGN_NONE = 0;
-  ALIGN_TOP = 1;
-  ALIGN_LEFT = 2;
-  ALIGN_RIGHT = 3;
-  ALIGN_BOTTOM = 4;
-  ALIGN_CLIENT = 9;
-  ALIGN_CENTER = 11;
 
   TEXTALIGN_CENTER = 0;
   TEXTALIGN_LEADING = 1;
@@ -265,55 +258,14 @@ begin
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
+var
+  M: String;
 begin
-  Result := False;
-  if P = nil then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': Nil pointer');
-    Exit();
-  end;
-  try
-    if not(IsHandleOf(P, TFmxObject)) then
-    begin
-      SetError(ERR_INVALID_PARENT, FuncName + ': Invalid object');
-      Exit();
-    end;
-  except
-    SetError(ERR_INVALID_PARENT, FuncName + ': Invalid pointer');
-    Exit();
-  end;
-  ClearError();
-  Result := True;
-end;
-
-function IntToAlign(Value: Integer): TAlignLayout;
-begin
-  case Value of
-    0: Result := TAlignLayout.None;
-    1: Result := TAlignLayout.Top;
-    2: Result := TAlignLayout.Left;
-    3: Result := TAlignLayout.Right;
-    4: Result := TAlignLayout.Bottom;
-    9: Result := TAlignLayout.Client;
-    11: Result := TAlignLayout.Center;
+  Result := ControlCommon.ParentIsValid(P, FuncName, M);
+  if Result then
+    ClearError()
   else
-    Result := TAlignLayout.None;
-  end;
-end;
-
-function AlignToInt(Value: TAlignLayout): Integer;
-begin
-  case Value of
-    TAlignLayout.None: Result := 0;
-    TAlignLayout.Top: Result := 1;
-    TAlignLayout.Left: Result := 2;
-    TAlignLayout.Right: Result := 3;
-    TAlignLayout.Bottom: Result := 4;
-    TAlignLayout.Client: Result := 9;
-    TAlignLayout.Center: Result := 11;
-  else
-    Result := 0;
-  end;
+    SetError(ERR_INVALID_PARENT, M);
 end;
 
 function IntToTextAlign(Value: Integer): TTextAlign;
@@ -3096,7 +3048,7 @@ begin
   Result.s := '';
   if not ValidateGrid(Args[0].P, 'stringgrid_align#') then
     Exit();
-  TBasStringGrid(Args[0].P).Align := IntToAlign(Trunc(Args[1].n));
+  TBasStringGrid(Args[0].P).Align := AlignFromInt(Trunc(Args[1].n));
   ClearError();
 end;
 
