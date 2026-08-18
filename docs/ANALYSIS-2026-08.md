@@ -692,8 +692,39 @@ the application is its own debugger and there is no separate window to pause.
 no `ConfirmProc`, so a regression that parks the VM stops that file's output and
 the runner kills it on timeout.
 
-Block 4 of the validation applet runs again on every platform: a dialog on
-desktop, the frame in the output on the device.
+Block 4 of the validation applet runs again on every platform.
+
+Running it produced one further correction. The variable dump sat inside the
+branch taken only when the VM does not park, so the desktop — where a dialog
+follows — logged the line and the message and nothing else. The trace was
+therefore richer on a phone than on a workstation, and answering the dialog
+discarded the values for good. The dump now runs above the branch: the frame
+reads the same everywhere, and where a dialog does appear it repeats the values
+rather than being the only place they exist.
+
+### Validated on the devices, not only in the suite
+
+**Android** — Galaxy S24 over `adb`, one press of Run. The applet runs to
+completion and block 4 prints:
+
+```
+[BREAKPOINT] checkpoint reached (Line 52)
+             bpcount = 3
+             bpname$ = "frame dump"
+  PASS - execution continued past the breakpoint
+```
+
+The process stayed alive throughout and the window kept focus — no system
+"not responding" dialog. This is the same statement that killed the app in
+about three seconds.
+
+**Linux** — over PAServer. The dialog appears carrying the frame and the script
+pauses, so the guard costs the desktop nothing. **Yes** resumes; **No** aborts
+at the breakpoint and block 5 never runs, which exercises the `ended := true`
+arm of the callback. That arm is reachable only from a host that can pause, so
+no amount of mobile testing could have covered it.
+
+All five blocks pass on Windows, Linux and Android.
 
 ### What it does not touch
 
