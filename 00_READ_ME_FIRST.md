@@ -79,6 +79,24 @@ dcc64 Plan9Basic.dpr
 - **Debug**: Memory leak reporting enabled on Windows
 - **Release**: Optimized for distribution
 
+### Checking the documentation against the code
+
+The library surface is registered in exactly one place -- the `Lib.Add` calls
+that bind a native function to a signature -- and the reference pages under
+`New docs/` write their calls the same way, so the two can be compared:
+
+```bash
+python tools/check-docs.py
+```
+
+It reports a documented function that is not registered, and a documented call
+whose arguments no registered overload accepts, and exits non-zero on either.
+`Changelogs/` is scanned but never fails the run: a page describing what a
+release did is not promising the function still exists.
+
+Undocumented functions are counted, never a failure -- silence misleads nobody.
+Run with `--undocumented` to list them.
+
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the

@@ -886,8 +886,9 @@ PRINTLN word$[[4]]  ' o
 | `chr$(n)` | ASCII code to character | `chr$(65)` → `"A"` |
 | `asc(s$)` | Character to ASCII code | `asc("A")` → `65` |
 | `space$(n)` | String of n spaces | `space$(5)` → `"     "` |
-| `string$(n, s$)` | Repeat string n times | `string$(3, "ab")` → `"ababab"` |
-| `replace$(s$, old$, new$)` | Replace occurrences | `replace$("Hello", "l", "L")` → `"HeLLo"` |
+| `string$(n, code)` | Repeat one character n times, by ASCII code | `string$(3, 65)` → `"AAA"` |
+| `replacestr$(s$, old$, new$)` | Replace occurrences, case sensitive | `replacestr$("Hello", "l", "L")` → `"HeLLo"` |
+| `replacetext$(s$, old$, new$)` | Replace occurrences, ignoring case | `replacetext$("Hello", "L", "X")` → `"HeXXo"` |
 
 ```basic
 ' String manipulation examples

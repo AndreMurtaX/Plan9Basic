@@ -128,11 +128,48 @@ See section 7.
 The interpreter core linked FMX for three interactions with a person. See
 section 10.
 
-### 3.10 Documentation with no link to the code
+### 3.10 Documentation with no link to the code - resolved on 2026-08-18
 
 Two generations coexist (`Changelogs/`, from January 2026, and `New docs/`, from
-March 2026) and nothing guarantees that a documented signature still exists in
+March 2026) and nothing guaranteed that a documented signature still existed in
 the corresponding `.pas`.
+
+`tools/check-docs.py` is that guarantee now. Both sides already write the same
+thing: the engine registers `string$@nn`, and the reference writes
+`` `string$(n, code)` ``, so a documented call converts to a signature and gets
+looked up. That catches more than a deleted function -- an argument added,
+dropped or retyped since the page was written shows up as well.
+
+Against 4,691 registered signatures and 4,185 documented calls it found two
+errors, both on adjacent lines of the user guide, and both confirmed by running
+them through the interpreter rather than by reading:
+
+- `replace$(s$, old$, new$)` does not exist. The functions are `replacestr$`,
+  which is case sensitive, and `replacetext$`, which is not.
+- `string$(3, "ab")` was documented as yielding `"ababab"`. It does not compile.
+  `string$` takes a character code: `string$(3, 65)` is `"AAA"`.
+
+Both are now correct in the guide and pinned in `06_strings.bas`, so the
+documentation being right no longer depends on the code staying still.
+
+Getting there took three passes over the extractor, and the reason is worth
+recording: documentation writes calls in three registers, and only one of them
+is a claim about arity.
+
+| written | means | checked as |
+|---|---|---|
+| `` `asc(s$)` `` | a declaration | name and signature |
+| `` `asc("A")` `` | an example | name and signature, typing the literal |
+| `` `arr_free()` `` | prose naming the function | name only |
+
+Reading all three as declarations produced 106 findings, essentially all noise.
+Nine functions also build their signature at registration --
+`Lib.Add('narr_get@#' + nStr, ...)`, one per dimension -- so their arity cannot
+be read statically and is not checked.
+
+The remaining gap is coverage, not correctness: 492 registered names have no
+reference page. That is reported and never fails the run, on the principle that
+silence misleads nobody.
 
 ---
 

@@ -106,3 +106,12 @@ assert_eq(count(multi$), 3, "line count")
 test_case("str/word")
 assert_eq(word$("alpha beta gamma", 2, " "), "beta")
 assert_eq(wordcount("alpha beta gamma", " "), 3)
+
+test_case("strings/repeat-and-replace")
+rem Pinned because the user guide got all three of these wrong: it documented
+rem a string$ that repeats a string, and a replace$ that does not exist.
+assert_eq(string$(3, 65), "AAA", "string$ repeats a character by its code")
+assert_eq(string$(0, 65), "", "zero repetitions is empty")
+assert_eq(replacestr$("Hello", "l", "L"), "HeLLo", "replacestr$ is case sensitive")
+assert_eq(replacestr$("Hello", "L", "X"), "Hello", "and so leaves the wrong case alone")
+assert_eq(replacetext$("Hello", "L", "X"), "HeXXo", "replacetext$ ignores case")
