@@ -34,6 +34,58 @@ Core breakdown:
 
 ---
 
+## 1b. Three things waiting on a decision
+
+Written across eight rounds of an unattended loop and gathered here, because a
+finding scattered over eight sections is a finding nobody acts on. Each was left
+alone deliberately: the evidence is settled and the choice is not a checker's to
+make.
+
+### The two-argument `instr` returns a flag, not a position
+
+| call | returns |
+|---|---|
+| `instr(s$, sub$)` | 1 or 0 |
+| `instr(s$, sub$, start)` | the position, 1-based |
+| `instrrev(s$, sub$)` | the position, 1-based |
+
+`StrLib.md` documents the first as a position, and so does every other BASIC.
+Its own three-argument form disagrees with it.
+
+*Change the engine* and any applet relying on the flag breaks. *Change the page*
+and the inconsistency is written down as intended. Held in
+`tools/gen-doc-examples.py` under `PARKED`, with the reason beside it, so the
+generated suite shows it rather than filing it away.
+
+### `Libs/AI/archive/` is documented and not distributed
+
+Seven units — `IntelligenceEngine`, `P9EngineLib`, `PromptAssembler`,
+`RAGDocGenerator`, `SkillEngine`, `SkillLib`, `ToolExecutor` — register 39
+`p9_*` and `skill_*` functions. They appear in no `.dpr`, and `.gitignore`
+excludes `archive/`, so they exist on one machine and in no clone.
+`New docs/AI/` documents them across three pages.
+
+This is why `check-all.py` reports 51 findings on a fresh checkout and none
+here. **The public documentation describes a library nobody can obtain.**
+
+*Finish it* — register the units, add them to the projects. *Retire it* — the
+pages go with the code. Either closes the check; leaving it open keeps a red
+mark that is correct.
+
+### Which copy of the examples is canonical
+
+`Examples/NN_name.bas` and `Website/assets/examples/name.bas` hold the same 98
+programs. 96 are identical. The copy step is real and mostly faithful, and
+nothing states which direction it runs.
+
+`ChuckNorrisFacts_Demo.bas` has already drifted: the website's copy is older,
+missing a section and carrying a byte-order mark. One `savetext$` argument order
+had drifted too, and was corrected against the implementation.
+
+*Name one canonical and generate the other*, or *keep both and check them* —
+either would have caught the drift. Doing neither means the next divergence is
+found the same way this one was, by accident.
+
 ## 2. Architecture
 
 The pipeline is clean and well separated:
