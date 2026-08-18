@@ -597,6 +597,52 @@ a modal dialog.
 - It is the prerequisite for moving the VM off the UI thread: those
   `ProcessMessages` calls were the reason the VM needed that thread
 
+### Defect found while validating on a device: BREAKPOINT hangs Android
+
+Running the validation applet on a Galaxy S24 exposed a defect that **predates
+this work**. The engine's `BREAKPOINT` parks the VM:
+
+```pascal
+ExecStatus := TExecStatus.esIdle;
+```
+
+and the main loop then spins, waiting for the host to answer:
+
+```pascal
+if ExecStatus <> esRun then
+begin
+  if Assigned(FYieldProc) then FYieldProc();   // Application.ProcessMessages
+  TThread.Sleep(16);
+  continue;
+end;
+```
+
+The dialog is a native Java dialog, and its result comes back through the
+Android main looper. That loop never returns to the looper, so the answer can
+never arrive: the spin is infinite and Android kills the app as not responding,
+in about three seconds.
+
+`INPUT` is unaffected, and the contrast is the proof. It is asynchronous by
+design — the statement names a function, and that function is the continuation
+the host calls back into. It never parks the VM, so control returns to the
+looper, the dialog appears, and the answer arrives whenever the person gives
+it. On the device INPUT works and BREAKPOINT does not.
+
+Confirmed pre-existing: the code before the host callbacks had the identical
+structure, and its own comment already named the risk — *"On mobile devices
+this drains battery and can trigger Android ANR or iOS watchdog."* The
+`Sleep(16)` addressed the battery half and could not address the other.
+
+Bisected on the device: with the `BREAKPOINT` line removed, the same applet
+runs to completion on Android — 30 printed lines, the error-policy check, the
+handle check, and the INPUT dialog returning its value after the script ended.
+
+**Not fixed here.** The repair is to stop parking the VM and let `BREAKPOINT`
+resume through a continuation, the way `INPUT` already does. That is the same
+change as taking the VM off the UI thread (section 3.6), and it should be done
+once, deliberately. Until then the validation applet ships with the
+`BREAKPOINT` lines commented out and says why.
+
 ### What it does not touch
 
 The GUI libraries are still FireMonkey, and should be — they exist to wrap it.
