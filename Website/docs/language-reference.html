@@ -1201,8 +1201,9 @@ word$ = <span class="str">"Hello"</span>
 <tr><td><code>chr$(n)</code></td><td>ASCII code to character</td><td><code>chr$(65)</code> &rarr; <code>"A"</code></td></tr>
 <tr><td><code>asc(s$)</code></td><td>Character to ASCII code</td><td><code>asc("A")</code> &rarr; <code>65</code></td></tr>
 <tr><td><code>space$(n)</code></td><td>String of n spaces</td><td><code>space$(5)</code></td></tr>
-<tr><td><code>string$(n, s$)</code></td><td>Repeat string n times</td><td><code>string$(3, "ab")</code> &rarr; <code>"ababab"</code></td></tr>
-<tr><td><code>replace$(s$, old$, new$)</code></td><td>Replace occurrences</td><td><code>replace$("Hello", "l", "L")</code> &rarr; <code>"HeLLo"</code></td></tr>
+<tr><td><code>string$(n, code)</code></td><td>Repeat one character n times, by ASCII code</td><td><code>string$(3, 65)</code> &rarr; <code>"AAA"</code></td></tr>
+<tr><td><code>replacestr$(s$, old$, new$)</code></td><td>Replace occurrences, case sensitive</td><td><code>replacestr$("Hello", "l", "L")</code> &rarr; <code>"HeLLo"</code></td></tr>
+<tr><td><code>replacetext$(s$, old$, new$)</code></td><td>Replace occurrences, ignoring case</td><td><code>replacetext$("Hello", "L", "X")</code> &rarr; <code>"HeXXo"</code></td></tr>
 </table>
 </section>
 

@@ -167,9 +167,58 @@ Nine functions also build their signature at registration --
 `Lib.Add('narr_get@#' + nStr, ...)`, one per dimension -- so their arity cannot
 be read statically and is not checked.
 
-The remaining gap is coverage, not correctness: 492 registered names have no
-reference page. That is reported and never fails the run, on the principle that
-silence misleads nobody.
+### The third generation: the website
+
+There is a third copy, and it is the one the public reads. `Website/` is
+versioned here, and its pages write calls inside `<code>` exactly as the
+markdown writes them inside backticks, so the same check covers both.
+
+It documents the surface better than `New docs/` does -- 99.1% of registered
+names against 89.1% -- and carried the same two errors, which is what one
+expects of a copy.
+
+It also advertised an entire asynchronous HTTP API that does not exist.
+`httplib.html` had a section titled *Asynchronous HTTP (Polling) -- For mobile
+platforms*, a signature table for `http_get_async`, `http_post_async`,
+`http_put_async`, `http_patch_async`, `http_delete_async` and `http_busy`, a
+worked polling example, and two Quick Reference rows. `HttpLib` registers 92
+functions and none of them is any of those. The page's own category counts gave
+it away in hindsight: they summed to 98 while the page claimed 92, which is 92
+plus the six that were never written.
+
+Removed on the author's instruction, along with the sidebar entry, the summary
+row, and the mobile example that used it. The counts now agree at 92.
+
+**What that leaves open is real.** The section existed to answer a real
+question: a synchronous HTTP call on Android blocks the UI thread, which is the
+same defect as section 3.6 in a different costume. The page now says to keep
+requests small and set `http_timeout#`, which is true and is not a solution.
+Either an async HTTP API or the VM off the UI thread would be one.
+
+### What the extractor had to learn
+
+Documentation writes calls in four registers, and only two are claims about
+arity:
+
+| written | means | checked as |
+|---|---|---|
+| `` `asc(s$)` `` | a declaration | name and signature |
+| `` `asc("A")` `` | an example | name and signature, typing the literal |
+| `` `arr_free()` `` | prose naming the function | name only |
+| `arc#(parent#[, w, h] \| [, x, y, w, h])` | a synopsis of the overloads | name only |
+
+And one register is not a claim at all: *"the syntax is `formatdatetime$(...)`
+-- Not `format$(value, ...)`"* shows a call in order to warn against it. A match
+a negation introduced is skipped.
+
+Reading everything as a declaration produced 106 findings on the markdown and 54
+on the website, essentially all noise. Nine functions also build their signature
+at registration -- `Lib.Add('narr_get@#' + nStr, ...)`, one per array dimension
+-- so their arity cannot be read statically and is not checked.
+
+The remaining gap is coverage, not correctness: 27 registered names have no page
+on the website, 492 have none in `New docs/`. Reported, never a failure, on the
+principle that silence misleads nobody.
 
 ---
 

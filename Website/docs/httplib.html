@@ -481,7 +481,6 @@ body::after {
     <div class="sidebar-section-title">Requests</div>
     <a href="#forms" class="sidebar-link">Form Data</a>
     <a href="#sync" class="sidebar-link">Sync Methods</a>
-    <a href="#async" class="sidebar-link">Async (Polling)</a>
   </div>
 
   <div class="sidebar-section">
@@ -518,7 +517,6 @@ body::after {
 <tr><td>Proxy</td><td>3</td><td>http_proxy#, http_proxyauth#, http_clearproxy#</td></tr>
 <tr><td>Form Data</td><td>10</td><td>Create, fields, files (3 overloads), clear, count, URL-encode, free</td></tr>
 <tr><td>Sync HTTP Methods</td><td>11</td><td>GET, POST (3), PUT (2), PATCH, DELETE, HEAD, OPTIONS</td></tr>
-<tr><td>Async HTTP Methods</td><td>6</td><td>GET, POST, PUT, DELETE, PATCH async + http_busy</td></tr>
 <tr><td>Response Access</td><td>20</td><td>Status, body, headers, cookies, content info, category checks</td></tr>
 <tr><td>File Operations</td><td>4</td><td>http_download, http_upload$, http_uploadput$, http_postfile$</td></tr>
 <tr><td>Encoding Utilities</td><td>4</td><td>http_urlencode$, http_urldecode$, http_htmlencode$, http_htmldecode$</td></tr>
@@ -530,21 +528,12 @@ body::after {
 <h2>Platform Considerations</h2>
 <div class="table-wrap"><table><thead><tr><th>Platform</th><th>Approach</th><th>Reason</th></tr></thead><tbody>
 <tr><td>Desktop (Windows, macOS, Linux)</td><td><strong>Synchronous</strong> functions</td><td>Simple, blocking &mdash; main thread is fine</td></tr>
-<tr><td>Mobile (Android, iOS)</td><td><strong>Asynchronous</strong> + polling</td><td>Non-blocking to avoid ANR / UI freeze</td></tr>
+<tr><td>Mobile (Android, iOS)</td><td><strong>Synchronous</strong> functions</td><td>The same calls. A long request blocks the UI thread, so keep requests small and set <code>http_timeout#</code></td></tr>
 </tbody></table></div>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; desktop.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Desktop - synchronous (simple)</span>
 <span class="kw">let</span> client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://api.example.com&quot;</span>)
 <span class="kw">let</span> response$ = <span class="fn">http_get$</span>(client#, <span class="str">&quot;/data&quot;</span>)
 <span class="kw">println</span> <span class="fn">http_body$</span>(client#)</pre></div></div>
-<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; mobile.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Mobile - async with timer polling</span>
-<span class="fn">http_get_async</span>(client#, <span class="str">&quot;/data&quot;</span>)
-
-<span class="kw">function</span> <span class="fn">OnTimer</span>(sender#) <span class="kw">local</span> x
-    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
-        <span class="fn">timer_enabled#</span>(sender#, <span class="num">0</span>)
-        <span class="kw">println</span> <span class="fn">http_body$</span>(client#)
-    <span class="kw">end</span> <span class="kw">if</span>
-<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
 </section>
 
 <section class="doc-section" id="errors">
@@ -764,52 +753,6 @@ body::after {
 <span class="kw">println</span> <span class="str">&quot;Content-Length: &quot;</span>; <span class="fn">http_contentlength</span>(client#)</pre></div></div>
 </section>
 
-<section class="doc-section" id="async">
-<h2>Asynchronous HTTP (Polling)</h2>
-<p>For mobile platforms. Functions return immediately &mdash; poll with <code>http_busy()</code> for completion.</p>
-<div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>http_get_async(c#, url$)</code></td><td><code>http_get_async@#$</code></td><td>Start async GET</td></tr>
-<tr><td><code>http_post_async(c#, url$, body$)</code></td><td><code>http_post_async@#$$</code></td><td>Start async POST</td></tr>
-<tr><td><code>http_put_async(c#, url$, body$)</code></td><td><code>http_put_async@#$$</code></td><td>Start async PUT</td></tr>
-<tr><td><code>http_delete_async(c#, url$)</code></td><td><code>http_delete_async@#$</code></td><td>Start async DELETE</td></tr>
-<tr><td><code>http_patch_async(c#, url$, body$)</code></td><td><code>http_patch_async@#$$</code></td><td>Start async PATCH</td></tr>
-<tr><td><code>http_busy(c#)</code></td><td><code>http_busy@#</code></td><td>1 = request in progress, 0 = done</td></tr>
-</tbody></table></div>
-<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; async_demo.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Recommended async pattern with timer polling</span>
-<span class="kw">let</span> client# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
-<span class="kw">let</span> timer# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
-
-<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Async Demo&quot;</span>)
-<span class="kw">let</span> lbl# = <span class="fn">label#</span>(frm#, <span class="str">&quot;Ready&quot;</span>, <span class="num">10</span>, <span class="num">10</span>)
-<span class="kw">let</span> btn# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Fetch&quot;</span>, <span class="num">10</span>, <span class="num">50</span>, <span class="num">120</span>, <span class="num">40</span>)
-<span class="fn">button_onclick#</span>(btn#, <span class="str">&quot;OnFetchClick&quot;</span>)
-
-timer# = <span class="fn">timer#</span>(frm#, <span class="num">100</span>)
-<span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
-<span class="fn">timer_ontimer#</span>(timer#, <span class="str">&quot;OnPollTimer&quot;</span>)
-<span class="fn">form_show</span>(frm#)
-
-<span class="kw">function</span> <span class="fn">OnFetchClick</span>(sender#)
-    client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://httpbin.org&quot;</span>)
-    <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Loading...&quot;</span>)
-    <span class="fn">http_get_async</span>(client#, <span class="str">&quot;/get&quot;</span>)
-    <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
-<span class="kw">end</span> <span class="kw">function</span>
-
-<span class="kw">function</span> <span class="fn">OnPollTimer</span>(sender#) <span class="kw">local</span> x
-    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
-        <span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
-        <span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
-            <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Status: &quot;</span> + <span class="fn">str$</span>(<span class="fn">http_status</span>(client#)))
-        <span class="kw">else</span>
-            <span class="fn">label_text#</span>(lbl#, <span class="str">&quot;Error: &quot;</span> + <span class="fn">http_errormsg$</span>())
-        <span class="kw">end</span> <span class="kw">if</span>
-        <span class="kw">let</span> x = <span class="fn">http_free</span>(client#)
-    <span class="kw">end</span> <span class="kw">if</span>
-<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
-<div class="warning-box"><strong>&#9888; Warning:</strong> On Android/iOS, always use async functions to avoid ANR (Application Not Responding). Desktop can use either sync or async.</div>
-</section>
-
 <section class="doc-section" id="response">
 <h2>Response Access</h2>
 <h3>Status &amp; Body</h3>
@@ -966,57 +909,6 @@ timer# = <span class="fn">timer#</span>(frm#, <span class="num">100</span>)
 
 <span class="kw">let</span> x = <span class="fn">http_formfree</span>(form#)
 <span class="kw">let</span> x = <span class="fn">http_free</span>(client#)</pre></div></div>
-<h3>Mobile Async HTTP Tests</h3>
-<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; mobile_async.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Async HTTP demo for Android/iOS</span>
-<span class="kw">let</span> client# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
-<span class="kw">let</span> timer# = <span class="fn">Pointer#</span>(<span class="num">0</span>)
-<span class="kw">let</span> testNum = <span class="num">0</span>
-
-<span class="kw">let</span> frm# = <span class="fn">form#</span>(<span class="str">&quot;Mobile HTTP Demo&quot;</span>)
-<span class="kw">let</span> memo# = <span class="fn">memo#</span>(frm#, <span class="num">10</span>, <span class="num">10</span>, <span class="num">380</span>, <span class="num">350</span>, <span class="str">&quot;&quot;</span>)
-<span class="kw">let</span> btnRun# = <span class="fn">button#</span>(frm#, <span class="str">&quot;Run Tests&quot;</span>, <span class="num">10</span>, <span class="num">370</span>, <span class="num">120</span>, <span class="num">40</span>)
-<span class="fn">button_onclick#</span>(btnRun#, <span class="str">&quot;OnRunClick&quot;</span>)
-
-timer# = <span class="fn">timer#</span>(frm#, <span class="num">50</span>)
-<span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
-<span class="fn">timer_ontimer#</span>(timer#, <span class="str">&quot;OnPollTimer&quot;</span>)
-<span class="fn">form_show</span>(frm#)
-
-<span class="kw">function</span> <span class="fn">OnRunClick</span>(sender#)
-    <span class="fn">memo_clear#</span>(memo#)
-    <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Starting tests...&quot;</span>)
-    client# = <span class="fn">http_client#</span>(<span class="str">&quot;https://httpbin.org&quot;</span>)
-    testNum = <span class="num">0</span>
-    <span class="fn">StartNextTest</span>()
-<span class="kw">end</span> <span class="kw">function</span>
-
-<span class="kw">function</span> <span class="fn">StartNextTest</span>()
-    testNum = testNum + <span class="num">1</span>
-    <span class="kw">if</span> testNum = <span class="num">1</span> <span class="kw">then</span>
-        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Test 1: GET...&quot;</span>)
-        <span class="fn">http_get_async</span>(client#, <span class="str">&quot;/get&quot;</span>)
-        <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
-    <span class="kw">else</span> <span class="kw">if</span> testNum = <span class="num">2</span> <span class="kw">then</span>
-        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;Test 2: POST...&quot;</span>)
-        <span class="fn">http_post_async</span>(client#, <span class="str">&quot;/post&quot;</span>, <span class="str">&quot;{\&quot;</span>test\<span class="str">&quot;:true}&quot;</span>)
-        <span class="fn">timer_enabled#</span>(timer#, <span class="num">1</span>)
-    <span class="kw">else</span>
-        <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;All tests complete!&quot;</span>)
-        <span class="kw">let</span> x = <span class="fn">http_free</span>(client#)
-    <span class="kw">end</span> <span class="kw">if</span>
-<span class="kw">end</span> <span class="kw">function</span>
-
-<span class="kw">function</span> <span class="fn">OnPollTimer</span>(sender#)
-    <span class="kw">if</span> <span class="fn">http_busy</span>(client#) = <span class="num">0</span> <span class="kw">then</span>
-        <span class="fn">timer_enabled#</span>(timer#, <span class="num">0</span>)
-        <span class="kw">if</span> <span class="fn">http_ok</span>(client#) &lt;&gt; <span class="num">0</span> <span class="kw">then</span>
-            <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;  OK: &quot;</span> + <span class="fn">str$</span>(<span class="fn">http_status</span>(client#)))
-        <span class="kw">else</span>
-            <span class="fn">memo_addline#</span>(memo#, <span class="str">&quot;  FAIL: &quot;</span> + <span class="fn">http_errormsg$</span>())
-        <span class="kw">end</span> <span class="kw">if</span>
-        <span class="fn">StartNextTest</span>()
-    <span class="kw">end</span> <span class="kw">if</span>
-<span class="kw">end</span> <span class="kw">function</span></pre></div></div>
 </section>
 
 <section class="doc-section" id="quick-ref">
@@ -1054,8 +946,6 @@ timer# = <span class="fn">timer#</span>(frm#, <span class="num">50</span>)
 <tr><td><code>http_get$/post$/put$/patch$/delete$</code></td><td><code>various</code></td><td>Sync methods (5 core)</td></tr>
 <tr><td><code>http_postform$/postformurl$/postformstr$/putform$</code></td><td><code>various</code></td><td>Form methods (4)</td></tr>
 <tr><td><code>http_head/http_options$</code></td><td><code>various</code></td><td>HEAD &amp; OPTIONS (2)</td></tr>
-<tr><td><code>http_get/post/put/delete/patch_async</code></td><td><code>various</code></td><td>Async methods (5)</td></tr>
-<tr><td><code>http_busy(c#)</code></td><td><code>http_busy@#</code></td><td>Check async completion</td></tr>
 </tbody></table></div>
 <h3>Response (20), Files (4), Encoding (4), Simple (3)</h3>
 <div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
