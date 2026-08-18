@@ -375,11 +375,37 @@ build.
 the divergence between the two trees dropped to **zero lines** across the five
 core units. A fresh clone with `--recurse-submodules` builds identically.
 
-**Pending item found during verification:** `Plan9BasicApplet.res` is not
-versioned (`*.res` in the `.gitignore`), so a clean clone only builds after the
-project is opened once in RAD Studio, which regenerates the file. A pre-existing
-gap, not introduced here, but awkward in a public repository whose point is that
-others can build it.
+### Making a fresh clone buildable
+
+Splitting shared files across repositories creates ways for a clone to arrive
+broken, so this was verified empirically rather than assumed: clone from GitHub
+into an empty folder, build with no search paths and no environment setup.
+
+Two problems showed up, and both are fixed:
+
+- **The project resource was not versioned.** `*.res` in the `.gitignore` also
+  caught `Plan9Basic.res` and `Plan9BasicApplet.res`. RAD Studio only
+  regenerates those when the project is opened in the IDE, so a command-line
+  build failed outright on a clean checkout. They are versioned now; the rule
+  still excludes every other `.res`. This was a pre-existing gap, not one the
+  submodule split introduced.
+- **A plain `git clone` leaves `engine/` empty**, and the build dies on the
+  first unit with a confusing error. Both READMEs now say to clone recursively
+  and how to repair a checkout already made without it.
+
+What the split did **not** break: unit resolution. Every unit is referenced with
+its path from the `.dpr`, including the ones inside `engine/`, so no search path
+or environment setup is needed. Verified by building both projects from a fresh
+clone with no `-U` flags at all.
+
+Also cleaned up: 17 stale `.dcu`/`.o` files left in the runner by pre-submodule
+builds, sitting in folders whose sources had moved into `engine/`. They are
+ignored by git, so they never reached a clone, but locally an IDE *Compile*
+could have picked up a stale unit instead of the submodule's source.
+
+**Fresh-clone verification, both repositories:** build succeeds, and in the IDE
+repository the full suite runs — 338 non-GUI assertions, 380 GUI assertions and
+the negative suite, all green.
 
 ---
 
