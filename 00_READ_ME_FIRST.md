@@ -8,14 +8,46 @@
 
 ## 🔧 How to Build
 
+### Clone recursively
+
+The interpreter core and the shared standard library live in a separate
+repository, [Plan9BasicEngine](https://github.com/AndreMurtaX/Plan9BasicEngine),
+and are pulled in as a git submodule under `engine/`. Clone recursively, or the
+`engine/` folder arrives empty and the build fails on the first unit:
+
+```bash
+git clone --recurse-submodules <repository-url>
+```
+
+Already cloned without it? Fix an existing checkout with:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Build
+
 1. Open **RAD Studio / Delphi** (version 10.3 Rio or later recommended)
 2. Open the project file: `Plan9Basic.dpr`
 3. Select your target platform (Win32, Win64, macOS, Android, etc.)
 4. Press **F9** to compile and run, or **Ctrl+Shift+F9** for build only
 
+From the command line, no search paths or environment setup are needed — every
+unit is referenced with its path from the `.dpr`, including the ones inside
+`engine/`:
+
+```bash
+dcc64 Plan9Basic.dpr
+```
+
 ### Build Configurations
 - **Debug**: Memory leak reporting enabled on Windows
 - **Release**: Optimized for distribution
+
+### Tests
+
+`tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the
+FMX libraries. See [tests/README.md](tests/README.md).
 
 ---
 
