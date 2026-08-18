@@ -25,6 +25,41 @@ Already cloned without it? Fix an existing checkout with:
 git submodule update --init --recursive
 ```
 
+### Where a change belongs, and how far it travels
+
+The tree spans three repositories, and which one a file sits in decides who has
+to be updated when you touch it. This is easy to get wrong, because `engine/`
+looks like an ordinary folder.
+
+| Path | Repository | Reaches |
+|---|---|---|
+| `engine/**` | Plan9BasicEngine (public) | this IDE **and** the applet runner |
+| `Libs/GUI/**` | Plan9Basic (this one) | this IDE only |
+| `Libs/**` outside `GUI/` | Plan9Basic (this one) | this IDE only |
+| everything else at the root | Plan9Basic (this one) | this IDE only |
+
+**A change under `engine/` is not finished when it compiles here.** It has to be
+committed and pushed in the submodule, then the pointer bumped in *both*
+consumers -- this repository and
+[Plan9BasicAppletRunner](https://github.com/AndreMurtaX/Plan9BasicAppletRunner)
+-- or the runner keeps building against the previous commit and quietly
+diverges.
+
+```bash
+cd engine && git commit -am "..." && git push    # the engine itself
+cd ..      && git add engine && git commit       # this repository's pointer
+# then, in the runner checkout:
+cd engine && git pull && cd .. && git add engine && git commit
+```
+
+The trap worth naming: `Libs/GUI/` holds a hundred control, effect and animation
+libraries and looks like the home of everything GUI, but **one** GUI library
+lives in the engine instead -- `engine/Libs/GUI/TimerLib.pas`, because
+`exec.pas` depends on it. A sweep across "the GUI libraries" that globs
+`Libs/GUI/*.pas` misses exactly that one, and it is the only one of the hundred
+that ships in the public repositories. Sweep both paths, or the exception ends
+up in the half other people build on.
+
 ### Build
 
 1. Open **RAD Studio / Delphi** (version 10.3 Rio or later recommended)
