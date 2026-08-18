@@ -510,6 +510,31 @@ nobody can obtain.** `check-all.py` will stay red on a fresh clone until it is
 answered, which is correct: a red check with a named cause is an open question,
 not a false alarm.
 
+### The whole workflow, from a clone
+
+The previous round fixed the checks so a clone would get the same answers. This
+one ran the documented path end to end on one, on the assumption that a
+newcomer's first hour is the only test of whether any of this was worth writing:
+
+```
+git clone --recurse-submodules ...      42 items, engine at the pinned commit
+tests/build.ps1                          138,283 lines
+tests/build.ps1 -Run                     367 assertions
+tests/build.ps1 -Run -Gui                589 assertions
+tools/check-all.py                       7 checks
+```
+
+Everything works. Six of the seven checks pass, and the seventh is the P9Engine
+question below, reported with its cause named.
+
+One detail worth keeping: `check-doc-blocks.py` passes in the clone, where the
+archived AI library does not exist at all, because its baseline is keyed on the
+file and the compiler's complaint rather than on a block's position. A fixture
+keyed to position would have gone red the moment anything moved.
+
+That closes the question this loop has been circling: not whether the
+documentation is right, but whether anyone other than this machine can find out.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,
