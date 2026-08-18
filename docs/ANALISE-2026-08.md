@@ -277,6 +277,35 @@ caminho de teardown, onde a única ação sensata é continuar desempilhando, e
 
 `SQLiteLib` ficou de fora: não segue o padrão de constantes de erro das demais.
 
+### Frente 3 — correção posterior: o padrão inseguro fora das classes `TBas`
+
+A primeira varredura procurava `TObject(P) is TBas...` e deu a frente por
+encerrada. Isso era **literalmente verdade e enganoso**: boa parte das
+bibliotecas valida contra classes FMX cruas, sem o prefixo `TBas`, e passou
+batido. Restavam **163 sítios** com o dereference.
+
+| Onde | Sítios | Validava contra |
+|---|---|---|
+| `ValidateParent`, em 91 bibliotecas | 93 | `TFmxObject` |
+| `ValidateEffect`, nas 64 de efeito | 64 | a classe FMX do efeito |
+| `ConfigLib`, `RAGLib` (no engine) | 2 | `TBasConfig`, `TRAGEngine` |
+| Outros | 4 | `TCommonCustomForm`, `TVertScrollBox` |
+
+`ValidateParent` era o mais exposto: é ele que recebe o pai quando o programa
+cria qualquer controle. A troca foi direta — o pai é sempre um controle que as
+próprias bibliotecas criaram, e essas classes já se registravam.
+
+Os efeitos exigiram uma peça nova. São classes FMX instanciadas direto, sem
+subclasse `TBas` onde encaixar registro e baixa, e o FMX libera o efeito junto
+com o controle dono sem avisar a biblioteca. `THandleWatcher` é um `TComponent`
+que assina `FreeNotification` de tudo que seja `TComponent` e dá baixa ao
+receber `opRemove` — uma peça cobre os 64, sem subclasse por tipo.
+
+Por que a suíte não pegou: `gui/02_handles.bas` testava `button_text$` com
+handle errado, que passa por `ValidateButton` — justamente o caminho que **fora**
+convertido. Agora cobre também pai forjado, efeito forjado, efeito de classe
+errada e efeito liberado através do controle dono.
+
 ### Defeitos encontrados pela suíte
 
 1. **`RegexLib.regex_isvalid` / `regex_error$`** — usavam `TRegEx.Create`, que no
