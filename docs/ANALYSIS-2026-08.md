@@ -275,6 +275,35 @@ inconsistency as intended, and changing the engine would break any applet
 relying on the flag. That is a decision, so it waits as one -- visible in the
 generated suite rather than filed away.
 
+### The code blocks, and the limit of scanning them
+
+Everything above checks spans -- a call written inside backticks or `<code>`.
+The **code blocks** are unchecked, and they are what a reader copies: 1,719 in
+the markdown, 901 on the website.
+
+Scanning them for calls to functions that do not exist looked easy and was not.
+The first pass reported 275 names. Stripping BASIC comments, where
+`' Blur amount slider (0-10 range)` reads as a call to `slider`, brought it to
+76. Excluding functions the block itself declares brought it lower still, and
+the rest was mostly string literals: `println "sqrt(16) = "` is not a call to
+`sqrt`, and the example beside it uses `sqr` correctly.
+
+That is three times in this document that a comment or a literal has been read
+as code -- once in Pascal, twice in BASIC. It is the standing hazard of scanning
+a language without parsing it, and the reason the surviving finding was checked
+by running it rather than by trusting the count.
+
+One real error came out of it. **`dict_new#(0)` does not exist**, and both the
+user guide and the website used it to introduce dictionaries -- the first
+dictionary line a reader meets. The constructor is `dict#()`. Corrected in both
+and pinned in `08_dict.bas`.
+
+A permanent block-scanner is not built. The noise floor is high enough that it
+would need to parse rather than match, and the honest version of that is
+compiling the blocks, which the test runner cannot yet do: it compiles and runs,
+and running a documented example may open a window or reach the network. A
+`--compile-only` mode would make it possible, and is the natural next step.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

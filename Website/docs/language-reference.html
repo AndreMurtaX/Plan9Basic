@@ -656,7 +656,7 @@ multiline$ = <span class="str">"Line 1\nLine 2"</span></pre></div></div>
 <h3>Pointers</h3>
 <p>Pointers reference complex objects like arrays, GUI controls, dictionaries, and JSON structures. They are identified by the <code>#</code> suffix. Pointers are platform-native (64-bit on 64-bit systems, 32-bit on 32-bit systems) and are typically returned by native functions that interface with the operating system or create internal data structures.</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>myArray# = <span class="fn">dim#</span>(<span class="num">10</span>)      <span class="cmt">' Create a numeric array of 10 elements</span>
-myDict# = <span class="fn">dict_new#</span>(<span class="num">0</span>)   <span class="cmt">' Create a dictionary</span></pre></div></div>
+myDict# = <span class="fn">dict#</span>()        <span class="cmt">' Create a dictionary</span></pre></div></div>
 </section>
 
 <!-- ============================================================ -->

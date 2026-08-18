@@ -64,3 +64,11 @@ test_case("dict/typename")
 assert_eq(dict_typename$(d#), "numeric")
 assert_eq(dict_typename$(sd#), "string")
 assert_eq(dict_typename$(pd#), "pointer")
+
+test_case("dict/constructor-name")
+rem Pinned because both the user guide and the website documented the
+rem constructor as dict_new#(0), which does not exist and never did.
+d# = dict#()
+p# = dict_set#(d#, "answer", 42)
+assert_eq(dict_get(d#, "answer"), 42, "dict#() is the constructor")
+assert_eq(dict_count(d#), 1, "and it starts empty")

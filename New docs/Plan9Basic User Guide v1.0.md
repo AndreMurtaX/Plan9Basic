@@ -184,7 +184,7 @@ Pointers reference complex objects like arrays, identified by the `#` suffix:
 
 ```basic
 myArray# = dim#(10)      ' Create a numeric array of 10 elements
-myDict# = dict_new#(0)   ' Create a dictionary
+myDict# = dict#()        ' Create a dictionary
 ```
 
 ---
