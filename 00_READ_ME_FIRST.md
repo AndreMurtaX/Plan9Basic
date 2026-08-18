@@ -133,7 +133,12 @@ And the site's own links resolve or they do not:
 
 ```bash
 python tools/check-links.py         # --fix rewrites the unambiguous ones
+python tools/check-anchors.py       # and the #section on the end of them
 ```
+
+A link that reaches the right file and then names a section that is not there
+does not fail: the browser leaves the reader at the top of the page, which is
+worse than an error, because nobody reports it.
 
 ### Tests
 

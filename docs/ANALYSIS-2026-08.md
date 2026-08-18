@@ -437,11 +437,20 @@ appeared orphaned, and was not: the throwaway script skipped external URLs with
 test has to include its colon.
 
 Folding both into `check-links.py` produced a version reporting 1,616 dangling
-fragments where the same logic in isolation reports none, and the cause did not
-surface in reasonable time. It was reverted rather than shipped. A checker that
-cries wolf 1,616 times is worse than no checker: the next real finding arrives
-in a list nobody reads. The two questions are answered for today and the tool
-still answers the one it answers correctly.
+fragments where the same logic in isolation reported none. It was reverted
+rather than shipped: a checker that cries wolf 1,616 times is worse than no
+checker, because the next real finding arrives inside a list nobody reads.
+
+Rebuilt from scratch the following round as `tools/check-anchors.py`, a faithful
+port of the script that had worked, it reports **1,744 fragments and none
+dangling** — the answer already known. So the defect was never in the logic. It
+was in how the edit was applied: the change went in through a nested here-doc
+whose escaping ate a ``, and probably more. The fifth time in this project
+that nested escaping has corrupted something, and the first time it produced a
+plausible wrong answer rather than a syntax error, which is why it cost a round.
+
+Worth stating as a rule: an edit that rewrites a regex should be applied
+directly, not through a shell that will interpret the backslashes on the way.
 
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
