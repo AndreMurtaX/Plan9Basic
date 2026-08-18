@@ -874,7 +874,7 @@ PRINTLN word$[[4]]  ' o
 | `len(s$)` | Length of string | `len("Hello")` → `5` |
 | `left$(s$, n)` | First n characters | `left$("Hello", 3)` → `"Hel"` |
 | `right$(s$, n)` | Last n characters | `right$("Hello", 2)` → `"lo"` |
-| `mid$(s$, start, len)` | Substring (1-based) | `mid$("Hello", 2, 3)` → `"ell"` |
+| `mid$(s$, start, len)` | Substring (0-based, like `s$[[n]]`) | `mid$("Hello", 1, 3)` → `"ell"` |
 | `ucase$(s$)` | Convert to uppercase | `ucase$("Hello")` → `"HELLO"` |
 | `lcase$(s$)` | Convert to lowercase | `lcase$("Hello")` → `"hello"` |
 | `trim$(s$)` | Remove leading/trailing spaces | `trim$("  Hi  ")` → `"Hi"` |

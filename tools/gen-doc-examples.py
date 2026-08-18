@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""
+gen-doc-examples.py - turns the documentation's worked examples into a test.
+
+check-docs.py verifies that a documented function exists and takes what the page
+says it takes. It cannot verify that the page is right about what the function
+*does*. The documentation makes that claim constantly:
+
+    `left$("Hello", 3)` -> `"Hel"`
+    `string$(3, "ab")`  -> `"ababab"`      <- this one was false
+
+The second went unnoticed for as long as the page existed, and was found by
+typing it into the interpreter. This generates
+tests/suite/16_doc_examples.bas so that every such claim is typed into the
+interpreter on every run.
+
+Only self-contained examples are usable: every argument a literal, and the
+expected value a literal too. An example reading `ndims(matrix#)` -> `2` needs a
+matrix, and the page is not obliged to say where it came from.
+
+    python tools/gen-doc-examples.py          write the suite
+    python tools/gen-doc-examples.py --list   print what it found, write nothing
+"""
+import re
+import sys
+import glob
+import os
+import html
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, 'tests', 'suite', '16_doc_examples.bas')
+
+SOURCES = [
+    ('New docs/**/*.md',
+     re.compile(r'`([a-z][a-z0-9_]*[$#]?\([^`]*\))`\s*(?:&rarr;|→|->)\s*`([^`]*)`')),
+    ('Website/docs/**/*.html',
+     re.compile(r'<code>([a-z][a-z0-9_]*[$#]?\([^<]*\))</code>'
+                r'\s*(?:&rarr;|→)\s*<code>([^<]*)</code>')),
+]
+
+LITERAL = re.compile(r'^\s*(?:"[^"]*"|[-+]?\d+\.?\d*)\s*$')
+
+# Claims the documentation makes that the engine does not honour, where the
+# documentation looks right and the engine looks wrong. Correcting the page
+# would write the discrepancy down as intended behaviour, so they are held here,
+# named, until someone decides which side moves.
+#
+#   expression -> (what the page claims, why it is parked)
+PARKED = {
+    'instr("Hello", "ll")': (
+        '3',
+        'The two-argument instr returns 1 or 0, a contains flag, not a '
+        'position. Its own three-argument form does return a position -- '
+        'instr("Hello World", "World", 1) is 6 -- and so does instrrev. The '
+        'page, the sibling and every other BASIC agree against it.'),
+}
+
+
+def split_args(expr):
+    """The argument list of a call, or None when it is not one."""
+    if '(' not in expr or not expr.rstrip().endswith(')'):
+        return None
+    inner = expr[expr.index('(') + 1:expr.rindex(')')]
+    if not inner.strip():
+        return []
+    out, depth, cur = [], 0, ''
+    for ch in inner:
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+        if ch == ',' and depth == 0:
+            out.append(cur)
+            cur = ''
+        else:
+            cur += ch
+    out.append(cur)
+    return out
+
+
+def collect():
+    """Self-contained (expression, expected, source) triples, deduplicated."""
+    seen, found = set(), []
+    for pattern, rx in SOURCES:
+        for path in sorted(glob.glob(os.path.join(ROOT, pattern), recursive=True)):
+            rel = os.path.relpath(path, ROOT).replace('\\', '/')
+            with open(path, encoding='utf-8', errors='replace') as f:
+                text = f.read()
+            for m in rx.finditer(text):
+                expr = html.unescape(m.group(1)).strip()
+                want = html.unescape(m.group(2)).strip()
+                args = split_args(expr)
+                if args is None:
+                    continue
+                if args and not all(LITERAL.match(a) for a in args):
+                    continue              # needs state the page did not give
+                if not LITERAL.match(want):
+                    continue              # the claim is prose, not a value
+                key = (expr, want)
+                if key in seen or expr in PARKED:
+                    continue
+                seen.add(key)
+                found.append((expr, want, rel))
+    return found
+
+
+def _wrap(text, width):
+    """Fold a sentence to width, so the generated rem lines stay readable."""
+    out, line = [], ''
+    for word in text.split():
+        if line and len(line) + 1 + len(word) > width:
+            out.append(line)
+            line = word
+        else:
+            line = f'{line} {word}'.strip()
+    if line:
+        out.append(line)
+    return out
+
+
+def basic_literal(v):
+    """A documented value as the BASIC source that denotes it."""
+    v = v.strip()
+    if v.startswith('"'):
+        return v.replace('\\', '\\\\')
+    return v
+
+
+def main():
+    found = collect()
+    if '--list' in sys.argv:
+        for expr, want, rel in found:
+            print(f'{expr:<38} -> {want:<14} {rel}')
+        print(f'\n{len(found)} self-contained example(s)')
+        return 0
+
+    lines = [
+        'rem ---------------------------------------------------------------',
+        'rem GENERATED by tools/gen-doc-examples.py -- do not edit by hand.',
+        'rem',
+        'rem Every line below is a claim the documentation makes about what a',
+        'rem function returns, typed back into the interpreter. The pages state',
+        'rem these as `expr` -> `value`; only the self-contained ones are here,',
+        'rem since an example over a variable needs state the page never gave.',
+        'rem',
+        'rem This exists because string$(3, "ab") was documented as "ababab"',
+        'rem for as long as the page did, and it does not even compile.',
+        'rem ---------------------------------------------------------------',
+        '',
+        'test_case("docs/worked-examples")',
+    ]
+    for expr, want, rel in found:
+        note = f'{rel} says {expr}'.replace('"', "'")
+        lines.append(f'assert_eq({expr}, {basic_literal(want)}, "{note}")')
+    lines.append('')
+    if PARKED:
+        lines.append('rem --- not asserted, awaiting a decision ---------------------------')
+        for expr, (claim, why) in sorted(PARKED.items()):
+            lines.append(f'rem {expr} is documented as {claim}.')
+            for chunk in _wrap(why, 68):
+                lines.append(f'rem   {chunk}')
+        lines.append('')
+
+    with open(OUT, 'w', encoding='utf-8', newline='\r\n') as f:
+        f.write('\n'.join(lines))
+    print(f'wrote {os.path.relpath(OUT, ROOT)}: {len(found)} assertion(s)')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

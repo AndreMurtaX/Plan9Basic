@@ -97,6 +97,20 @@ release did is not promising the function still exists.
 Undocumented functions are counted, never a failure -- silence misleads nobody.
 Run with `--undocumented` to list them.
 
+That checks the shape of what is documented, not the truth of it. The pages also
+assert results -- ``left$("Hello", 3)`` yields ``"Hel"`` -- and those can be
+typed back into the interpreter:
+
+```bash
+python tools/gen-doc-examples.py
+```
+
+It regenerates `tests/suite/16_doc_examples.bas` from every self-contained claim
+in both generations of documentation, so the ordinary test run answers whether
+the pages are telling the truth. Claims the engine contradicts *and* the page
+looks right about are parked in the generator, named, rather than quietly
+corrected to match the code.
+
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the

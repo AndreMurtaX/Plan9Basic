@@ -236,6 +236,45 @@ The remaining gap is coverage, not correctness: `New docs/` covers 93.2% of
 registered names and the website 99.1%. Reported, never a failure, on the
 principle that silence misleads nobody.
 
+### Checking what the pages claim a function *does*
+
+`check-docs.py` verifies that a documented function exists and takes what the
+page says. It cannot verify that the page is right about the result. The
+documentation asserts results constantly:
+
+    `left$("Hello", 3)` -> `"Hel"`
+    `string$(3, "ab")`  -> `"ababab"`
+
+The second was false for as long as the page existed, and was caught by typing
+it into the interpreter. `tools/gen-doc-examples.py` now does that on every run:
+it collects the self-contained claims -- every argument a literal, the expected
+value a literal -- and writes `tests/suite/16_doc_examples.bas`. Seventeen of
+them, over both generations of documentation.
+
+It found two more on its first run.
+
+**`mid$` is 0-based, and the user guide said 1-based.** `mid$("Hello", 2, 3)`
+was documented as `"ell"` and returns `"llo"`. The engine is right and the page
+was wrong: `StrLib.md` already documented `mid$("ABCDEF", 3)` as `"DEF"`, and
+the guide itself says string indexing is 0-based, like `s$[[n]]`. Corrected in
+both the guide and the website.
+
+**`instr` with two arguments returns a flag, not a position.** This one is
+parked, not corrected, and the reason is in `gen-doc-examples.py` next to the
+claim:
+
+| call | returns |
+|---|---|
+| `instr(s$, sub$)` | 1 or 0 |
+| `instr(s$, sub$, start)` | the position, 1-based |
+| `instrrev(s$, sub$)` | the position, 1-based |
+
+The page, the three-argument sibling and every other BASIC agree that it should
+be a position. Writing the page down to match the engine would record the
+inconsistency as intended, and changing the engine would break any applet
+relying on the flag. That is a decision, so it waits as one -- visible in the
+generated suite rather than filed away.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,
