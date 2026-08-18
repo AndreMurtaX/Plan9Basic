@@ -318,8 +318,8 @@ The frame carries:
 - **Yes** - Continue execution
 - **No** - Stop execution immediately
 
-**On Android and iOS** there is no dialog and the script is not paused. The
-frame goes to the output instead:
+The frame also goes to the output, on every platform, so the trace keeps the
+values after the dialog is gone:
 
 ```
 [BREAKPOINT] checkpoint reached (Line 25)
