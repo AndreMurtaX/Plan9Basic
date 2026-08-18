@@ -637,11 +637,53 @@ Bisected on the device: with the `BREAKPOINT` line removed, the same applet
 runs to completion on Android — 30 printed lines, the error-policy check, the
 handle check, and the INPUT dialog returning its value after the script ended.
 
-**Not fixed here.** The repair is to stop parking the VM and let `BREAKPOINT`
-resume through a continuation, the way `INPUT` already does. That is the same
-change as taking the VM off the UI thread (section 3.6), and it should be done
-once, deliberately. Until then the validation applet ships with the
-`BREAKPOINT` lines commented out and says why.
+### Repaired by degrading rather than by pausing
+
+Three options were weighed.
+
+*Suspend and resume.* Make `ExecuteProgram` return at a breakpoint and let the
+host call `Resume()` from the dialog's callback. Feasible at the top level,
+since `PRG_IP`, `STKP`, `BASEP` and both memories are object fields rather than
+native stack. It breaks for a breakpoint inside `ExecuteFunction` — a timer
+tick, an `INPUT` continuation — where a live native frame cannot be unwound and
+resumed, and it changes what a returning `ExecuteProgram` means for every host
+and for the test runner. The fallback below would still be needed for the
+nested case, leaving two mechanisms where one would do.
+
+*VM on a worker thread.* The real repair, and section 3.6's subject. The
+breakpoint blocks the worker, the UI thread stays free, and the hang becomes
+impossible by construction; it also ends the reason `YieldProc` exists at all.
+The cost is marshalling every GUI library call to the UI thread across all of
+`Libs/GUI/`. A project, not a patch — still owed.
+
+*Degrade where the VM cannot be parked.* Taken.
+
+The engine already had the seam: with no `ConfirmProc` assigned, `fBreakpoint`
+reports to the trace and returns without ever setting `esIdle`. Two changes
+make that path worth taking.
+
+`CanPauseForHostDialog`, declared in `exec.pas`, reports whether the platform
+can deliver a modal answer to a calling thread that is already blocked — false
+on Android and iOS. Both hosts gate the assignment on it, so nothing on those
+platforms can park the VM in the first place.
+
+And the unset path now carries the whole frame rather than the message alone:
+
+```
+[BREAKPOINT] checkpoint reached (Line 25)
+             n = 7
+             s$ = "frame"
+```
+
+which is the half of a breakpoint that still means something on a phone, where
+the application is its own debugger and there is no separate window to pause.
+
+`tests/suite/15_breakpoint_degrade.bas` guards it. The headless runner installs
+no `ConfirmProc`, so a regression that parks the VM stops that file's output and
+the runner kills it on timeout.
+
+Block 4 of the validation applet runs again on every platform: a dialog on
+desktop, the frame in the output on the device.
 
 ### What it does not touch
 

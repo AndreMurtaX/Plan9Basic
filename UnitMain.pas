@@ -2076,7 +2076,12 @@ begin
   FBasic := TBasicEngine.Create(); // Now it's OK.
   FBasic.ScriptTimeOut := 0;
   FBasic.InputProc := HostInput;
-  FBasic.ConfirmProc := HostConfirm;
+  //BREAKPOINT parks the VM until this answers, so it is only safe where the
+  //platform can deliver a modal answer with the calling thread blocked. Left
+  //unset, the engine reports the breakpoint frame to the trace and carries on,
+  //instead of waiting for a reply that can never arrive.
+  if CanPauseForHostDialog then
+    FBasic.ConfirmProc := HostConfirm;
   FBasic.YieldProc := HostYield;
 
   // Register all libraries

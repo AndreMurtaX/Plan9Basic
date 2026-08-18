@@ -282,7 +282,7 @@ Plan9Basic includes built-in debugging support through three commands:
 |---------|-------------|
 | `TRACEON` | Enables trace mode - outputs each line executed to console |
 | `TRACEOFF` | Disables trace mode |
-| `BREAKPOINT` | Pauses execution and shows dialog (only when trace mode is ON) |
+| `BREAKPOINT` | Reports the current state, and pauses where the host can (only when trace mode is ON) |
 
 ### TRACEON / TRACEOFF
 
@@ -301,7 +301,7 @@ traceoff                    ' Disable tracing
 
 ### BREAKPOINT
 
-Pauses execution and displays a dialog with current state. **Only active when trace mode is enabled.**
+Reports the current state, and on desktop pauses until you answer. **Only active when trace mode is enabled.**
 
 ```basic
 breakpoint                                    ' Simple breakpoint
@@ -309,14 +309,29 @@ breakpoint "checkpoint reached"               ' With message
 breakpoint "loop iteration", i, sum, name$    ' With message and variables
 ```
 
-The dialog shows:
+The frame carries:
 - Current line number
 - Optional message
 - Variable values (numeric, string, and pointer variables supported)
 
-**Buttons:**
-- **OK** - Continue execution
-- **Abort** - Stop execution immediately
+**On Windows, macOS and Linux** a dialog appears:
+- **Yes** - Continue execution
+- **No** - Stop execution immediately
+
+**On Android and iOS** there is no dialog and the script is not paused. The
+frame goes to the output instead:
+
+```
+[BREAKPOINT] checkpoint reached (Line 25)
+             n = 7
+             s$ = "frame"
+```
+
+Pausing requires the answer to reach a thread the VM has already blocked, and
+those platforms deliver it through the looper that called into the application
+in the first place — a paused VM would be blocking the very mechanism meant to
+wake it. The same fallback applies to any host that installs no `ConfirmProc`,
+such as the headless test runner.
 
 ### Debugging Example
 
