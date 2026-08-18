@@ -532,7 +532,7 @@ begin
   if FOnChangeFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnChangeFunc.ToLower() + '@#', [SenderArg]);
@@ -545,7 +545,7 @@ begin
   if FOnTrackingFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnTrackingFunc.ToLower() + '@#', [SenderArg]);
@@ -558,7 +558,7 @@ begin
   if FOnClickFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnClickFunc.ToLower() + '@#', [SenderArg]);
@@ -571,7 +571,7 @@ begin
   if FOnDblClickFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnDblClickFunc.ToLower() + '@#', [SenderArg]);
@@ -584,7 +584,7 @@ begin
   if FOnEnterFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnEnterFunc.ToLower() + '@#', [SenderArg]);
@@ -597,7 +597,7 @@ begin
   if FOnExitFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnExitFunc.ToLower() + '@#', [SenderArg]);
@@ -609,7 +609,7 @@ var
 begin
   if FOnKeyDownFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := Key; Args[1].p := nil; Args[1].s := '';
   Args[2].n := 0; Args[2].p := nil; Args[2].s := KeyChar;
   Args[3].n := 0; Args[3].p := nil; Args[3].s := ShiftStateToString(Shift);
@@ -623,7 +623,7 @@ var
 begin
   if FOnKeyUpFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := Key; Args[1].p := nil; Args[1].s := '';
   Args[2].n := 0; Args[2].p := nil; Args[2].s := KeyChar;
   Args[3].n := 0; Args[3].p := nil; Args[3].s := ShiftStateToString(Shift);
@@ -637,7 +637,7 @@ var
 begin
   if FOnMouseDownFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := MouseButtonToInt(Button); Args[1].p := nil; Args[1].s := '';
   Args[2].n := 0; Args[2].p := nil; Args[2].s := ShiftStateToString(Shift);
   Args[3].n := X; Args[3].p := nil; Args[3].s := '';
@@ -652,7 +652,7 @@ var
 begin
   if FOnMouseUpFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := MouseButtonToInt(Button); Args[1].p := nil; Args[1].s := '';
   Args[2].n := 0; Args[2].p := nil; Args[2].s := ShiftStateToString(Shift);
   Args[3].n := X; Args[3].p := nil; Args[3].s := '';
@@ -667,7 +667,7 @@ var
 begin
   if FOnMouseMoveFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := 0; Args[1].p := nil; Args[1].s := ShiftStateToString(Shift);
   Args[2].n := X; Args[2].p := nil; Args[2].s := '';
   Args[3].n := Y; Args[3].p := nil; Args[3].s := '';
@@ -682,7 +682,7 @@ begin
   if FOnMouseEnterFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnMouseEnterFunc.ToLower() + '@#', [SenderArg]);
@@ -695,7 +695,7 @@ begin
   if FOnMouseLeaveFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnMouseLeaveFunc.ToLower() + '@#', [SenderArg]);
@@ -708,7 +708,7 @@ begin
   if FOnResizeFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnResizeFunc.ToLower() + '@#', [SenderArg]);
@@ -720,7 +720,7 @@ var
 begin
   if FOnDragEnterFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
 
@@ -734,7 +734,7 @@ var
 begin
   if FOnDragOverFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
 
@@ -752,7 +752,7 @@ var
 begin
   if FOnDragDropFunc = '' then Exit();
 
-  Args[0].n := 0; Args[0].p := Sender; Args[0].s := '';
+  Args[0].n := 0; Args[0].p := Pointer(Self); Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
 
@@ -766,7 +766,7 @@ begin
   if FOnDragLeaveFunc = '' then Exit();
 
   SenderArg.n := 0;
-  SenderArg.p := Sender;
+  SenderArg.p := Pointer(Self);
   SenderArg.s := '';
 
   ExecuteCallback(FOnDragLeaveFunc.ToLower() + '@#', [SenderArg]);

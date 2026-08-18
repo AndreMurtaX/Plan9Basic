@@ -514,7 +514,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnChangeFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnChangeFunc) + '@#', Args);
@@ -525,7 +525,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnClickFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnClickFunc) + '@#', Args);
@@ -536,7 +536,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnDblClickFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnDblClickFunc) + '@#', Args);
@@ -547,7 +547,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnEnterFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnEnterFunc) + '@#', Args);
@@ -558,7 +558,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnExitFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnExitFunc) + '@#', Args);
@@ -569,7 +569,7 @@ var
   Args: array[0..3] of TAsmData;
 begin
   if FOnKeyDownFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := Key; Args[1].p := nil; Args[1].s := '';
   Args[2].s := KeyChar; Args[2].n := 0; Args[2].p := nil;
   Args[3].s := ShiftStateToString(Shift); Args[3].n := 0; Args[3].p := nil;
@@ -581,7 +581,7 @@ var
   Args: array[0..3] of TAsmData;
 begin
   if FOnKeyUpFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := Key; Args[1].p := nil; Args[1].s := '';
   Args[2].s := KeyChar; Args[2].n := 0; Args[2].p := nil;
   Args[3].s := ShiftStateToString(Shift); Args[3].n := 0; Args[3].p := nil;
@@ -593,7 +593,7 @@ var
   Args: array[0..4] of TAsmData;
 begin
   if FOnMouseDownFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := MouseButtonToInt(Button); Args[1].p := nil; Args[1].s := '';
   Args[2].s := ShiftStateToString(Shift); Args[2].n := 0; Args[2].p := nil;
   Args[3].n := X; Args[3].p := nil; Args[3].s := '';
@@ -606,7 +606,7 @@ var
   Args: array[0..4] of TAsmData;
 begin
   if FOnMouseUpFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := MouseButtonToInt(Button); Args[1].p := nil; Args[1].s := '';
   Args[2].s := ShiftStateToString(Shift); Args[2].n := 0; Args[2].p := nil;
   Args[3].n := X; Args[3].p := nil; Args[3].s := '';
@@ -619,7 +619,7 @@ var
   Args: array[0..3] of TAsmData;
 begin
   if FOnMouseMoveFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].s := ShiftStateToString(Shift); Args[1].n := 0; Args[1].p := nil;
   Args[2].n := X; Args[2].p := nil; Args[2].s := '';
   Args[3].n := Y; Args[3].p := nil; Args[3].s := '';
@@ -631,7 +631,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnMouseEnterFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnMouseEnterFunc) + '@#', Args);
@@ -642,7 +642,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnMouseLeaveFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnMouseLeaveFunc) + '@#', Args);
@@ -653,7 +653,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnResizeFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnResizeFunc) + '@#', Args);
@@ -664,7 +664,7 @@ var
   Args: array[0..2] of TAsmData;
 begin
   if FOnDragEnterFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
   ExecuteCallback(LowerCase(FOnDragEnterFunc) + '@#nn', Args);
@@ -677,7 +677,7 @@ var
 begin
   Operation := TDragOperation.None;
   if FOnDragOverFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
   Res := ExecuteCallbackWithResult(LowerCase(FOnDragOverFunc) + '@#nn', Args);
@@ -690,7 +690,7 @@ var
   Args: array[0..2] of TAsmData;
 begin
   if FOnDragDropFunc = '' then Exit();
-  Args[0].p := Sender; Args[0].n := 0; Args[0].s := '';
+  Args[0].p := Pointer(Self); Args[0].n := 0; Args[0].s := '';
   Args[1].n := Point.X; Args[1].p := nil; Args[1].s := '';
   Args[2].n := Point.Y; Args[2].p := nil; Args[2].s := '';
   ExecuteCallback(LowerCase(FOnDragDropFunc) + '@#nn', Args);
@@ -701,7 +701,7 @@ var
   Args: array[0..0] of TAsmData;
 begin
   if FOnDragLeaveFunc = '' then Exit();
-  Args[0].p := Sender;
+  Args[0].p := Pointer(Self);
   Args[0].n := 0;
   Args[0].s := '';
   ExecuteCallback(LowerCase(FOnDragLeaveFunc) + '@#', Args);

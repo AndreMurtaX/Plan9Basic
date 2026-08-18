@@ -639,14 +639,24 @@ end;
 observable change is the error line, now uniform and carrying the failing
 signature, which not every previous version did.
 
-### Noted, not changed
+### Unified: the handle a callback receives
 
-264 dispatchers pass `Pointer(Self)` to the BASIC callback and 141 pass
-`Sender`. For the events these libraries bind, FMX fires with `Sender = Self`,
-so no failure is known — but `Pointer(Self)` is unconditionally the handle the
-program registered the callback on, and `Sender` is whatever FMX supplies.
-Unifying on `Pointer(Self)` is the safer form; it is left alone here because it
-belongs with the dispatchers, not with the plumbing.
+264 dispatchers passed `Pointer(Self)` to the BASIC callback and 141 passed
+`Sender`. All 405 now pass `Pointer(Self)`.
+
+This is a normalization, not a repair, and the check that established it is
+worth keeping: every `InternalOnXxx` is bound to `Self.OnXxx`, so FMX fires it
+with `Sender = Self` and the two forms agreed at runtime. The one place an
+event is bound to a child — `FTimer.OnTimer` in `MediaPlayerLib`, where `Sender`
+really is the inner `TTimer` and not the control — already passed
+`Pointer(Self)`.
+
+What it buys is that the agreement no longer depends on that. `Pointer(Self)` is
+unconditionally the handle the program registered the callback against;
+`Sender` is whatever FMX supplies, and an unregistered inner object handed to
+BASIC would be indistinguishable from a fabricated pointer — the failure mode
+`ScrollBoxLib` had. Binding one of these 405 events to a child later is now a
+one-line change instead of a silent bug.
 
 The dispatch tails — the argument packing before the call — are the remaining
 shareable piece: 16 signatures, of which about ten carry weight. That would cut
