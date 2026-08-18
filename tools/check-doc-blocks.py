@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+"""
+check-doc-blocks.py - compiles the documentation's code blocks.
+
+check-docs.py checks the calls written in spans. gen-doc-examples.py runs the
+worked examples. Neither touches the code blocks, which is what a reader copies:
+1,719 in the markdown and 901 on the website.
+
+Scanning them by pattern was tried and abandoned -- comments and string literals
+read as calls, and the noise floor swallowed the signal. This compiles them
+instead, with the interpreter's own parser, which is the only thing that knows
+BASIC. Nothing is executed: an example may open a window or reach the network,
+and a reader is not asking for either.
+
+Many blocks are fragments -- a loop body, a couple of lines lifted out of a
+program -- and a fragment is not expected to compile on its own. So a failure is
+only reported when the block looks whole, which here means it has no unclosed
+block statement. What that leaves is examples a reader could paste and run, and
+those must compile.
+
+    python tools/check-doc-blocks.py            compile them, report failures
+    python tools/check-doc-blocks.py --all      report fragments too
+    python tools/check-doc-blocks.py --keep     leave the generated .bas files
+"""
+import re
+import sys
+import glob
+import os
+import html
+import shutil
+import subprocess
+import tempfile
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUNNER = os.path.join(ROOT, 'tests', 'bin', 'Plan9BasicTest.exe')
+
+SOURCES = [
+    # The language tag is required. Made optional, the pattern treats a closing
+    # fence as an opening one and returns the prose between two blocks as a
+    # third, which is how 1,680 blocks first counted as 2,620.
+    ('New docs/**/*.md', re.compile(r'```(?:basic|bas)[ \t]*\r?\n(.*?)```', re.S), False),
+    ('Website/docs/**/*.html', re.compile(r'<pre>(.*?)</pre>', re.S), True),
+]
+
+# A block that opens one of these and never closes it is a fragment: the reader
+# is being shown the inside of something, not a program.
+OPENERS = [(re.compile(r'^\s*(?:for)\b', re.I), re.compile(r'^\s*next\b', re.I)),
+           (re.compile(r'^\s*while\b', re.I), re.compile(r'^\s*(?:endwhile|wend)\b', re.I)),
+           (re.compile(r'^\s*function\b', re.I), re.compile(r'^\s*end\s+function\b', re.I)),
+           (re.compile(r'^\s*select\b', re.I), re.compile(r'^\s*endselect\b', re.I))]
+IF_OPEN = re.compile(r'^\s*if\b.*\bthen\s*$', re.I)
+IF_CLOSE = re.compile(r'^\s*end\s+if\b', re.I)
+
+
+# The one complaint that is not about the block itself: it names a variable an
+# earlier block on the same page created.
+IGNORED = re.compile(r'Unknown variable', re.I)
+
+
+def strip_html(text):
+    return html.unescape(re.sub(r'<[^>]+>', '', text))
+
+
+def looks_whole(src):
+    """True when nothing the block opens is left unclosed."""
+    lines = src.split('\n')
+    for opener, closer in OPENERS:
+        if sum(bool(opener.match(l)) for l in lines) != \
+           sum(bool(closer.match(l)) for l in lines):
+            return False
+    if sum(bool(IF_OPEN.match(l)) for l in lines) != \
+       sum(bool(IF_CLOSE.match(l)) for l in lines):
+        return False
+    return True
+
+
+def collect():
+    """(source, index, code, whole) for every block found."""
+    out = []
+    for pattern, rx, ishtml in SOURCES:
+        for path in sorted(glob.glob(os.path.join(ROOT, pattern), recursive=True)):
+            rel = os.path.relpath(path, ROOT).replace('\\', '/')
+            with open(path, encoding='utf-8', errors='replace') as f:
+                text = f.read()
+            for i, blk in enumerate(rx.findall(text), 1):
+                code = strip_html(blk) if ishtml else blk
+                if not code.strip():
+                    continue
+                out.append((rel, i, code.rstrip(), looks_whole(code)))
+    return out
+
+
+def main():
+    show_all = '--all' in sys.argv
+    keep = '--keep' in sys.argv
+
+    if not os.path.exists(RUNNER):
+        print(f'runner not built: {RUNNER}')
+        print('build it with tests/build.ps1')
+        return 2
+
+    blocks = collect()
+    whole = [b for b in blocks if b[3]]
+    print(f'{len(blocks)} block(s), {len(whole)} whole enough to compile')
+
+    work = tempfile.mkdtemp(prefix='p9b-blocks-')
+    index = {}
+    try:
+        for n, (rel, i, code, is_whole) in enumerate(blocks):
+            if not (is_whole or show_all):
+                continue
+            name = f'b{n:05d}.bas'
+            index[name] = (rel, i)
+            with open(os.path.join(work, name), 'w',
+                      encoding='utf-8', newline='\r\n') as f:
+                f.write(code)
+
+        res = subprocess.run([RUNNER, '--gui', '--compile-only', work],
+                             capture_output=True, text=True)
+        failures = []
+        current = None
+        for line in res.stdout.split('\n'):
+            m = re.match(r'^(COMPILE|RUNTIME)\s+(b\d+\.bas)', line)
+            if m:
+                current = index.get(m.group(2))
+                continue
+            if current and line.strip().startswith('!'):
+                why = line.strip().lstrip('! ')
+                # Pages are written cumulatively: a block configures the client
+                # an earlier block created, and compiled alone it has no idea
+                # what ai# is. That is the page working as intended, not a
+                # defect, and it is the majority of what compiling in isolation
+                # reports. Any other complaint is about the code itself.
+                if not IGNORED.search(why):
+                    failures.append((current, why))
+                current = None
+
+        if failures:
+            print(f'\n{len(failures)} block(s) do not compile:\n')
+            for (rel, i), why in failures:
+                print(f'  {rel} block {i}')
+                print(f'    {why}')
+        else:
+            print('\nOK - every whole block compiles')
+        return 1 if failures else 0
+    finally:
+        if keep:
+            print(f'\nkept: {work}')
+        else:
+            shutil.rmtree(work, ignore_errors=True)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

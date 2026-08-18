@@ -16,6 +16,9 @@
                 suite, where the point is that the engine rejects the program.
     --gui       also register the FMX libraries, so suites can exercise forms
                 and controls. Windows are never shown.
+    --compile-only
+                stop after compiling: a file passes if it is valid source.
+                For checking examples that must compile but should not run.
     --verbose   print each program's output, not just failures
     --timeout N script timeout in seconds per file (default 30, 0 = unlimited)
 
@@ -187,6 +190,7 @@ var
   OptVerbose: Boolean = False;
   OptExpectFail: Boolean = False;
   OptGui: Boolean = False;
+  OptCompileOnly: Boolean = False;
   OptTimeout: Int64 = 30;
 
 //Programs written before this runner existed report their own results by
@@ -384,6 +388,16 @@ begin
       Exit();
     end;
 
+    //Compiling is the whole verdict when the caller only wants to know that
+    //the source is valid. Documentation examples are the reason: they must
+    //compile, but running one may open a window or reach the network, and the
+    //page is not asking the reader to accept either just to read it.
+    if OptCompileOnly then
+    begin
+      Result.Outcome := foPass;
+      Exit();
+    end;
+
     RuntimeMsg := '';
     try
       Engine.ExecuteProgram(Output);
@@ -556,6 +570,8 @@ begin
         OptExpectFail := True
       else if Arg = '--gui' then
         OptGui := True
+      else if Arg = '--compile-only' then
+        OptCompileOnly := True
       else if Arg = '--timeout' then
       begin
         Inc(i);

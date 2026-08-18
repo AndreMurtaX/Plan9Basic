@@ -298,11 +298,37 @@ user guide and the website used it to introduce dictionaries -- the first
 dictionary line a reader meets. The constructor is `dict#()`. Corrected in both
 and pinned in `08_dict.bas`.
 
-A permanent block-scanner is not built. The noise floor is high enough that it
-would need to parse rather than match, and the honest version of that is
-compiling the blocks, which the test runner cannot yet do: it compiles and runs,
-and running a documented example may open a window or reach the network. A
-`--compile-only` mode would make it possible, and is the natural next step.
+So the blocks are compiled instead of scanned, by the interpreter's own parser,
+which is the only thing that knows BASIC. `Plan9BasicTest` gained
+`--compile-only`: a file passes if it is valid source, and nothing runs, because
+a documented example may open a window or reach the network and a reader is not
+asking for either. `tools/check-doc-blocks.py` writes every block out and
+compiles the lot in one pass.
+
+Three filters were needed before the output meant anything, and each was a
+lesson about the corpus rather than the code.
+
+**The fences.** Matching ` ```basic ` with the tag optional treats a *closing*
+fence as an opening one and returns the prose between two blocks as a third.
+That is how 1,680 blocks first counted as 2,620. The tag is required now.
+
+**The fragments.** A block showing the inside of a loop is not expected to
+compile alone, so a block is only compiled when nothing it opens is left
+unclosed.
+
+**The accumulated context.** Pages are written cumulatively: one block creates
+`ai#`, the next configures it, and compiled alone the second has no idea what
+`ai#` is. That single complaint — *Unknown variable* — was 709 of the 923
+failures, and it is the page working as intended. Ignoring it is what left a
+signal.
+
+What survived: **37 blocks**, of which most are `<pre>` elements holding things
+that were never BASIC — SVG path data, mathematical notation, a bracketed
+section header — and 20 are the archived AI library described below.
+
+One real error. **`rectangle_cornerradius#` does not exist**; the setter is
+`rectangle_corners#`. Both sources used the wrong name in a worked example.
+Corrected in both and pinned in `gui/01_controls.bas`.
 
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 

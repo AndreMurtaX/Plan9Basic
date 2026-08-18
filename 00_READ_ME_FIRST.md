@@ -111,6 +111,17 @@ the pages are telling the truth. Claims the engine contradicts *and* the page
 looks right about are parked in the generator, named, rather than quietly
 corrected to match the code.
 
+And the code blocks -- what a reader actually copies -- are compiled:
+
+```bash
+python tools/check-doc-blocks.py
+```
+
+Nothing is executed, since a documented example may open a window or reach the
+network. It reports blocks that are whole and still do not compile; fragments
+and blocks that name a variable an earlier block created are skipped, because
+pages are written cumulatively and neither is a defect.
+
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the

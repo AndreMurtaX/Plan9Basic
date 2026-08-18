@@ -89,3 +89,10 @@ pn# = panel#(f#)
 inner# = button#(pn#)
 button_text#(inner#, "aninhado")
 assert_eq(button_text$(inner#), "aninhado", "control inside a panel")
+
+test_case("controls/rectangle-corners")
+rem Pinned because both sources documented rectangle_cornerradius#, which
+rem does not exist. The setter takes the two radii and is named corners#.
+r# = rectangle#(f#)
+p# = rectangle_corners#(r#, 10, 10)
+assert_eq(rectangle_error(), 0, "rectangle_corners# is the name")

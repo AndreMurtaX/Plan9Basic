@@ -162,7 +162,7 @@ let frm# = form#("Simple Blur", 400, 300)
 let rect# = rectangle#(frm#)
 rectangle_bounds#(rect#, 100, 75, 200, 150)
 rectangle_fill#(rect#, "DodgerBlue")
-rectangle_cornerradius#(rect#, 10, 10)
+rectangle_corners#(rect#, 10, 10)
 
 ' Add label inside
 let lbl# = label#(rect#, "Blurred Box", 50, 60)
