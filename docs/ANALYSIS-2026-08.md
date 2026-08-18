@@ -103,6 +103,11 @@ and running off the UI thread is closed off.
 That produces re-entrancy (RUN during RUN) and a standing ANR risk on Android.
 The `TThread.Sleep(16)` in the pause loop is a patch over the same problem.
 
+Partly unblocked on 2026-08-17: the two `ProcessMessages` calls **inside the
+engine** became a host callback, so the VM no longer requires a message loop of
+its own. See section 10. The remaining 125 are in the GUI libraries, and moving
+the VM off the UI thread is still open.
+
 ### 3.7 Fixed limits without guards — resolved on 2026-08-17
 
 See section 7.
@@ -117,6 +122,11 @@ template generation or an RTTI layer would produce. See section 9.
 ### 3.9 No automated tests — resolved on 2026-08-17
 
 See section 7.
+
+### 3.11 The engine required FireMonkey — resolved on 2026-08-17
+
+The interpreter core linked FMX for three interactions with a person. See
+section 10.
 
 ### 3.10 Documentation with no link to the code
 
@@ -514,3 +524,81 @@ sweeps were run across these libraries in a single session — the HandleRegistr
 conversion, the error policy, and the `ValidateParent` / `ValidateEffect`
 correction — each a matter of a script plus a build plus the suite. Duplication
 only costs a lot when the bulk change has to be made by hand.
+
+---
+
+## 10. Taking FireMonkey out of the engine
+
+Executed on 2026-08-17, after the roadmap's five fronts.
+
+### What the coupling actually was
+
+| Unit | FMX |
+|---|---|
+| `lexer.pas`, `parser.pas`, `basic.pas`, `UnitGC`, `HandleRegistry` | none, already |
+| `UnitUtils.pas` | `FMX.Graphics`, `FMX.Types` |
+| `exec.pas` | eight FMX units in the interface |
+
+Shallower than it looked. `exec.pas` used those eight units for **six call
+sites** serving three concerns: the BREAKPOINT dialog, the INPUT statement, and
+`Application.ProcessMessages`. `UnitUtils` had 78 uses of FMX-looking types, of
+which 76 were `TAlphaColor` and `TAlphaColorRec` — which live in
+`System.UITypes`.
+
+### What changed
+
+The engine already knew the right pattern and had applied it once: `PrintProc`
+is a host callback, which is why the PRINT statement never depended on a UI.
+The other three interactions were hardwired instead. They now follow the same
+shape:
+
+| Callback | Purpose |
+|---|---|
+| `InputProc` | ask for a value |
+| `ConfirmProc` | ask a yes/no question |
+| `YieldProc` | let a host with a message loop pump it |
+
+Both requests carry a continuation rather than returning a value, so a host
+whose dialogs are asynchronous answers later without blocking the VM — exactly
+what the FMX code did. All three may be left nil: INPUT then keeps the default
+the program supplied, and BREAKPOINT continues.
+
+Suspending timers around a breakpoint moved to the host too, which is what let
+`exec` drop its dependency on `TimerLib` — a GUI library that pulled the entire
+FMX stack into the engine through a single line.
+
+`LoadImageFromWeb` moved to `Libs/GUI/GuiUtils.pas` on the host side; it takes
+an FMX `TBitmap` and is called only by GUI libraries. `ValidMethod` took a
+`TFMXObject` but only reads `ClassType`, so it takes `TObject`.
+
+Removed along the way: an `EInvalidFmxHandle` clause in two exception blocks
+that could never fire, because the `Exception` handler above it caught
+everything first.
+
+### The guard
+
+`tests/NoFmxProbe.dpr`, built by `tests/build-nofmx.ps1`, links the core with
+the FMX directories **removed from the compiler's search path**. Putting an FMX
+reference back into the engine is then a hard build failure, not something the
+ordinary suites would miss.
+
+It also runs INPUT from stdin — impossible before, since INPUT was hardwired to
+a modal dialog.
+
+```
+18,799 lines, and a BASIC program runs.
+```
+
+### What it buys
+
+- The engine can be hosted from a console, a service, a test harness, or a VCL
+  application
+- INPUT works outside a window
+- It is the prerequisite for moving the VM off the UI thread: those
+  `ProcessMessages` calls were the reason the VM needed that thread
+
+### What it does not touch
+
+The GUI libraries are still FireMonkey, and should be — they exist to wrap it.
+The separation is now: engine free, non-GUI `Libs/` free, `Libs/GUI/` bound to
+FMX by definition. Which is the split the submodule already drew.
