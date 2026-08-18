@@ -421,6 +421,28 @@ judgement. 100 files rewritten, all 868 links resolve.
 This is the same shape of finding as the applets: a whole surface, an
 unambiguous question, and nobody had ever asked it.
 
+### Two surfaces measured, both sound, and one tool not shipped
+
+With the links resolving, the two neighbouring questions were asked once each,
+by throwaway script rather than by anything committed.
+
+**Fragments.** 1,758 anchors across the site; every one names an id that exists.
+The 14 that first looked broken were all `#'+e.target.id+'`, which is JavaScript
+building a fragment at run time, not a fragment. That is the fourth time in this
+document a scan without a parser has read code as content.
+
+**Reachability.** Every page is linked from somewhere. `docs/httplib.html`
+appeared orphaned, and was not: the throwaway script skipped external URLs with
+`startswith('http')`, and `'httplib.html'.startswith('http')` is true. A scheme
+test has to include its colon.
+
+Folding both into `check-links.py` produced a version reporting 1,616 dangling
+fragments where the same logic in isolation reports none, and the cause did not
+surface in reasonable time. It was reverted rather than shipped. A checker that
+cries wolf 1,616 times is worse than no checker: the next real finding arrives
+in a list nobody reads. The two questions are answered for today and the tool
+still answers the one it answers correctly.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,
