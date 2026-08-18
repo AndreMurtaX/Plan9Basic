@@ -1,27 +1,27 @@
 rem ---------------------------------------------------------------
-rem Validacao de handle nas bibliotecas GUI reais.
+rem Handle validation in the real GUI libraries.
 rem
-rem A linguagem permite fabricar um ponteiro com pointer#(n). Antes do
-rem HandleRegistry a validacao era "TObject(P) is TBasXxx" dentro de
-rem try/except, que segue o endereco recebido: recuperavel no Windows,
-rem morte do processo no Android e no Linux.
+rem The language lets a program fabricate a pointer with pointer#(n).
+rem Before HandleRegistry the check was "TObject(P) is TBasXxx" inside
+rem try/except, which follows whatever address it is given: recoverable
+rem on Windows, a dead process on Android and Linux.
 rem
-rem As libs GUI nao levantam excecao nesse caso: registram em
-rem xxx_error(). Isso deixa o comportamento conferivel aqui dentro.
+rem The GUI libraries do not raise in that case: they record the failure
+rem in xxx_error(). That makes the behaviour checkable from here.
 rem ---------------------------------------------------------------
 
 f# = form#()
 lbl# = label#(f#)
 btn# = button#(f#)
 
-test_case("handles/ponteiro-forjado")
+test_case("handles/fabricated-pointer")
 button_clearerror()
 junk# = pointer#(305419896)
 r$ = button_text$(junk#)
 ok = 0
 if button_error() <> 0 then ok = 1
-assert_eq(ok, 1, "endereco inventado e recusado")
-assert_eq(r$, "", "e nao devolve conteudo")
+assert_eq(ok, 1, "an invented address is rejected")
+assert_eq(r$, "", "and returns no content")
 
 test_case("handles/nil")
 button_clearerror()
@@ -29,97 +29,97 @@ z# = pointer#(0)
 r$ = button_text$(z#)
 ok = 0
 if button_error() <> 0 then ok = 1
-assert_eq(ok, 1, "nil e recusado")
+assert_eq(ok, 1, "nil is rejected")
 
-test_case("handles/classe-errada")
-rem Handle valido, mas de outra classe. E o caso que antes escrevia
-rem atraves da vtable errada.
+test_case("handles/wrong-class")
+rem A valid handle, but of another class. This is the case that used to
+rem write through the wrong vtable.
 button_clearerror()
 r$ = button_text$(lbl#)
 ok = 0
 if button_error() <> 0 then ok = 1
-assert_eq(ok, 1, "um label nao serve como botao")
+assert_eq(ok, 1, "a label is not a button")
 
 label_clearerror()
 r2$ = label_text$(btn#)
 ok = 0
 if label_error() <> 0 then ok = 1
-assert_eq(ok, 1, "um botao nao serve como label")
+assert_eq(ok, 1, "a button is not a label")
 
-test_case("handles/handle-valido-nao-acusa-erro")
+test_case("handles/valid-handle-reports-no-error")
 button_clearerror()
-button_text#(btn#, "certo")
-assert_eq(button_text$(btn#), "certo")
-assert_eq(button_error(), 0, "o caminho bom nao registra erro")
+button_text#(btn#, "right")
+assert_eq(button_text$(btn#), "right")
+assert_eq(button_error(), 0, "the good path records no error")
 
-test_case("handles/handle-liberado")
-rem Depois de liberado o ponteiro deixa de valer, em vez de virar
-rem acesso a memoria ja devolvida.
+test_case("handles/freed-handle")
+rem Once freed the pointer stops being valid, instead of becoming access
+rem to memory that was already returned.
 tmp# = button#(f#)
-button_text#(tmp#, "efemero")
-assert_eq(button_text$(tmp#), "efemero", "vale enquanto vivo")
+button_text#(tmp#, "ephemeral")
+assert_eq(button_text$(tmp#), "ephemeral", "valid while alive")
 button_free(tmp#)
 button_clearerror()
 r3$ = button_text$(tmp#)
 ok = 0
 if button_error() <> 0 then ok = 1
-assert_eq(ok, 1, "ponteiro obsoleto e recusado")
+assert_eq(ok, 1, "a stale pointer is rejected")
 
 rem ---------------------------------------------------------------
-rem Os casos abaixo cobrem os dois caminhos que passaram batido na
-rem primeira conversao, porque validavam contra classes FMX cruas
-rem (TFmxObject, TSepiaEffect) e nao contra classes TBas.
+rem The cases below cover the two paths missed by the first conversion,
+rem because they validated against raw FMX classes (TFmxObject,
+rem TSepiaEffect) rather than against TBas classes.
 rem ---------------------------------------------------------------
 
-test_case("handles/pai-forjado")
-rem ValidateParent recebe o pai quando o programa cria qualquer controle.
+test_case("handles/fabricated-parent")
+rem ValidateParent receives the parent whenever a program creates a control.
 button_clearerror()
 fake# = pointer#(305419896)
 b2# = button#(fake#)
 ok = 0
 if button_error() <> 0 then ok = 1
-assert_eq(ok, 1, "pai inventado e recusado")
+assert_eq(ok, 1, "an invented parent is rejected")
 
-test_case("handles/pai-valido")
+test_case("handles/valid-parent")
 button_clearerror()
 b3# = button#(f#)
-assert_eq(button_error(), 0, "form de verdade serve como pai")
-button_text#(b3#, "filho")
-assert_eq(button_text$(b3#), "filho")
+assert_eq(button_error(), 0, "a real form works as a parent")
+button_text#(b3#, "child")
+assert_eq(button_text$(b3#), "child")
 
-test_case("handles/efeito-forjado")
+test_case("handles/fabricated-effect")
 sepia_clearerror()
 a = sepia_amount(fake#)
 ok = 0
 if sepia_error() <> 0 then ok = 1
-assert_eq(ok, 1, "efeito inventado e recusado")
+assert_eq(ok, 1, "an invented effect is rejected")
 
-test_case("handles/efeito-valido")
+test_case("handles/valid-effect")
 host# = rectangle#(f#)
 sepia_clearerror()
 ef# = sepia#(host#)
-assert_eq(sepia_error(), 0, "efeito criado sobre controle de verdade")
+assert_eq(sepia_error(), 0, "effect created over a real control")
 sepia_amount#(ef#, 0.5)
-assert_near(sepia_amount(ef#), 0.5, 0.001, "propriedade responde")
+assert_near(sepia_amount(ef#), 0.5, 0.001, "the property responds")
 
-test_case("handles/efeito-classe-errada")
-rem Handle valido, mas de outro tipo de efeito.
+test_case("handles/effect-wrong-class")
+rem A valid handle, but of another effect type.
 bevel_clearerror()
 d = bevel_size(ef#)
 ok = 0
 if bevel_error() <> 0 then ok = 1
-assert_eq(ok, 1, "um sepia nao serve como bevel")
+assert_eq(ok, 1, "a sepia is not a bevel")
 
-test_case("handles/efeito-liberado-pelo-pai")
-rem O FMX libera o efeito junto com o controle dono, sem avisar a
-rem biblioteca. O registry escuta FreeNotification justamente para que
-rem o handle deixe de valer nesse caminho.
+test_case("handles/effect-freed-by-its-parent")
+rem FMX frees the effect together with the control that owns it, without
+rem telling the library. The registry listens to FreeNotification exactly
+rem so the handle stops being valid on that path.
 host2# = rectangle#(f#)
 ef2# = sepia#(host2#)
-assert_eq(sepia_error(), 0, "efeito vivo")
+assert_eq(sepia_error(), 0, "effect alive")
 rectangle_free(host2#)
 sepia_clearerror()
 a2 = sepia_amount(ef2#)
 ok = 0
 if sepia_error() <> 0 then ok = 1
-assert_eq(ok, 1, "handle morre junto com o controle dono")
+assert_eq(ok, 1, "the handle dies with the control that owns it")

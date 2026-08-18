@@ -1,7 +1,7 @@
 rem ---------------------------------------------------------------
-rem Cria um exemplar de cada tipo de controle e confere round-trip de
-rem propriedade. Nenhuma janela e exibida: form#() constroi o form e
-rem form_show#() e chamada separada, que esta suite nunca faz.
+rem Creates one instance of each control type and checks a property round
+rem trip. No window is displayed: form#() builds the form and form_show#()
+rem is a separate call this suite never makes.
 rem ---------------------------------------------------------------
 
 f# = form#()
@@ -10,12 +10,12 @@ test_case("controls/label")
 lbl# = label#(f#)
 label_text#(lbl#, "alpha")
 assert_eq(label_text$(lbl#), "alpha")
-rem O TLabel do FMX nasce com AutoSize ligado e recalcula a largura a
-rem partir do texto, entao definir width so gruda depois de desligar.
-assert_eq(label_autosize(lbl#), 1, "autosize vem ligado")
+rem The FMX TLabel starts with AutoSize on and recomputes its width from
+rem the text, so setting width only sticks once AutoSize is turned off.
+assert_eq(label_autosize(lbl#), 1, "autosize starts on")
 label_autosize#(lbl#, 0)
 label_width#(lbl#, 123)
-assert_eq(label_width(lbl#), 123, "width gruda com autosize desligado")
+assert_eq(label_width(lbl#), 123, "width sticks with autosize off")
 
 test_case("controls/button")
 btn# = button#(f#)
@@ -26,7 +26,7 @@ test_case("controls/edit")
 ed# = edit#(f#)
 edit_text#(ed#, "digitado")
 assert_eq(edit_text$(ed#), "digitado")
-assert_eq(edit_textlength(ed#), 8, "textlength acompanha o texto")
+assert_eq(edit_textlength(ed#), 8, "textlength follows the text")
 edit_maxlength#(ed#, 10)
 assert_eq(edit_maxlength(ed#), 10)
 
@@ -37,7 +37,7 @@ assert_eq(memo_text$(mm#), "linha1")
 memo_addline#(mm#, "linha2")
 ok = 0
 if memo_textlength(mm#) > 6 then ok = 1
-assert_eq(ok, 1, "addline aumentou o texto")
+assert_eq(ok, 1, "addline grew the text")
 
 test_case("controls/checkbox")
 cb# = checkbox#(f#)
@@ -88,4 +88,4 @@ ly# = layout#(f#)
 pn# = panel#(f#)
 inner# = button#(pn#)
 button_text#(inner#, "aninhado")
-assert_eq(button_text$(inner#), "aninhado", "controle dentro de painel")
+assert_eq(button_text$(inner#), "aninhado", "control inside a panel")

@@ -76,10 +76,10 @@ begin
       if EqualPos > 0 then
       begin
         Key := Line.Substring(0, EqualPos).Trim();
-        //Value := Line.Substring(EqualPos + 1).Trim(); //Esse Trim() ao final é um problema.
+        //Value := Line.Substring(EqualPos + 1).Trim(); //That trailing Trim() is a problem.
         Value := Line.Substring(EqualPos + 1);
 
-        // Se as aspas são delimitadoras, remova-as
+        // If the quotes are delimiters, strip them
         if (Value.StartsWith('"')) and (Value.EndsWith('"')) then
           Value := Value.Substring(1, Value.Length - 2);
 
@@ -109,16 +109,16 @@ end;
 //  DocPath := TPath.Combine(TPath.GetDocumentsPath, 'Translations.ini');
 //  AssetPath := TPath.Combine(TPath.GetDocumentsPath, 'assets\Translations.ini');
 //
-//  // Verifica se o arquivo já existe na pasta documents
+//  // Check whether the file already exists in the documents folder
 //  if not TFile.Exists(DocPath) then
 //  begin
 //    try
-//      // Cria o diretório se necessário
+//      // Create the directory if needed
 //      if not TDirectory.Exists(TPath.GetDirectoryName(DocPath)) then
 //        TDirectory.CreateDirectory(TPath.GetDirectoryName(DocPath));
 //
 //      if TFile.Exists(AssetPath) then
-//        // Copia o arquivo dos assets para documents
+//        // Copy the file from assets into documents
 //        TFile.Copy(AssetPath, DocPath);
 //    except
 //      on E: Exception do

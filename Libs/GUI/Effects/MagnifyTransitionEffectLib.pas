@@ -68,9 +68,9 @@ begin Result.n := 0; Result.s := ''; Result.p := nil; ClearError;
   try Effect := TMagnifyTransitionEffect.Create(TFmxObject(Args[0].p));
     Effect.Parent := TFmxObject(Args[0].p); Effect.Enabled := True;
     // GC.Add(Effect, IntToStr(NativeInt(Effect)));
-    //Torna este efeito um handle validavel sem dereferenciar o
-    //ponteiro que o programa BASIC devolver. A baixa e automatica:
-    //o efeito pertence ao pai, e o registry escuta FreeNotification.
+    //Makes this effect a handle that can be validated without dereferencing
+    //the pointer the BASIC program hands back. Revocation is automatic: the
+    //effect belongs to its parent, and the registry listens to FreeNotification.
     RegisterHandle(Effect);
     Result.p := Effect;
   except on E: Exception do SetError(ERR_INVALID_VALUE, E.Message); end;
