@@ -396,6 +396,31 @@ missing a section the source has, and carries a byte-order mark the source does
 not. Which copy is canonical is a workflow question rather than a defect, so it
 is left alone and named here.
 
+### The links between the pages
+
+The site is 124 pages that reference each other, and nothing had ever resolved
+those references. `tools/check-links.py` does: 868 internal links, external URLs
+left to whoever owns them, fragments treated as positions rather than pages.
+
+**132 of them did not resolve**, across eight distinct paths, and the cause is
+the same everywhere. A page written for `docs/` keeps its relative paths when it
+moves into `docs/gui/` or `docs/gui/effects/`, and a link written as a sibling
+stops reaching a parent.
+
+| pages | wrote | needed |
+|---|---|---|
+| 64 effect pages | `language-reference.html` | `../../language-reference.html` |
+| 29 control pages | `language-reference.html` | `../language-reference.html` |
+| 6 animation pages | `../index.html`, `../assets/img/...` | one level further up |
+
+So the **Language Reference** link in the navigation of every effect and control
+page — 99 pages — went nowhere. Each broken path resolved to exactly one real
+file, which is why `--fix` can rewrite them and why the correction needed no
+judgement. 100 files rewritten, all 868 links resolve.
+
+This is the same shape of finding as the applets: a whole surface, an
+unambiguous question, and nobody had ever asked it.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

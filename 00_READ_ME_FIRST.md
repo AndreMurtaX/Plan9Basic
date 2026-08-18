@@ -129,6 +129,12 @@ whole file -- so they go straight to the runner:
 tests/bin/Plan9BasicTest.exe --gui --compile-only Website/assets/examples
 ```
 
+And the site's own links resolve or they do not:
+
+```bash
+python tools/check-links.py         # --fix rewrites the unambiguous ones
+```
+
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the
