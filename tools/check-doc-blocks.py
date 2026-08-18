@@ -18,6 +18,11 @@ only reported when the block looks whole, which here means it has no unclosed
 block statement. What that leaves is examples a reader could paste and run, and
 those must compile.
 
+The applets the site distributes are checked the same way, and more simply,
+since a whole file needs none of the filtering a fragment does:
+
+    tests/bin/Plan9BasicTest.exe --gui --compile-only Website/assets/examples
+
     python tools/check-doc-blocks.py            compile them, report failures
     python tools/check-doc-blocks.py --all      report fragments too
     python tools/check-doc-blocks.py --keep     leave the generated .bas files

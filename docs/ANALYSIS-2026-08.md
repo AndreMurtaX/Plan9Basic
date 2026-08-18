@@ -342,6 +342,30 @@ illustrative examples calling invented functions -- `obj# = createSomeObject()`
 deliberate. No further real error came out of it, and that is the point at which
 refining the filter stops paying.
 
+### The applets the site hands out
+
+`Website/assets/examples/` holds 98 `.bas` files, offered for download and never
+compiled by anything. With `--compile-only` in hand they take no filtering: each
+is a whole file, so the runner reads the directory directly.
+
+**Six did not compile.** Every one of them fails on the first line that calls
+the wrong name:
+
+| written | exists |
+|---|---|
+| `docsdir$()` (4 files) | `documentspath$()` |
+| `image_loadurl#(img#, url$)` | `image_load#(img#, url$)`, which follows a URL itself |
+| `rectangle_stroke#(r#, "Blue", 3)` | `rectangle_stroke#(r#, colour$)`; the width is `rectangle_strokethickness#` |
+
+All six corrected, and all 98 compile. The inline copies on the site were
+checked for the same three names and are clean, so nothing was duplicated.
+
+This is the sharpest finding of the loop so far, and the reason is the shape of
+the surface rather than any cleverness: a downloadable applet is a whole
+program, so compiling it asks a question with no ambiguity in the answer. Every
+other check in this section spends most of its effort deciding what is even
+being claimed.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

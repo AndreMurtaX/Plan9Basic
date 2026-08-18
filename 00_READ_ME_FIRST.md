@@ -122,6 +122,13 @@ network. It reports blocks that are whole and still do not compile; fragments
 and blocks that name a variable an earlier block created are skipped, because
 pages are written cumulatively and neither is a defect.
 
+The applets the site offers for download take no filtering at all -- each is a
+whole file -- so they go straight to the runner:
+
+```bash
+tests/bin/Plan9BasicTest.exe --gui --compile-only Website/assets/examples
+```
+
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the

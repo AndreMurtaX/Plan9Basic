@@ -18,7 +18,7 @@ let lbl1# = label#(frm#, "TImage (should work):", 30, 20)
 img# = image#(frm#)
 image_bounds#(img#, 30, 50, 150, 100)
 ' Load a web image for testing
-image_loadurl#(img#, "https://picsum.photos/150/100")
+image_load#(img#, "https://picsum.photos/150/100")
 
 ' Apply monochrome to image
 mono1# = monochrome#(img#)
@@ -32,7 +32,8 @@ let lbl2# = label#(frm#, "TRectangle (may work):", 220, 20)
 rect# = rectangle#(frm#)
 rectangle_bounds#(rect#, 220, 50, 150, 100)
 rectangle_fill#(rect#, "Orange")
-rectangle_stroke#(rect#, "Blue", 3)
+rectangle_stroke#(rect#, "Blue")
+rectangle_strokethickness#(rect#, 3)
 
 ' Apply monochrome to rectangle
 mono2# = monochrome#(rect#)

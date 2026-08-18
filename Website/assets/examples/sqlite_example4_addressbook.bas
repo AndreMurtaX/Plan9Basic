@@ -13,7 +13,7 @@ let gDB# = Pointer#(0)
 ' Initialize database
 '------------------------------------------------------------------------------
 function InitDatabase() local sql$
-    gDB# = sql_open#(docsdir$() + "addressbook.db")
+    gDB# = sql_open#(documentspath$() + "addressbook.db")
     if PntToNum(gDB#) = 0 then
         println "ERROR: Failed to open database"
         return 0
@@ -389,12 +389,12 @@ sql_finalize(cursor#)
 ' Export to JSON file
 println ""
 println "=== Exporting to JSON File ==="
-ExportToJson(docsdir$() + "contacts_export.json")
+ExportToJson(documentspath$() + "contacts_export.json")
 
 ' Export to CSV file
 println ""
 println "=== Exporting to CSV File ==="
-ExportToCsv(docsdir$() + "contacts_export.csv")
+ExportToCsv(documentspath$() + "contacts_export.csv")
 
 ' Show exported JSON content (preview)
 println ""
