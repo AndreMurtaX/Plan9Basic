@@ -330,6 +330,18 @@ One real error. **`rectangle_cornerradius#` does not exist**; the setter is
 `rectangle_corners#`. Both sources used the wrong name in a worked example.
 Corrected in both and pinned in `gui/01_controls.bas`.
 
+Two further filters took the residue from 37 to 27. The website highlights its
+BASIC, so a `<pre>` carrying none of `class="kw"`, `"fn"`, `"str"`, `"num"` or
+`"cmt"` is holding something else -- an ASCII diagram of a crop rectangle, SVG
+path data. And a synopsis states the shape of a call rather than making one,
+`dim#(size1 [, size2, ..., size10])`, in a basic-tagged fence like any example.
+
+Of the 27 left, nine are the archived AI library below, and the rest are
+illustrative examples calling invented functions -- `obj# = createSomeObject()`
+-- which is the same register as the `function(sender#)` placeholder and just as
+deliberate. No further real error came out of it, and that is the point at which
+refining the filter stops paying.
+
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
 Seven units live under `Libs/AI/archive/` — `IntelligenceEngine`, `P9EngineLib`,

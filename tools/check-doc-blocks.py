@@ -57,12 +57,28 @@ IF_CLOSE = re.compile(r'^\s*end\s+if\b', re.I)
 IGNORED = re.compile(r'Unknown variable', re.I)
 
 
+# The website highlights its BASIC, so a <pre> that is BASIC carries spans. One
+# that carries none is holding something else: an ASCII diagram of a crop
+# rectangle, SVG path data, a bracketed section header. The markdown says the
+# same thing with its language tag; this is the website's version of it.
+HIGHLIGHTED = re.compile(r'class="(?:kw|fn|str|num|cmt)"')
+
+
 def strip_html(text):
     return html.unescape(re.sub(r'<[^>]+>', '', text))
 
 
+# A synopsis states the shape of a call rather than making one, with the
+# brackets and ellipsis that notation uses:
+#     arrayPointer# = dim#(size1 [, size2, ..., size10])
+# It sits in a basic-tagged fence like any example and is not one.
+SYNOPSIS = re.compile(r'\([^)\n]*(?:\[|\.\.\.)')
+
+
 def looks_whole(src):
     """True when nothing the block opens is left unclosed."""
+    if SYNOPSIS.search(src):
+        return False
     lines = src.split('\n')
     for opener, closer in OPENERS:
         if sum(bool(opener.match(l)) for l in lines) != \
@@ -83,6 +99,8 @@ def collect():
             with open(path, encoding='utf-8', errors='replace') as f:
                 text = f.read()
             for i, blk in enumerate(rx.findall(text), 1):
+                if ishtml and not HIGHLIGHTED.search(blk):
+                    continue
                 code = strip_html(blk) if ishtml else blk
                 if not code.strip():
                     continue
