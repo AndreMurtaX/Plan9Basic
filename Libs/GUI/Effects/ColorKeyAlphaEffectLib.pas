@@ -55,23 +55,17 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
 
 procedure RegisterColorKeyAlphaEffectFuncs(Lib: TFunctionsDictionary);
 
 implementation
 
 var
-  LastError: Integer = 0;
-  LastErrorMsg: String = '';
+  //One error slot for this library, shared shape in EffectCommon.
+  Err: TEffectErrors;
 
 const
-  ERR_NONE = 0;
-  ERR_NIL_EFFECT = 1;
-  ERR_INVALID_EFFECT = 2;
-  ERR_INVALID_VALUE = 3;
-  ERR_NIL_PARENT = 4;
-  ERR_INVALID_PARENT = 5;
   ERR_INVALID_COLOR = 6;
 
 // =============================================================================
@@ -80,46 +74,22 @@ const
 
 procedure SetError(Code: Integer; const Msg: String);
 begin
-  LastError := Code;
-  LastErrorMsg := Msg;
+  Err.SetErr(Code, Msg);
 end;
 
-procedure ClearError;
+procedure ClearError();
 begin
-  LastError := ERR_NONE;
-  LastErrorMsg := '';
+  Err.Clear();
 end;
 
 function ValidateEffect(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TColorKeyAlphaEffect)) then
-  begin
-    SetError(ERR_INVALID_EFFECT, FuncName + ': invalid effect object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateEffect(P, TColorKeyAlphaEffect, Err, FuncName);
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_PARENT, FuncName + ': parent is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TFmxObject)) then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': invalid parent object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateParent(P, Err, FuncName);
 end;
 
 // =============================================================================
@@ -128,16 +98,12 @@ end;
 
 function n_colorkey_error(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := LastError;
-  Result.s := '';
-  Result.p := nil;
+  Result := ErrorCodeResult(Err);
 end;
 
 function s_colorkey_errormsg(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := 0;
-  Result.s := LastErrorMsg;
-  Result.p := nil;
+  Result := ErrorMsgResult(Err);
 end;
 
 function s_colorkey_strerror(var Args: array of TAsmData): TAsmData;
@@ -162,10 +128,7 @@ end;
 
 function n_colorkey_clearerror(var Args: array of TAsmData): TAsmData;
 begin
-  ClearError;
-  Result.n := 0;
-  Result.s := '';
-  Result.p := nil;
+  Result := ClearErrorResult(Err);
 end;
 
 // =============================================================================

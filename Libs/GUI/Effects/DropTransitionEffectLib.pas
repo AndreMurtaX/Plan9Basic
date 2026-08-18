@@ -15,40 +15,48 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
 
 procedure RegisterDropTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
 implementation
 
-var LastError: Integer = 0; LastErrorMsg: String = '';
+var
+  //One error slot for this library, shared shape in EffectCommon.
+  Err: TEffectErrors;
 
 const
-  ERR_NONE = 0; ERR_NIL_EFFECT = 1; ERR_INVALID_EFFECT = 2; ERR_INVALID_VALUE = 3;
-  ERR_NIL_PARENT = 4; ERR_INVALID_PARENT = 5; ERR_LOAD_FAILED = 6; ERR_NIL_BITMAP = 7;
+  ERR_LOAD_FAILED = 6;
+  ERR_NIL_BITMAP = 7;
 
-procedure SetError(Code: Integer; const Msg: String); begin LastError := Code; LastErrorMsg := Msg; end;
-procedure ClearError; begin LastError := ERR_NONE; LastErrorMsg := ''; end;
+procedure SetError(Code: Integer; const Msg: String);
+begin
+  Err.SetErr(Code, Msg);
+end;
+procedure ClearError();
+begin
+  Err.Clear();
+end;
 
 function ValidateEffect(P: Pointer; const FuncName: String): Boolean;
-begin Result := False;
-  if P = nil then begin SetError(ERR_NIL_EFFECT, FuncName + ': nil'); Exit; end;
-  if not (IsHandleOf(P, TDropTransitionEffect)) then begin SetError(ERR_INVALID_EFFECT, FuncName + ': invalid'); Exit; end;
-  Result := True;
+begin
+  Result := EffectCommon.ValidateEffect(P, TDropTransitionEffect, Err, FuncName);
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
-begin Result := False;
-  if P = nil then begin SetError(ERR_NIL_PARENT, FuncName + ': nil'); Exit; end;
-  if not (IsHandleOf(P, TFmxObject)) then begin SetError(ERR_INVALID_PARENT, FuncName + ': invalid'); Exit; end;
-  Result := True;
+begin
+  Result := EffectCommon.ValidateParent(P, Err, FuncName);
 end;
 
 function n_droptrans_error(var Args: array of TAsmData): TAsmData;
-begin Result.n := LastError; Result.s := ''; Result.p := nil; end;
+begin
+  Result := ErrorCodeResult(Err);
+end;
 
 function s_droptrans_errormsg(var Args: array of TAsmData): TAsmData;
-begin Result.n := 0; Result.s := LastErrorMsg; Result.p := nil; end;
+begin
+  Result := ErrorMsgResult(Err);
+end;
 
 function s_droptrans_strerror(var Args: array of TAsmData): TAsmData;
 begin Result.n := 0; Result.p := nil;
@@ -59,7 +67,9 @@ begin Result.n := 0; Result.p := nil;
 end;
 
 function n_droptrans_clearerror(var Args: array of TAsmData): TAsmData;
-begin ClearError; Result.n := 0; Result.s := ''; Result.p := nil; end;
+begin
+  Result := ClearErrorResult(Err);
+end;
 
 function p_droptrans_new(var Args: array of TAsmData): TAsmData;
 var Effect: TDropTransitionEffect;

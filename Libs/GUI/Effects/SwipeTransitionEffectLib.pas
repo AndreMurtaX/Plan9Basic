@@ -52,68 +52,38 @@ uses
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
   FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, EffectCommon;
 
 procedure RegisterSwipeTransitionEffectFuncs(Lib: TFunctionsDictionary);
 
 implementation
 
 var
-  LastError: Integer = 0;
-  LastErrorMsg: String = '';
+  //One error slot for this library, shared shape in EffectCommon.
+  Err: TEffectErrors;
 
 const
-  ERR_NONE = 0;
-  ERR_NIL_EFFECT = 1;
-  ERR_INVALID_EFFECT = 2;
-  ERR_INVALID_VALUE = 3;
-  ERR_NIL_PARENT = 4;
-  ERR_INVALID_PARENT = 5;
   ERR_LOAD_FAILED = 6;
   ERR_NIL_BITMAP = 7;
 
 procedure SetError(Code: Integer; const Msg: String);
 begin
-  LastError := Code;
-  LastErrorMsg := Msg;
+  Err.SetErr(Code, Msg);
 end;
 
-procedure ClearError;
+procedure ClearError();
 begin
-  LastError := ERR_NONE;
-  LastErrorMsg := '';
+  Err.Clear();
 end;
 
 function ValidateEffect(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TSwipeTransitionEffect)) then
-  begin
-    SetError(ERR_INVALID_EFFECT, FuncName + ': invalid effect object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateEffect(P, TSwipeTransitionEffect, Err, FuncName);
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_PARENT, FuncName + ': parent is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TFmxObject)) then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': invalid parent object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateParent(P, Err, FuncName);
 end;
 
 // =============================================================================
@@ -122,16 +92,12 @@ end;
 
 function n_swipetrans_error(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := LastError;
-  Result.s := '';
-  Result.p := nil;
+  Result := ErrorCodeResult(Err);
 end;
 
 function s_swipetrans_errormsg(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := 0;
-  Result.s := LastErrorMsg;
-  Result.p := nil;
+  Result := ErrorMsgResult(Err);
 end;
 
 function s_swipetrans_strerror(var Args: array of TAsmData): TAsmData;
@@ -155,10 +121,7 @@ end;
 
 function n_swipetrans_clearerror(var Args: array of TAsmData): TAsmData;
 begin
-  ClearError;
-  Result.n := 0;
-  Result.s := '';
-  Result.p := nil;
+  Result := ClearErrorResult(Err);
 end;
 
 // =============================================================================

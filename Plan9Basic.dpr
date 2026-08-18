@@ -63,6 +63,7 @@ uses
   BitmapListAnimationLib in 'Libs\GUI\Animations\BitmapListAnimationLib.pas',
   PathAnimationLib in 'Libs\GUI\Animations\PathAnimationLib.pas',
   RectAnimationLib in 'Libs\GUI\Animations\RectAnimationLib.pas',
+  EffectCommon in 'Libs\GUI\Effects\EffectCommon.pas',
   BlurEffectLib in 'Libs\GUI\Effects\BlurEffectLib.pas',
   GlowEffectLib in 'Libs\GUI\Effects\GlowEffectLib.pas',
   ShadowEffectLib in 'Libs\GUI\Effects\ShadowEffectLib.pas',

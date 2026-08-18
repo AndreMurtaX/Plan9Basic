@@ -391,6 +391,7 @@
         <DCCReference Include="Libs\GUI\Animations\BitmapListAnimationLib.pas"/>
         <DCCReference Include="Libs\GUI\Animations\PathAnimationLib.pas"/>
         <DCCReference Include="Libs\GUI\Animations\RectAnimationLib.pas"/>
+        <DCCReference Include="Libs\GUI\Effects\EffectCommon.pas"/>
         <DCCReference Include="Libs\GUI\Effects\BlurEffectLib.pas"/>
         <DCCReference Include="Libs\GUI\Effects\GlowEffectLib.pas"/>
         <DCCReference Include="Libs\GUI\Effects\ShadowEffectLib.pas"/>

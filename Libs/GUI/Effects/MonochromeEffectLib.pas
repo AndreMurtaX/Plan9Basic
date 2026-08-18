@@ -59,23 +59,16 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.Math,
   FMX.Types, FMX.Controls, FMX.Effects, FMX.Filter.Effects,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, EffectCommon;
 
 procedure RegisterMonochromeEffectFuncs(Lib: TFunctionsDictionary);
 
 implementation
 
 var
-  LastError: Integer = 0;
-  LastErrorMsg: String = '';
+  //One error slot for this library, shared shape in EffectCommon.
+  Err: TEffectErrors;
 
-const
-  ERR_NONE = 0;
-  ERR_NIL_EFFECT = 1;
-  ERR_INVALID_EFFECT = 2;
-  ERR_INVALID_VALUE = 3;
-  ERR_NIL_PARENT = 4;
-  ERR_INVALID_PARENT = 5;
 
 // =============================================================================
 // Error Handling
@@ -83,46 +76,22 @@ const
 
 procedure SetError(Code: Integer; const Msg: String);
 begin
-  LastError := Code;
-  LastErrorMsg := Msg;
+  Err.SetErr(Code, Msg);
 end;
 
 procedure ClearError();
 begin
-  LastError := ERR_NONE;
-  LastErrorMsg := '';
+  Err.Clear();
 end;
 
 function ValidateEffect(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_EFFECT, FuncName + ': effect is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TMonochromeEffect)) then
-  begin
-    SetError(ERR_INVALID_EFFECT, FuncName + ': invalid effect object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateEffect(P, TMonochromeEffect, Err, FuncName);
 end;
 
 function ValidateParent(P: Pointer; const FuncName: String): Boolean;
 begin
-  Result := False;
-  if not Assigned(P) then
-  begin
-    SetError(ERR_NIL_PARENT, FuncName + ': parent is nil');
-    Exit;
-  end;
-  if not (IsHandleOf(P, TFmxObject)) then
-  begin
-    SetError(ERR_INVALID_PARENT, FuncName + ': invalid parent object');
-    Exit;
-  end;
-  Result := True;
+  Result := EffectCommon.ValidateParent(P, Err, FuncName);
 end;
 
 // =============================================================================
@@ -131,43 +100,22 @@ end;
 
 function n_mono_error(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := LastError;
-  Result.s := '';
-  Result.p := nil;
+  Result := ErrorCodeResult(Err);
 end;
 
 function s_mono_errormsg(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := 0;
-  Result.s := LastErrorMsg;
-  Result.p := nil;
+  Result := ErrorMsgResult(Err);
 end;
 
 function s_mono_strerror(var Args: array of TAsmData): TAsmData;
-var
-  Code: Integer;
 begin
-  Result.n := 0;
-  Result.p := nil;
-  Code := Trunc(Args[0].n);
-  case Code of
-    ERR_NONE: Result.s := 'No error';
-    ERR_NIL_EFFECT: Result.s := 'Effect is nil';
-    ERR_INVALID_EFFECT: Result.s := 'Invalid effect object';
-    ERR_INVALID_VALUE: Result.s := 'Invalid value';
-    ERR_NIL_PARENT: Result.s := 'Parent is nil';
-    ERR_INVALID_PARENT: Result.s := 'Invalid parent object';
-  else
-    Result.s := 'Unknown error code: ' + IntToStr(Code);
-  end;
+  Result := ErrorTextResult(Trunc(Args[0].n));
 end;
 
 function n_mono_clearerror(var Args: array of TAsmData): TAsmData;
 begin
-  ClearError();
-  Result.n := 0;
-  Result.s := '';
-  Result.p := nil;
+  Result := ClearErrorResult(Err);
 end;
 
 // =============================================================================
