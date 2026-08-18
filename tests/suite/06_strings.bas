@@ -115,3 +115,16 @@ assert_eq(string$(0, 65), "", "zero repetitions is empty")
 assert_eq(replacestr$("Hello", "l", "L"), "HeLLo", "replacestr$ is case sensitive")
 assert_eq(replacestr$("Hello", "L", "X"), "Hello", "and so leaves the wrong case alone")
 assert_eq(replacetext$("Hello", "L", "X"), "HeXXo", "replacetext$ ignores case")
+
+test_case("strings/instr-family")
+rem All three answer the same way: a zero-based position, -1 when absent.
+rem The two-argument form used to return 1 for found and 0 for absent, which
+rem agreed with neither its own siblings nor its documentation.
+assert_eq(instr("Hello World", "World"), 6, "instr finds the position")
+assert_eq(instr("Hello", "H"), 0, "zero-based, so the first character is 0")
+assert_eq(instr("Hello", "ll"), 2, "and not merely 'found'")
+assert_eq(instr("Hello", "zz"), -1, "absent is -1")
+assert_eq(instr("Hello World", "World", 1), 6, "the three-argument form agrees")
+assert_eq(instr("abcabc", "b", 3), 4, "searching from an offset")
+assert_eq(instrrev("abcabc", "b"), 4, "and so does instrrev")
+assert_eq(instrrev("abcabc", "zz"), -1, "absent is -1 there too")

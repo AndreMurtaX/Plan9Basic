@@ -880,7 +880,7 @@ PRINTLN word$[[4]]  ' o
 | `trim$(s$)` | Remove leading/trailing spaces | `trim$("  Hi  ")` → `"Hi"` |
 | `ltrim$(s$)` | Remove leading spaces | `ltrim$("  Hi")` → `"Hi"` |
 | `rtrim$(s$)` | Remove trailing spaces | `rtrim$("Hi  ")` → `"Hi"` |
-| `instr(s$, find$)` | Find substring position | `instr("Hello", "ll")` → `3` |
+| `instr(s$, find$)` | Position of a substring, 0-based, -1 when absent | `instr("Hello", "ll")` → `2` |
 | `str$(n)` | Number to string | `str$(42)` → `"42"` |
 | `val(s$)` | String to number | `val("42")` → `42` |
 | `chr$(n)` | ASCII code to character | `chr$(65)` → `"A"` |

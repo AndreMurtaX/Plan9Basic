@@ -20,6 +20,7 @@ assert_eq(lcase$("Hello"), "hello", "New docs/Plan9Basic User Guide v1.0.md says
 assert_eq(trim$("  Hi  "), "Hi", "New docs/Plan9Basic User Guide v1.0.md says trim$('  Hi  ')")
 assert_eq(ltrim$("  Hi"), "Hi", "New docs/Plan9Basic User Guide v1.0.md says ltrim$('  Hi')")
 assert_eq(rtrim$("Hi  "), "Hi", "New docs/Plan9Basic User Guide v1.0.md says rtrim$('Hi  ')")
+assert_eq(instr("Hello", "ll"), 2, "New docs/Plan9Basic User Guide v1.0.md says instr('Hello', 'll')")
 assert_eq(str$(42), "42", "New docs/Plan9Basic User Guide v1.0.md says str$(42)")
 assert_eq(val("42"), 42, "New docs/Plan9Basic User Guide v1.0.md says val('42')")
 assert_eq(chr$(65), "A", "New docs/Plan9Basic User Guide v1.0.md says chr$(65)")
@@ -28,10 +29,3 @@ assert_eq(space$(5), "     ", "New docs/Plan9Basic User Guide v1.0.md says space
 assert_eq(string$(3, 65), "AAA", "New docs/Plan9Basic User Guide v1.0.md says string$(3, 65)")
 assert_eq(replacestr$("Hello", "l", "L"), "HeLLo", "New docs/Plan9Basic User Guide v1.0.md says replacestr$('Hello', 'l', 'L')")
 assert_eq(replacetext$("Hello", "L", "X"), "HeXXo", "New docs/Plan9Basic User Guide v1.0.md says replacetext$('Hello', 'L', 'X')")
-
-rem --- not asserted, awaiting a decision ---------------------------
-rem instr("Hello", "ll") is documented as 3.
-rem   The two-argument instr returns 1 or 0, a contains flag, not a
-rem   position. Its own three-argument form does return a position --
-rem   instr("Hello World", "World", 1) is 6 -- and so does instrrev. The
-rem   page, the sibling and every other BASIC agree against it.

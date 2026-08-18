@@ -41,7 +41,16 @@ finding scattered over eight sections is a finding nobody acts on. Each was left
 alone deliberately: the evidence is settled and the choice is not a checker's to
 make.
 
-### The two-argument `instr` returns a flag, not a position
+### The two-argument `instr` returns a flag, not a position — resolved 2026-08-18
+
+Fixed. Reading the implementation shrank it: `n_instr` computed the position and
+threw it away. The three-argument form, `instrrev` and `StrLib.md` all specify a
+zero-based position with -1 for absent, and the documented example was already
+right for that answer, so the engine was the only party disagreeing. See
+[PLAN-restructure.md](PLAN-restructure.md) §1.1 for what it breaks.
+
+*(original entry below)*
+
 
 | call | returns |
 |---|---|

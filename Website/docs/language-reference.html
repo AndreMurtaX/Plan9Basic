@@ -1195,7 +1195,7 @@ word$ = <span class="str">"Hello"</span>
 <tr><td><code>ucase$(s$)</code></td><td>Uppercase</td><td><code>ucase$("Hello")</code> &rarr; <code>"HELLO"</code></td></tr>
 <tr><td><code>lcase$(s$)</code></td><td>Lowercase</td><td><code>lcase$("Hello")</code> &rarr; <code>"hello"</code></td></tr>
 <tr><td><code>trim$(s$)</code></td><td>Remove leading/trailing spaces</td><td><code>trim$("  Hi  ")</code> &rarr; <code>"Hi"</code></td></tr>
-<tr><td><code>instr(s$, find$)</code></td><td>Find substring position</td><td><code>instr("Hello", "ll")</code> &rarr; <code>3</code></td></tr>
+<tr><td><code>instr(s$, find$)</code></td><td>Position of a substring, 0-based, -1 when absent</td><td><code>instr("Hello", "ll")</code> &rarr; <code>2</code></td></tr>
 <tr><td><code>str$(n)</code></td><td>Number to string</td><td><code>str$(42)</code> &rarr; <code>"42"</code></td></tr>
 <tr><td><code>val(s$)</code></td><td>String to number</td><td><code>val("42")</code> &rarr; <code>42</code></td></tr>
 <tr><td><code>chr$(n)</code></td><td>ASCII code to character</td><td><code>chr$(65)</code> &rarr; <code>"A"</code></td></tr>

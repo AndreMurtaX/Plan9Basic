@@ -47,12 +47,8 @@ LITERAL = re.compile(r'^\s*(?:"[^"]*"|[-+]?\d+\.?\d*)\s*$')
 #
 #   expression -> (what the page claims, why it is parked)
 PARKED = {
-    'instr("Hello", "ll")': (
-        '3',
-        'The two-argument instr returns 1 or 0, a contains flag, not a '
-        'position. Its own three-argument form does return a position -- '
-        'instr("Hello World", "World", 1) is 6 -- and so does instrrev. The '
-        'page, the sibling and every other BASIC agree against it.'),
+    # Empty: the one entry that lived here, instr("Hello", "ll"), was the
+    # engine disagreeing with its own documentation, and the engine was wrong.
 }
 
 
