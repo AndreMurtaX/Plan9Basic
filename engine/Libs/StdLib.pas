@@ -28,7 +28,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.Classes, System.Variants, System.Math,
-  FMX.Forms,
+  HostServices,
   exec;
 
 procedure RegisterStdFuncs(Lib: TFunctionsDictionary);
@@ -223,15 +223,18 @@ end;
 function n_processmessages(var Args: Array of TAsmData): TAsmData;
 begin
   Result := Default(TAsmData);
-  Result.n := 1;
-  Application.ProcessMessages();
+  //0 where the host has no event loop to drain, so a script can tell.
+  Result.n := Ord(Assigned(HostServices.PumpMessages));
+  if Assigned(HostServices.PumpMessages) then
+    HostServices.PumpMessages();
 end;
 
 function n_handlemessage(var Args: Array of TAsmData): TAsmData;
 begin
   Result := Default(TAsmData);
-  Result.n := 1;
-  Application.HandleMessage();
+  Result.n := Ord(Assigned(HostServices.HandleOneMessage));
+  if Assigned(HostServices.HandleOneMessage) then
+    HostServices.HandleOneMessage();
 end;
 
 function n_isinfinite(var Args: Array of TAsmData): TAsmData;

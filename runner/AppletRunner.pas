@@ -105,7 +105,9 @@ uses
   FMX.DialogService.Async,
   FMX.Controls.Presentation, FMX.StdCtrls, FMX.Memo, FMX.Layouts,
   FMX.ScrollBox, FMX.Memo.Types, FMX.Edit,
-  basic, exec, UnitGC,
+  FMX.Platform,
+  System.Rtti,
+  basic, exec, UnitGC, HostServices,
   ArrayLib, StdLib, StrLib, SysLib, TimerLib,
   NumLib, DateTimeLib, JsonLib, ConfigLib, Base64Lib, ZipLib,
   PlatformInfoLib, HttpLib, AILib, RAGLib;
@@ -156,6 +158,13 @@ type
                         const ADefaults: array of String; const ADone: TInputDoneProc);
     procedure HostConfirm(const AMessage: String; const ADone: TConfirmDoneProc);
     procedure HostYield();
+    //The platform services the engine asks HostServices for. FireMonkey lives
+    //here, in the host that already has a window, rather than in StrLib.
+    procedure WireHostServices();
+    procedure HostPumpMessages();
+    procedure HostHandleOneMessage();
+    procedure HostSetClipboard(const AText: string);
+    function HostGetClipboard(): string;
     procedure InitEngine();
     procedure SetStatus(const Msg: String);
     procedure SetTitle();
@@ -251,6 +260,48 @@ begin
     end);
 end;
 
+procedure TfrmAppletRunner.HostPumpMessages();
+begin
+  Application.ProcessMessages();
+end;
+
+procedure TfrmAppletRunner.HostHandleOneMessage();
+begin
+  Application.HandleMessage();
+end;
+
+procedure TfrmAppletRunner.HostSetClipboard(const AText: string);
+var
+  Svc: IFMXClipboardService;
+begin
+  if TPlatformServices.Current.SupportsPlatformService(IFMXClipboardService,
+                                                       IInterface(Svc)) then
+    Svc.SetClipboard(TValue.From(AText))
+  else
+    //StrLib turns an exception here into ERR_CLIPBOARD_ERROR, which is what
+    //the missing platform service used to produce.
+    raise Exception.Create('no clipboard service on this platform');
+end;
+
+function TfrmAppletRunner.HostGetClipboard(): string;
+var
+  Svc: IFMXClipboardService;
+begin
+  if TPlatformServices.Current.SupportsPlatformService(IFMXClipboardService,
+                                                       IInterface(Svc)) then
+    Result := Svc.GetClipboard.AsString
+  else
+    raise Exception.Create('no clipboard service on this platform');
+end;
+
+procedure TfrmAppletRunner.WireHostServices();
+begin
+  HostServices.PumpMessages := HostPumpMessages;
+  HostServices.HandleOneMessage := HostHandleOneMessage;
+  HostServices.SetClipboardText := HostSetClipboard;
+  HostServices.GetClipboardText := HostGetClipboard;
+end;
+
 procedure TfrmAppletRunner.HostYield();
 begin
   Application.ProcessMessages();
@@ -294,6 +345,7 @@ begin
   if CanPauseForHostDialog then
     FEngine.ConfirmProc := HostConfirm;
   FEngine.YieldProc := HostYield;
+  WireHostServices();
 end;
 
 // ---------------------------------------------------------------------------

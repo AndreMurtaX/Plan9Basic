@@ -341,6 +341,7 @@
         <DCCReference Include="utils\TranslationManager.pas"/>
         <DCCReference Include="engine\utils\UnitGC.pas"/>
         <DCCReference Include="engine\utils\HandleRegistry.pas"/>
+        <DCCReference Include="engine\utils\HostServices.pas"/>
         <DCCReference Include="utils\BasicConsole.pas"/>
         <DCCReference Include="engine\Libs\ArrayLib.pas"/>
         <DCCReference Include="engine\Libs\DateTimeLib.pas"/>

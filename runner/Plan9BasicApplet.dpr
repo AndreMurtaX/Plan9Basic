@@ -36,6 +36,7 @@ uses
   UnitUtils in '..\engine\UnitUtils.pas',
   UnitGC in '..\engine\utils\UnitGC.pas',
   HandleRegistry in '..\engine\utils\HandleRegistry.pas',
+  HostServices in '..\engine\utils\HostServices.pas',
   ArrayLib in '..\engine\Libs\ArrayLib.pas',
   StdLib in '..\engine\Libs\StdLib.pas',
   StrLib in '..\engine\Libs\StrLib.pas',

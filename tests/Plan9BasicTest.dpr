@@ -46,6 +46,7 @@ uses
   basic in '..\engine\basic.pas',
   UnitGC in '..\engine\utils\UnitGC.pas',
   HandleRegistry in '..\engine\utils\HandleRegistry.pas',
+  HostServices in '..\engine\utils\HostServices.pas',
   ArrayLib in '..\engine\Libs\ArrayLib.pas',
   DateTimeLib in '..\engine\Libs\DateTimeLib.pas',
   StdLib in '..\engine\Libs\StdLib.pas',

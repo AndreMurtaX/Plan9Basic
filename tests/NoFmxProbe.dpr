@@ -7,11 +7,11 @@
   to be hardwired to an FMX dialog and was therefore impossible outside a
   windowed host.
 
-  It does not prove the engine links without FireMonkey. It cannot: dcc64 finds
-  the FMX .dcu files beside the RTL's, so an FMX reference resolves whatever the
-  search path says, and this program links 58 FMX units by way of StdLib and
-  StrLib. That boundary is checked by reading the uses clauses instead, in
-  tools\check-fmx-boundary.py.
+  Nothing FireMonkey is linked into it, and build-nofmx.ps1 checks that against
+  the linker's map rather than trusting a search path -- dcc64 finds the FMX
+  .dcu files beside the RTL's, so excluding the source directories never
+  excluded anything, and this program linked 58 of them until StdLib and StrLib
+  moved their message pump and clipboard to HostServices.
 
   Built by tests\build-nofmx.ps1.
 ******************************************************************************}
@@ -29,6 +29,7 @@ uses
   basic in '..\engine\basic.pas',
   UnitGC in '..\engine\utils\UnitGC.pas',
   HandleRegistry in '..\engine\utils\HandleRegistry.pas',
+  HostServices in '..\engine\utils\HostServices.pas',
   ArrayLib in '..\engine\Libs\ArrayLib.pas',
   DateTimeLib in '..\engine\Libs\DateTimeLib.pas',
   StdLib in '..\engine\Libs\StdLib.pas',

@@ -28,8 +28,6 @@ ENGINE = os.path.join(ROOT, 'engine')
 
 # Unit -> why it is still allowed to reach FireMonkey.
 KNOWN = {
-    'StdLib': 'processmessages() and handlemessage() call Application directly',
-    'StrLib': 'the clipboard functions go through IFMXClipboardService',
     'TimerLib': 'a GUI library by design, kept here because exec.pas needs it',
 }
 

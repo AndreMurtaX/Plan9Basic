@@ -329,6 +329,7 @@
         <DCCReference Include="..\engine\UnitUtils.pas"/>
         <DCCReference Include="..\engine\utils\UnitGC.pas"/>
         <DCCReference Include="..\engine\utils\HandleRegistry.pas"/>
+        <DCCReference Include="..\engine\utils\HostServices.pas"/>
         <DCCReference Include="..\engine\Libs\ArrayLib.pas"/>
         <DCCReference Include="..\engine\Libs\StdLib.pas"/>
         <DCCReference Include="..\engine\Libs\StrLib.pas"/>

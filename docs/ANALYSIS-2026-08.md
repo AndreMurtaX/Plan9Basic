@@ -1611,3 +1611,55 @@ one language — pages, or Pascal, or BASIC — and the dependency ran between t
 them. Coverage of each says nothing about the seam.
 
 It was found because somebody read a page and asked.
+
+---
+
+## 16. The engine asks for platform services instead of reaching for them
+
+Done 2026-08-19. §12 named this and left it: `StdLib` calling
+`Application.ProcessMessages` and `Application.HandleMessage`, `StrLib` going
+through `IFMXClipboardService`. Three imports, and the whole reason `engine/`
+could not link without a windowing framework.
+
+**The cost was not tidiness.** Those three imports pulled **58 FireMonkey units**
+into anything that wanted `left$()`. A console host, a service, a test runner,
+a future non-FMX front end: all of them paid for a clipboard they never asked
+for.
+
+**`engine/utils/HostServices.pas`** holds four procedure variables the host
+fills in — set the clipboard, get the clipboard, pump the message loop, wait
+for one message. `StdLib` and `StrLib` call them and no longer import FMX at
+all. The hosts implement them, which is where FireMonkey belongs: they already
+have a window.
+
+This is not the per-module global state Phase 2.2 removed, and the distinction
+matters. That was 35 libraries each holding their own copy of an engine
+reference, filled in at registration and wrong the moment a second engine
+existed. A clipboard is one resource belonging to the process, as is the message
+loop. One set, filled once.
+
+**Unassigned is an answer.** A headless runner has no event loop and no
+clipboard, so `processmessages()` returns 0 rather than 1, and `copytext$`
+reports `ERR_CLIPBOARD_ERROR` — which is exactly what the missing platform
+service produced before. `tests/suite/17_host_services.bas` pins that, because
+the failure it guards against is an access violation on a nil procedure.
+
+**Measured, not assumed:**
+
+| | before | after |
+|---|---:|---:|
+| engine units importing FMX | 3 | 1 |
+| FMX units linked into the console host | 58 | **0** |
+| console host binary | 10.2 MB | **3.16 MB** |
+
+The one remaining is `TimerLib`, which is a GUI library on purpose.
+
+**And the probe finally proves its claim.** `build-nofmx.ps1` spent months
+asserting the engine linked without FireMonkey, by a search path that excluded
+nothing (§12). It now compiles with `-GD` and reads the linker's map: a single
+`FMX.` line fails the run. Watched going red first — one `uses FMX.Forms` added
+to `NumLib` brings back all 58, which is its own confirmation that those 58 were
+StdLib and StrLib's doing and nothing else's.
+
+So the boundary now has two independent guards, one on the source and one on
+the link, and neither was trusted until it had been seen to fail.

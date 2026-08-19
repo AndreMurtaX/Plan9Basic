@@ -29,7 +29,7 @@ interface
 uses
   System.SysUtils, System.Types, System.Classes, System.StrUtils, System.Rtti,
   System.Character,
-  FMX.Types, FMX.Platform, FMX.Forms,
+  HostServices,
   exec, UnitUtils;
 
 procedure RegisterStrFuncs(Lib: TFunctionsDictionary);
@@ -1365,46 +1365,42 @@ begin
 end;
 
 function s_copytext(var Args: Array of TAsmData): TAsmData;
-var
-  Clipboard: IFMXClipboardService;
-  Data: TValue;
 begin
   lastError := ERR_NONE;
   Result.s := '';
 
-  if TPlatformServices.Current.SupportsPlatformService(IFMXClipboardService, IInterface(Clipboard)) then
+  //Asked of the host rather than of FireMonkey. Unassigned is the same answer
+  //the platform service gave when it was missing: no clipboard here.
+  if not Assigned(HostServices.SetClipboardText) then
   begin
-    try
-      Data := TValue.From(Args[0].s);
-      Clipboard.SetClipboard(Data);
-      Result.s := Args[0].s;
-    except
-      lastError := ERR_CLIPBOARD_ERROR;
-    end;
-  end
-  else
     lastError := ERR_CLIPBOARD_ERROR;
+    Exit();
+  end;
+
+  try
+    HostServices.SetClipboardText(Args[0].s);
+    Result.s := Args[0].s;
+  except
+    lastError := ERR_CLIPBOARD_ERROR;
+  end;
 end;
 
 function s_pastetext(var Args: Array of TAsmData): TAsmData;
-var
-  Clipboard: IFMXClipboardService;
-  Data: TValue;
 begin
   lastError := ERR_NONE;
   Result.s := '';
 
-  if TPlatformServices.Current.SupportsPlatformService(IFMXClipboardService, IInterface(Clipboard)) then
+  if not Assigned(HostServices.GetClipboardText) then
   begin
-    try
-      Data := Clipboard.GetClipboard;
-      Result.s := Data.AsString;
-    except
-      lastError := ERR_CLIPBOARD_ERROR;
-    end;
-  end
-  else
     lastError := ERR_CLIPBOARD_ERROR;
+    Exit();
+  end;
+
+  try
+    Result.s := HostServices.GetClipboardText();
+  except
+    lastError := ERR_CLIPBOARD_ERROR;
+  end;
 end;
 
 // word$@$n$ - Extract word at position from delimited string

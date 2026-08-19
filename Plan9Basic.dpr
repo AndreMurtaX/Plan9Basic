@@ -12,6 +12,7 @@ uses
   TranslationManager in 'utils\TranslationManager.pas',
   UnitGC in 'engine\utils\UnitGC.pas',
   HandleRegistry in 'engine\utils\HandleRegistry.pas',
+  HostServices in 'engine\utils\HostServices.pas',
   BasicConsole in 'utils\BasicConsole.pas',
   ArrayLib in 'engine\Libs\ArrayLib.pas',
   DateTimeLib in 'engine\Libs\DateTimeLib.pas',
