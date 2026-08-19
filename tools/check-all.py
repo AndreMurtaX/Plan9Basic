@@ -31,7 +31,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, 'tools')
 RUNNER = os.path.join(ROOT, 'tests', 'bin', 'Plan9BasicTest.exe')
 
-APPLETS = ['Examples', 'Website/assets/examples', 'Demos']
+APPLETS = ['Examples', 'Website/assets/examples', 'Demos',
+           'runner/assets/examples']
 
 
 def tool(name, *args):

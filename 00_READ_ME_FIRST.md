@@ -26,10 +26,23 @@ rather than a `submodule update`.
 ### Where a change belongs
 
 Everything is in this tree, so a change is finished when it compiles and the
-suites are green here. The split that used to make that untrue -- an
-`engine/` commit that had to be pushed and then have its pointer bumped in two
-consumers, or the applet runner would quietly keep building the previous commit
--- is gone.
+suites are green here. The split that used to make that untrue — an `engine/`
+commit that had to be pushed and then have its pointer bumped in two consumers,
+or the applet runner would quietly keep building the previous commit — is gone.
+
+There are two applications and one library set:
+
+| Path | What it is |
+|---|---|
+| `Plan9Basic.dpr` | the IDE: editor, output, file manager |
+| `runner/` | the applet runner: a minimal FMX host, one form, no editor |
+| `engine/` | the interpreter and the non-GUI libraries, shared by both |
+| `Libs/` | the IDE's libraries, `Libs/GUI/` included |
+| `tests/` | the headless suites, which link `engine/` and `Libs/` directly |
+
+The runner was its own repository until 2026-08-19, and pulled `engine/` in as a
+submodule of its own. Both applications now build from the same working tree, so
+an engine change reaches them together or not at all.
 
 `engine/` still means something, even though it no longer means a repository
 boundary: it is the part meant to run without a windowing system driving it,
@@ -162,6 +175,8 @@ FMX libraries. See [tests/README.md](tests/README.md).
 |------|-------------|
 | `Plan9Basic.dpr` | **Main project file** - The interpreter/IDE application |
 | `UnitMain.pas` | Main form with editor, output, and file manager |
+| `runner/Plan9BasicApplet.dpr` | The applet runner: the same engine in a host with no editor |
+| `runner/AppletRunner.pas` | Its one form — see [runner/README.md](runner/README.md) |
 
 > **Note**: Currently there is a single executable that serves as both the interpreter engine and the development environment (IDE).
 
