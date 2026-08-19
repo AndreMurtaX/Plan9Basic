@@ -98,3 +98,6 @@ __pycache__/
 
 # Assembled by tools/package-site.py for upload. Never committed.
 dist/
+
+# Written by the IDE running with --selftest.
+bin/

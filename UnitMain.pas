@@ -116,6 +116,26 @@ type
     FThemes: array[TColorTheme] of TThemeColors;
     FConsole: TBasicConsole;
 
+    // --- Self-test ---------------------------------------------------------
+    // Run with --selftest and the IDE loads a program, runs it, checks its own
+    // console and exits with a verdict.
+    //
+    // The applet runner got this first (ANALYSIS 24) and it is worth more here:
+    // the IDE is the thing on the download page, it is the largest of the two
+    // hosts, and until now nothing exercised it at all. It is also the host
+    // still running the VM on its interface thread, which is a difference from
+    // the runner worth having covered rather than assumed.
+    FSelfTest: Boolean;
+    FSelfTestTimer: TTimer;
+    FSelfTestStarted: Boolean;
+    FSelfTestElapsed: Integer;
+    //Accumulated as it appears, not read at the end. The console can be
+    //cleared out from under a running program: when the translations finish
+    //downloading, the IDE reprints its welcome block and calls CmdCls to do it.
+    //The first run of this test failed for exactly that reason and passed on
+    //every run afterwards, because by then the file was cached.
+    FSelfTestSeen: String;
+
     // Search & Replace controls (created at runtime)
     FLayoutSearchBar: TLayout;
     FRectSearchBackground: TRectangle;
@@ -221,6 +241,7 @@ type
     procedure CmdNew();
     procedure CmdList(const Args: string);
     procedure CmdRun();
+    procedure SelfTestTick(Sender: TObject);
     procedure CmdLoad(const Filename: string);
     procedure CmdSave(const Filename: string);
     procedure CmdFiles();
@@ -450,10 +471,22 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
+var
+  SelfTestArg: Integer;
 begin
   {$IF Defined(DEBUG) and Defined(MSWINDOWS)}
   ReportMemoryLeaksOnShutdown := True;
   {$ENDIF}
+
+  // ---- Self-test ----
+  // FindCmdLineSwitch strips one switch character, so --selftest would reach it
+  // as -selftest and never match. Read the parameters directly.
+  FSelfTest := False;
+  for SelfTestArg := 1 to ParamCount do
+    if SameText(ParamStr(SelfTestArg), '--selftest') or
+       SameText(ParamStr(SelfTestArg), '-selftest') or
+       SameText(ParamStr(SelfTestArg), '/selftest') then
+      FSelfTest := True;
 
   // Initialize collections
   FProgram := TStringList.Create;
@@ -477,6 +510,17 @@ begin
   // values and _() falls back to the key name — EnsureRequiredFiles() will
   // download the file in the background and reload the manager when done.
   LanguageManager := TTranslationManager.Create(System.IOUtils.TPath.Combine(GetAppPath(), 'Translations.ini'));
+
+  //Started last, so everything above it exists before the first tick.
+  if FSelfTest then
+  begin
+    FSelfTestStarted := False;
+    FSelfTestElapsed := 0;
+    FSelfTestTimer := TTimer.Create(Self);
+    FSelfTestTimer.Interval := 250;
+    FSelfTestTimer.OnTimer := SelfTestTick;
+    FSelfTestTimer.Enabled := True;
+  end;
 
   // Platform-specific adjustments
   AdjustForPlatform();
@@ -2546,6 +2590,103 @@ begin
     FConsole.AddCodeLine(FProgram[I]);
 
   PrintReady();
+end;
+
+//A program that exercises the pieces the IDE is made of, and says so in its
+//own output. Deliberately small: this checks that the host works, not that the
+//language does -- 387 assertions and 225 applets already cover that.
+const
+  SELFTEST_PROGRAM =
+    'PRINTLN "p9b-selftest begin"' + sLineBreak +
+    'LET a = 6 * 7' + sLineBreak +
+    'IF a = 42 THEN' + sLineBreak +
+    '  PRINTLN "  PASS arithmetic"' + sLineBreak +
+    'END IF' + sLineBreak +
+    'LET s$ = ucase$("plan9")' + sLineBreak +
+    'IF s$ = "PLAN9" THEN' + sLineBreak +
+    '  PRINTLN "  PASS strings"' + sLineBreak +
+    'END IF' + sLineBreak +
+    'LET f# = form#("selftest", 200, 150)' + sLineBreak +
+    'LET b# = button#(f#, "ok", 10, 10, 80, 30)' + sLineBreak +
+    'IF PntToNum(b#) <> 0 THEN' + sLineBreak +
+    '  PRINTLN "  PASS gui controls"' + sLineBreak +
+    'END IF' + sLineBreak +
+    'LET freed = button_free(b#)' + sLineBreak +
+    'IF freed = 1 THEN' + sLineBreak +
+    '  PRINTLN "  PASS free reports success"' + sLineBreak +
+    'END IF' + sLineBreak +
+    'LET p = instr(os_name$(), "n")' + sLineBreak +
+    'IF p >= -1 THEN' + sLineBreak +
+    '  PRINTLN "  PASS instr answers a position"' + sLineBreak +
+    'END IF' + sLineBreak +
+    'PRINTLN "p9b-selftest end"' + sLineBreak +
+    'END';
+
+procedure TfrmMain.SelfTestTick(Sender: TObject);
+var
+  Report: TStringList;
+  Text, Verdict: String;
+  Code, Wanted: Integer;
+begin
+  Inc(FSelfTestElapsed, FSelfTestTimer.Interval);
+
+  if not FSelfTestStarted then
+  begin
+    //One tick's grace so the window and the engine are up first.
+    FSelfTestStarted := True;
+    FProgram.Text := SELFTEST_PROGRAM;
+    CmdRun();
+    Exit();
+  end;
+
+  FSelfTestSeen := FSelfTestSeen + FConsole.Lines.Text;
+  Text := FSelfTestSeen;
+  //CmdRun returns only when the program has finished, because this host still
+  //runs the VM on its interface thread. The wait is here so a change to that
+  //cannot turn a hang into a pass.
+  if (Pos('p9b-selftest end', Text) = 0) and (FSelfTestElapsed < 30000) then
+    Exit();
+
+  FSelfTestTimer.Enabled := False;
+
+  Wanted := 5;
+  Code := 0;
+  if Pos('p9b-selftest end', Text) = 0 then
+  begin
+    Verdict := 'FAIL - the program did not finish within 30s';
+    Code := 1;
+  end
+  else
+  begin
+    Code := 0;
+    Verdict := 'OK - the IDE compiled and ran a program, and its console agrees';
+    if (Pos('PASS arithmetic', Text) = 0) or
+       (Pos('PASS strings', Text) = 0) or
+       (Pos('PASS gui controls', Text) = 0) or
+       (Pos('PASS free reports success', Text) = 0) or
+       (Pos('PASS instr answers a position', Text) = 0) then
+    begin
+      Verdict := 'FAIL - not all ' + IntToStr(Wanted) + ' checks reported PASS';
+      Code := 1;
+    end;
+  end;
+
+  Report := TStringList.Create();
+  try
+    Report.Add(Verdict);
+    Report.Add('--- state ---');
+    Report.Add('  started      : ' + BoolToStr(FSelfTestStarted, True));
+    Report.Add('  elapsed ms   : ' + IntToStr(FSelfTestElapsed));
+    Report.Add('  program lines: ' + IntToStr(FProgram.Count));
+    Report.Add('  console lines: ' + IntToStr(FConsole.Lines.Count));
+    Report.Add('--- console ---');
+    Report.AddStrings(FConsole.Lines);
+    Report.SaveToFile(System.IOUtils.TPath.Combine(
+      System.IOUtils.TPath.GetDirectoryName(ParamStr(0)), 'ide-selftest.out'));
+  finally
+    Report.Free();
+  end;
+  Halt(Code);
 end;
 
 procedure TfrmMain.CmdRun();
