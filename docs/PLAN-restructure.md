@@ -309,11 +309,45 @@ All of it is inert. With no marshaller installed `CallNative` calls straight
 through, which is what the sites did before, and the suites and the no-FMX probe
 confirm nothing moved.
 
-**What remains** is the flip: setting the flag in the 101 GUI libraries, a host
-that runs `ExecuteProgram` on a worker thread and installs a marshaller, and
-proving it on a device. Staged deliberately — the seam is worth having on its
-own and is testable in a way the flip is not, and the flip is where a mistake
-costs a hung application rather than a failed assertion.
+The flags are in as well, 2026-08-19: 96 units say `True`, 20 say `False`, and
+every one states it rather than defaulting — `Fn` is a local record whose other
+fields were never assigned, so an unstated field is stack garbage and a stray
+`True` marshals a call that must not be.
+
+### What the flip still requires, and why it was not attempted
+
+Reading the run path turned up more than a worker thread. The VM would be
+entered from **two directions**, and only one of them has a seam.
+
+**Output writes to a UI object.** `ExecuteProgram(FOutputMemo.Lines)` hands the
+engine the memo's own `Lines`, and every `PRINT` appends to it. From a worker
+that is a data race on every line of output.
+
+**Timers re-enter the VM from the UI thread.** `TimerLib` calls
+`ExecuteUserFunction` from `OnTimer`, which fires on the UI thread. With the VM
+on a worker, the UI thread would enter the VM while the worker is already
+inside it.
+
+**So does every control callback.** `ControlCommon.RunCallback` runs a BASIC
+function from an FMX event, on the UI thread, for all 405 dispatchers.
+
+**And the re-entry guard is not thread-safe.** `UnitGC.GlobalCallbackBusy` is a
+plain Boolean with no lock. It stops a callback firing inside a callback on one
+thread and does nothing across two.
+
+That is the real shape: the seam built here marshals **VM → UI**, and the flip
+also needs **UI → VM**, which is a queue rather than a `Synchronize` — a
+callback cannot run where it fires, it has to be handed to the VM's thread and
+waited for. Plus a lock on the guard.
+
+Naming these is the point of stopping. Each one fails as a hang or a corrupted
+memo rather than a red assertion, which is precisely the failure this project
+spent a session chasing on Android, and the device was not reachable when the
+attempt came up.
+
+**Sequenced after Phases 3 and 4.** Nothing else in the plan depends on it, the
+site can describe the language without it, and it is the one change that wants a
+device in hand and a clear head rather than the end of a long pass.
 
 ### 2.4 What that unlocks
 
