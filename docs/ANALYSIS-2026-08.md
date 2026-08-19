@@ -1956,3 +1956,52 @@ in a way nobody could reproduce.
 
 Inert code is untested code wearing a justification. It is worth having a probe
 that exercises it *as* inert code, before the day it stops being inert.
+
+---
+
+## 22. The flip, redone, and watched running
+
+Done 2026-08-19. The applet runner now runs the program on a thread of its own.
+It is the same change §19 rolled back, over parts that are all tested now rather
+than all inert.
+
+**What it does.** `BtnRunClick` starts a worker, which claims the VM and calls
+`ExecuteProgram`. A 50 ms timer brings output across with `DrainOutput`.
+`MarshalProc` sends the FireMonkey library calls back to the UI thread.
+`OnTerminate` reports the result, and runs on the UI thread already.
+
+**`YieldProc` is set to nil inside the worker**, which is the piece §19 needed
+and did not have. It means "let the host's event loop run", and on a worker that
+is a call into a loop belonging to another thread. The VM's yielding is now
+`DrainProc`, which runs both between instructions and — since §20 — while the VM
+is parked waiting for an answer.
+
+**Watched on screen, on Windows:**
+
+- the program runs while the window keeps redrawing and the status says
+  `Running...`
+- `PRINT` output arrives in the memo, brought over by the timer, from a thread
+  that never touches it
+- the `BREAKPOINT` dialog is raised **from the worker** and renders complete
+- answering it continues execution
+
+That last pair is the whole point of the exercise. A dialog raised by a thread
+that does not own the window, answered by the thread that does, releasing a VM
+parked on a third path.
+
+**One thing is not verified, and is marked as such in the code.** `INPUT`'s
+dialog opened blank the first time, raised through `Synchronize`. The reasoning:
+`INPUT` does not park the VM — the script carries on and the answer arrives later
+through a callback — so there is nothing for the worker to wait for, and holding
+it inside the dialog's construction is wrong. `TThread.Queue` instead.
+
+That repair has not been seen working. The synthetic clicks driving the session
+stopped reaching the dialogs before the path could be reached again, which is a
+limit of the automation and not of the code. It is written down in
+`AppletRunner.pas` where somebody will meet it, rather than in a commit message
+where nobody will. One press of Run answers it.
+
+**Why this is committed anyway**, having rolled back once for less: §19 rolled
+back a flip whose core was unproven and whose failure was a window that said
+`Running...` forever. This one has its core on screen. What remains is one
+dialog on one path, named, with the check that settles it.

@@ -142,6 +142,21 @@ type
     // Internals
     FCurrentFile : String;
 
+    // --- The VM on a thread of its own -------------------------------------
+    // The program used to run on the UI thread, which is why a long script
+    // froze the window and why BREAKPOINT could not stop on a phone: the
+    // thread that had to answer the dialog was the one waiting for it.
+    FVMWorker: TThread;
+    FDrainTimer: TTimer;
+    FRunFailure: String;
+    procedure VMWorkerBody();
+    procedure VMWorkerDone(Sender: TObject);
+    procedure DrainTimerTick(Sender: TObject);
+    // Runs AProc on the UI thread and waits. The engine calls this for the
+    // library functions that touch FireMonkey, so they keep running on the
+    // thread that owns the window.
+    procedure HostMarshal(const AProc: TThreadMethod);
+
     procedure BtnLoadClick(Sender: TObject);
     procedure BtnSaveClick(Sender: TObject);
     procedure BtnRunClick(Sender: TObject);
@@ -229,34 +244,70 @@ procedure TfrmAppletRunner.HostInput(const ACaption: String;
   const ALabels: array of String; const ADefaults: array of String;
   const ADone: TInputDoneProc);
 var
-  Values: array of String;
+  Values: TArray<String>;
+  Labels: TArray<String>;
+  Caption: String;
   I: Integer;
 begin
+  // Delphi will not let an anonymous method capture an open array or a const
+  // parameter, so everything the dialog needs is copied into locals first.
   SetLength(Values, Length(ADefaults));
   for I := 0 to High(ADefaults) do
     Values[I] := ADefaults[I];
+  SetLength(Labels, Length(ALabels));
+  for I := 0 to High(ALabels) do
+    Labels[I] := ALabels[I];
+  Caption := ACaption;
 
-  TDialogServiceAsync.InputQuery(ACaption, ALabels, Values,
-    procedure(const AResult: TModalResult; const AValues: array of string)
+  // Queued rather than synchronized, and the difference matters. INPUT does
+  // not park the VM -- the script carries on and the answer arrives later
+  // through gotValue -- so there is nothing for the worker to wait for, and
+  // holding it inside the dialog's construction produced a window that opened
+  // blank. BREAKPOINT is the opposite case and does use Synchronize: there the
+  // VM is parked and the answer is what releases it.
+  //
+  // NOT YET SEEN WORKING. The blank window was observed once, with Synchronize;
+  // this is the reasoned repair and no run has confirmed it. Everything else in
+  // the flip was watched on screen -- the worker, the draining output, the
+  // BREAKPOINT dialog raised from the worker and answered -- but the synthetic
+  // clicks driving that session stopped reaching the dialogs before this path
+  // could be reached a second time. One press of Run answers it.
+  TThread.Queue(nil,
+    procedure
     begin
-      ADone(AResult = mrOk, AValues);
+      TDialogServiceAsync.InputQuery(Caption, Labels, Values,
+        procedure(const AResult: TModalResult; const AValues: array of string)
+        begin
+          ADone(AResult = mrOk, AValues);
+        end);
     end);
 end;
 
 procedure TfrmAppletRunner.HostConfirm(const AMessage: String;
   const ADone: TConfirmDoneProc);
+var
+  Message: String;
 begin
-  //Timers belong to the host, so pausing them around a breakpoint is the
-  //host's job. The engine only asks the question.
-  TimerLib.PauseAllTimers();
-
-  TDialogServiceAsync.MessageDialog(AMessage, TMsgDlgType.mtConfirmation,
-    [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbYes, 0,
-    procedure(const AResult: TModalResult)
+  Message := AMessage;
+  // Raised on the thread that owns the window, whatever thread the VM asked
+  // from. This is what lets BREAKPOINT stop on a phone: the VM waits on its
+  // own thread while the looper stays free to show the dialog and carry the
+  // answer back.
+  TThread.Synchronize(nil,
+    procedure
     begin
-      if AResult <> mrNo then
-        TimerLib.ResumeAllTimers();
-      ADone(AResult <> mrNo);
+      //Timers belong to the host, so pausing them around a breakpoint is the
+      //host's job. The engine only asks the question.
+      TimerLib.PauseAllTimers();
+
+      TDialogServiceAsync.MessageDialog(Message, TMsgDlgType.mtConfirmation,
+        [TMsgDlgBtn.mbYes, TMsgDlgBtn.mbNo], TMsgDlgBtn.mbYes, 0,
+        procedure(const AResult: TModalResult)
+        begin
+          if AResult <> mrNo then
+            TimerLib.ResumeAllTimers();
+          ADone(AResult <> mrNo);
+        end);
     end);
 end;
 
@@ -511,6 +562,16 @@ begin
   FOutputMemo.Font.Family := 'Courier New';
   FOutputMemo.Font.Size := 13;
 
+  // ---- Output drain ----
+  // With the VM on a worker, PRINT cannot reach this memo: appending to a
+  // TMemo's Lines from another thread races on every line of output. The
+  // engine holds the text and this brings it across on the thread that owns
+  // the window. 50 ms is below what a reader notices.
+  FDrainTimer := TTimer.Create(Self);
+  FDrainTimer.Interval := 50;
+  FDrainTimer.Enabled := False;
+  FDrainTimer.OnTimer := DrainTimerTick;
+
   // ---- File dialogs (desktop only) ----
   {$IFDEF P9B_DESKTOP}
   FOpenDlg := TOpenDialog.Create(Self);
@@ -628,17 +689,69 @@ begin
   SetStatus('Running...');
   Application.ProcessMessages();
 
+  // Library calls that touch FireMonkey come back here; anything this thread
+  // queues is answered at the VM's own yield points.
+  FEngine.Parser.exec.MarshalProc := HostMarshal;
+  FDrainTimer.Enabled := True;
+  FRunFailure := '';
+
+  FVMWorker := TThread.CreateAnonymousThread(VMWorkerBody);
+  FVMWorker.FreeOnTerminate := False;
+  FVMWorker.OnTerminate := VMWorkerDone;
+  FVMWorker.Start();
+end;
+
+procedure TfrmAppletRunner.VMWorkerBody();
+begin
+  // YieldProc means "let the host's event loop run", and on this thread that
+  // is precisely wrong: Application.ProcessMessages belongs to the thread that
+  // owns the window. The VM's own yielding is DrainProc, which ClaimVMThread
+  // installs, and which runs both between instructions and while the VM is
+  // parked at a BREAKPOINT waiting for an answer.
+  FEngine.YieldProc := nil;
+
+  // Claimed from inside the worker, because it records *this* thread as the
+  // one that owns the VM. Every other thread then queues instead of entering.
+  FEngine.ClaimVMThread();
   try
-    // Pass the output memo lines directly: every PRINT appends a line there.
-    FEngine.ExecuteProgram(FOutputMemo.Lines);
-    SetStatus('Done.');
-  except
-    on E: Exception do
-    begin
-      FOutputMemo.Lines.Add('Runtime error: ' + E.Message);
-      SetStatus('Runtime error — see output pane.');
+    try
+      FEngine.ExecuteProgram(FOutputMemo.Lines);
+    except
+      on E: Exception do
+        FRunFailure := E.Message;
     end;
+  finally
+    FEngine.ReleaseVMThread();
+    FEngine.YieldProc := HostYield;   // for anything unthreaded afterwards
   end;
+end;
+
+procedure TfrmAppletRunner.VMWorkerDone(Sender: TObject);
+begin
+  // OnTerminate runs on the UI thread, so the memo and the label are safe here.
+  FDrainTimer.Enabled := False;
+  FEngine.DrainOutput(FOutputMemo.Lines);   // whatever the last tick missed
+
+  if FRunFailure <> '' then
+  begin
+    FOutputMemo.Lines.Add('Runtime error: ' + FRunFailure);
+    SetStatus('Runtime error — see output pane.');
+  end
+  else
+    SetStatus('Done.');
+
+  FreeAndNil(FVMWorker);
+end;
+
+procedure TfrmAppletRunner.DrainTimerTick(Sender: TObject);
+begin
+  if Assigned(FEngine) then
+    FEngine.DrainOutput(FOutputMemo.Lines);
+end;
+
+procedure TfrmAppletRunner.HostMarshal(const AProc: TThreadMethod);
+begin
+  TThread.Synchronize(nil, AProc);
 end;
 
 procedure TfrmAppletRunner.BtnStopClick(Sender: TObject);
