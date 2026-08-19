@@ -161,13 +161,30 @@ Seven units registering 39 `p9_*` and `skill_*` functions. They appear in no
 three pages. The public documentation describes a library nobody can obtain,
 which is why `check-all.py` is red on a fresh clone.
 
-Two honest endings. **Finish**: register the units, add them to the projects,
-test them, and the documentation becomes true. **Retire**: the three pages go
-with the code, and the analysis records what existed and why it stopped.
+**Retired, on the author's decision, 2026-08-19.**
 
-This is the one item in Phase 1 that is a product judgement rather than a
-correction, and it needs an answer before the website phase can describe the
-library surface.
+The measurement that informed it: 6,969 lines across seven units, 97 registered
+functions, never versioned, and — checked rather than assumed — they still
+compile. Adding them to the test project builds at 145,323 lines with no error.
+So "finish it" was cheaper than it looked, and the reason not to take it is not
+cost.
+
+It is that compiling is not working. `SQLiteLib` compiled perfectly and was
+dead, which item 1.5 discovered the same day, and `RAGLib` with it. These seven
+units have never been exercised by anything at all, so finishing means finding
+out what else is wrong in code nobody has run.
+
+Three pages were retired with the decision: `P9EngineLib.md`, `SkillLib.md` and
+`IntelligenceEngine_Spec.md`. `AILib.md` and `RAGLib.md` stay, because both
+describe libraries that ship. Nothing outside `New docs/AI/` linked to the
+three, so no navigation broke.
+
+The code stays where it was, still excluded by `.gitignore`, and the pages stay
+in git history. Retiring is not deleting.
+
+With them gone, `check-docs.py` is green against a tree that has no
+`Libs/AI/archive/` — which is what a clone is, and which is what had been
+keeping `check-all.py` red for everyone but this machine.
 
 ---
 

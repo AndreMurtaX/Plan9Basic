@@ -66,7 +66,7 @@ and the inconsistency is written down as intended. Held in
 `tools/gen-doc-examples.py` under `PARKED`, with the reason beside it, so the
 generated suite shows it rather than filing it away.
 
-### `Libs/AI/archive/` is documented and not distributed
+### `Libs/AI/archive/` is documented and not distributed — retired 2026-08-19
 
 Seven units — `IntelligenceEngine`, `P9EngineLib`, `PromptAssembler`,
 `RAGDocGenerator`, `SkillEngine`, `SkillLib`, `ToolExecutor` — register 39
@@ -595,6 +595,24 @@ keyed to position would have gone red the moment anything moved.
 
 That closes the question this loop has been circling: not whether the
 documentation is right, but whether anyone other than this machine can find out.
+
+### Resolved 2026-08-19: Libs/AI/archive/ retired
+
+The author chose to retire rather than finish. `P9EngineLib.md`, `SkillLib.md`
+and `IntelligenceEngine_Spec.md` are gone from `New docs/AI/`; `AILib.md` and
+`RAGLib.md` remain, describing libraries that ship. The code is untouched and
+still ignored, and the pages remain in history.
+
+What decided it was not cost. The seven units compile — adding them to the test
+project builds clean — so finishing was cheap in the obvious sense. But
+`SQLiteLib` compiled too, and was dead, and so was `RAGLib`; both were found the
+same day by running them rather than reading them. Seven units that nothing has
+ever exercised are seven units whose defects are all still ahead.
+
+`check-all.py` is now green against a tree without `Libs/AI/archive/`, which is
+what every clone is.
+
+*(the original entry follows)*
 
 ### Accumulated for review: Libs/AI/archive/ is not in any build
 
