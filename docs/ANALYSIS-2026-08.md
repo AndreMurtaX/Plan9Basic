@@ -1431,3 +1431,46 @@ contradicted reading it: a check is not evidence until it has been seen to
 fail. This one was never watched going red, so nobody learned that it could
 not. Writing the negative test — adding an FMX import to a unit that has none,
 watching the ratchet catch it — took under a minute.
+
+---
+
+## 13. The same rot, in the checker next door
+
+Found 2026-08-19, in Phase 4.2, looking for pages that still describe the
+language as it was before Phase 1.
+
+`tools/check-doc-blocks.py` keeps a baseline of code blocks that are known not
+to compile, so that a page's existing problems do not drown a new one. Five of
+its twenty-two entries named files that no longer exist — `SkillLib.md`,
+`P9EngineLib.md`, `IntelligenceEngine_Spec.md`, all retired with the AI archive
+in 1.6.
+
+The checker *noticed*. It computed the set of known failures that no longer
+occur, printed them, and said what to do about it — and then returned zero.
+
+So the notice went out on every run and nothing acted on it, which is the same
+failure as §12 wearing different clothes: §12 was a check that could not go red,
+this was a check that chose not to. Worse here, because `check-all.py` reports
+each check by its last line of output, and the last line of this one was a dead
+filename. The summary table read:
+
+```
+ok    code blocks    New docs/AI/SkillLib.md
+```
+
+A verdict slot containing the name of a file that had been deleted, on a green
+run. It had looked like that for as long as the archive had been gone, and it
+went unread every time because the `ok` in front of it answered the question.
+
+**Fixed:** a stale entry now fails, and the report says which of them lost their
+file, since that is the usual cause. The baseline went from 22 entries to 17.
+
+**The general shape**, now that it has happened twice in two days: a list that
+excuses things has to fail when it stops describing the tree, not merely mention
+it. `check-fmx-boundary.py` was built with that property on the same day and it
+was not a coincidence — it was the lesson from §12, applied once and then found
+to be needed again ten metres away.
+
+Worth asking of the rest: `tools/gen-doc-examples.py` parks claims the engine
+contradicts, `check-links.py` treats deliberately-absent targets separately.
+Both are exception lists. Neither has been watched going red.

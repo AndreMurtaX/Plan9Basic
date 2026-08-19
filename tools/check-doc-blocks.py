@@ -190,14 +190,21 @@ def main():
                 rel, why = key.split('#', 1)
                 print(f'  {rel}')
                 print(f'    {why}')
+        # A baseline entry for a failure that no longer happens has stopped
+        # describing the tree, and the usual cause is that the file was deleted,
+        # so the exception now excuses nothing. Left as a warning it rots: five
+        # of these outlived the retired AI archive, the run stayed green, and
+        # check-all printed one of the dead filenames where a verdict belongs.
         if gone:
             print(f'\n{len(gone)} known failure(s) no longer occur — '
                   f'rerun with --baseline to record that:\n')
             for key in gone:
-                print(f'  {key.split("#", 1)[0]}')
+                rel = key.split('#', 1)[0]
+                lost = '' if os.path.exists(os.path.join(ROOT, rel)) else '   (the file is gone)'
+                print(f'  {rel}{lost}')
         if not new and not gone:
             print(f'\nOK - {len(seen)} known failure(s), nothing new')
-        return 1 if new else 0
+        return 1 if (new or gone) else 0
     finally:
         if keep:
             print(f'\nkept: {work}')

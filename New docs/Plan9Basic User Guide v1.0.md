@@ -1183,7 +1183,8 @@ UNWATCH         ' Clear all watched variables
 
 ### BREAKPOINT - Pause and Inspect
 
-BREAKPOINT pauses your program and shows a dialog:
+BREAKPOINT pauses your program and shows a dialog — on Windows, Linux and
+macOS. On Android and iOS it prints instead of pausing; see below.
 
 ```basic
 TRACEON
@@ -1206,6 +1207,24 @@ When the program reaches each BREAKPOINT:
 1. A dialog box appears showing the message and variable values
 2. Click "Yes" to continue running
 3. Click "No" to stop the program
+
+**On Android and iOS, it does not pause.** Waiting for a dialog means waiting
+for an answer that arrives on the same loop the script is running on, so the
+wait would never end and the system would kill the application in about three
+seconds. There, BREAKPOINT writes its message and the variables it was given to
+the trace output, and execution carries straight on.
+
+Everything the statement was going to *show* you, you still get:
+
+```
+[BREAKPOINT] checkpoint reached (Line 52)
+             bpcount = 3
+             bpname$ = "frame dump"
+```
+
+What you lose is the stop. The engine decides this for itself rather than
+trusting the host to have checked, so an applet shipped to a phone cannot hang
+on a breakpoint somebody left in.
 
 ### Debugging Quick Reference
 

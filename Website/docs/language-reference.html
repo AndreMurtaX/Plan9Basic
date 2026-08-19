@@ -1577,7 +1577,7 @@ x = <span class="num">10</span>
 x = <span class="num">10</span> : y = <span class="num">20</span> : total = x + y
 <span class="kw">UNWATCH</span>
 
-<span class="cmt">' BREAKPOINT - pause and inspect</span>
+<span class="cmt">' BREAKPOINT - pause and inspect (desktop); dump and continue (mobile)</span>
 <span class="kw">BREAKPOINT</span> <span class="str">"Before calc"</span>, x, y
 
 <span class="kw">TRACEOFF</span></pre></div></div>
@@ -1592,8 +1592,9 @@ x = <span class="num">10</span> : y = <span class="num">20</span> : total = x + 
 <tr><td><code>DUMP "label"</code></td><td>Show all global variables</td></tr>
 <tr><td><code>WATCH var1, var2</code></td><td>Monitor specific variables</td></tr>
 <tr><td><code>UNWATCH</code></td><td>Stop monitoring</td></tr>
-<tr><td><code>BREAKPOINT "msg", vars</code></td><td>Pause and show values</td></tr>
+<tr><td><code>BREAKPOINT "msg", vars</code></td><td>Pause and show values &mdash; see the note below on Android and iOS</td></tr>
 </table>
+<p><strong>BREAKPOINT does not pause on Android or iOS.</strong> Pausing means waiting for an answer from a dialog, and on those platforms the dialog is delivered by the very loop the script is running on: waiting for it would wait forever, and the system would kill the application in a few seconds. So there the statement prints its message and the variables it was given to the trace output and execution carries straight on. Everything <code>BREAKPOINT</code> was going to <em>show</em> you, you still get; what you lose is the stop. The engine decides this itself rather than trusting the host, so an applet built for mobile cannot hang on a breakpoint left in by accident.</p>
 </section>
 
 <!-- ============================================================ -->
