@@ -14,6 +14,8 @@ made it.
     the applets              the runner         do the files offered for download
     the links                check-links.py     does a link reach a file
     the fragments            check-anchors.py   does the #section name anything
+    the site's examples      check-site-examples  does the page hand out the
+                                                same program the repository has
 
 Everything here is read-only. The generators that write files --
 gen-doc-examples.py and check-doc-blocks.py --baseline -- are run by hand, since
@@ -70,6 +72,7 @@ def main():
         ('fmx boundary', tool('check-fmx-boundary.py'), False),
         ('site deps', tool('check-site-deps.py'), False),
         ('callbacks', tool('check-callbacks.py'), False),
+        ('site examples', tool('check-site-examples.py'), False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]

@@ -577,29 +577,6 @@ a:hover { text-shadow: 0 0 10px var(--glow-color); }
   color: var(--accent);
 }
 
-.btn-play {
-  font-family: var(--font-retro);
-  font-size: 0.45rem;
-  padding: 0.45rem 1.1rem;
-  border: 1px solid rgba(255,215,0,0.5);
-  background: rgba(255,215,0,0.08);
-  color: #ffd700;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  transition: all var(--transition);
-  border-radius: 3px;
-  letter-spacing: 0.5px;
-}
-.btn-play:hover {
-  background: rgba(255,215,0,0.18);
-  border-color: #ffd700;
-  box-shadow: 0 0 14px rgba(255,215,0,0.25);
-  color: #ffe44d;
-  text-shadow: 0 0 8px rgba(255,215,0,0.5);
-  transform: none;
-}
-
 .game-badge-advanced {
   background: rgba(255,95,86,0.15); color: #ff5f56; border: 1px solid rgba(255,95,86,0.3);
   font-family: var(--font-mono); font-size: 0.55rem; padding: 0.2rem 0.5rem;
@@ -1075,7 +1052,6 @@ const games = [
     difficulty: 'advanced',
     description: 'Slide numbered tiles to combine them and reach 2048. Deceptively simple, endlessly addictive.',
     controls: '&#128187; Arrow keys &nbsp;|&nbsp; &#128241; Swipe',
-    url: 'https://plan9basic.com/docs/examples/games/2048',
     code: `' ============================================================
 '  2048 - The Addictive Puzzle Game
 '  Written in Plan9Basic
@@ -1102,7 +1078,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Game Area Constants ---
 let GAME_W = 450
@@ -1365,7 +1341,7 @@ SpawnTile()
 '  KEYBOARD EVENT HANDLER (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$) local moved
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$) local moved
   ' R = restart
   if keyChar$ = "r" then
     ResetGame()
@@ -1899,7 +1875,6 @@ end function
     difficulty: 'advanced',
     description: 'Classic arcade shooter — rotate your ship, thrust forward, and blast asteroids before they blast you.',
     controls: '&#128187; Arrow keys + Space &nbsp;|&nbsp; &#128241; On-screen buttons',
-    url: 'https://plan9basic.com/docs/examples/games/asteroids',
     code: `' ============================================================
 '  ASTEROIDS - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -1933,7 +1908,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Game Area Constants ---
 let GAME_W = 800
@@ -2289,7 +2264,7 @@ form_show(frm#)
 '  KEYBOARD EVENT HANDLERS (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   ' Left=37, Right=39, Up=38, Down=40
   if keyCode = 37 then
     let rotateL = 1
@@ -2312,7 +2287,7 @@ function OnKeyDown(sender#, keyCode, keyChar$)
   end if
 end function
 
-function OnKeyUp(sender#, keyCode, keyChar$)
+function OnKeyUp(sender#, keyCode, keyChar$, shiftState$)
   if keyCode = 37 then
     let rotateL = 0
   end if
@@ -2813,7 +2788,6 @@ end function
     difficulty: 'advanced',
     description: 'Move your paddle to bounce the ball and smash all the colored bricks. Score varies by row color.',
     controls: '&#128187; Mouse / Arrow keys &nbsp;|&nbsp; &#128241; Touch drag',
-    url: 'https://plan9basic.com/docs/examples/games/breakout',
     code: `' ============================================================
 '  BREAKOUT - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -3084,7 +3058,7 @@ form_show(frm#)
 '  KEYBOARD EVENT HANDLERS (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   ' Left arrow = 37, Right arrow = 39, Up arrow = 38
   if keyCode = 37 then
     let moveL = 1
@@ -3097,7 +3071,7 @@ function OnKeyDown(sender#, keyCode, keyChar$)
   end if
 end function
 
-function OnKeyUp(sender#, keyCode, keyChar$)
+function OnKeyUp(sender#, keyCode, keyChar$, shiftState$)
   if keyCode = 37 then
     let moveL = 0
   end if
@@ -3356,7 +3330,6 @@ end function
     difficulty: 'advanced',
     description: 'Tap to flap through an endless gauntlet of pipes. One button, brutal difficulty, total addiction.',
     controls: '&#128187; Space / Click &nbsp;|&nbsp; &#128241; Tap',
-    url: 'https://plan9basic.com/docs/examples/games/flappy_bird',
     code: `' ============================================================
 '  FLAPPY BIRD - A Modern Classic
 '  Written in Plan9Basic
@@ -3382,7 +3355,7 @@ let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if (PLATFORM$ = "Android") or (PLATFORM$ = "iOS") then IS_MOBILE = 1
 ' Also check with instr in case os_name$ returns "Android 14" etc.
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Game Area Constants ---
 let GAME_W = 400
@@ -3692,7 +3665,7 @@ form_show(frm#)
 '  KEYBOARD EVENT HANDLER (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   ' Up=38, Space detected via keyChar$
   if running = 0 then
     if keyCode = 38 then
@@ -3914,7 +3887,6 @@ end function
     difficulty: 'advanced',
     description: 'Guide your spacecraft to a safe landing — manage thrust, rotation, and fuel. Physics simulation with full scoring.',
     controls: '&#128187; Arrow keys + Z/X &nbsp;|&nbsp; &#128241; On-screen buttons',
-    url: 'https://plan9basic.com/docs/examples/games/lunar_lander',
     code: `' ============================================================
 '  LUNAR LANDER - A Classic Simulation Game
 '  Written in Plan9Basic
@@ -3974,11 +3946,11 @@ IF (PLATFORM$ = "Android") OR (PLATFORM$ = "iOS") THEN IS_MOBILE = 1
 LET SOUND_BASE$ = "https://plan9basic.com/assets/sounds/lunar/"
 LET SOUND_EXT$ = "mp3"
 PRINTLN "Current platform: "; PLATFORM$
-IF InStr(PLATFORM$, "Windows") <> 0 THEN SOUND_EXT$ = "wav"
+IF InStr(PLATFORM$, "Windows") >= 0 THEN SOUND_EXT$ = "wav"
 PRINTLN "Testing Windows: "; InStr(PLATFORM$, "Windows")
-IF InStr(PLATFORM$, "Linux") <> 0 THEN SOUND_EXT$ = "ogg"
+IF InStr(PLATFORM$, "Linux") >= 0 THEN SOUND_EXT$ = "ogg"
 PRINTLN "Testing Linux: "; InStr(PLATFORM$, "Linux")
-IF InStr(PLATFORM$, "Android") <> 0 THEN SOUND_EXT$ = "ogg"
+IF InStr(PLATFORM$, "Android") >= 0 THEN SOUND_EXT$ = "ogg"
 PRINTLN "Testing Android: "; InStr(PLATFORM$, "Android")
 ' --- Game Area Constants ---
 LET GAME_W = 480
@@ -4971,7 +4943,6 @@ END FUNCTION
     difficulty: 'advanced',
     description: 'Enemy missiles rain down — click to fire counter-missiles and protect your cities. Waves get faster.',
     controls: '&#128187; Mouse click &nbsp;|&nbsp; &#128241; Tap',
-    url: 'https://plan9basic.com/docs/examples/games/missile_command',
     code: `' ============================================================
 '  MISSILE COMMAND - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -5003,7 +4974,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Audio Format Detection ---
 '     Windows → WAV  (Win32 native, hardware-accelerated)
@@ -5013,9 +4984,9 @@ if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE
 '     iOS     → MP3  (AVFoundation universal support)
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/missile/"
 let SOUND_EXT$ = "mp3"
-if instr(PLATFORM$, "Windows") > 0 then SOUND_EXT$ = "wav"
-if instr(PLATFORM$, "Linux")   > 0 then SOUND_EXT$ = "ogg"
-if instr(PLATFORM$, "Android") > 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
+if instr(PLATFORM$, "Linux") >= 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Android") >= 0 then SOUND_EXT$ = "ogg"
 
 ' --- Game Area Constants ---
 let GAME_W = 800
@@ -5892,7 +5863,6 @@ end function
     difficulty: 'advanced',
     description: 'Eat food to grow longer, avoid walls and your own tail. A timeless classic reimagined in Plan9Basic.',
     controls: '&#128187; Arrow keys &nbsp;|&nbsp; &#128241; Swipe',
-    url: 'https://plan9basic.com/docs/examples/games/snake',
     code: `' ============================================================
 '  SNAKE - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -5917,7 +5887,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 ' --- Audio Format Detection ---
 '     Windows → WAV  (Win32 native, hardware-accelerated)
 '     Linux   → OGG  (GStreamer native, open-source royalty-free)
@@ -5926,9 +5896,9 @@ if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE
 '     iOS     → MP3  (AVFoundation universal support)
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/snake/"
 let SOUND_EXT$ = "mp3"
-if instr(PLATFORM$, "Windows") > 0 then SOUND_EXT$ = "wav"
-if instr(PLATFORM$, "Linux")   > 0 then SOUND_EXT$ = "ogg"
-if instr(PLATFORM$, "Android") > 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
+if instr(PLATFORM$, "Linux") >= 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Android") >= 0 then SOUND_EXT$ = "ogg"
 ' --- Label Text Alignment Constants ---
 let TEXT_ALIGN_CENTER = 0
 let TEXT_ALIGN_LEADING = 1
@@ -6594,7 +6564,6 @@ end function
     difficulty: 'advanced',
     description: 'Destroy alien waves before they reach the ground. Move your ship, fire lasers, dodge bombs.',
     controls: '&#128187; Arrow keys + Space &nbsp;|&nbsp; &#128241; Touch buttons',
-    url: 'https://plan9basic.com/docs/examples/games/space_invaders',
     code: `' ============================================================
 '  SPACE INVADERS - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -6626,7 +6595,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if (PLATFORM$ = "Android") or (PLATFORM$ = "iOS") then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Audio Format Detection ---
 '     Windows → WAV  (Win32 native, hardware-accelerated)
@@ -6636,9 +6605,9 @@ if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE
 '     iOS     → MP3  (AVFoundation universal support)
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/invaders/"
 let SOUND_EXT$ = "mp3"
-if instr(PLATFORM$, "Windows") > 0 then SOUND_EXT$ = "wav"
-if instr(PLATFORM$, "Linux")   > 0 then SOUND_EXT$ = "ogg"
-if instr(PLATFORM$, "Android") > 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
+if instr(PLATFORM$, "Linux") >= 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Android") >= 0 then SOUND_EXT$ = "ogg"
 
 ' --- Game Area Constants ---
 let GAME_W = 640
@@ -7977,7 +7946,6 @@ end function
     difficulty: 'advanced',
     description: 'Moles pop up randomly — click or tap them before they hide. Golden moles are worth extra. 30-second frenzy!',
     controls: '&#128187; Mouse click &nbsp;|&nbsp; &#128241; Tap',
-    url: 'https://plan9basic.com/docs/examples/games/whack_a_mole',
     code: `' ============================================================
 '  WHACK-A-MOLE - A Classic Arcade Game
 '  Written in Plan9Basic
@@ -8008,7 +7976,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Game Area Constants ---
 let GAME_W = 600
@@ -8311,7 +8279,7 @@ form_show(frm#)
 '  EVENT HANDLERS
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   if keyCode = 38 then
     if running = 0 then
       if gameOver = 1 then
@@ -9335,10 +9303,7 @@ function renderCards() {
       <div class="game-card-description">${game.description}</div>
       <div class="game-card-footer">
         <span class="tag tag-games">arcade &middot; game</span>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
-          <button class="btn-view-code">&#9112; Code</button>
-          <a class="btn-play" href="${game.url}" target="_blank" rel="noopener">&#9654; PLAY</a>
-        </div>
+        <button class="btn-view-code">&#9112; Code</button>
       </div>
     `;
 
