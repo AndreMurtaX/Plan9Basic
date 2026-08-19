@@ -1146,6 +1146,8 @@ end;
 // media_player#@ - Create a new media player
 function p_media_player(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Player: TBasMediaPlayer;
 begin
   ClearError();
@@ -1155,6 +1157,10 @@ begin
 
   try
     Player := TBasMediaPlayer.Create();
+    //The only object here with no place in a form tree: TBasMediaPlayer is a
+    //plain TObject created without a parent, so there is nothing to walk up.
+    //It keeps the module-level engine, and is the one exception to the
+    //parent-chain rule the other libraries follow.
     Player.BasicEngine := ModuleEngine;
     Player.ConsoleOutput := ModuleOutput;
     GC.Add(Player, MEDIA_GC_TAG);
@@ -1480,6 +1486,8 @@ end;
 // media_control#@#nnnn - Create a media player control
 function p_media_control(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Parent: TFmxObject;
   Control: TBasMediaPlayerControl;
   X, Y, W, H: Single;
@@ -1506,6 +1514,10 @@ begin
     Control.Position.Y := Y;
     Control.Width := W;
     Control.Height := H;
+    //The only object here with no place in a form tree: TBasMediaPlayer is a
+    //plain TObject created without a parent, so there is nothing to walk up.
+    //It keeps the module-level engine, and is the one exception to the
+    //parent-chain rule the other libraries follow.
     Control.BasicEngine := ModuleEngine;
     Control.ConsoleOutput := ModuleOutput;
     Result.p := Control;

@@ -652,6 +652,8 @@ end;
 // label#(parent#) - Create a new label with parent (empty text)
 function p_label_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Lbl: TBasLabel;
   ParentObj: TFmxObject;
 begin
@@ -664,8 +666,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
-    Lbl.BasicEngine := ModuleEngine;
-    Lbl.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Lbl, Eng, Outp) then
+    begin
+      Lbl.BasicEngine := Eng;
+      Lbl.ConsoleOutput := Outp;
+    end;
     Lbl.Parent := ParentObj;
 
     // Set sensible defaults
@@ -692,6 +699,8 @@ end;
 // label#(parent#, text$) - Create with text
 function p_label_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Lbl: TBasLabel;
   ParentObj: TFmxObject;
 begin
@@ -704,8 +713,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
-    Lbl.BasicEngine := ModuleEngine;
-    Lbl.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Lbl, Eng, Outp) then
+    begin
+      Lbl.BasicEngine := Eng;
+      Lbl.ConsoleOutput := Outp;
+    end;
     Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;
@@ -731,6 +745,8 @@ end;
 // label#(parent#, text$, x, y) - Create with text and position
 function p_label_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Lbl: TBasLabel;
   ParentObj: TFmxObject;
 begin
@@ -743,8 +759,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
-    Lbl.BasicEngine := ModuleEngine;
-    Lbl.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Lbl, Eng, Outp) then
+    begin
+      Lbl.BasicEngine := Eng;
+      Lbl.ConsoleOutput := Outp;
+    end;
     Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;
@@ -772,6 +793,8 @@ end;
 // label#(parent#, text$, x, y, width, height) - Create with text, position and size
 function p_label_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Lbl: TBasLabel;
   ParentObj: TFmxObject;
 begin
@@ -784,8 +807,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
-    Lbl.BasicEngine := ModuleEngine;
-    Lbl.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Lbl, Eng, Outp) then
+    begin
+      Lbl.BasicEngine := Eng;
+      Lbl.ConsoleOutput := Outp;
+    end;
     Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;

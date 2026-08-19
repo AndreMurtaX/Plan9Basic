@@ -634,6 +634,8 @@ end;
 
 function p_progressbar_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   pb: TBasProgressBar;
   ParentObj: TFmxObject;
 begin
@@ -645,8 +647,13 @@ begin
 
   try
     pb := TBasProgressBar.Create(nil);
-    pb.BasicEngine := ModuleEngine;
-    pb.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(pb, Eng, Outp) then
+    begin
+      pb.BasicEngine := Eng;
+      pb.ConsoleOutput := Outp;
+    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       pb.Parent := TCommonCustomForm(Args[0].p)
@@ -670,6 +677,8 @@ end;
 
 function p_progressbar_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   pb: TBasProgressBar;
   ParentObj: TFmxObject;
 begin
@@ -681,8 +690,13 @@ begin
 
   try
     pb := TBasProgressBar.Create(nil);
-    pb.BasicEngine := ModuleEngine;
-    pb.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(pb, Eng, Outp) then
+    begin
+      pb.BasicEngine := Eng;
+      pb.ConsoleOutput := Outp;
+    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       pb.Parent := TCommonCustomForm(Args[0].p)

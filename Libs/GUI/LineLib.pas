@@ -829,6 +829,8 @@ end;
 // Line creation functions
 function p_line_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   L: TBasLine;
 begin
   Result.n := 0;
@@ -840,8 +842,13 @@ begin
   try
     L := TBasLine.Create(nil);
     L.Parent := TFmxObject(Args[0].p);
-    L.BasicEngine := ModuleEngine;
-    L.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(L, Eng, Outp) then
+    begin
+      L.BasicEngine := Eng;
+      L.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(L);
 //    if Assigned(UnitGC.GC) then
@@ -856,6 +863,8 @@ end;
 
 function p_line_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   L: TBasLine;
 begin
   Result.n := 0;
@@ -869,8 +878,13 @@ begin
     L.Parent := TFmxObject(Args[0].p);
     L.Width := Args[1].n;
     L.Height := Args[2].n;
-    L.BasicEngine := ModuleEngine;
-    L.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(L, Eng, Outp) then
+    begin
+      L.BasicEngine := Eng;
+      L.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(L);
 //    if Assigned(UnitGC.GC) then
@@ -885,6 +899,8 @@ end;
 
 function p_line_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   L: TBasLine;
 begin
   Result.n := 0;
@@ -901,8 +917,13 @@ begin
     L.Position.Y := Args[2].n;
     L.Width := Args[3].n;
     L.Height := Args[4].n;
-    L.BasicEngine := ModuleEngine;
-    L.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(L, Eng, Outp) then
+    begin
+      L.BasicEngine := Eng;
+      L.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(L);
 //    if Assigned(UnitGC.GC) then

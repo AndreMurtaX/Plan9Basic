@@ -1,4 +1,4 @@
-unit ColorAnimationLib;
+﻿unit ColorAnimationLib;
 
 {******************************************************************************
   ColorAnimationLib - Color Animation Library for Plan9Basic
@@ -81,7 +81,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Ani,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, ControlCommon;
 
 type
   TBasColorAnimation = class(TColorAnimation)
@@ -365,7 +365,9 @@ end;
 // =============================================================================
 
 function p_colorani_new(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasColorAnimation;
 begin
   Result.n := 0;
@@ -379,8 +381,13 @@ begin
     // Only the internal TFloatAnimation objects need Create(nil) to avoid double-free
     Ani := TBasColorAnimation.Create(TComponent(Args[0].p));
     Ani.Parent := TFmxObject(Args[0].p);
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     //UnitGC.GC.Add<TBasColorAnimation>(Ani, IntToStr(NativeInt(Ani)));
 
@@ -392,7 +399,9 @@ begin
 end;
 
 function p_colorani_new_named(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasColorAnimation;
 begin
   Result.n := 0;
@@ -407,8 +416,13 @@ begin
     Ani := TBasColorAnimation.Create(TComponent(Args[0].p));
     Ani.Parent := TFmxObject(Args[0].p);
     Ani.Name := Args[1].s;
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     //UnitGC.GC.Add<TBasColorAnimation>(Ani, IntToStr(NativeInt(Ani)));
 

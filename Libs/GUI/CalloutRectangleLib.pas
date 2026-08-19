@@ -885,6 +885,8 @@ end;
 
 function p_callout_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   C: TBasCalloutRectangle;
 begin
   Result.n := 0;
@@ -897,8 +899,13 @@ begin
   try
     C := TBasCalloutRectangle.Create(nil);
     C.Parent := TFmxObject(Args[0].p);
-    C.BasicEngine := ModuleEngine;
-    C.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(C, Eng, Outp) then
+    begin
+      C.BasicEngine := Eng;
+      C.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(C);
 //    if Assigned(UnitGC.GC) then
@@ -913,6 +920,8 @@ end;
 
 function p_callout_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   C: TBasCalloutRectangle;
 begin
   Result.n := 0;
@@ -927,8 +936,13 @@ begin
     C.Parent := TFmxObject(Args[0].p);
     C.Width := Args[1].n;
     C.Height := Args[2].n;
-    C.BasicEngine := ModuleEngine;
-    C.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(C, Eng, Outp) then
+    begin
+      C.BasicEngine := Eng;
+      C.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(C);
 //    if Assigned(UnitGC.GC) then
@@ -943,6 +957,8 @@ end;
 
 function p_callout_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   C: TBasCalloutRectangle;
 begin
   Result.n := 0;
@@ -959,8 +975,13 @@ begin
     C.Position.Y := Args[2].n;
     C.Width := Args[3].n;
     C.Height := Args[4].n;
-    C.BasicEngine := ModuleEngine;
-    C.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(C, Eng, Outp) then
+    begin
+      C.BasicEngine := Eng;
+      C.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(C);
 //    if Assigned(UnitGC.GC) then

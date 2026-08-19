@@ -755,6 +755,8 @@ end;
 
 function p_radiobutton_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RB: TBasRadioButton;
   ParentObj: TFmxObject;
 begin
@@ -772,8 +774,13 @@ begin
 
     RB := TBasRadioButton.Create(nil);
     RB.Parent := ParentObj;
-    RB.BasicEngine := ModuleEngine;
-    RB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RB, Eng, Outp) then
+    begin
+      RB.BasicEngine := Eng;
+      RB.ConsoleOutput := Outp;
+    end;
     RB.Position.X := 0;
     RB.Position.Y := 0;
     RB.Width := 120;
@@ -793,6 +800,8 @@ end;
 
 function p_radiobutton_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RB: TBasRadioButton;
   ParentObj: TFmxObject;
 begin
@@ -810,8 +819,13 @@ begin
 
     RB := TBasRadioButton.Create(nil);
     RB.Parent := ParentObj;
-    RB.BasicEngine := ModuleEngine;
-    RB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RB, Eng, Outp) then
+    begin
+      RB.BasicEngine := Eng;
+      RB.ConsoleOutput := Outp;
+    end;
     RB.Text := Args[1].s;
     RB.Position.X := 0;
     RB.Position.Y := 0;
@@ -832,6 +846,8 @@ end;
 
 function p_radiobutton_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RB: TBasRadioButton;
   ParentObj: TFmxObject;
 begin
@@ -849,8 +865,13 @@ begin
 
     RB := TBasRadioButton.Create(nil);
     RB.Parent := ParentObj;
-    RB.BasicEngine := ModuleEngine;
-    RB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RB, Eng, Outp) then
+    begin
+      RB.BasicEngine := Eng;
+      RB.ConsoleOutput := Outp;
+    end;
     RB.Position.X := Args[1].n;
     RB.Position.Y := Args[2].n;
     RB.Width := Args[3].n;
@@ -870,6 +891,8 @@ end;
 
 function p_radiobutton_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RB: TBasRadioButton;
   ParentObj: TFmxObject;
 begin
@@ -887,8 +910,13 @@ begin
 
     RB := TBasRadioButton.Create(nil);
     RB.Parent := ParentObj;
-    RB.BasicEngine := ModuleEngine;
-    RB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RB, Eng, Outp) then
+    begin
+      RB.BasicEngine := Eng;
+      RB.ConsoleOutput := Outp;
+    end;
     RB.Text := Args[1].s;
     RB.Position.X := Args[2].n;
     RB.Position.Y := Args[3].n;

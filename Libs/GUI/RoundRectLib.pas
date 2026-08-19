@@ -1093,6 +1093,8 @@ end;
 // roundrect#@# - Create roundrect with parent only
 function p_roundrect_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RoundRect: TBasRoundRect;
 begin
   Result.n := 0;
@@ -1104,8 +1106,13 @@ begin
   try
     RoundRect := TBasRoundRect.Create(nil);
     RoundRect.Parent := TFmxObject(Args[0].p);
-    RoundRect.BasicEngine := ModuleEngine;
-    RoundRect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RoundRect, Eng, Outp) then
+    begin
+      RoundRect.BasicEngine := Eng;
+      RoundRect.ConsoleOutput := Outp;
+    end;
     RoundRect.HitTest := True;  // Enable mouse events by default
 
     Result.p := Pointer(RoundRect);
@@ -1125,6 +1132,8 @@ end;
 // roundrect#@#nn - Create roundrect with parent and size (width, height)
 function p_roundrect_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RoundRect: TBasRoundRect;
 begin
   Result.n := 0;
@@ -1138,8 +1147,13 @@ begin
     RoundRect.Parent := TFmxObject(Args[0].p);
     RoundRect.Width := Args[1].n;
     RoundRect.Height := Args[2].n;
-    RoundRect.BasicEngine := ModuleEngine;
-    RoundRect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RoundRect, Eng, Outp) then
+    begin
+      RoundRect.BasicEngine := Eng;
+      RoundRect.ConsoleOutput := Outp;
+    end;
     RoundRect.HitTest := True;
 
     Result.p := Pointer(RoundRect);
@@ -1159,6 +1173,8 @@ end;
 // roundrect#@#nnnn - Create roundrect with parent, position, and size
 function p_roundrect_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   RoundRect: TBasRoundRect;
 begin
   Result.n := 0;
@@ -1174,8 +1190,13 @@ begin
     RoundRect.Position.Y := Args[2].n;
     RoundRect.Width := Args[3].n;
     RoundRect.Height := Args[4].n;
-    RoundRect.BasicEngine := ModuleEngine;
-    RoundRect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(RoundRect, Eng, Outp) then
+    begin
+      RoundRect.BasicEngine := Eng;
+      RoundRect.ConsoleOutput := Outp;
+    end;
     RoundRect.HitTest := True;
 
     Result.p := Pointer(RoundRect);

@@ -812,6 +812,8 @@ end;
 
 function p_listbox_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   LB: TBasListBox;
 begin
   Result.n := 0;
@@ -827,8 +829,13 @@ begin
     LB.Position.Y := 0;
     LB.Width := 150;
     LB.Height := 200;
-    LB.BasicEngine := ModuleEngine;
-    LB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(LB, Eng, Outp) then
+    begin
+      LB.BasicEngine := Eng;
+      LB.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(LB);
 
@@ -845,6 +852,8 @@ end;
 
 function p_listbox_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   LB: TBasListBox;
 begin
   Result.n := 0;
@@ -860,8 +869,13 @@ begin
     LB.Position.Y := Args[2].n;
     LB.Width := Args[3].n;
     LB.Height := Args[4].n;
-    LB.BasicEngine := ModuleEngine;
-    LB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(LB, Eng, Outp) then
+    begin
+      LB.BasicEngine := Eng;
+      LB.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(LB);
 

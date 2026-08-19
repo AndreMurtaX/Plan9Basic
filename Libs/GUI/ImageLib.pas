@@ -794,6 +794,8 @@ end;
 
 function p_image_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Img: TBasImage;
 begin
   Result.n := 0;
@@ -806,8 +808,13 @@ begin
   try
     Img := TBasImage.Create(nil);
     Img.Parent := TFmxObject(Args[0].p);
-    Img.BasicEngine := ModuleEngine;
-    Img.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Img, Eng, Outp) then
+    begin
+      Img.BasicEngine := Eng;
+      Img.ConsoleOutput := Outp;
+    end;
 
     Result.p := Img;
 
@@ -824,6 +831,8 @@ end;
 
 function p_image_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Img: TBasImage;
 begin
   Result.n := 0;
@@ -838,8 +847,13 @@ begin
     Img.Parent := TFmxObject(Args[0].p);
     Img.Width := Args[1].n;
     Img.Height := Args[2].n;
-    Img.BasicEngine := ModuleEngine;
-    Img.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Img, Eng, Outp) then
+    begin
+      Img.BasicEngine := Eng;
+      Img.ConsoleOutput := Outp;
+    end;
 
     Result.p := Img;
 
@@ -856,6 +870,8 @@ end;
 
 function p_image_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Img: TBasImage;
 begin
   Result.n := 0;
@@ -872,8 +888,13 @@ begin
     Img.Position.Y := Args[2].n;
     Img.Width := Args[3].n;
     Img.Height := Args[4].n;
-    Img.BasicEngine := ModuleEngine;
-    Img.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Img, Eng, Outp) then
+    begin
+      Img.BasicEngine := Eng;
+      Img.ConsoleOutput := Outp;
+    end;
 
     Result.p := Img;
 

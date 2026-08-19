@@ -1,4 +1,4 @@
-unit BitmapListAnimationLib;
+﻿unit BitmapListAnimationLib;
 
 {******************************************************************************
   BitmapListAnimationLib - Bitmap List Animation Library for Plan9Basic
@@ -87,7 +87,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Controls, FMX.Ani, FMX.Graphics, FMX.Objects,
-  basic, exec, UnitGC, UnitUtils, HandleRegistry, GuiUtils;
+  basic, exec, UnitGC, UnitUtils, HandleRegistry, GuiUtils, ControlCommon;
 
 type
   TBasBitmapListAnimation = class(TBitmapListAnimation)
@@ -325,7 +325,9 @@ end;
 // =============================================================================
 
 function p_bmplistani_new(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasBitmapListAnimation;
 begin
   Result.n := 0;
@@ -340,8 +342,13 @@ begin
     Ani := TBasBitmapListAnimation.Create(TComponent(Args[0].p));
     Ani.Parent := TFmxObject(Args[0].p);
     Ani.PropertyName := 'Bitmap';  // Default property for TImage
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     //UnitGC.GC.Add<TBasBitmapListAnimation>(Ani, IntToStr(NativeInt(Ani)));
 
@@ -353,7 +360,9 @@ begin
 end;
 
 function p_bmplistani_new_named(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasBitmapListAnimation;
 begin
   Result.n := 0;
@@ -369,8 +378,13 @@ begin
     Ani.Parent := TFmxObject(Args[0].p);
     Ani.Name := Args[1].s;
     Ani.PropertyName := 'Bitmap';
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     //UnitGC.GC.Add<TBasBitmapListAnimation>(Ani, IntToStr(NativeInt(Ani)));
 

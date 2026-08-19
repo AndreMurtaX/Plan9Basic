@@ -94,7 +94,14 @@ type
     Wraps a TForm and provides event bridging to Plan9Basic user functions.
     Each event stores the name of a BASIC function to call when triggered.
   ****************************************************************************}
-  TBasForm = class(TForm)
+  //IEngineHost is how a control finds the engine it belongs to: it walks up its
+  //parents until something answers, and the form is what answers. Before this,
+  //every library kept a ModuleEngine unit variable and copied it into each
+  //object at construction, which made the engine per-process.
+  //
+  //TComponent implements IInterface without reference counting, so holding this
+  //interface does not affect the form's lifetime.
+  TBasForm = class(TForm, IEngineHost)
   private
     // Event callback function names (stored in lowercase+signature format)
     FOnShowFunc: String;
@@ -190,6 +197,10 @@ type
     // Engine references
     property BasicEngine: TBasicEngine read FBasicEngine write FBasicEngine;
     property ConsoleOutput: TStrings read FConsoleOutput write FConsoleOutput;
+
+    //IEngineHost
+    function GetEngine: TBasicEngine;
+    function GetOutput: TStrings;
 
     // Close behavior
     property AllowClose: Boolean read FAllowClose write FAllowClose;
@@ -375,6 +386,16 @@ begin
   Result := False;
   if Assigned(FBasicEngine) then
     Result := FBasicEngine.UserFunctionExists(FuncName);
+end;
+
+function TBasForm.GetEngine: TBasicEngine;
+begin
+  Result := FBasicEngine;
+end;
+
+function TBasForm.GetOutput: TStrings;
+begin
+  Result := FConsoleOutput;
 end;
 
 procedure TBasForm.ExecuteCallback(const FuncSignature: String; const Args: array of TAsmData);
@@ -940,7 +961,9 @@ end;
 
 // form#() - Create a new form
 function p_form_new(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Frm: TBasForm;
 begin
   Result.n := 0;
@@ -949,8 +972,13 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    Frm.BasicEngine := ModuleEngine;
-    Frm.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Frm, Eng, Outp) then
+    begin
+      Frm.BasicEngine := Eng;
+      Frm.ConsoleOutput := Outp;
+    end;
 
     // Set sensible defaults
     Frm.Caption := 'Plan9Basic Form';
@@ -976,7 +1004,9 @@ end;
 
 // form#(caption$) - Create a new form with caption
 function p_form_new_caption(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Frm: TBasForm;
 begin
   Result.n := 0;
@@ -985,8 +1015,13 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    Frm.BasicEngine := ModuleEngine;
-    Frm.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Frm, Eng, Outp) then
+    begin
+      Frm.BasicEngine := Eng;
+      Frm.ConsoleOutput := Outp;
+    end;
 
     Frm.Caption := Args[0].s;
     Frm.Width := 640;
@@ -1011,7 +1046,9 @@ end;
 
 // form#(caption$, width, height) - Create with caption and size
 function p_form_new_full(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Frm: TBasForm;
 begin
   Result.n := 0;
@@ -1020,8 +1057,13 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    Frm.BasicEngine := ModuleEngine;
-    Frm.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Frm, Eng, Outp) then
+    begin
+      Frm.BasicEngine := Eng;
+      Frm.ConsoleOutput := Outp;
+    end;
 
     Frm.Caption := Args[0].s;
     Frm.Width := Trunc(Args[1].n);

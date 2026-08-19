@@ -1468,6 +1468,8 @@ end;
 
 function p_stringgrid_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   SG: TBasStringGrid;
 begin
   Result.n := 0;
@@ -1483,8 +1485,13 @@ begin
     SG.Width := 300;
     SG.Height := 200;
     SG.RowCount := 0;
-    SG.BasicEngine := ModuleEngine;
-    SG.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(SG, Eng, Outp) then
+    begin
+      SG.BasicEngine := Eng;
+      SG.ConsoleOutput := Outp;
+    end;
     Result.P := Pointer(SG);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then
@@ -1499,6 +1506,8 @@ end;
 
 function p_stringgrid_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   SG: TBasStringGrid;
 begin
   Result.n := 0;
@@ -1514,8 +1523,13 @@ begin
     SG.Width := Args[3].n;
     SG.Height := Args[4].n;
     SG.RowCount := 0;
-    SG.BasicEngine := ModuleEngine;
-    SG.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(SG, Eng, Outp) then
+    begin
+      SG.BasicEngine := Eng;
+      SG.ConsoleOutput := Outp;
+    end;
     Result.P := Pointer(SG);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then

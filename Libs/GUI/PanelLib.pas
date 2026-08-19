@@ -933,6 +933,8 @@ end;
 // panel#(parent#) - Create a new panel with parent
 function p_panel_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Panel: TBasPanel;
   ParentObj: TFmxObject;
 begin
@@ -945,8 +947,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
-    Panel.BasicEngine := ModuleEngine;
-    Panel.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Panel, Eng, Outp) then
+    begin
+      Panel.BasicEngine := Eng;
+      Panel.ConsoleOutput := Outp;
+    end;
     Panel.Parent := ParentObj;
 
     // Set sensible defaults
@@ -973,6 +980,8 @@ end;
 // panel#(parent#, width, height) - Create with size
 function p_panel_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Panel: TBasPanel;
   ParentObj: TFmxObject;
 begin
@@ -985,8 +994,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
-    Panel.BasicEngine := ModuleEngine;
-    Panel.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Panel, Eng, Outp) then
+    begin
+      Panel.BasicEngine := Eng;
+      Panel.ConsoleOutput := Outp;
+    end;
     Panel.Parent := ParentObj;
 
     Panel.Width := Args[1].n;
@@ -1012,6 +1026,8 @@ end;
 // panel#(parent#, x, y, width, height) - Create with position and size
 function p_panel_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Panel: TBasPanel;
   ParentObj: TFmxObject;
 begin
@@ -1024,8 +1040,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
-    Panel.BasicEngine := ModuleEngine;
-    Panel.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Panel, Eng, Outp) then
+    begin
+      Panel.BasicEngine := Eng;
+      Panel.ConsoleOutput := Outp;
+    end;
     Panel.Parent := ParentObj;
 
     Panel.Position.X := Args[1].n;

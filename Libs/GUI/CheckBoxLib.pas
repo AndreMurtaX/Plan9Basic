@@ -740,6 +740,8 @@ end;
 
 function p_checkbox_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasCheckBox;
   ParentObj: TFmxObject;
 begin
@@ -757,8 +759,13 @@ begin
 
     CB := TBasCheckBox.Create(nil);
     CB.Parent := ParentObj;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
     CB.Position.X := 0;
     CB.Position.Y := 0;
     CB.Width := 120;
@@ -778,6 +785,8 @@ end;
 
 function p_checkbox_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasCheckBox;
   ParentObj: TFmxObject;
 begin
@@ -795,8 +804,13 @@ begin
 
     CB := TBasCheckBox.Create(nil);
     CB.Parent := ParentObj;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
     CB.Text := Args[1].s;
     CB.Position.X := 0;
     CB.Position.Y := 0;
@@ -817,6 +831,8 @@ end;
 
 function p_checkbox_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasCheckBox;
   ParentObj: TFmxObject;
 begin
@@ -834,8 +850,13 @@ begin
 
     CB := TBasCheckBox.Create(nil);
     CB.Parent := ParentObj;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
     CB.Position.X := Args[1].n;
     CB.Position.Y := Args[2].n;
     CB.Width := Args[3].n;
@@ -855,6 +876,8 @@ end;
 
 function p_checkbox_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasCheckBox;
   ParentObj: TFmxObject;
 begin
@@ -872,8 +895,13 @@ begin
 
     CB := TBasCheckBox.Create(nil);
     CB.Parent := ParentObj;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
     CB.Text := Args[1].s;
     CB.Position.X := Args[2].n;
     CB.Position.Y := Args[3].n;

@@ -250,10 +250,38 @@ layer around four thousand entry points.
 
 ### 2.2 Remove the per-module global state
 
-While it stands, two engine instances in one process are impossible, "BASIC
-inside BASIC" is unsafe, and running off the UI thread is closed off. The
-handle registry is the model: state that belongs to an instance lives with the
-instance.
+**Done 2026-08-19.** A control now finds its engine by walking up its parents to
+the form, which is what holds it. `ControlCommon.EngineOf` does the walk, and
+`TBasForm` answers it through a small `IEngineHost` interface — an interface
+rather than a class reference because `FormLib` already uses `ControlCommon`,
+and naming the class would close the circle.
+
+**87 construction sites across 34 units.** The shape was identical everywhere,
+which is why a sweep was possible at all:
+
+```pascal
+Btn.BasicEngine := ModuleEngine;      ->   if EngineOf(Btn, Eng, Outp) then
+Btn.ConsoleOutput := ModuleOutput;         begin
+                                             Btn.BasicEngine := Eng;
+                                             Btn.ConsoleOutput := Outp;
+                                           end;
+```
+
+Two cases needed the sweep adjusted, and both are worth naming.
+
+An **animation** is a `TComponent` with no `Parent` of its own — it attaches to
+a target rather than being a child of one — so its walk starts at the control it
+animates. Six units.
+
+A **media player** is a plain `TObject` created with no parent at all, and has
+no place in a form tree to walk. It keeps `ModuleEngine`, and is the single
+honest exception. The comment there says so, so the next person does not read it
+as an oversight.
+
+`gui/07_engine_by_parent.bas` proves it where it matters: a callback firing
+needs the engine to run the BASIC function, and the only place it can have come
+from is the form. One level down, two levels down, and through an animation's
+target.
 
 ### 2.3 Move the VM off the UI thread
 

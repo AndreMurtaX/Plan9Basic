@@ -754,6 +754,8 @@ end;
 
 function p_ellipse_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ellipse: TBasEllipse;
 begin
   Result.n := 0;
@@ -765,8 +767,13 @@ begin
   try
     Ellipse := TBasEllipse.Create(nil);
     Ellipse.Parent := TFmxObject(Args[0].p);
-    Ellipse.BasicEngine := ModuleEngine;
-    Ellipse.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Ellipse, Eng, Outp) then
+    begin
+      Ellipse.BasicEngine := Eng;
+      Ellipse.ConsoleOutput := Outp;
+    end;
     Ellipse.HitTest := True;
 
     Result.p := Pointer(Ellipse);
@@ -782,6 +789,8 @@ end;
 
 function p_ellipse_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ellipse: TBasEllipse;
 begin
   Result.n := 0;
@@ -795,8 +804,13 @@ begin
     Ellipse.Parent := TFmxObject(Args[0].p);
     Ellipse.Width := Args[1].n;
     Ellipse.Height := Args[2].n;
-    Ellipse.BasicEngine := ModuleEngine;
-    Ellipse.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Ellipse, Eng, Outp) then
+    begin
+      Ellipse.BasicEngine := Eng;
+      Ellipse.ConsoleOutput := Outp;
+    end;
     Ellipse.HitTest := True;
 
     Result.p := Pointer(Ellipse);
@@ -812,6 +826,8 @@ end;
 
 function p_ellipse_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ellipse: TBasEllipse;
 begin
   Result.n := 0;
@@ -827,8 +843,13 @@ begin
     Ellipse.Position.Y := Args[2].n;
     Ellipse.Width := Args[3].n;
     Ellipse.Height := Args[4].n;
-    Ellipse.BasicEngine := ModuleEngine;
-    Ellipse.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Ellipse, Eng, Outp) then
+    begin
+      Ellipse.BasicEngine := Eng;
+      Ellipse.ConsoleOutput := Outp;
+    end;
     Ellipse.HitTest := True;
 
     Result.p := Pointer(Ellipse);

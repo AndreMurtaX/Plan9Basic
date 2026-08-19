@@ -85,7 +85,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Ani, FMX.Graphics, FMX.Objects, FMX.Controls,
-  basic, exec, UnitGC, HandleRegistry;
+  basic, exec, UnitGC, HandleRegistry, ControlCommon;
 
 type
   TBasPathAnimation = class(TPathAnimation)
@@ -321,7 +321,9 @@ end;
 // =============================================================================
 
 function p_pathani_new(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasPathAnimation;
 begin
   Result.n := 0;
@@ -335,8 +337,13 @@ begin
     // Only the internal TFloatAnimation objects need Create(nil) to avoid double-free
     Ani := TBasPathAnimation.Create(TComponent(Args[0].p));
     Ani.Parent := TFmxObject(Args[0].p);
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     // Register with GC using NativeInt for 64-bit safety
     //UnitGC.GC.Add<TBasPathAnimation>(Ani, IntToStr(NativeInt(Ani)));
@@ -349,7 +356,9 @@ begin
 end;
 
 function p_pathani_new_named(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasPathAnimation;
 begin
   Result.n := 0;
@@ -364,8 +373,13 @@ begin
     Ani := TBasPathAnimation.Create(TComponent(Args[0].p));
     Ani.Parent := TFmxObject(Args[0].p);
     Ani.Name := Args[1].s;
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
 
     //UnitGC.GC.Add<TBasPathAnimation>(Ani, IntToStr(NativeInt(Ani)));
 

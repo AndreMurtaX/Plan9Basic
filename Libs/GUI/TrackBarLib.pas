@@ -824,6 +824,8 @@ end;
 
 function p_trackbar_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   tb: TBasTrackBar;
   ParentObj: TFmxObject;
 begin
@@ -835,8 +837,13 @@ begin
 
   try
     tb := TBasTrackBar.Create(nil);
-    tb.BasicEngine := ModuleEngine;
-    tb.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(tb, Eng, Outp) then
+    begin
+      tb.BasicEngine := Eng;
+      tb.ConsoleOutput := Outp;
+    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       tb.Parent := TCommonCustomForm(Args[0].p)
@@ -860,6 +867,8 @@ end;
 
 function p_trackbar_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   tb: TBasTrackBar;
   ParentObj: TFmxObject;
 begin
@@ -871,8 +880,13 @@ begin
 
   try
     tb := TBasTrackBar.Create(nil);
-    tb.BasicEngine := ModuleEngine;
-    tb.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(tb, Eng, Outp) then
+    begin
+      tb.BasicEngine := Eng;
+      tb.ConsoleOutput := Outp;
+    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       tb.Parent := TCommonCustomForm(Args[0].p)

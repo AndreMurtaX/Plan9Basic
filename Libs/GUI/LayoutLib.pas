@@ -961,6 +961,8 @@ end;
 // layout#(parent#) - Create a new layout with parent
 function p_layout_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Layout: TBasLayout;
   ParentObj: TFmxObject;
 begin
@@ -973,8 +975,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
-    Layout.BasicEngine := ModuleEngine;
-    Layout.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Layout, Eng, Outp) then
+    begin
+      Layout.BasicEngine := Eng;
+      Layout.ConsoleOutput := Outp;
+    end;
     Layout.Parent := ParentObj;
 
     // Set sensible defaults
@@ -1001,6 +1008,8 @@ end;
 // layout#(parent#, width, height) - Create with size
 function p_layout_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Layout: TBasLayout;
   ParentObj: TFmxObject;
 begin
@@ -1013,8 +1022,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
-    Layout.BasicEngine := ModuleEngine;
-    Layout.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Layout, Eng, Outp) then
+    begin
+      Layout.BasicEngine := Eng;
+      Layout.ConsoleOutput := Outp;
+    end;
     Layout.Parent := ParentObj;
 
     Layout.Width := Args[1].n;
@@ -1040,6 +1054,8 @@ end;
 // layout#(parent#, x, y, width, height) - Create with position and size
 function p_layout_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Layout: TBasLayout;
   ParentObj: TFmxObject;
 begin
@@ -1052,8 +1068,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
-    Layout.BasicEngine := ModuleEngine;
-    Layout.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Layout, Eng, Outp) then
+    begin
+      Layout.BasicEngine := Eng;
+      Layout.ConsoleOutput := Outp;
+    end;
     Layout.Parent := ParentObj;
 
     Layout.Position.X := Args[1].n;

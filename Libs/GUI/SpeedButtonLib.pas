@@ -648,6 +648,8 @@ end;
 // Creation Functions
 function p_speedbutton_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Btn: TBasSpeedButton;
 begin
   Result.n := 0;
@@ -666,8 +668,13 @@ begin
     Btn.Width := 80;
     Btn.Height := 22;
     Btn.StaysPressed := False;
-    Btn.BasicEngine := ModuleEngine;
-    Btn.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Btn, Eng, Outp) then
+    begin
+      Btn.BasicEngine := Eng;
+      Btn.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Btn);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then
@@ -684,6 +691,8 @@ end;
 
 function p_speedbutton_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Btn: TBasSpeedButton;
 begin
   Result.n := 0;
@@ -702,8 +711,13 @@ begin
     Btn.Width := 80;
     Btn.Height := 22;
     Btn.StaysPressed := False;
-    Btn.BasicEngine := ModuleEngine;
-    Btn.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Btn, Eng, Outp) then
+    begin
+      Btn.BasicEngine := Eng;
+      Btn.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Btn);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then
@@ -720,6 +734,8 @@ end;
 
 function p_speedbutton_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Btn: TBasSpeedButton;
 begin
   Result.n := 0;
@@ -738,8 +754,13 @@ begin
     Btn.Width := Args[3].n;
     Btn.Height := Args[4].n;
     Btn.StaysPressed := False;
-    Btn.BasicEngine := ModuleEngine;
-    Btn.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Btn, Eng, Outp) then
+    begin
+      Btn.BasicEngine := Eng;
+      Btn.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Btn);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then
@@ -756,6 +777,8 @@ end;
 
 function p_speedbutton_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Btn: TBasSpeedButton;
 begin
   Result.n := 0;
@@ -774,8 +797,13 @@ begin
     Btn.Width := Args[4].n;
     Btn.Height := Args[5].n;
     Btn.StaysPressed := False;
-    Btn.BasicEngine := ModuleEngine;
-    Btn.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Btn, Eng, Outp) then
+    begin
+      Btn.BasicEngine := Eng;
+      Btn.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Btn);
     // Register with GC using tag
 //    if Assigned(UnitGC.GC) then

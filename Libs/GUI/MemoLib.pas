@@ -774,6 +774,8 @@ end;
 // ============================================================================
 function p_memo_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Memo: TBasMemo;
 begin
   Result.n := 0;
@@ -784,8 +786,13 @@ begin
   try
     Memo := TBasMemo.Create(nil);
     Memo.Parent := TFmxObject(Args[0].P);
-    Memo.BasicEngine := ModuleEngine;
-    Memo.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Memo, Eng, Outp) then
+    begin
+      Memo.BasicEngine := Eng;
+      Memo.ConsoleOutput := Outp;
+    end;
 
     Result.P := Pointer(Memo);
 
@@ -802,6 +809,8 @@ end;
 
 function p_memo_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Memo: TBasMemo;
 begin
   Result.n := 0;
@@ -812,8 +821,13 @@ begin
   try
     Memo := TBasMemo.Create(nil);
     Memo.Parent := TFmxObject(Args[0].P);
-    Memo.BasicEngine := ModuleEngine;
-    Memo.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Memo, Eng, Outp) then
+    begin
+      Memo.BasicEngine := Eng;
+      Memo.ConsoleOutput := Outp;
+    end;
     Memo.Position.X := Args[1].n;
     Memo.Position.Y := Args[2].n;
     Memo.Width := Args[3].n;
@@ -834,6 +848,8 @@ end;
 
 function p_memo_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Memo: TBasMemo;
 begin
   Result.n := 0;
@@ -844,8 +860,13 @@ begin
   try
     Memo := TBasMemo.Create(nil);
     Memo.Parent := TFmxObject(Args[0].P);
-    Memo.BasicEngine := ModuleEngine;
-    Memo.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Memo, Eng, Outp) then
+    begin
+      Memo.BasicEngine := Eng;
+      Memo.ConsoleOutput := Outp;
+    end;
     Memo.Position.X := Args[1].n;
     Memo.Position.Y := Args[2].n;
     Memo.Width := Args[3].n;

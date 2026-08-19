@@ -868,6 +868,8 @@ end;
 // Creation Functions
 function p_edit_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Edit: TBasEdit;
 begin
   Result.n := 0;
@@ -880,8 +882,13 @@ begin
   try
     Edit := TBasEdit.Create(nil);
     Edit.Parent := TFmxObject(Args[0].P);
-    Edit.BasicEngine := ModuleEngine;
-    Edit.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Edit, Eng, Outp) then
+    begin
+      Edit.BasicEngine := Eng;
+      Edit.ConsoleOutput := Outp;
+    end;
     Edit.StyledSettings := Edit.StyledSettings - [TStyledSetting.Family, TStyledSetting.Size, TStyledSetting.Style, TStyledSetting.FontColor];
 
     Result.P := Pointer(Edit);
@@ -899,6 +906,8 @@ end;
 
 function p_edit_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Edit: TBasEdit;
 begin
   Result.n := 0;
@@ -911,8 +920,13 @@ begin
   try
     Edit := TBasEdit.Create(nil);
     Edit.Parent := TFmxObject(Args[0].P);
-    Edit.BasicEngine := ModuleEngine;
-    Edit.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Edit, Eng, Outp) then
+    begin
+      Edit.BasicEngine := Eng;
+      Edit.ConsoleOutput := Outp;
+    end;
     Edit.Position.X := Args[1].n;
     Edit.Position.Y := Args[2].n;
     Edit.Width := Args[3].n;
@@ -934,6 +948,8 @@ end;
 
 function p_edit_new_text(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Edit: TBasEdit;
 begin
   Result.n := 0;
@@ -944,8 +960,13 @@ begin
   try
     Edit := TBasEdit.Create(nil);
     Edit.Parent := TFmxObject(Args[0].P);
-    Edit.BasicEngine := ModuleEngine;
-    Edit.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Edit, Eng, Outp) then
+    begin
+      Edit.BasicEngine := Eng;
+      Edit.ConsoleOutput := Outp;
+    end;
     Edit.Position.X := Args[1].n;
     Edit.Position.Y := Args[2].n;
     Edit.Width := Args[3].n;

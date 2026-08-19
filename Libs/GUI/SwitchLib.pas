@@ -749,6 +749,8 @@ end;
 
 function p_switch_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   SW: TBasSwitch;
   ParentObj: TFmxObject;
 begin
@@ -767,8 +769,13 @@ begin
     SW := TBasSwitch.Create(nil);
     SW.Parent := ParentObj;
 
-    SW.BasicEngine := ModuleEngine;
-    SW.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(SW, Eng, Outp) then
+    begin
+      SW.BasicEngine := Eng;
+      SW.ConsoleOutput := Outp;
+    end;
     SW.Position.X := 0;
     SW.Position.Y := 0;
     SW.Width := 50;
@@ -788,6 +795,8 @@ end;
 
 function p_switch_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   SW: TBasSwitch;
   ParentObj: TFmxObject;
 begin
@@ -810,8 +819,13 @@ begin
     // Since TBasSwitch is a subclass, FMX would look for 'basswitchstyle' which doesn't exist
     SW.StyleLookup := 'switchstyle';
 
-    SW.BasicEngine := ModuleEngine;
-    SW.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(SW, Eng, Outp) then
+    begin
+      SW.BasicEngine := Eng;
+      SW.ConsoleOutput := Outp;
+    end;
     SW.Position.X := Args[1].n;
     SW.Position.Y := Args[2].n;
     SW.Width := Args[3].n;

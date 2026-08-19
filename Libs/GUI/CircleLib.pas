@@ -1008,6 +1008,8 @@ end;
 // circle#@# - Create circle with parent only
 function p_circle_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Circle: TBasCircle;
 begin
   Result.n := 0;
@@ -1019,8 +1021,13 @@ begin
   try
     Circle := TBasCircle.Create(nil);
     Circle.Parent := TFmxObject(Args[0].p);
-    Circle.BasicEngine := ModuleEngine;
-    Circle.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Circle, Eng, Outp) then
+    begin
+      Circle.BasicEngine := Eng;
+      Circle.ConsoleOutput := Outp;
+    end;
     Circle.HitTest := True;  // Enable mouse events by default
 
     Result.p := Pointer(Circle);
@@ -1040,6 +1047,8 @@ end;
 // circle#@#nn - Create circle with parent and size (width, height)
 function p_circle_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Circle: TBasCircle;
 begin
   Result.n := 0;
@@ -1053,8 +1062,13 @@ begin
     Circle.Parent := TFmxObject(Args[0].p);
     Circle.Width := Args[1].n;
     Circle.Height := Args[2].n;
-    Circle.BasicEngine := ModuleEngine;
-    Circle.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Circle, Eng, Outp) then
+    begin
+      Circle.BasicEngine := Eng;
+      Circle.ConsoleOutput := Outp;
+    end;
     Circle.HitTest := True;
 
     Result.p := Pointer(Circle);
@@ -1074,6 +1088,8 @@ end;
 // circle#@#nnnn - Create circle with parent, position, and size
 function p_circle_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Circle: TBasCircle;
 begin
   Result.n := 0;
@@ -1089,8 +1105,13 @@ begin
     Circle.Position.Y := Args[2].n;
     Circle.Width := Args[3].n;
     Circle.Height := Args[4].n;
-    Circle.BasicEngine := ModuleEngine;
-    Circle.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Circle, Eng, Outp) then
+    begin
+      Circle.BasicEngine := Eng;
+      Circle.ConsoleOutput := Outp;
+    end;
     Circle.HitTest := True;
 
     Result.p := Pointer(Circle);

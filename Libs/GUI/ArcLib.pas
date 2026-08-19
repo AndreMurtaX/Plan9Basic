@@ -1025,6 +1025,8 @@ end;
 // arc#@# - Create arc with parent only
 function p_arc_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Arc: TBasArc;
 begin
   Result.n := 0;
@@ -1036,8 +1038,13 @@ begin
   try
     Arc := TBasArc.Create(nil);
     Arc.Parent := TFmxObject(Args[0].p);
-    Arc.BasicEngine := ModuleEngine;
-    Arc.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Arc, Eng, Outp) then
+    begin
+      Arc.BasicEngine := Eng;
+      Arc.ConsoleOutput := Outp;
+    end;
     Arc.HitTest := True;  // Enable mouse events by default
 
     Result.p := Pointer(Arc);
@@ -1056,6 +1063,8 @@ end;
 // arc#@#nn - Create arc with parent and size (width, height)
 function p_arc_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Arc: TBasArc;
 begin
   Result.n := 0;
@@ -1069,8 +1078,13 @@ begin
     Arc.Parent := TFmxObject(Args[0].p);
     Arc.Width := Args[1].n;
     Arc.Height := Args[2].n;
-    Arc.BasicEngine := ModuleEngine;
-    Arc.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Arc, Eng, Outp) then
+    begin
+      Arc.BasicEngine := Eng;
+      Arc.ConsoleOutput := Outp;
+    end;
     Arc.HitTest := True;
 
     Result.p := Pointer(Arc);
@@ -1089,6 +1103,8 @@ end;
 // arc#@#nnnn - Create arc with parent, position, and size
 function p_arc_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Arc: TBasArc;
 begin
   Result.n := 0;
@@ -1104,8 +1120,13 @@ begin
     Arc.Position.Y := Args[2].n;
     Arc.Width := Args[3].n;
     Arc.Height := Args[4].n;
-    Arc.BasicEngine := ModuleEngine;
-    Arc.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Arc, Eng, Outp) then
+    begin
+      Arc.BasicEngine := Eng;
+      Arc.ConsoleOutput := Outp;
+    end;
     Arc.HitTest := True;
 
     Result.p := Pointer(Arc);

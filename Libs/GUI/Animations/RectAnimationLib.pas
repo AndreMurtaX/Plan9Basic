@@ -1,4 +1,4 @@
-unit RectAnimationLib;
+﻿unit RectAnimationLib;
 
 {******************************************************************************
   RectAnimationLib - Bounds Animation Library for Plan9Basic
@@ -23,7 +23,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Generics.Collections, System.TypInfo,
   FMX.Types, FMX.Controls, FMX.Ani,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, ControlCommon;
 
 type
   TBasRectAnimation = class(TComponent)
@@ -452,7 +452,9 @@ begin
 end;
 
 function p_rectani_new(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasRectAnimation;
 begin
   Result.n := 0;
@@ -465,8 +467,13 @@ begin
     // Only the internal TFloatAnimation objects need Create(nil) to avoid double-free
     Ani := TBasRectAnimation.Create(TComponent(Args[0].p));
     Ani.SetTarget(TControl(Args[0].p));
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Ani);
   except
     on E: Exception do
@@ -475,7 +482,9 @@ begin
 end;
 
 function p_rectani_new_named(var Args: array of TAsmData): TAsmData;
-var
+var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Ani: TBasRectAnimation;
 begin
   Result.n := 0;
@@ -486,8 +495,13 @@ begin
     Ani := TBasRectAnimation.Create(TComponent(Args[0].p));
     Ani.SetTarget(TControl(Args[0].p));
     Ani.Name := Args[1].s;
-    Ani.BasicEngine := ModuleEngine;
-    Ani.ConsoleOutput := ModuleOutput;
+    //An animation is a TComponent with no Parent, so the walk starts at the
+    //control it animates, which does have one.
+    if EngineOf(TFmxObject(Args[0].p), Eng, Outp) then
+    begin
+      Ani.BasicEngine := Eng;
+      Ani.ConsoleOutput := Outp;
+    end;
     Result.p := Pointer(Ani);
   except
     on E: Exception do

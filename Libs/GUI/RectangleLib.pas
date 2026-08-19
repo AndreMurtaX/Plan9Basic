@@ -1066,6 +1066,8 @@ end;
 // rect#(parent#) - Create a new rectangle with parent
 function p_rect_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Rect: TBasRectangle;
   ParentObj: TFmxObject;
 begin
@@ -1078,8 +1080,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
-    Rect.BasicEngine := ModuleEngine;
-    Rect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Rect, Eng, Outp) then
+    begin
+      Rect.BasicEngine := Eng;
+      Rect.ConsoleOutput := Outp;
+    end;
     Rect.Parent := ParentObj;
 
     // Set sensible defaults
@@ -1108,6 +1115,8 @@ end;
 // rect#(parent#, width, height) - Create with size
 function p_rect_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Rect: TBasRectangle;
   ParentObj: TFmxObject;
 begin
@@ -1120,8 +1129,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
-    Rect.BasicEngine := ModuleEngine;
-    Rect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Rect, Eng, Outp) then
+    begin
+      Rect.BasicEngine := Eng;
+      Rect.ConsoleOutput := Outp;
+    end;
     Rect.Parent := ParentObj;
 
     Rect.Width := Args[1].n;
@@ -1149,6 +1163,8 @@ end;
 // rect#(parent#, x, y, width, height) - Create with position and size
 function p_rect_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Rect: TBasRectangle;
   ParentObj: TFmxObject;
 begin
@@ -1161,8 +1177,13 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
-    Rect.BasicEngine := ModuleEngine;
-    Rect.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Rect, Eng, Outp) then
+    begin
+      Rect.BasicEngine := Eng;
+      Rect.ConsoleOutput := Outp;
+    end;
     Rect.Parent := ParentObj;
 
     Rect.Position.X := Args[1].n;

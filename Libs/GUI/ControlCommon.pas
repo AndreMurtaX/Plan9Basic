@@ -81,6 +81,33 @@ const
   ALIGN_FIT_LEFT    = 18;
   ALIGN_FIT_RIGHT   = 19;
 
+type
+  //Implemented by the form, which is where a running program's engine and
+  //output actually live. Everything a program builds hangs off a form, so a
+  //control can reach them by asking upwards instead of reading a unit variable.
+  //
+  //An interface rather than a class reference, because ControlCommon cannot
+  //name TBasForm: FormLib already uses this unit, and the dependency would
+  //close a circle.
+  IEngineHost = interface
+    ['{4B1E9A62-3C7D-4E58-9E2A-7C0F5D8B41A6}']
+    function GetEngine: TBasicEngine;
+    function GetOutput: TStrings;
+  end;
+
+//The engine and output that own Obj, found by walking up to the form.
+//
+//This replaces `Obj.BasicEngine := ModuleEngine` at construction, where
+//ModuleEngine was a unit variable filled in once at registration. That made the
+//engine per-process: a second one could not exist beside the first. Reached
+//through the parent chain it is per form tree instead, which is what "two
+//engines in one process" needs.
+//
+//False when the chain reaches no host, which is what happens to a control
+//created with no parent.
+function EngineOf(Obj: TFmxObject; out Engine: TBasicEngine;
+                  out Output: TStrings): Boolean;
+
 //Alignment, both directions. An unknown value yields None rather than an error,
 //which is what every previous copy did.
 function AlignToInt(Value: TAlignLayout): Integer;
@@ -115,6 +142,27 @@ function RunCallbackWithResult(Engine: TBasicEngine; Output: TStrings;
                       const Owner: String): TAsmData;
 
 implementation
+
+function EngineOf(Obj: TFmxObject; out Engine: TBasicEngine;
+                  out Output: TStrings): Boolean;
+var
+  Host: IEngineHost;
+begin
+  Engine := nil;
+  Output := nil;
+  Result := False;
+
+  while Assigned(Obj) do
+  begin
+    if Supports(Obj, IEngineHost, Host) then
+    begin
+      Engine := Host.GetEngine;
+      Output := Host.GetOutput;
+      Exit(Assigned(Engine));
+    end;
+    Obj := Obj.Parent;
+  end;
+end;
 
 function AlignToInt(Value: TAlignLayout): Integer;
 begin

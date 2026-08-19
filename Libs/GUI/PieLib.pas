@@ -784,6 +784,8 @@ end;
 // Pie Creation/Destruction
 function p_pie_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Pie: TBasPie;
 begin
   Result.n := 0;
@@ -794,8 +796,13 @@ begin
   try
     Pie := TBasPie.Create(nil);
     Pie.Parent := TFmxObject(Args[0].P);
-    Pie.BasicEngine := ModuleEngine;
-    Pie.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Pie, Eng, Outp) then
+    begin
+      Pie.BasicEngine := Eng;
+      Pie.ConsoleOutput := Outp;
+    end;
     Pie.HitTest := True;
 
     Result.P := Pointer(Pie);
@@ -811,6 +818,8 @@ end;
 
 function p_pie_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Pie: TBasPie;
 begin
   Result.n := 0;
@@ -823,8 +832,13 @@ begin
     Pie.Parent := TFmxObject(Args[0].P);
     Pie.Width := Args[1].n;
     Pie.Height := Args[2].n;
-    Pie.BasicEngine := ModuleEngine;
-    Pie.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Pie, Eng, Outp) then
+    begin
+      Pie.BasicEngine := Eng;
+      Pie.ConsoleOutput := Outp;
+    end;
     Pie.HitTest := True;
 
     Result.P := Pointer(Pie);
@@ -840,6 +854,8 @@ end;
 
 function p_pie_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   Pie: TBasPie;
 begin
   Result.n := 0;
@@ -854,8 +870,13 @@ begin
     Pie.Position.Y := Args[2].n;
     Pie.Width := Args[3].n;
     Pie.Height := Args[4].n;
-    Pie.BasicEngine := ModuleEngine;
-    Pie.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(Pie, Eng, Outp) then
+    begin
+      Pie.BasicEngine := Eng;
+      Pie.ConsoleOutput := Outp;
+    end;
     Pie.HitTest := True;
 
     Result.P := Pointer(Pie);

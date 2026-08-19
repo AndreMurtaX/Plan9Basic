@@ -905,6 +905,8 @@ end;
 
 function p_path_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   P: TBasPath;
 begin
   Result.n := 0;
@@ -916,8 +918,13 @@ begin
   try
     P := TBasPath.Create(nil);
     P.Parent := TFmxObject(Args[0].p);
-    P.BasicEngine := ModuleEngine;
-    P.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(P, Eng, Outp) then
+    begin
+      P.BasicEngine := Eng;
+      P.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(P);
 //    if Assigned(UnitGC.GC) then
@@ -932,6 +939,8 @@ end;
 
 function p_path_new_size(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   P: TBasPath;
 begin
   Result.n := 0;
@@ -946,8 +955,13 @@ begin
     P.Parent := TFmxObject(Args[0].p);
     P.Width := Args[1].n;
     P.Height := Args[2].n;
-    P.BasicEngine := ModuleEngine;
-    P.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(P, Eng, Outp) then
+    begin
+      P.BasicEngine := Eng;
+      P.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(P);
 //    if Assigned(UnitGC.GC) then
@@ -962,6 +976,8 @@ end;
 
 function p_path_new_full(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   P: TBasPath;
 begin
   Result.n := 0;
@@ -978,8 +994,13 @@ begin
     P.Position.Y := Args[2].n;
     P.Width := Args[3].n;
     P.Height := Args[4].n;
-    P.BasicEngine := ModuleEngine;
-    P.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(P, Eng, Outp) then
+    begin
+      P.BasicEngine := Eng;
+      P.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(P);
 //    if Assigned(UnitGC.GC) then

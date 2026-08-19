@@ -728,6 +728,8 @@ end;
 // Creation Functions
 function p_combobox_new(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasComboBox;
 begin
   Result.n := 0;
@@ -743,8 +745,13 @@ begin
     CB.Position.Y := 0;
     CB.Width := 150;
     CB.Height := 22;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(CB);
 
@@ -760,6 +767,8 @@ end;
 
 function p_combobox_new_pos(var Args: array of TAsmData): TAsmData;
 var
+  Eng: TBasicEngine;
+  Outp: TStrings;
   CB: TBasComboBox;
 begin
   Result.n := 0;
@@ -775,8 +784,13 @@ begin
     CB.Position.Y := Args[2].n;
     CB.Width := Args[3].n;
     CB.Height := Args[4].n;
-    CB.BasicEngine := ModuleEngine;
-    CB.ConsoleOutput := ModuleOutput;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(CB, Eng, Outp) then
+    begin
+      CB.BasicEngine := Eng;
+      CB.ConsoleOutput := Outp;
+    end;
 
     Result.p := Pointer(CB);
 
