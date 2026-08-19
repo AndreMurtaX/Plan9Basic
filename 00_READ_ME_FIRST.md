@@ -77,6 +77,28 @@ dcc64 Plan9Basic.dpr
 - **Debug**: Memory leak reporting enabled on Windows
 - **Release**: Optimized for distribution
 
+### Does all of it still work
+
+One command, one verdict:
+
+```powershell
+.	oolserify.ps1
+```
+
+It builds both applications, runs both suites and the negative one, builds and
+runs the console host, and runs every documentation check — then prints one
+table. A failing step does not stop the run, because knowing that three things
+broke is worth more than knowing the first one did. `-Quick` skips the two
+application builds, which are most of the wall clock.
+
+Those steps used to be four separate invocations with no common answer, and
+nothing at all built the IDE or the runner: both could stop compiling while
+every suite stayed green. That is not hypothetical — it is what the first run
+of this script demonstrated, with a syntax error in `runner/AppletRunner.pas`
+and 994 assertions passing.
+
+The rest of this section is what each step asks. Run one alone when it fails.
+
 ### Checking the documentation against the code
 
 All of it, from one place:
@@ -165,7 +187,8 @@ worse than an error, because nobody reports it.
 ### Tests
 
 `tests/build.ps1 -Run` compiles and runs the automated suite; add `-Gui` for the
-FMX libraries. See [tests/README.md](tests/README.md).
+FMX libraries. See [tests/README.md](tests/README.md). `tools/verify.ps1` runs
+both, along with everything else.
 
 ---
 

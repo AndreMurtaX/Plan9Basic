@@ -1,0 +1,146 @@
+<#
+.SYNOPSIS
+  Builds every target and runs every check. One command, one verdict.
+
+.DESCRIPTION
+  There used to be no single answer to "does this work". The suites were two
+  invocations of tests\build.ps1 with different switches, the console-host probe
+  was a third script, the documentation checks were a Python entry point that
+  assumed someone had already built the test runner, and nothing at all built
+  the two applications -- so the IDE and the applet runner could stop compiling
+  and every check would still pass.
+
+  This runs all of it, in the order that fails cheapest first, and prints one
+  table at the end. A failing step does not stop the run: knowing that three
+  things broke is worth more than knowing the first one did.
+
+.PARAMETER Quick
+  Skip the two application builds, which are most of the wall clock and the
+  least likely to be what you just changed.
+
+.PARAMETER Dcc
+  Full path to dcc64.exe, overriding registry detection.
+
+.EXAMPLE
+  .\tools\verify.ps1
+#>
+[CmdletBinding()]
+param(
+    [switch] $Quick,
+    [string] $Dcc
+)
+
+$ErrorActionPreference = 'Continue'
+$root = Split-Path -Parent $PSScriptRoot
+
+function Find-Dcc64 {
+    if ($Dcc) {
+        if (-not (Test-Path $Dcc)) { throw "dcc64 not found at $Dcc" }
+        return $Dcc
+    }
+    $roots = @()
+    foreach ($hive in @('HKLM:\SOFTWARE\Embarcadero\BDS', 'HKCU:\SOFTWARE\Embarcadero\BDS')) {
+        if (-not (Test-Path $hive)) { continue }
+        foreach ($key in Get-ChildItem $hive) {
+            $rootDir = (Get-ItemProperty $key.PSPath -ErrorAction SilentlyContinue).RootDir
+            if ($rootDir) {
+                $roots += [pscustomobject]@{
+                    Version = [double] $key.PSChildName
+                    Exe     = Join-Path $rootDir 'bin\dcc64.exe'
+                }
+            }
+        }
+    }
+    $found = $roots | Where-Object { Test-Path $_.Exe } | Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $found) { throw 'dcc64.exe not found. Install RAD Studio or pass -Dcc <path>.' }
+    return $found.Exe
+}
+
+$results = @()
+
+function Step {
+    param([string] $Label, [scriptblock] $Body)
+    Write-Host "--- $Label" -ForegroundColor DarkGray
+    $detail = ''
+    try {
+        $detail = & $Body
+        $ok = $?
+        if ($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE) { $ok = $false }
+    } catch {
+        $ok = $false
+        $detail = $_.Exception.Message
+    }
+    # Some steps report more than one line worth keeping -- the suite prints its
+    # own totals and the negative suite's -- so keep up to three, joined.
+    $lines = @($detail | Where-Object { $_ } | Select-Object -Last 3)
+    $script:results += [pscustomobject]@{
+        Label = $Label; Ok = $ok; Detail = ($lines -join '  |  ')
+    }
+    $global:LASTEXITCODE = 0
+}
+
+# An application that does not compile is the cheapest thing to discover, and
+# the only failure the suites cannot see: they link the units directly.
+if (-not $Quick) {
+    $dcc = Find-Dcc64
+    Write-Host "compiler: $dcc"
+    foreach ($app in @(
+        @{ Label = 'IDE builds';    Dir = $root;                       Proj = 'Plan9Basic.dpr' },
+        @{ Label = 'runner builds'; Dir = (Join-Path $root 'runner');  Proj = 'Plan9BasicApplet.dpr' })) {
+        Step $app.Label {
+            $out = Join-Path $app.Dir '__verify'
+            New-Item -ItemType Directory -Force (Join-Path $out 'dcu') | Out-Null
+            Push-Location $app.Dir
+            try {
+                $log = & $dcc -B "-E$out" "-N$(Join-Path $out 'dcu')" $app.Proj 2>&1
+                $log | Select-String 'lines,|Fatal|error E' | ForEach-Object { $_.Line.Trim() }
+            } finally {
+                Pop-Location
+                Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
+$tests = Join-Path $root 'tests'
+
+Step 'suite' {
+    (& (Join-Path $tests 'build.ps1') -Run 2>&1 | Out-String) -split "`n" |
+        Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
+}
+
+Step 'gui suite' {
+    (& (Join-Path $tests 'build.ps1') -Run -Gui 2>&1 | Out-String) -split "`n" |
+        Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
+}
+
+Step 'console host' {
+    (& (Join-Path $tests 'build-nofmx.ps1') -Run 2>&1 | Out-String) -split "`n" |
+        Select-String 'OK -|Fatal|Error' | ForEach-Object { $_.Line.Trim() }
+}
+
+Step 'documentation' {
+    $args = @((Join-Path $root 'tools\check-all.py'))
+    if ($Quick) { $args += '--quick' }
+    (& python @args 2>&1 | Out-String) -split "`n" |
+        Select-String 'check\(s\) (passed|failed)' | ForEach-Object { $_.Line.Trim() }
+}
+
+Write-Host ''
+$width = ($results | ForEach-Object { $_.Label.Length } | Measure-Object -Maximum).Maximum
+foreach ($r in $results) {
+    $mark = if ($r.Ok) { 'ok  ' } else { 'FAIL' }
+    $colour = if ($r.Ok) { 'Green' } else { 'Red' }
+    Write-Host ("  {0}  {1}  {2}" -f $mark, $r.Label.PadRight($width), $r.Detail) -ForegroundColor $colour
+}
+
+$bad = @($results | Where-Object { -not $_.Ok })
+Write-Host ''
+if ($bad.Count) {
+    Write-Host "$($bad.Count) step(s) failed: $(($bad | ForEach-Object { $_.Label }) -join ', ')"
+    Write-Host 'run that step on its own for the detail'
+    exit 1
+}
+$note = if ($Quick) { '  (--quick: the application builds were skipped)' } else { '' }
+Write-Host "$($results.Count) step(s) passed$note"
+exit 0
