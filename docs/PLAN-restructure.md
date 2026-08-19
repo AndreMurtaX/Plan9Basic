@@ -452,12 +452,15 @@ developer's machine. Every check passes. Flipping a private repository to
 public is not reversible in any meaningful sense — the content is out — so it
 waits for a deliberate go-ahead rather than arriving as the tail of a long pass.
 
-The obsolete notices in 3.4 went out first, so both old repositories now name a
-destination that does not open yet. They say so, in as many words, rather than
-leaving a reader at an unexplained 404. Removing that paragraph from both is
-part of doing this step.
+**Sequenced to the end of the project**, and everything written before then
+describes the repository as public — the obsolete notices in 3.4, the website in
+Phase 4, every link that points at it. Documentation that hedges about a
+temporary state is documentation somebody has to find and unwrite later, and
+the window is measured in this project's remaining work rather than in months.
 
-Nothing else in the plan waits on it: Phase 4 rebuilds the site either way.
+So the only thing this step still involves is the flip itself.
+
+Nothing else in the plan waits on it.
 
 ---
 
