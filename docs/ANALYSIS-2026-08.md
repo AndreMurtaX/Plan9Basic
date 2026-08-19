@@ -2336,7 +2336,9 @@ they will call, in the `Signature := LowerCase(F...Func) + '@...'` lines the
 dispatchers already contain. The programs declare what they wrote. Where a name
 is registered, the two have to agree.
 
-**937 registered callbacks across the tree**, every one now the right shape.
+**1,176 registered callbacks across the tree**, every one now the right
+shape. The figure first written here was 937, which was the count the check
+could see before section 29 corrected it.
 Watched failing first: putting the three-parameter declaration back into
 `flappy_bird` produces
 
@@ -2357,3 +2359,156 @@ function that always answered 0, an assertion that was never true, eighty
 comparisons written for a contract `instr` no longer has, and this. Every one of
 them found by running something rather than reading it, and this last one only
 because a person sat in front of a game and pressed a key.
+
+
+## 29. The check itself skipped in silence, and the review that followed
+
+Written 2026-08-19, after the author asked for a review of `Demos/`, having
+tried to run `flappy_bird` from that folder.
+
+### The check had the defect it was written to catch
+
+Section 28 built `tools/check-callbacks.py` to catch a callback whose parameter
+count does not match the signature the dispatcher sends. It read the dispatchers
+with one pattern:
+
+```
+Signature := LowerCase(FOnKeyDownFunc) + '@#n$$';
+```
+
+The libraries use three forms, not one. Two hundred and thirty-six dispatchers
+call `ExecuteCallback(LowerCase(FOnTimerFunc) + '@#', Args)` inline without ever
+naming a `Signature` variable, and the track bar writes
+`FOnChangeFunc.ToLower() + '@#'`. The check saw 937 of 1,176 registrations and
+reported `ok` for the rest — skipping in silence, which is exactly the failure
+the file was written to catch.
+
+### And fixing it broke the other end
+
+Widening the pattern made the check permissive. It keyed its expectations on the
+event name alone, so `keydown` accumulated the arities of every control that
+sends one — `[3, 4]` — and a three-parameter declaration was accepted again. The
+original bug passed.
+
+The shape of an event depends on **which control sends it**, so the key has to
+carry the library too. Which prefix a library answers to is now read from the
+library's own `Lib.Add('callout_onclick#@#$', Fn)` lines rather than guessed
+from its filename, because `CalloutRectangleLib.pas` answers `callout_` and
+`FloatAnimationLib.pas` answers `floatani_`. Keyed by `(library, event)` the
+check is exact: **1,176 registrations, no event left unchecked**, and putting
+the three-parameter declaration back into `flappy_bird` reports it again.
+
+### The comments were wrong where it mattered most
+
+Holding each dispatcher against the comment beside it turned up two
+disagreements in the whole tree, and they were these:
+
+```
+  // Signature: funcname@#nn$ (form#, keyCode, keyChar, shiftState$)
+  Signature := LowerCase(FOnKeyDownFunc) + '@#n$$';
+```
+
+`OnKeyDown` and `OnKeyUp` in `FormLib.pas`, documenting the keyboard handler
+with its third parameter typed as a number where a string arrives. The count is
+right, so this did not cause section 28's defect, but it is the comment a person
+reads in order to write the handler that did. Corrected, and the comparison is
+now part of the check.
+
+### What the review of the nine games found
+
+Every other class came back clean, and each was measured rather than read:
+
+- every callback matches the shape its dispatcher sends
+- every `instr` comparison uses the position contract, none the old flag
+- every library call's argument count matches its registered signature, once the
+  checker was taught that nine array families are registered in a loop for one
+  to ten dimensions, so `dim#@` + `nStr` means arity 1..10 and not 0
+- no callback names a function the program does not declare
+- no array indexed from zero, in a language whose arrays start at one
+- no boolean expression outside `IF`, `WHILE` or `UNTIL`
+
+`flappy_bird` in particular loads no external file at all.
+
+### The site was still handing out the broken copy
+
+This is the part that matters, and it is why the author saw what they saw.
+
+`Website/docs/examples.html` carries the source of every example inside itself,
+in a JavaScript template literal. That embedded copy is what a reader copies and
+runs. The nine games also exist as files under `Demos/`. Two copies of the same
+program, and only one of them was ever fixed.
+
+Every correction of this month landed in `Demos/` and none in the page. On
+2026-08-19 the page was still serving:
+
+- **seven keyboard handlers declared with three parameters**, in `2048`,
+  `asteroids`, `breakout`, `flappy_bird` and `whack_a_mole` -- the exact defect
+  of section 28, in the exact copy a reader takes
+- **twenty-three comparisons written for the contract `instr` had before 1.1**,
+  across seven of the games, breaking platform detection
+
+Which explains the source the author pasted into this conversation after the
+keyboard would not respond. They had copied it from the site. The repository had
+been right for days; the thing people actually download had not.
+
+Both copies now agree, in a diff of twenty-six lines against twenty-six, every
+one of them an `instr` comparison or a keyboard declaration.
+
+`tools/check-site-examples.py` holds them together from here, and
+`check-callbacks.py` now reads the embedded examples as programs in their own
+right -- **1,256 registrations** rather than 1,176, the eighty new ones being
+the site's own copies, which had never been checked at all.
+
+Only the nine games are paired by name. `calculator` exists in both places and
+is two entirely different programs that happen to share a name, which is why the
+pairing is an explicit list rather than a filename match.
+
+### Nine PLAY buttons that lead nowhere
+
+Each game entry carries a `url` alongside its code, and the page renders it as a
+button:
+
+```html
+<a class="btn-play" href="${game.url}" target="_blank">PLAY</a>
+```
+
+All nine point at `https://plan9basic.com/docs/examples/games/<name>`, and all
+nine answer 404 today. Nothing under `Website/` would answer them either -- the
+directory does not exist -- so this is not something publishing would break. It
+is already broken, and has been.
+
+`check-links.py` did not see it because it reads relative links, and these are
+written absolute against the site's own domain. Eighteen such paths exist across
+the site; nine resolve to a file in `Website/`, and the nine that do not are
+exactly these buttons.
+
+The author chose to remove them. The button is gone, and with it the CSS rule
+it was the only user of and the nine `url` fields nothing reads any more. The
+`Code` button stays, which is the one that works: it opens the source, and the
+source is now the corrected one. Watched in a browser afterwards -- nine cards,
+nine `Code` buttons, no `PLAY`, no console error, and the modal for
+`flappy_bird` showing `function OnKeyDown(sender#, keyCode, keyChar$,
+shiftState$)` and `instr(...) >= 0`.
+
+### The sounds are fetched from the live site, and most are not there
+
+Four games — `lunar_lander`, `missile_command`, `snake`, `space_invaders` —
+load audio over the network from `https://plan9basic.com/assets/sounds/`.
+Checking all sixty combinations of game, sound and extension against both the
+repository and the running site:
+
+- **three files the site served were missing from `Website/`**: `lunar/start.wav`,
+  `lunar/start.ogg` and `lunar/thrust.mp3`. Publishing `Website/` as it stood
+  would have taken them off the site. Fetched back into the repository on the
+  author's instruction -- 307,244, 6,416 and 2,906,583 bytes, headers `RIFF`,
+  `OggS` and `ID3` -- so `lunar` is now complete at five sounds in three
+  extensions.
+- **twenty-seven exist in neither place.** `space_invaders` loses `player_hit`,
+  `game_over`, `wave_clear` and `march` on every platform; `snake` loses `die`
+  and `start` on every platform.
+- `SOUND_EXT$` defaults to `mp3` and is only overridden for Windows, Linux and
+  Android, so macOS, iOS and anything unrecognised ask for a set that barely
+  exists: `missile` and `invaders` have no `.mp3` at all.
+
+None of it is fatal. `SetError` records and does not halt, so a game whose sound
+will not load runs without it. It is silent in both senses.
