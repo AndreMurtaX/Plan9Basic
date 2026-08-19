@@ -159,6 +159,20 @@ type
     FInputCaption: String;
     FInputLabels: TArray<String>;
     FInputValues: TArray<String>;
+
+    // --- Self-test ---------------------------------------------------------
+    // Run with --selftest and the applet presses its own Run, answers its own
+    // dialogs, writes the output beside the executable and exits with a verdict.
+    //
+    // It exists because everything about this host had been checked by eye. The
+    // deadlock in ANALYSIS 23 took six build-and-run cycles, each needing a
+    // person to press a button, and would have shown up here on the first one:
+    // a UI thread waiting on a worker that waits on it never reaches 'Done.',
+    // and the timeout says so.
+    FSelfTest: Boolean;
+    FSelfTestTimer: TTimer;
+    FSelfTestElapsed: Integer;
+    FSelfTestStarted: Boolean;
     procedure VMWorkerBody();
     procedure VMWorkerDone(Sender: TObject);
     procedure DrainTimerTick(Sender: TObject);
@@ -166,6 +180,9 @@ type
     // library functions that touch FireMonkey, so they keep running on the
     // thread that owns the window.
     procedure HostMarshal(const AProc: TThreadMethod);
+
+    procedure SelfTestTick(Sender: TObject);
+    procedure FinishSelfTest(const AVerdict: String; const ACode: Integer);
 
     procedure BtnLoadClick(Sender: TObject);
     procedure BtnSaveClick(Sender: TObject);
@@ -255,6 +272,7 @@ procedure TfrmAppletRunner.HostInput(const ACaption: String;
   const ADone: TInputDoneProc);
 var
   I: Integer;
+  Answer: TInputDoneProc;
 begin
   // Copied onto the form. An open array parameter is only the caller's memory
   // and this returns before the window is built.
@@ -265,6 +283,20 @@ begin
   for I := 0 to High(ALabels) do
     FInputLabels[I] := ALabels[I];
   FInputCaption := ACaption;
+
+  if FSelfTest then
+  begin
+    //Answering with the default is what a person would do, and it keeps the
+    //applet's own PASS line meaningful. Copied because a const parameter
+    //cannot be captured by a closure.
+    Answer := ADone;
+    TThread.Queue(nil,
+      procedure
+      begin
+        Answer(True, [FInputValues[0]]);
+      end);
+    Exit();
+  end;
 
   // Queued, so the worker is not held while the window is built. INPUT does
   // not park the VM: the script carries on and the answer arrives later.
@@ -283,7 +315,22 @@ procedure TfrmAppletRunner.HostConfirm(const AMessage: String;
   const ADone: TConfirmDoneProc);
 var
   Message: String;
+  Answer: TConfirmDoneProc;
 begin
+  //Under self-test nobody is there to press Yes, and the point is to exercise
+  //the pause and the release, not the window.
+  if FSelfTest then
+  begin
+    //Copied because a const parameter cannot be captured by a closure.
+    Answer := ADone;
+    TThread.Queue(nil,
+      procedure
+      begin
+        Answer(True);
+      end);
+    Exit();
+  end;
+
   Message := AMessage;
   // Raised on the thread that owns the window, whatever thread the VM asked
   // from. This is what lets BREAKPOINT stop on a phone: the VM waits on its
@@ -418,6 +465,8 @@ const
   {$ELSE}
   BTN_W = 64;  // narrow buttons so all 5 fit on a phone in portrait
   {$ENDIF}
+var
+  I: Integer;
 begin
   Caption := 'Plan9Basic Applet Runner';
   Width   := 960;
@@ -567,6 +616,24 @@ begin
   FDrainTimer.Interval := 50;
   FDrainTimer.Enabled := False;
   FDrainTimer.OnTimer := DrainTimerTick;
+
+  // ---- Self-test ----
+  //FindCmdLineSwitch strips one switch character, so --selftest reaches it as
+  //-selftest and never matches. Read the parameters directly instead.
+  FSelfTest := False;
+  for I := 1 to ParamCount do
+    if SameText(ParamStr(I), '--selftest') or SameText(ParamStr(I), '-selftest') or
+       SameText(ParamStr(I), '/selftest') then
+      FSelfTest := True;
+  if FSelfTest then
+  begin
+    FSelfTestElapsed := 0;
+    FSelfTestStarted := False;
+    FSelfTestTimer := TTimer.Create(Self);
+    FSelfTestTimer.Interval := 200;
+    FSelfTestTimer.OnTimer := SelfTestTick;
+    FSelfTestTimer.Enabled := True;
+  end;
 
   // ---- File dialogs (desktop only) ----
   {$IFDEF P9B_DESKTOP}
@@ -749,6 +816,61 @@ procedure TfrmAppletRunner.DrainTimerTick(Sender: TObject);
 begin
   if Assigned(FEngine) then
     FEngine.DrainOutput(FOutputMemo.Lines);
+end;
+
+procedure TfrmAppletRunner.FinishSelfTest(const AVerdict: String;
+  const ACode: Integer);
+var
+  Report: TStringList;
+begin
+  FSelfTestTimer.Enabled := False;
+  Report := TStringList.Create();
+  try
+    Report.Add(AVerdict);
+    Report.Add('--- output ---');
+    Report.AddStrings(FOutputMemo.Lines);
+    Report.SaveToFile(TPath.Combine(TPath.GetDirectoryName(ParamStr(0)),
+                                    'selftest.out'));
+  finally
+    Report.Free();
+  end;
+  Halt(ACode);
+end;
+
+procedure TfrmAppletRunner.SelfTestTick(Sender: TObject);
+var
+  Text: String;
+begin
+  Inc(FSelfTestElapsed, FSelfTestTimer.Interval);
+
+  if not FSelfTestStarted then
+  begin
+    //One tick's grace so the form is up before anything is asked of it.
+    FSelfTestStarted := True;
+    BtnRunClick(nil);
+    Exit();
+  end;
+
+  //A run that never reports Done is the shape a deadlock takes from outside.
+  if FSelfTestElapsed > 30000 then
+  begin
+    FinishSelfTest('FAIL - the run did not finish in 30s; status was "' +
+                   FStatusLbl.Text + '"', 1);
+    Exit();
+  end;
+
+  if FStatusLbl.Text <> 'Done.' then
+    Exit();
+
+  //INPUT answers after the script ends, so its line arrives late by design.
+  Text := FOutputMemo.Lines.Text;
+  if Pos('the host returned', Text) = 0 then
+    Exit();
+
+  if Pos('FAIL', Text) > 0 then
+    FinishSelfTest('FAIL - the applet reported a failing check', 1)
+  else
+    FinishSelfTest('OK - five checks passed, run completed on the VM thread', 0);
 end;
 
 procedure TfrmAppletRunner.HostMarshal(const AProc: TThreadMethod);

@@ -1,0 +1,64 @@
+OK - five checks passed, run completed on the VM thread
+--- output ---
+  PASS - the host returned 42
+  (arriving after Done. is correct: INPUT is async)
+=== 1/5  UI stays alive (YieldProc) ===
+  scrolling 30 lines; the screen must not freeze
+  working 1
+  working 2
+  working 3
+  working 4
+  working 5
+  working 6
+  working 7
+  working 8
+  working 9
+  working 10
+  working 11
+  working 12
+  working 13
+  working 14
+  working 15
+  working 16
+  working 17
+  working 18
+  working 19
+  working 20
+  working 21
+  working 22
+  working 23
+  working 24
+  working 25
+  working 26
+  working 27
+  working 28
+  working 29
+  working 30
+  PASS if the app stayed responsive
+
+=== 2/5  Library errors are reported ===
+  PASS - bad input reported code 1
+
+=== 3/5  Invented pointer is refused ===
+  a real handle reads 500
+  PASS - refused: timer_interval: Invalid object
+
+=== 4/5  BREAKPOINT degrades where it cannot pause ===
+  desktop: a dialog appears - answer YES to go on
+  mobile:  no dialog; the frame is printed below
+[TRACE] Trace level 1 (basic)
+[TRACE] Line 52
+[BREAKPOINT] checkpoint reached (Line 52)
+             bpcount = 3
+             bpname$ = "frame dump"
+[BREAKPOINT] Execution resumed
+[TRACE] Line 53
+[TRACE] Trace disabled
+  PASS - execution continued past the breakpoint
+
+=== 5/5  INPUT asks the host (async) ===
+  a prompt appears; the script ENDS without waiting
+  type a number - the PASS line arrives when you do
+
+script finished - now answer the prompt above
+

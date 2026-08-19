@@ -152,6 +152,40 @@ Step 'vm thread' {
     }
 }
 
+Step 'applet self-test' {
+    # The applet presses its own Run, answers its own dialogs and reports. This
+    # covers what VMThreadProbe cannot: the host's own threading -- the worker's
+    # lifetime, the output drain timer, the marshaller, and the teardown.
+    #
+    # The outer kill is not belt-and-braces. A deadlocked UI thread cannot run
+    # the applet's own timeout either, so the only thing that can call it is a
+    # process that is not the applet.
+    $runner = Join-Path $root 'runner'
+    $exe = Join-Path $runner 'bin\Plan9BasicApplet.exe'
+    $out = Join-Path $runner 'bin\selftest.out'
+    Remove-Item $out -ErrorAction SilentlyContinue
+
+    New-Item -ItemType Directory -Force (Join-Path $runner 'bin\dcu') | Out-Null
+    Push-Location $runner
+    try {
+        $log = & (Find-Dcc64) '-E.\bin' '-N.\bin\dcu' 'Plan9BasicApplet.dpr' 2>&1
+        $bad = $log | Select-String 'Error|Fatal'
+        if ($bad) { $bad | ForEach-Object { $_.Line.Trim() }; $global:LASTEXITCODE = 1; return }
+    } finally {
+        Pop-Location
+    }
+
+    $proc = Start-Process -FilePath $exe -ArgumentList '--selftest' -PassThru -WindowStyle Minimized
+    if (-not $proc.WaitForExit(90000)) {
+        $proc.Kill()
+        'the applet did not finish in 90s -- its interface is wedged'
+        $global:LASTEXITCODE = 1
+        return
+    }
+    $global:LASTEXITCODE = $proc.ExitCode
+    if (Test-Path $out) { (Get-Content $out | Select-Object -First 1).Trim() }
+}
+
 Step 'documentation' {
     $args = @((Join-Path $root 'tools\check-all.py'))
     if ($Quick) { $args += '--quick' }

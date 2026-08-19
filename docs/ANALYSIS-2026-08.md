@@ -2070,3 +2070,40 @@ That is the standing gap this episode exposed, and it is worth more than the
 bug: `VMThreadProbe` covers the engine's threading thoroughly and the host's not
 at all. A host harness that drives Run, answers the dialogs and reads the output
 would have found this in one run, alone, in seconds.
+
+---
+
+## 24. The applet tests itself
+
+Done 2026-08-19, closing the gap §23 named an hour after naming it.
+
+`Plan9BasicApplet.exe --selftest` presses its own Run, answers its own dialogs,
+writes the output beside the executable and exits with a verdict. `verify.ps1`
+runs it, so the count is now eight steps.
+
+**What it covers that nothing else did.** `VMThreadProbe` exercises the engine's
+threading thoroughly and the host's not at all, and the host is where every bug
+in this phase lived: the worker's lifetime, the drain timer, the marshaller, the
+teardown. All of it had been checked by eye since it was written.
+
+**Watched failing before being trusted**, and the way it failed matters.
+Reintroducing the §23 deadlock — `FreeAndNil` in the worker's own `OnTerminate`
+— hangs the applet, and **its own 30-second timeout never fires**: a deadlocked
+UI thread cannot run the timer that would report it. Only the outer kill in
+`verify.ps1` ends it.
+
+That is worth stating plainly, because the internal timeout looks like the
+safety net and is not one. A process cannot time itself out when the thing that
+failed is the thread that would notice.
+
+**Two small things it cost.** `FindCmdLineSwitch` strips one switch character,
+so `--selftest` arrives as `-selftest` and never matches — the first run went
+straight past the flag and sat there as an ordinary window until the harness
+killed it, which looked exactly like a deadlock and was not. And Delphi will not
+capture a `const` parameter in a closure, so the auto-answers copy their
+callbacks to locals first.
+
+**What it does not cover**, and should be said rather than assumed: the dialogs
+answer themselves, so nothing here proves one renders. That is why §23's
+blank-window hunt needed a person, and it still would. What this catches is
+everything around them, which is where the fault actually was.
