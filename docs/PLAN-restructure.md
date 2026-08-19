@@ -285,7 +285,16 @@ target.
 
 ### 2.3 Move the VM off the UI thread
 
-**Started 2026-08-19. The seam is in; the flip is not.**
+**Done 2026-08-19.** The applet runner executes on a thread of its own, and
+the five checks of its validation applet pass on Windows with the interface
+responsive throughout, `BREAKPOINT` pausing and resuming through a dialog,
+and `INPUT` answering asynchronously.
+
+What it took, beyond the seam described below, is in ANALYSIS §17 through
+§24: the UI-to-VM queue, a drain point in the instruction loop *and* in the
+pause loop, output that waits to be fetched, an atomic re-entry guard, and
+one deadlock of the author's own making that cost four wrong diagnoses. The
+applet now tests itself, which is the part most worth keeping.
 
 The `ProcessMessages` part of this item was already done — see 2.1. What is real
 is that FireMonkey is not thread-safe and 3,899 GUI functions touch it.

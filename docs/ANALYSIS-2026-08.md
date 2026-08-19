@@ -2107,3 +2107,9 @@ callbacks to locals first.
 answer themselves, so nothing here proves one renders. That is why §23's
 blank-window hunt needed a person, and it still would. What this catches is
 everything around them, which is where the fault actually was.
+
+**Confirmed by hand afterwards**, which the harness cannot do: the platform's own
+`InputQuery` renders correctly again, prompt and default and all, and accepts a
+typed answer. The bespoke dialog that §23 built was never needed — it was a
+repair for a fault that was somewhere else entirely, and removing it is the last
+trace of that detour to disappear.
