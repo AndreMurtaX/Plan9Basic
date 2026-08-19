@@ -28,6 +28,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.Character, System.Math,
+  System.SyncObjs, System.Generics.Collections,
   lexer, parser, exec, UnitUtils;
 
 type
@@ -45,6 +46,25 @@ type
   //
   //Interface between the language engine and the host application
   //
+  //One call the UI thread wants made, waiting for the thread that owns the VM.
+  //
+  //The VM is a single-threaded stack machine: two callers cannot be inside it
+  //at once, whatever thread they arrive from. So a control click or a timer
+  //tick that fires on the UI thread while the VM runs elsewhere cannot execute
+  //there -- it has to be handed over and waited for.
+  TVMCall = class
+  public
+    Signature: String;
+    Args: TArray<TAsmData>;
+    RetType: TExprKind;
+    RetValue: TAsmData;
+    Failed: Boolean;
+    ErrorText: String;
+    Finished: TEvent;
+    constructor Create();
+    destructor Destroy(); override;
+  end;
+
   TBasicEngine = class
   private
     output: TStrings;
@@ -77,6 +97,19 @@ type
     //--------------------------------------------------------------------------
 
     FScriptTimeOut: Int64; //Maximum script execution time
+
+    //Zero until a host declares that the VM has a thread of its own. While it
+    //is zero every call runs where it is made, which is what happened before
+    //any of this existed and is still what a single-threaded host wants.
+    FVMThread: TThreadID;
+    FPending: TObjectList<TVMCall>;
+    FPendingLock: TCriticalSection;
+    procedure RunOneQueuedCall(const ACall: TVMCall);
+    function QueueAndWait(const ASignature: String;
+                          const AParameters: array of TAsmData;
+                          out RetType: TExprKind;
+                          out RetValue: TAsmData): Boolean;
+
     procedure PrintProc(p: PChar); //PRINT management function
     procedure SetScriptTimeOut(const Value: Int64);
   public
@@ -88,6 +121,21 @@ type
     This: TObject;
     constructor Create();
     destructor Destroy(); override;
+
+    //--- Running the VM on a thread of its own ---------------------------
+    //
+    //Called from inside the thread that is about to run ExecuteProgram, and
+    //again when it finishes. Between the two, ExecuteUserFunction called from
+    //any other thread queues instead of executing, and DrainQueuedCalls runs
+    //what was queued. A host that never calls these behaves exactly as before.
+    procedure ClaimVMThread();
+    procedure ReleaseVMThread();
+    //Runs everything the UI thread has queued, on the caller's thread. Belongs
+    //in YieldProc, which the VM already calls at its pause and refresh points.
+    procedure DrainQueuedCalls();
+    //True while a thread has been claimed and this is not it.
+    function CallsMustBeQueued(): Boolean;
+
     function Compile(source: TStrings): Integer; overload;
     function Compile(source: PChar): Integer; overload;
     function LoadIntermediate(source: TStrList): Integer;
@@ -201,8 +249,29 @@ begin
   end;
 end;
 
+{ TVMCall }
+
+constructor TVMCall.Create();
+begin
+  inherited Create();
+  //Manual reset, because the waiter may look after the VM has already
+  //signalled, and an auto-reset event would have forgotten by then.
+  Finished := TEvent.Create(nil, True, False, '');
+end;
+
+destructor TVMCall.Destroy();
+begin
+  Finished.Free();
+  inherited Destroy();
+end;
+
+{ TBasicEngine }
+
 constructor TBasicEngine.Create();
 begin
+  FVMThread := 0;
+  FPending := TObjectList<TVMCall>.Create(False); //the waiter owns each call
+  FPendingLock := TCriticalSection.Create();
   FFunctions := TFunctionsDictionary.Create();
   Parser := TBasicParser.Create(); //Creates the parser
   INTSource := TStringTokens.Create(); //Holds intermediate postfix code
@@ -220,6 +289,27 @@ end;
 
 destructor TBasicEngine.Destroy();
 begin
+  //Anything still queued will never run, and its waiter is blocked on an event
+  //nobody will set. Release them with a failure rather than leaving threads
+  //parked on a dead engine.
+  if Assigned(FPendingLock) then
+  begin
+    FPendingLock.Enter();
+    try
+      while FPending.Count > 0 do
+      begin
+        FPending[0].Failed := True;
+        FPending[0].ErrorText := 'the engine was destroyed before this call ran';
+        FPending[0].Finished.SetEvent();
+        FPending.Delete(0);
+      end;
+    finally
+      FPendingLock.Leave();
+    end;
+  end;
+  if Assigned(FPending) then FreeAndNil(FPending);
+  if Assigned(FPendingLock) then FreeAndNil(FPendingLock);
+
   if Assigned(LibFunctionsTable) then FreeAndNil(LibFunctionsTable);
   if Assigned(UserFunctionsTable) then FreeAndNil(UserFunctionsTable);
   if Assigned(ASMSource) then FreeAndNil(ASMSource);
@@ -249,6 +339,155 @@ begin
 end;
 
 //Execute a user defined function present at the compiled BASIC code
+procedure TBasicEngine.ClaimVMThread();
+begin
+  FVMThread := TThread.Current.ThreadID;
+  //The VM needs somewhere to run what other threads queue. Its existing yield
+  //points fire only when paused or after a PRINT, so a computing program would
+  //never reach one and the caller would wait until it timed out.
+  Parser.exec.DrainProc := DrainQueuedCalls;
+end;
+
+procedure TBasicEngine.ReleaseVMThread();
+begin
+  FVMThread := 0;
+  Parser.exec.DrainProc := nil;
+  //Whatever is still queued can no longer be run by anyone.
+  DrainQueuedCalls();
+end;
+
+function TBasicEngine.CallsMustBeQueued(): Boolean;
+begin
+  Result := (FVMThread <> 0) and (TThread.Current.ThreadID <> FVMThread);
+end;
+
+procedure TBasicEngine.RunOneQueuedCall(const ACall: TVMCall);
+begin
+  try
+    //Straight through: this is already the VM's thread, so the routing test in
+    //ExecuteUserFunction sends it down the ordinary path.
+    ExecuteUserFunction(output, ACall.Signature, ACall.Args,
+                        ACall.RetType, ACall.RetValue);
+  except
+    on E: Exception do
+    begin
+      ACall.Failed := True;
+      ACall.ErrorText := E.Message;
+    end;
+  end;
+  ACall.Finished.SetEvent();
+end;
+
+procedure TBasicEngine.DrainQueuedCalls();
+var
+  Call: TVMCall;
+begin
+  if not Assigned(FPendingLock) then
+    Exit();
+
+  //One at a time, releasing the lock while the VM runs, so a callback that
+  //queues another call cannot deadlock against the queue it is queueing into.
+  repeat
+    Call := nil;
+    FPendingLock.Enter();
+    try
+      if FPending.Count > 0 then
+      begin
+        Call := FPending[0];
+        FPending.Delete(0);
+      end;
+    finally
+      FPendingLock.Leave();
+    end;
+
+    if Call = nil then
+      Break;
+
+    if FVMThread = 0 then
+    begin
+      //Nobody owns the VM any more; the waiter would wait forever.
+      Call.Failed := True;
+      Call.ErrorText := 'the VM thread ended before this call ran';
+      Call.Finished.SetEvent();
+    end
+    else
+      RunOneQueuedCall(Call);
+  until False;
+end;
+
+function TBasicEngine.QueueAndWait(const ASignature: String;
+                                   const AParameters: array of TAsmData;
+                                   out RetType: TExprKind;
+                                   out RetValue: TAsmData): Boolean;
+var
+  Call: TVMCall;
+  i: Integer;
+  Waited: Cardinal;
+begin
+  Result := False;
+  RetType := TExprKind.ekNumber;
+  RetValue := Default(TAsmData);
+
+  Call := TVMCall.Create();
+  try
+    Call.Signature := ASignature;
+    SetLength(Call.Args, Length(AParameters));
+    for i := 0 to High(AParameters) do
+      Call.Args[i] := AParameters[i];
+
+    FPendingLock.Enter();
+    try
+      FPending.Add(Call);
+    finally
+      FPendingLock.Leave();
+    end;
+
+    //The wait cannot simply block. The VM may marshal a library call back to
+    //this thread through TThread.Synchronize, and Synchronize only completes
+    //when the main thread runs CheckSynchronize. A plain WaitFor here would
+    //park the very thread the VM is waiting on: both sides stopped, forever.
+    //
+    //So the wait is a loop that keeps answering.
+    Waited := 0;
+    while Call.Finished.WaitFor(10) = wrTimeout do
+    begin
+      if TThread.Current.ThreadID = MainThreadID then
+        CheckSynchronize(0);
+      Inc(Waited, 10);
+      //A VM stuck in a loop with no yield point would otherwise hold the
+      //interface still. Give up rather than freeze, and say why.
+      if (FScriptTimeOut > 0) and (Waited > Cardinal(FScriptTimeOut) * 1000) then
+      begin
+        Call.Failed := True;
+        Call.ErrorText := 'the VM did not reach a yield point in time';
+        Break;
+      end;
+      if FVMThread = 0 then
+      begin
+        Call.Failed := True;
+        Call.ErrorText := 'the VM thread ended while this call waited';
+        Break;
+      end;
+    end;
+
+    if not Call.Failed then
+    begin
+      RetType := Call.RetType;
+      RetValue := Call.RetValue;
+      Result := True;
+    end;
+  finally
+    //Taken out of the queue if the wait gave up on it before the VM got there.
+    FPendingLock.Enter();
+    try
+      FPending.Remove(Call);
+    finally
+      FPendingLock.Leave();
+    end;
+    Call.Free();
+  end;
+end;
+
 procedure TBasicEngine.ExecuteUserFunction(stdout: TStrings; FunctionSignature: String; Parameters: array of TAsmData; out RetType: TExprKind; out RetValue: TAsmData);
 var
   wFunction: TFunctionData;
@@ -282,6 +521,18 @@ begin
   //Find function return type.
   //If there is a problem with the signature syntax, leave with no action.
   //But this should never take place.
+  //Arriving from a thread that does not own the VM, this cannot run here: the
+  //stack machine holds one caller at a time. Hand it over and wait.
+  //
+  //The call site does not change. TimerLib's OnTimer and the 405 control
+  //callbacks all reach the VM through this method, so routing it once routes
+  //all of them, and a host that never claims a thread never takes this path.
+  if CallsMustBeQueued() then
+  begin
+    QueueAndWait(FunctionSignature, Parameters, RetType, RetValue);
+    Exit();
+  end;
+
   if not ReturnType(FunctionSignature, RetType) then
     Exit();
 

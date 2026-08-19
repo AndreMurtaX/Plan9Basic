@@ -1663,3 +1663,64 @@ StdLib and StrLib's doing and nothing else's.
 
 So the boundary now has two independent guards, one on the source and one on
 the link, and neither was trusted until it had been seen to fail.
+
+---
+
+## 17. The handover into the VM, and the yield points that were not there
+
+Done 2026-08-19. The other half of 2.3: the seam built earlier marshals **VM to
+UI**, and a worker VM also needs **UI to VM** — a click or a timer tick that
+fires on the UI thread while the VM runs elsewhere.
+
+**The design turned out much smaller than feared.** Every one of those paths
+reaches the VM through one method, `TBasicEngine.ExecuteUserFunction`:
+`TimerLib`'s `OnTimer`, and all 405 control callbacks through
+`ControlCommon.RunCallback`. So the routing goes there, and **no call site
+changes at all**. If the caller is not on the thread that claimed the VM, the
+call is queued and waited for; otherwise it runs exactly as before.
+
+**The wait is the part that cannot be naive.** The VM may marshal a library
+call back to the UI thread through `TThread.Synchronize`, which completes only
+when the main thread runs `CheckSynchronize`. A plain `WaitFor` on the main
+thread parks the very thread the VM is waiting for: both sides stopped, nothing
+reported. So the wait is a loop that keeps answering, with a timeout, because a
+VM wedged without a yield point should give the interface back rather than hold
+it.
+
+**And then the probe hung, which is how the real gap was found.**
+
+`YieldProc` is called in exactly two places: the pause loop, when the VM is
+already idle, and after a `PRINT`, throttled. Both are right for pumping a
+message loop — there is nothing to show and nothing to do. Neither fires while
+a program computes. The probe's program looped without printing, so the queue
+was never drained and the caller waited until it timed out.
+
+The existing yield points were sufficient for *refreshing an interface* and
+useless for *answering it*. That is not a bug in them; they were built for a
+different question.
+
+So `TExec` gained `DrainProc`, called between two instructions every 512 of
+them — the only place a stack machine holds no caller and can take another.
+`nil` for a host that kept the VM on the UI thread, so it costs one null test
+per interval.
+
+**What is pinned.** `tests/VMThreadProbe.dpr`, because a BASIC test cannot: it
+has no threads, and which thread a call runs on is the entire subject. It runs
+a program on a worker, queues a call from the main thread, and checks the answer
+comes back. Under a 60-second kill, since **the failure this guards against is a
+deadlock, and a deadlocked test does not fail, it waits.**
+
+Isolating that first failure was worth the two minutes it took. A direct call
+with no thread claimed was added above the queued one, so "the signature is
+wrong" and "the handover is broken" stopped being the same red line. The
+signature was fine.
+
+**What 2.3 still needs**, so this is not read as finished:
+
+- `ExecuteProgram` is handed the memo's own `Lines`, so every `PRINT` writes a
+  UI object from the worker. That is a data race per line of output.
+- `UnitGC.GlobalCallbackBusy` is a plain Boolean. It stops a callback inside a
+  callback on one thread and does nothing across two.
+- No host claims a thread yet. All of this is inert, deliberately, and proved
+  by the suites being unchanged at 387 and 614.
+- Nothing has run on a device.

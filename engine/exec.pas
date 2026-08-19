@@ -174,6 +174,20 @@ type
   //libraries touch FMX from 3,899 functions, but the VM reaches all of them
   //through one place, so the handover belongs here and not in the libraries.
   TMarshalProc = procedure(const AProc: TThreadMethod) of object;
+
+  //Called on the VM's own thread, at a fixed instruction interval, so a host
+  //that moved the VM off the UI thread has somewhere to run what the UI thread
+  //queued while the program is running.
+  //
+  //The existing yield points are not enough for that, which the first attempt
+  //discovered by hanging: YieldProc fires only when the VM is paused, or after
+  //a PRINT, and a program that computes without printing reaches neither. That
+  //is fine for pumping a message loop -- there is nothing to see -- and no use
+  //at all for answering a click.
+  //
+  //Nil for a host that kept the VM on the UI thread, which is why this costs a
+  //null test per interval rather than a call.
+  TDrainProc = procedure of object;
   //BASIC tokenized instructions
   TBasInstr = record
     id: TBasToken; //Token type
@@ -271,6 +285,7 @@ type
     FConfirmProc: TConfirmProc;
     FYieldProc: TYieldProc;
     FMarshalProc: TMarshalProc;
+    FDrainProc: TDrainProc;
     //Set for the duration of one marshalled call, because an open array cannot
     //be captured by the parameterless method Synchronize wants.
     FCallFn: TLinkFunction;
@@ -439,6 +454,7 @@ type
     property ConfirmProc: TConfirmProc read FConfirmProc write FConfirmProc;
     property YieldProc: TYieldProc read FYieldProc write FYieldProc;
     property MarshalProc: TMarshalProc read FMarshalProc write FMarshalProc;
+    property DrainProc: TDrainProc read FDrainProc write FDrainProc;
     property CallbackProc: TNotifyEvent read FCallbackProc write FCallbackProc;
     property CallbackObj: TObject read FCallbackObj write FCallbackObj;
     property TimeOut: Int64 read FTimeOut write FTimeOut;
@@ -1035,16 +1051,21 @@ end;
 procedure TExec.ExecuteProgram();
 const
   TIMEOUT_CHECK_INTERVAL = 10000; // Check timeout every N instructions
+  //Small enough that a click is answered without a visible wait, large enough
+  //that the null test disappears into the dispatch loop it sits in.
+  DRAIN_CHECK_INTERVAL = 512;
 var
   deltaTicks: Int64;
   Timer: TStopWatch;
   instructionCount: Integer;
+  drainCount: Integer;
 begin
   ExecStatus := TExecStatus.esRun; //Change status to 'running'
   Self.Clear(); //Reset the stack machine
   deltaTicks := FTimeOut * 1000; //Timeout in milliseconds
   Timer := TStopWatch.StartNew(); //Create watch
   instructionCount := 0; // HIGH PRIORITY FIX: Counter for optimized timeout checking
+  drainCount := 0;
 
   repeat //for each instruction...
     if ExecStatus <> TExecStatus.esRun then
@@ -1082,6 +1103,18 @@ begin
     Inc(PRG_IP); //Increment instruction pointer
     //Check for callback object, If assigned process it.
     if (callBackObj <> nil) then CallBackProc(callBackObj);
+    //Anything another thread queued for the VM runs here, between two
+    //instructions, which is the only place it can: the stack machine holds one
+    //caller at a time and this is where it holds none.
+    if Assigned(FDrainProc) then
+    begin
+      Inc(drainCount);
+      if drainCount >= DRAIN_CHECK_INTERVAL then
+      begin
+        drainCount := 0;
+        FDrainProc();
+      end;
+    end;
     // HIGH PRIORITY FIX: Optimized timeout checking - only check every N instructions
     if FTimeOut > 0 then //0 = no timeout (be careful)
     begin

@@ -119,6 +119,39 @@ Step 'console host' {
         Select-String 'OK -|Fatal|Error' | ForEach-Object { $_.Line.Trim() }
 }
 
+Step 'vm thread' {
+    # Compiled here rather than by a script of its own, because it is one file
+    # and the interesting part is running it under a timeout: the failure this
+    # probe guards against is a deadlock, and a deadlocked test does not fail,
+    # it waits.
+    $probeDir = Join-Path $tests 'bin'
+    New-Item -ItemType Directory -Force (Join-Path $probeDir 'vmthread') | Out-Null
+    Push-Location $tests
+    try {
+        $dcc2 = Find-Dcc64
+        $log = & $dcc2 -B "-NU$(Join-Path $probeDir 'vmthread')" "-E$probeDir" `
+                       'VMThreadProbe.dpr' 2>&1
+        $bad = $log | Select-String 'Error|Fatal'
+        if ($bad) { $bad | ForEach-Object { $_.Line.Trim() }; return }
+
+        $out = Join-Path $probeDir 'vmthread.out'
+        $proc = Start-Process -FilePath (Join-Path $probeDir 'VMThreadProbe.exe') `
+                    -NoNewWindow -PassThru -RedirectStandardOutput $out `
+                    -RedirectStandardError (Join-Path $probeDir 'vmthread.err')
+        if (-not $proc.WaitForExit(60000)) {
+            $proc.Kill()
+            'the probe did not finish in 60s -- the handover deadlocked'
+            $global:LASTEXITCODE = 1
+            return
+        }
+        $global:LASTEXITCODE = $proc.ExitCode
+        Get-Content $out | Where-Object { $_ -match 'OK -|FAIL|failed' } |
+            ForEach-Object { $_.Trim() }
+    } finally {
+        Pop-Location
+    }
+}
+
 Step 'documentation' {
     $args = @((Join-Path $root 'tools\check-all.py'))
     if ($Quick) { $args += '--quick' }
