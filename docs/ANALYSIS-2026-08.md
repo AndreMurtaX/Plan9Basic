@@ -1724,3 +1724,49 @@ signature was fine.
 - No host claims a thread yet. All of this is inert, deliberately, and proved
   by the suites being unchanged at 387 and 614.
 - Nothing has run on a device.
+
+---
+
+## 18. Output that waits to be fetched, and a guard that could be claimed twice
+
+Done 2026-08-19, closing two of the three hazards §17 left open.
+
+### The output
+
+`ExecuteProgram` is handed a `TStrings`, and on a real host that is a `TMemo`'s
+own `Lines`. `PrintProc` appended to it directly, which from a worker is a data
+race on **every line of output** — the most frequent operation a BASIC program
+performs.
+
+The text now waits in the engine and the host comes and gets it, on the host's
+thread, through `DrainOutput`. The append rule — what `PRINT` emits continues the
+line already there, and only an embedded break starts a new one — moved into a
+method both paths call, so the threaded and unthreaded versions cannot drift
+apart on the one piece of behaviour a reader would notice.
+
+`OnPrintOutput` moved with it, and fires during the drain rather than from
+`PrintProc`. A handler that touches the interface now runs on the thread that
+owns it, which is where a host would naturally have put one.
+
+Pinned in `VMThreadProbe`: the list handed to `ExecuteProgram` is checked to be
+**still empty** after the program has printed, and the text is checked to arrive
+only when the host asks for it.
+
+### The guard
+
+`UnitGC.GlobalCallbackBusy` stopped a callback firing inside a callback. Tested,
+then set. Sound on one thread, where nothing runs between those two lines, and
+useless across two: both callers read `False`, both write `True`, both proceed
+into a stack machine that holds one caller.
+
+Now `ClaimCallbackGuard`, one interlocked compare-and-exchange, so exactly one
+caller can win however many arrive together. The cheap read stays for the
+early-out, because a caller that loses *there* has merely asked twice.
+
+**Measured before sweeping, and the measurement halved the work.** 43 references
+across 15 files — but 19 of them were inside commented-out blocks, left behind
+when those libraries were reworked. 24 live sites in 8 files, every one with the
+identical three-line shape, which is what made a mechanical sweep safe.
+
+Had that not been counted first, the sweep would have been written to handle
+shapes that only exist in dead code.

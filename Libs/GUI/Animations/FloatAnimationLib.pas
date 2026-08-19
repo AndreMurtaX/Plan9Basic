@@ -206,12 +206,13 @@ var
   RetVal: TAsmData;
   I: Integer;
 begin
-  if UnitGC.GlobalCallbackBusy then Exit;
+  if UnitGC.CallbackInProgress() then Exit;
   if not Assigned(FBasicEngine) then Exit;
   if not Assigned(FConsoleOutput) then Exit;
   if FuncSignature = '' then Exit;
 
-  UnitGC.GlobalCallbackBusy := True;
+  if not UnitGC.ClaimCallbackGuard() then
+    Exit();
   UnitGC.SkipProcessMessages := True;
 
   try
@@ -229,7 +230,7 @@ begin
     end;
   finally
     UnitGC.SkipProcessMessages := False;
-    UnitGC.GlobalCallbackBusy := False;
+    UnitGC.ReleaseCallbackGuard();
   end;
 end;
 

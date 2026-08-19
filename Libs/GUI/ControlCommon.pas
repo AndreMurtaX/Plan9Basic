@@ -284,12 +284,13 @@ begin
   Result.p := nil;
   Result.s := '';
 
-  if UnitGC.GlobalCallbackBusy then Exit();
+  if UnitGC.CallbackInProgress() then Exit();
   if not Assigned(Engine) then Exit();
   if not Assigned(Output) then Exit();
   if FuncSignature = '' then Exit();
 
-  UnitGC.GlobalCallbackBusy := True;
+  if not UnitGC.ClaimCallbackGuard() then
+    Exit();
   UnitGC.SkipProcessMessages := True;
   try
     SetLength(CallArgs, Length(Args));
@@ -304,7 +305,7 @@ begin
     end;
   finally
     UnitGC.SkipProcessMessages := False;
-    UnitGC.GlobalCallbackBusy := False;
+    UnitGC.ReleaseCallbackGuard();
   end;
 end;
 

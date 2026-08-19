@@ -104,6 +104,17 @@ type
     FVMThread: TThreadID;
     FPending: TObjectList<TVMCall>;
     FPendingLock: TCriticalSection;
+
+    //With the VM on a thread of its own, PRINT cannot write to the TStrings the
+    //host handed over: that is a TMemo's Lines, and appending to it from a
+    //worker is a data race on every line of output. The text waits here until
+    //the host moves it across, on the host's own thread.
+    FPendingText: String;
+    FPendingClear: Boolean;
+    FOutputLock: TCriticalSection;
+    //The append rule, shared by both paths so they cannot drift: the first
+    //piece continues the last line, the rest start new ones.
+    procedure AppendToOutput(ATarget: TStrings; const AText: String);
     procedure RunOneQueuedCall(const ACall: TVMCall);
     function QueueAndWait(const ASignature: String;
                           const AParameters: array of TAsmData;
@@ -133,6 +144,10 @@ type
     //Runs everything the UI thread has queued, on the caller's thread. Belongs
     //in YieldProc, which the VM already calls at its pause and refresh points.
     procedure DrainQueuedCalls();
+    //Moves whatever PRINT has produced into ATarget, applying the same append
+    //rule the unthreaded path applies directly. Called by the host, on the
+    //host's thread, which is the whole point. Answers how many lines moved.
+    function DrainOutput(ATarget: TStrings): Integer;
     //True while a thread has been claimed and this is not it.
     function CallsMustBeQueued(): Boolean;
 
@@ -272,6 +287,9 @@ begin
   FVMThread := 0;
   FPending := TObjectList<TVMCall>.Create(False); //the waiter owns each call
   FPendingLock := TCriticalSection.Create();
+  FOutputLock := TCriticalSection.Create();
+  FPendingText := '';
+  FPendingClear := False;
   FFunctions := TFunctionsDictionary.Create();
   Parser := TBasicParser.Create(); //Creates the parser
   INTSource := TStringTokens.Create(); //Holds intermediate postfix code
@@ -309,6 +327,7 @@ begin
   end;
   if Assigned(FPending) then FreeAndNil(FPending);
   if Assigned(FPendingLock) then FreeAndNil(FPendingLock);
+  if Assigned(FOutputLock) then FreeAndNil(FOutputLock);
 
   if Assigned(LibFunctionsTable) then FreeAndNil(LibFunctionsTable);
   if Assigned(UserFunctionsTable) then FreeAndNil(UserFunctionsTable);
@@ -653,35 +672,109 @@ end;
 //    //output.Add(StrPas(p));
 //end;
 //Auxiliary to the PRINT command. Adds the text in "p" to the output list
-procedure TBasicEngine.PrintProc(p: PChar);
+//The rule PRINT has always followed: what it emits continues the line already
+//there, and only an embedded break starts a new one. Extracted so the threaded
+//and unthreaded paths cannot drift apart on it.
+procedure TBasicEngine.AppendToOutput(ATarget: TStrings; const AText: String);
 var
-  Text: String;
   Lines: TArray<String>;
   I, LastIndex: Integer;
 begin
+  if (ATarget = nil) or (AText = '') then
+    Exit();
+
+  Lines := AText.Split([#13#10, #10, #13], TStringSplitOptions.None);
+  if Length(Lines) = 0 then
+    Exit();
+
+  // First part: append to the last line, or start a new one
+  if ATarget.Count = 0 then
+    ATarget.Add(Lines[0])
+  else
+  begin
+    LastIndex := ATarget.Count - 1;
+    ATarget[LastIndex] := ATarget[LastIndex] + Lines[0];
+  end;
+
+  // Additional lines (from line breaks inside the text)
+  for I := 1 to High(Lines) do
+    ATarget.Add(Lines[I]);
+end;
+
+procedure TBasicEngine.PrintProc(p: PChar);
+var
+  Text: String;
+begin
+  //With a thread claimed, `output` is the host's TMemo.Lines and this is the
+  //worker. Touching it here is a data race on every line, so the text waits
+  //for DrainOutput, which the host calls on its own thread.
+  if FVMThread <> 0 then
+  begin
+    FOutputLock.Enter();
+    try
+      if p = nil then
+      begin
+        //A clear cancels everything queued behind it, exactly as it would if
+        //it had been applied the moment it was asked for.
+        FPendingText := '';
+        FPendingClear := True;
+      end
+      else
+        FPendingText := FPendingText + StrPas(p);
+    finally
+      FOutputLock.Leave();
+    end;
+    Exit();
+  end;
+
   if output = nil then Exit();
   if p = nil then begin output.Clear(); Exit(); end;
 
   Text := StrPas(p);
   if Text = '' then Exit();
 
-  Lines := Text.Split([#13#10, #10, #13], TStringSplitOptions.None);
-  if Length(Lines) = 0 then Exit();
-
-  // First part: append to the last line, or start a new one
-  if output.Count = 0 then
-    output.Add(Lines[0])
-  else
-  begin
-    LastIndex := output.Count - 1;
-    output[LastIndex] := output[LastIndex] + Lines[0];
-  end;
-
-  // Additional lines (from line breaks inside the text)
-  for I := 1 to High(Lines) do
-    output.Add(Lines[I]);
+  AppendToOutput(output, Text);
 
   // Fire the event HERE - after the text is already in the output
+  if Assigned(FOnPrintOutput) then
+    FOnPrintOutput(Self, Text, False);
+end;
+
+function TBasicEngine.DrainOutput(ATarget: TStrings): Integer;
+var
+  Text: String;
+  DoClear: Boolean;
+  Before: Integer;
+begin
+  Result := 0;
+  if not Assigned(FOutputLock) then
+    Exit();
+
+  //Held only long enough to take the text, so a PRINT on the VM thread is not
+  //waiting on however long a TMemo takes to redraw.
+  FOutputLock.Enter();
+  try
+    Text := FPendingText;
+    DoClear := FPendingClear;
+    FPendingText := '';
+    FPendingClear := False;
+  finally
+    FOutputLock.Leave();
+  end;
+
+  if ATarget = nil then
+    Exit();
+  if DoClear then
+    ATarget.Clear();
+  if Text = '' then
+    Exit();
+
+  Before := ATarget.Count;
+  AppendToOutput(ATarget, Text);
+  Result := ATarget.Count - Before;
+
+  //Fired here rather than from PrintProc, so a handler that touches the
+  //interface runs on the thread that owns it.
   if Assigned(FOnPrintOutput) then
     FOnPrintOutput(Self, Text, False);
 end;

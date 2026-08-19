@@ -110,6 +110,7 @@ const
     '  LET r = n * 2' + sLineBreak +
     '  RETURN r' + sLineBreak +
     'END FUNCTION' + sLineBreak +
+    'PRINTLN "printed from the vm thread"' + sLineBreak +
     'LET k = 0' + sLineBreak +
     // Long enough that the program is still running when the call is queued,
     // and stopped explicitly once it has been answered. A short loop finishes
@@ -129,6 +130,8 @@ var
   RetValue: TAsmData;
   Args: array of TAsmData;
   Queued: Boolean;
+  Shown: TStringList;
+  Moved, Tries: Integer;
 begin
   UnitGC.SkipProcessMessages := True;
   GC := TGarbageCollector.Create();
@@ -183,6 +186,30 @@ begin
         Writeln('        (came back with ', RetValue.n:0:4, ')');
       Check('the queued call came back with the VM answer', RetValue.n = 42);
       Check('and with the right type', RetType = TExprKind.ekNumber);
+
+      //PRINT must not have touched the TStrings handed to ExecuteProgram: on a
+      //real host that is a TMemo's Lines, and this is not its thread. The text
+      //waits for the host to come and get it.
+      Check('the handed-over list was never written from the worker',
+            Output.Count = 0);
+
+      Shown := TStringList.Create();
+      try
+        Moved := 0;
+        for Tries := 1 to 200 do
+        begin
+          Moved := Moved + Engine.DrainOutput(Shown);
+          if Moved > 0 then
+            Break;
+          Sleep(10);
+        end;
+        Check('and it arrives when the host drains it', Moved > 0);
+        Check('with the text the program printed',
+              (Shown.Count > 0) and
+              (Pos('printed from the vm thread', Shown.Text) > 0));
+      finally
+        Shown.Free();
+      end;
 
       //The program would otherwise run for a very long time.
       Engine.Stop();

@@ -87,15 +87,51 @@ type
     property Enabled: Boolean read FEnabled write FEnabled;
   end;
 
+//Stops a callback firing inside a callback: BASIC is single-threaded, and a
+//control handler that ran while another was still running would re-enter the
+//stack machine on top of itself.
+//
+//It was a plain Boolean, tested and then set. That is sound on one thread,
+//where nothing runs between the two lines, and does nothing at all across two:
+//both callers read False, both set True, both proceed. With the VM able to own
+//a thread of its own, the claim has to be one operation.
+//
+//The cheap read stays available for the early-out, since a caller that loses
+//the race merely does the work of asking twice.
+function CallbackInProgress(): Boolean;
+function ClaimCallbackGuard(): Boolean;
+procedure ReleaseCallbackGuard();
+
 var
   GC: TGarbageCollector;
-  GlobalCallbackBusy: Boolean = False;
   SkipProcessMessages: Boolean = False;
 
 implementation
 
 uses
   System.SysUtils;
+
+var
+  //0 free, 1 held. An Integer because that is what an interlocked exchange
+  //takes; nothing outside these three functions reads it.
+  CallbackGuard: Integer = 0;
+
+function CallbackInProgress(): Boolean;
+begin
+  Result := TInterlocked.CompareExchange(CallbackGuard, 0, 0) <> 0;
+end;
+
+function ClaimCallbackGuard(): Boolean;
+begin
+  //Sets it to 1 only if it was 0, and answers with what it found. Exactly one
+  //caller can see 0, however many arrive together.
+  Result := TInterlocked.CompareExchange(CallbackGuard, 1, 0) = 0;
+end;
+
+procedure ReleaseCallbackGuard();
+begin
+  TInterlocked.Exchange(CallbackGuard, 0);
+end;
 
 constructor TGarbageCollector.Create();
 begin
