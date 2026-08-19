@@ -1506,3 +1506,46 @@ Then six files, because searching the page text counts a filename discussed in
 prose — `downloads.html` names `Translations.ini` and points at it nowhere.
 Then three, because an absolute URL has a last segment too, and
 `github.com/AndreMurtaX/Plan9Basic` ends in the name of the Linux binary.
+
+---
+
+## 14. And then I built the same defect again, on purpose to avoid it
+
+Same day, Phase 4.6, writing `tools/package-site.py` — the script that assembles
+what belongs on the server, so that publishing stops being a judgement about
+which of 124 pages changed.
+
+It has a guard. Some files the pages link to are not in the repository, and
+uploading without them publishes a broken link, so the packager refuses:
+
+```
+1 file(s) the pages link to are not on this disk:
+  Website/assets/ebooks/programas_de_jogos_espaciais.pdf
+
+uploading without them would publish a broken link.
+```
+
+That is the output *after* the fix. The first version could not produce it.
+
+It asked `git ls-files --others --ignored` for the files it needed — and that
+command reports files, not paths, so it only ever lists things that exist.
+Moving an ebook out of the tree did not make it missing. It made it **not
+needed**: the set the guard compares against shrank by exactly the file that had
+gone. The packager produced a package one file smaller and reported success.
+
+Written on the same day as §12 and §13, both of which are about checks that
+cannot fail. Knowing the shape of the mistake did not prevent the mistake. What
+caught it was the habit those two produced: move the file, run it, watch for
+red. Thirty seconds, and it was the only thing standing between this and a guard
+that would have been quietly decorative for as long as it existed.
+
+**The fix** is `git check-ignore`, which answers about paths rather than files
+and therefore works on one that is not there — the question actually being asked.
+Combined with the broken links `check-links` already finds, since a linked file
+that is gone is a broken link before it is anything else.
+
+**What generalises**, and it is not "be careful": a guard whose input is derived
+from the same state it is guarding cannot see that state change. The needed-set
+came from the disk, and the thing being checked was the disk. Nothing about
+attention fixes that, and no amount of reading the code reveals it. Running it
+does, immediately, every time.

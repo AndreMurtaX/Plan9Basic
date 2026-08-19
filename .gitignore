@@ -85,3 +85,6 @@ Thumbs.db
 # Python bytecode from the tools in tools/
 __pycache__/
 *.pyc
+
+# Assembled by tools/package-site.py for upload. Never committed.
+dist/

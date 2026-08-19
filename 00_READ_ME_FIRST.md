@@ -190,6 +190,20 @@ worse than an error, because nobody reports it.
 FMX libraries. See [tests/README.md](tests/README.md). `tools/verify.ps1` runs
 both, along with everything else.
 
+### Publishing the site
+
+The site is uploaded by hand and nothing here does it, which is how the
+published copy came to be 111 files behind this tree while looking finished.
+The procedure is [docs/PUBLISHING.md](docs/PUBLISHING.md), and
+
+```bash
+python tools/package-site.py
+```
+
+assembles exactly what belongs on the server — tracked pages plus the handful of
+linked files git deliberately ignores — so the manual step is a copy rather than
+a judgement about which of 124 pages changed.
+
 ---
 
 ## 📦 Project Entry Points
