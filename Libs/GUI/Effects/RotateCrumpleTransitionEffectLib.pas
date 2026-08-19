@@ -1,4 +1,4 @@
-unit RotateCrumpleTransitionEffectLib;
+﻿unit RotateCrumpleTransitionEffectLib;
 
 { ******************************************************************************
   RotateCrumpleTransitionEffectLib - Rotate Crumple Transition for Plan9Basic
@@ -141,12 +141,12 @@ begin
     Exit();
   try
     V := Args[1].n;
-    if V <= 1.0 then
-      V := V * 100;
-    if V < 0 then
-      V := 0;
-    if V > 100 then
-      V := 100;
+    //The documented range is 0 to 1; FireMonkey's property is 0 to 100.
+    //This used to multiply by 100 only when the value was at most 1, so
+    //progress#(e, 1) meant 100% and progress#(e, 2) meant 2%.
+    if V < 0 then V := 0;
+    if V > 1 then V := 1;
+    V := V * 100;
     TRotateCrumpleTransitionEffect(Args[0].P).Progress := V;
     Result.P := Args[0].P;
   except

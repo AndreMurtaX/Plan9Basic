@@ -1,4 +1,4 @@
-unit BrightTransitionEffectLib;
+﻿unit BrightTransitionEffectLib;
 
 {******************************************************************************
   BrightTransitionEffectLib - Bright Transition Effect for Plan9Basic
@@ -118,8 +118,13 @@ begin
   Result.n := 0; Result.s := ''; Result.p := nil; ClearError;
   if not ValidateEffect(Args[0].p, 'brighttrans_progress#') then Exit;
   try
-    Value := Args[1].n; if Value <= 1.0 then Value := Value * 100;
-    if Value < 0 then Value := 0; if Value > 100 then Value := 100;
+    Value := Args[1].n;
+    //The documented range is 0 to 1; FireMonkey's property is 0 to 100.
+    //This used to multiply by 100 only when the value was at most 1, so
+    //progress#(e, 1) meant 100% and progress#(e, 2) meant 2%.
+    if Value < 0 then Value := 0;
+    if Value > 1 then Value := 1;
+    Value := Value * 100;
     TBrightTransitionEffect(Args[0].p).Progress := Value; Result.p := Args[0].p;
   except on E: Exception do SetError(ERR_INVALID_VALUE, 'brighttrans_progress#: ' + E.Message); end;
 end;

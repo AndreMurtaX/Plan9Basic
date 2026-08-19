@@ -108,10 +108,25 @@ Value := Args[1].n;
 if Value <= 1.0 then Value := Value * 100;
 ```
 
-So `progress#(e, 1)` means 100%, not 1%, and the round trip through a `Single`
-is lossy. Pick one scale — 0..1 or 0..100 — apply it to all 17, and drop the
-guess. The generated effect suite currently needs a tolerance because of this;
-it should stop needing one.
+**Done 2026-08-18.** There were 22 of these, not 17, and the guess made the
+scale discontinuous: `progress#(e, 1)` meant 100% and `progress#(e, 2)` meant
+2%, while `0.5` and `50` both meant halfway.
+
+Like 1.1, the contract was already settled and only the setter disagreed. The
+documentation says *"Progress | 0.0 - 1.0 | 0.0 | Transition progress (0=source,
+1=target)"* and the getter already returned `Progress / 100`. So the setter now
+clamps to 0..1 and converts, and out-of-range saturates at the ends instead of
+being reinterpreted.
+
+The generated effect suite got tighter rather than merely staying green. Its
+tolerance existed for the scale conversion, and with the guess gone the only
+imprecision left is arithmetic: 0.3 through a 32-bit `Single` and the ×100 ÷100
+pair comes back 0.300000019073486. So 124 round-trips are asserted **exactly**
+now and only the 22 `progress` ones keep a tolerance, for a reason the comment
+can state honestly.
+
+`gui/05_progress_scale.bas` pins the scale, the clamping and — the thing the old
+setter got wrong — that the scale is continuous across 1.
 
 ### 1.5 SQLiteLib is outside the error policy
 

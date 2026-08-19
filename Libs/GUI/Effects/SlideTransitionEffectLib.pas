@@ -1,4 +1,4 @@
-unit SlideTransitionEffectLib;
+﻿unit SlideTransitionEffectLib;
 
 {******************************************************************************
   SlideTransitionEffectLib - Slide Transition Effect Library for Plan9Basic
@@ -166,14 +166,12 @@ begin
 
   try
     Value := Args[1].n;
-    
-    // User passes 0-1 (normalized), convert to 0-100 for FireMonkey
-    if Value <= 1.0 then
-      Value := Value * 100;
-    
-    // Clamp to valid range
+    //The documented range is 0 to 1; FireMonkey's property is 0 to 100.
+    //This used to multiply by 100 only when the value was at most 1, so
+    //progress#(e, 1) meant 100% and progress#(e, 2) meant 2%.
     if Value < 0 then Value := 0;
-    if Value > 100 then Value := 100;
+    if Value > 1 then Value := 1;
+    Value := Value * 100;
     
     TSlideTransitionEffect(Args[0].p).Progress := Value;
     Result.p := Args[0].p;

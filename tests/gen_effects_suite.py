@@ -15,12 +15,16 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 EFFECTS = ROOT / "Libs" / "GUI" / "Effects"
 OUT = ROOT / "tests" / "gui" / "03_effects.bas"
 
-# A round trip through an FMX Single property is not exact: several units
-# convert scale (progress stores 0..100 and returns 0..1), and the pair of
-# conversions loses precision. The tolerance absorbs that noise while still
-# catching the error that matters when regenerating -- a getter and a setter
-# wired to different properties, which returns a completely different value.
+# Only progress needs a tolerance, and only because of arithmetic. It is stored
+# as 0..100 and read back as 0..1, and that pair of conversions through a 32-bit
+# Single turns 0.3 into 0.300000019073486. Every other property is stored and
+# returned unchanged, so it round-trips exactly and is asserted exactly.
+#
+# The setter used to guess the scale as well, multiplying by 100 only when the
+# value was at most 1, which made progress#(e, 1) mean 100% and progress#(e, 2)
+# mean 2%. That is fixed; what is left here is the float.
 TOL = "0.001"
+TOLERANT = {"progress"}
 
 
 def descriptors():
@@ -77,7 +81,9 @@ def main():
                 continue
             L += [f"v = {pre}_{prop}(e#)",
                   f"{pre}_{prop}#(e#, v)",
-                  f'assert_near({pre}_{prop}(e#), v, {TOL}, "{pre}_{prop} round-trip")']
+                  (f'assert_near({pre}_{prop}(e#), v, {TOL}, "{pre}_{prop} round-trip")'
+                   if prop in TOLERANT else
+                   f'assert_eq({pre}_{prop}(e#), v, "{pre}_{prop} round-trip")')]
             n += 1
         L += [f"{pre}_enabled#(e#, 1)",
               f'assert_eq({pre}_enabled(e#), 1, "{pre}_enabled on")',

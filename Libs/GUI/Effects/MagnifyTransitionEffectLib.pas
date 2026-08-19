@@ -1,4 +1,4 @@
-unit MagnifyTransitionEffectLib;
+﻿unit MagnifyTransitionEffectLib;
 
 {******************************************************************************
   MagnifyTransitionEffectLib - Magnify Transition Effect for Plan9Basic
@@ -104,7 +104,13 @@ function p_magnifytrans_progress_set(var Args: array of TAsmData): TAsmData;
 var V: Single;
 begin Result.n := 0; Result.s := ''; Result.p := nil; ClearError;
   if not ValidateEffect(Args[0].p, 'magnifytrans_progress#') then Exit;
-  try V := Args[1].n; if V <= 1.0 then V := V * 100; if V < 0 then V := 0; if V > 100 then V := 100;
+  try V := Args[1].n;
+ //The documented range is 0 to 1; FireMonkey's property is 0 to 100.
+ //This used to multiply by 100 only when the value was at most 1, so
+ //progress#(e, 1) meant 100% and progress#(e, 2) meant 2%.
+ if V < 0 then V := 0;
+ if V > 1 then V := 1;
+ V := V * 100;
     TMagnifyTransitionEffect(Args[0].p).Progress := V; Result.p := Args[0].p;
   except on E: Exception do SetError(ERR_INVALID_VALUE, E.Message); end;
 end;
