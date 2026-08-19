@@ -130,8 +130,29 @@ setter got wrong — that the scale is continuous across 1.
 
 ### 1.5 SQLiteLib is outside the error policy
 
-70 `except` blocks that do not follow the policy the rest of the libraries
-adopted: record the error, return a value the caller can test, never swallow.
+**Done 2026-08-18, and the item was mis-stated.** The 70 handlers looked like
+the problem and were not. `ValidateConn` and `ValidateStmt` already record
+before they raise, and the library already exposes `sql_error`,
+`sql_errormsg$`, `sql_strerror$` and `sql_clearerror`. The policy was in place.
+
+**`SQLiteLib` was dead.** It validates handles with `IsHandleOf` and never
+called `RegisterHandle`, so every call refused the pointer `sql_open#` had just
+returned — the same defect as `ScrollBoxLib`, found the same way, by trying to
+use the thing rather than by reading it.
+
+The earlier sweep for this shape missed it because it searched `Libs/GUI/**`
+rather than the whole tree. Redone properly, it found a second: **`RAGLib`**,
+which never registered either *and* freed by testing
+`TObject(P) is TRAGEngine` — the pattern the registry exists to replace, which
+follows whatever address it is handed and is fatal outside Windows.
+
+Both fixed: registered at creation, revoked at destruction, and `rag_free` asks
+the registry. `gui/06_sqlite.bas` is the first test the library has ever had —
+16 assertions over open, exec, query, a genuine SQL error with its code and
+message, and a fabricated pointer.
+
+The lesson worth keeping: an item written from reading the code named the wrong
+defect. Running it named the right one.
 
 ### 1.6 `Libs/AI/archive/` — finish it or retire it
 

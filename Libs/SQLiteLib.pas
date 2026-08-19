@@ -1,4 +1,4 @@
-unit SqliteLib;
+﻿unit SqliteLib;
 
 {******************************************************************************
   SqliteLib - SQLite Database Library for Plan9Basic
@@ -272,6 +272,7 @@ var
   TrimSQL: String;
 begin
   inherited Create;
+  RegisterHandle(Self);
   FOwner := AOwner;
   FSQL := ASQL;
   FActive := False;
@@ -294,6 +295,8 @@ end;
 
 destructor TBasSqliteStmt.Destroy;
 begin
+  UnregisterHandle(Self);
+
   // Unregister from owner (if owner still exists)
   if Assigned(FOwner) and Assigned(FOwner.FStatements) then
     FOwner.UnregisterStatement(Self);
@@ -688,6 +691,11 @@ end;
 constructor TBasSqliteConn.Create;
 begin
   inherited Create;
+  //Without this every sql_* call fails: the library validates handles against
+  //the registry with IsHandleOf and never added anything to it, so the pointer
+  //sql_open# had just returned was indistinguishable from one a program made
+  //up with pointer#(n).
+  RegisterHandle(Self);
   FConnection := TFDConnection.Create(nil);
   FConnection.DriverName := 'SQLite';
   FConnection.LoginPrompt := False;
@@ -701,6 +709,8 @@ var
   i: Integer;
   Stmt: TBasSqliteStmt;
 begin
+  UnregisterHandle(Self);
+
   // First, close all statements (in reverse order to avoid index issues)
   if Assigned(FStatements) then
   begin
