@@ -65,12 +65,21 @@ every run.
 
 ### 1.2 `savetext$` and `opentext$` are not a round trip
 
-They pass through a `TStringList`, which appends a line break: 11 characters
-in, 13 out. `file_writealltext` / `file_readalltext$` in IOUtilsLib do not have
-the problem, which is the shape the fix should follow.
+**Done 2026-08-18.** Both halves went through a `TStringList`, which is a list
+of lines and not a string: assigning to `.Text` normalised the line endings, and
+both `SaveToFile` and reading `.Text` back appended a break. Eleven characters
+in, thirteen out.
 
-Behaviour is currently pinned by `suite/12_fileio.bas`; that test changes with
-the code.
+They use `TFile` now — what `IOUtilsLib` already used for `file_writealltext`,
+which never had the problem. `TUtils.OpenStr` also leaked its `TStringList` on
+the exception path; the rewrite has nothing to leak.
+
+Two things made this contained. `StrLib` is the only caller of either, and the
+documentation never described the extra break — so it has always described the
+behaviour that now exists, and no page needed correcting.
+
+`suite/12_fileio.bas` now pins the round trip and, separately, that a bare LF
+inside the text survives instead of being normalised.
 
 ### 1.3 Inconsistent argument order in StrLib
 

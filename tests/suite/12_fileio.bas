@@ -20,18 +20,22 @@ multi$ = "line1" + chr$(10) + "line2"
 file_writealltext(g$, multi$)
 assert_eq(file_readalltext$(g$), multi$, "line breaks survive the round trip")
 
-test_case("io/savetext-appends-a-line-break")
-rem Known wart: savetext$/opentext$ go through a TStringList, so the text
-rem read back is NOT identical to the text written -- a trailing CRLF is
-rem added. file_writealltext$/file_readalltext$ do not have this problem.
-rem This test pins the current behaviour so that changing it is a decision
-rem rather than an accident.
+test_case("io/savetext-round-trip")
+rem savetext$ and opentext$ used to pass through a TStringList, which is a
+rem list of lines and not a string: eleven characters went in and thirteen
+rem came out. They use TFile now, as file_writealltext always did.
 src$ = "hello world"
 savetext$(f$, "utf-8", src$)
 back$ = opentext$(f$, "utf-8")
-assert_eq(len(src$), 11, "source length")
-assert_eq(len(back$), 13, "two extra characters come back")
-assert_eq(back$, src$ + chr$(13) + chr$(10), "the extra characters are CRLF")
+assert_eq(len(back$), 11, "nothing is added")
+assert_eq(back$, src$, "what was written is what comes back")
+
+rem The line endings inside the text survive as written, rather than being
+rem normalised to the platform's.
+lines$ = "one" + chr$(10) + "two"
+savetext$(f$, "utf-8", lines$)
+assert_eq(len(opentext$(f$, "utf-8")), 7, "a bare LF stays one character")
+assert_eq(opentext$(f$, "utf-8"), lines$, "and the text is unchanged")
 
 test_case("io/delete")
 file_delete(f$)
