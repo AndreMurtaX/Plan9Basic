@@ -2289,3 +2289,71 @@ working directory is not finished. It deletes it now.
 That is a small thing with a general shape worth keeping: a test that exercises
 a host exercises the host's *side effects* too, and the ones that reach outside
 the repository are the ones nobody looks for.
+
+---
+
+## 28. Five of the nine games had dead keyboard handlers
+
+Found 2026-08-19, when the author loaded `flappy_bird` in the IDE and its start
+screen would not respond to UP. The first guess — mine and theirs — was the
+remote desktop session eating the key events. It was not.
+
+`TBasForm.InternalOnKeyDown` builds a signature and looks it up:
+
+```pascal
+Signature := LowerCase(FOnKeyDownFunc) + '@#n$$';   // form, key, char, shift
+...
+if UserFunctionsTable.ContainsKey(Signature) then
+```
+
+`ContainsKey` is exact. The game declared:
+
+```basic
+function OnKeyDown(sender#, keyCode, keyChar$)
+```
+
+which compiles to `@#n$`. Three parameters where four were sent, so the lookup
+misses, and **the event is dropped in silence**. No error, no warning, no
+message: the key is pressed and the program does not hear.
+
+**Five of the nine games**, in seven declarations: `2048`, `asteroids`,
+`breakout`, `flappy_bird`, `whack_a_mole`. The other four declared four
+parameters and worked. The documentation had said four all along.
+
+### Why nothing caught it
+
+§25 turned on running the applets, which found three defects. It could not find
+this one: a program run to completion is never sent an event. The suites create
+controls and read their properties; they do not press anything.
+
+And this is not a bug the language can report. A signature that does not match
+is not an error — it is a function that was not called.
+
+### The check that will
+
+`tools/check-callbacks.py` reads both sides. The libraries declare what shape
+they will call, in the `Signature := LowerCase(F...Func) + '@...'` lines the
+dispatchers already contain. The programs declare what they wrote. Where a name
+is registered, the two have to agree.
+
+**937 registered callbacks across the tree**, every one now the right shape.
+Watched failing first: putting the three-parameter declaration back into
+`flappy_bird` produces
+
+```
+Demos/flappy_bird.bas
+    onkeydown calls OnKeyDown with 4 parameter(s), and it declares 3
+```
+
+It covers every event kind, not only the keyboard — the dispatchers use eight
+distinct shapes, from `@#` for a click to `@#nnnn` — so the same silent drop
+cannot happen to `onclick` or `ontimer` either.
+
+### What it says about the day
+
+The author declined to publish until the applets and the IDE had been tested.
+That decision has now produced four defects that shipped for months: a library
+function that always answered 0, an assertion that was never true, eighty
+comparisons written for a contract `instr` no longer has, and this. Every one of
+them found by running something rather than reading it, and this last one only
+because a person sat in front of a game and pressed a key.
