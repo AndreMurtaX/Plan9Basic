@@ -2197,3 +2197,64 @@ of the kind that leave a program running happily while doing the wrong thing.
 
 `check-all.py` now runs them: 225 applets, about two minutes, and the games are
 part of the regression net rather than decoration beside it.
+
+---
+
+## 26. The IDE tests itself, and the first run of it found a defect
+
+Done 2026-08-19. `Plan9Basic.exe --selftest` loads a program, runs it, checks
+its own console and exits with a verdict. `verify.ps1` runs it, so the count is
+nine steps.
+
+It matters more than the applet's. The IDE is the application on the download
+page, it is the larger host at 143,966 lines, and until now **nothing exercised
+it at all**. It is also still the host that runs the VM on its interface thread
+— the runner was moved off it in 2.3 and this one was not — so having that
+difference covered rather than assumed is worth something on its own.
+
+### The first run failed, and the reason is a real defect
+
+`FAIL - the program did not finish within 30s`, with a console holding the
+welcome block and nothing else. Every run afterwards passed, four in a row, in
+500 ms.
+
+The difference was the network. On first launch the IDE downloads
+`Translations.ini`, and when that arrives:
+
+```pascal
+if TransDownloaded then
+  TThread.Synchronize(nil, procedure begin
+    ...
+    CmdCls();                          // <- the console is emptied
+    PrintLn('Plan9 BASIC v' + VERSION);
+```
+
+It clears the console so the welcome block can be reprinted in the language just
+downloaded. The test's program had already run, and its output went with it.
+
+**That happens to users, not only to tests.** Run a program during the first
+launch of a fresh installation and your output disappears when the download
+lands. It is not deliberate — nobody chose to discard what the user had — it is
+a side effect of reprinting a header.
+
+Left as a finding rather than fixed, because the repair has a judgement in it:
+reprint only when the console still holds nothing but the welcome, or translate
+the header in place, or drop the reprint. That is the author's call.
+
+The test was made immune instead: it accumulates the console as it appears
+rather than reading it at the end, so a clear cannot erase the evidence.
+
+### And a filter that read a hint as an error
+
+The step failed once more before it settled, on this:
+
+```
+UnitMain.pas(267) Hint: H2219 Private symbol 'PrintSyntaxError' declared but never used
+```
+
+The build check matched `Error|Fatal`, and the *identifier* is called
+`PrintSyntaxError`. Compiler diagnostics carry a colon — `Error:`, `Fatal:` —
+and the filter now requires it, in all three places that had it.
+
+Same shape as the scheme test in §13's neighbourhood: `'httplib.html'` starts
+with `'http'`. A substring test wants the delimiter that makes it a token.
