@@ -196,11 +196,57 @@ promise.
 
 ### 2.1 Measure first
 
-38 libraries hold `ModuleEngine`, `ModuleOutput` and `lastError` as unit
-variables. Before changing any of them, count how many genuinely need
-per-module state and how many merely inherited the pattern — the same
-measurement that made the GUI boilerplate work tractable and that stopped it
-from becoming a rewrite.
+**Done 2026-08-19, and it reshapes the phase.**
+
+**The `ProcessMessages` count is stale.** The analysis says 125 remain in the
+GUI libraries. There is **one**, and it is not internal pumping:
+`StdLib.n_processmessages` is the BASIC function `processmessages()`, which a
+script calls deliberately to keep the interface alive during a long loop. The
+host has two more, both legitimate: one updating the console as output arrives,
+and `HostYield`, which is the callback the engine decoupling created. The rest
+went with section 10 and the sweeps after it, and nobody updated the number.
+
+What looked like 125 sites to convert is 0.
+
+**The per-module state is real, and has one shape.** 37 units declare
+`ModuleEngine` and `ModuleOutput`; 35 read them, all in the same statement:
+
+```pascal
+Btn.BasicEngine := ModuleEngine;
+Btn.ConsoleOutput := ModuleOutput;
+```
+
+`RegisterXxxFuncs(Lib, Eng, OutP)` stashes the engine in a unit variable, and
+every constructor copies it into the instance. So the engine is per-process by
+construction, and a second one cannot exist beside it.
+
+The error slots are a different matter and are **not** a defect: `lastError` is
+per-library on purpose, so that `button_error()` stays independent of
+`circle_error()`. 64 effect units hold `Err` for the same reason. What makes
+them a hazard is threads, not multiplicity.
+
+**The VM does run on the UI thread**, in both hosts, straight from the button
+handler with no `TThread` anywhere.
+
+### What the measurement means for 2.2 and 2.3
+
+The plan treated 3.5 and 3.6 as one problem. They are two, and only one of them
+is large.
+
+Removing `ModuleEngine` needs the engine to reach a constructor some other way.
+The honest route is the parent chain — a control is created against a parent,
+the chain ends at a form, and the form is created when the engine is in hand.
+That is a design change across 35 units, but a mechanical one.
+
+Moving the VM off the UI thread is the large one, and the cost is not
+`ProcessMessages`. FireMonkey is not thread-safe, so **every** call that touches
+an FMX object has to be marshalled: 3,899 functions across 101 units in
+`Libs/GUI/`. The 709 functions outside `Libs/GUI/` touch nothing and need
+nothing.
+
+That ratio is the decision. A worker-thread VM makes `BREAKPOINT` pause on
+mobile and stops long scripts freezing the interface, and it costs a marshalling
+layer around four thousand entry points.
 
 ### 2.2 Remove the per-module global state
 

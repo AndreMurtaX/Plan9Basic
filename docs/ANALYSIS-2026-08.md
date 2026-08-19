@@ -159,6 +159,13 @@ and running off the UI thread is closed off.
 
 ### 3.6 VM on the UI thread
 
+> **Measured again 2026-08-19 and partly stale.** The "125 remaining" figure
+> below is no longer true: there is one `Application.ProcessMessages` in the
+> libraries, and it is the BASIC function `processmessages()` that a script
+> calls on purpose. Two more live in the host, both legitimate. What remains of
+> this item is the VM itself, which does still run on the UI thread in both
+> hosts. See [PLAN-restructure.md](PLAN-restructure.md) §2.1.
+
 `CmdRun` calls `ExecuteProgram` straight from the button handler, and there are
 127 occurrences of `Application.ProcessMessages` across engine and libraries.
 That produces re-entrancy (RUN during RUN) and a standing ANR risk on Android.
