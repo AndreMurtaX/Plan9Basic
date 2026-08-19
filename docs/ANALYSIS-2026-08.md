@@ -1906,3 +1906,53 @@ the state a bug lives in will keep agreeing with you.
 by reading:** when a claim about behaviour is testable in minutes, it is not a
 conclusion until it has been tested. §12 was a check that could not fail. This
 was a diagnosis that was never made to.
+
+---
+
+## 21. The marshalling seam had never worked
+
+Found 2026-08-19, immediately after §20, by writing the first test that
+exercised it.
+
+The seam is from §2.3: `TLinkFunction.NeedsUIThread`, set by 116 libraries, read
+by `CallNative`, which hands the call to the host's `MarshalProc` when the VM is
+not on the UI thread. Built, documented, committed, and marked inert *by design*
+because no host had claimed a thread yet.
+
+It was inert for a different reason. All seven dispatch sites did this:
+
+```pascal
+numF.Entry := ProgramFunctions[farFuncSign].Entry; //get entry point
+```
+
+`numF` is a fresh local `TLinkFunction`. One field is filled in. **NeedsUIThread
+holds whatever was on the stack**, so the flag those 116 libraries were changed
+to set never reached the code that reads it.
+
+Two things make this worse than a missed assignment.
+
+It is the exact hazard the flag's own commit message described — *"`Fn` is a
+local record whose other fields were never assigned, so an unstated field is
+stack garbage"* — noticed on the writing side, where every library was made to
+state the value, and not on the reading side, where the value was thrown away.
+
+And it is **not** merely a seam that failed to fire. Uninitialised stack memory
+is not reliably zero. A call could have marshalled at random, on a host that had
+installed a marshaller, for reasons nothing could reproduce.
+
+**The test that caught it.** The GUI libraries cannot be linked into a console
+probe — that would drag in the 58 FMX units the whole boundary exists to keep
+out — so one registered function stands in for all 96 that carry the flag. It
+records the thread it ran on. That is the only thing the seam is responsible
+for, and it is enough.
+
+**Fixed** by copying the whole record at all seven sites rather than one field.
+
+**What this says about "inert by design".** Three things in this project have
+been committed inert and correct-by-inspection: the seam, the flags, the queue.
+Two of the three were fine. This one was not, and nothing would have found it
+until a host claimed a thread and a user reported that their button did nothing
+in a way nobody could reproduce.
+
+Inert code is untested code wearing a justification. It is worth having a probe
+that exercises it *as* inert code, before the day it stops being inert.
