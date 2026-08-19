@@ -1,15 +1,19 @@
-{******************************************************************************
-  NoFmxProbe - proves the engine no longer needs FireMonkey
+﻿{******************************************************************************
+  NoFmxProbe - the engine core running in a console host
 
-  Links only the interpreter core and the non-GUI libraries, and runs a BASIC
-  program. If this compiles, nothing in the core reaches for FMX: a missing
-  unit is a compile error, not something that can slip through.
+  Links the interpreter and the non-GUI libraries into a program with no form,
+  no Application and no window, and runs BASIC through it. The host's PrintProc
+  writes to stdout and its InputProc reads stdin, which is the point: INPUT used
+  to be hardwired to an FMX dialog and was therefore impossible outside a
+  windowed host.
 
-  It also exercises INPUT, which used to be hardwired to an FMX dialog and was
-  therefore impossible outside a windowed host. Here the host reads stdin.
+  It does not prove the engine links without FireMonkey. It cannot: dcc64 finds
+  the FMX .dcu files beside the RTL's, so an FMX reference resolves whatever the
+  search path says, and this program links 58 FMX units by way of StdLib and
+  StrLib. That boundary is checked by reading the uses clauses instead, in
+  tools\check-fmx-boundary.py.
 
-  Built by tests\build-nofmx.ps1, which passes an empty unit search path so
-  even an accidental FMX reference cannot resolve.
+  Built by tests\build-nofmx.ps1.
 ******************************************************************************}
 program NoFmxProbe;
 
@@ -100,7 +104,7 @@ begin
     Engine.InputProc := Host.Input;
     Engine.ConfirmProc := Host.Confirm;
 
-    Source.Add('println "engine running with no FireMonkey linked"');
+    Source.Add('println "engine running in a host with no window"');
     Source.Add('a# = dim#(3)');
     Source.Add('a#[1] = 21');
     Source.Add('println "array: "; narr_get(a#, 1) * 2');
@@ -117,7 +121,7 @@ begin
     Engine.ExecuteProgram(Output);
     for i := 0 to Output.Count - 1 do
       Writeln(Output[i]);
-    Writeln('OK - no FMX');
+    Writeln('OK - ran headless');
   finally
     Host.Free();
     Source.Free();

@@ -1369,5 +1369,65 @@ All five blocks pass on Windows, Linux and Android.
 ### What it does not touch
 
 The GUI libraries are still FireMonkey, and should be — they exist to wrap it.
-The separation is now: engine free, non-GUI `Libs/` free, `Libs/GUI/` bound to
-FMX by definition. Which is the split the submodule already drew.
+The separation is: `Libs/GUI/` bound to FMX by definition, everything else
+meant to be free of it. — Meant to be — is doing a lot of work in that
+sentence; see below.
+
+---
+
+## 12. A green check that was answering the wrong question
+
+Found 2026-08-19, while folding the engine in and writing down what `engine/`
+means now that it is not a repository.
+
+The claim under test was the one this document made a paragraph ago: that the
+engine is free of FireMonkey. `tests/build-nofmx.ps1` existed to hold it, and
+its header said it compiled "with the FMX unit directories removed from the
+compiler's search path, so any reference to FireMonkey from the engine is a
+hard compile error". It passed. It had always passed.
+
+Three units under `engine/` import FMX in their interface `uses`, with no
+conditional — `StdLib`, `StrLib`, `SysLib` — and the probe links two of them.
+
+The path trick never worked. `dcc64` ships the compiled FMX `.dcu` files in
+`lib\Win64\release`, the same directory as the RTL's own — 209 of them — so a
+search path holding "the RTL only" holds all of FireMonkey too. Removing the
+FMX *source* directories excluded nothing. Compiling the probe with a detailed
+map and counting what actually linked: **58 FMX units**.
+
+So it passed for a reason unrelated to what it asserted, which is worse than
+not having it. A red check gets investigated. A green one answering a question
+nobody asked closes the question instead, and this one closed it long enough
+for the claim to reach this document and the onboarding guide.
+
+**What replaced it.** The question is about `uses` clauses, so it is now asked
+of `uses` clauses — `tools/check-fmx-boundary.py` reads them and holds the
+answer as a ratchet:
+
+| Unit | Why it still reaches FMX |
+|---|---|
+| `StdLib` | `processmessages()` and `handlemessage()` call `Application` |
+| `StrLib` | the clipboard functions go through `IFMXClipboardService` |
+| `TimerLib` | a GUI library on purpose, kept here because `exec.pas` needs it |
+
+A fourth unit fails the run. So does an entry that stops being true, so the
+list cannot rot into a comment. `SysLib` was the fourth when this started: its
+`FMX.Forms` was a dead import, used for nothing, and removing it cost nothing.
+
+`NoFmxProbe` stays, with its claim corrected. It demonstrates something real
+and worth guarding — the interpreter running in a program with no form, no
+`Application` and no window, `INPUT` included, reading stdin through the host
+callback that replaced the FMX dialog. That was always what it proved.
+
+**Left as named work, not fixed here.** `StdLib` and `StrLib` want the
+treatment `PrintProc` and `InputProc` already got: a host callback, so the
+engine asks for a clipboard or a message pump rather than reaching for one.
+Both belong with the deferred 2.3 flip rather than with a repository move —
+`processmessages()` is *literally* a question about which thread owns the
+message loop, and answering it twice would be wasted work.
+
+**The lesson**, since this is the second time this pass that running something
+contradicted reading it: a check is not evidence until it has been seen to
+fail. This one was never watched going red, so nobody learned that it could
+not. Writing the negative test — adding an FMX import to a unit that has none,
+watching the ratchet catch it — took under a minute.

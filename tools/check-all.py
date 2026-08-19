@@ -60,6 +60,7 @@ def main():
         ('registered surface', tool('check-docs.py'), False),
         ('links', tool('check-links.py'), False),
         ('fragments', tool('check-anchors.py'), False),
+        ('fmx boundary', tool('check-fmx-boundary.py'), False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]

@@ -8,57 +8,42 @@
 
 ## 🔧 How to Build
 
-### Clone recursively
+### Clone
 
-The interpreter core and the shared standard library live in a separate
-repository, [Plan9BasicEngine](https://github.com/AndreMurtaX/Plan9BasicEngine),
-and are pulled in as a git submodule under `engine/`. Clone recursively, or the
-`engine/` folder arrives empty and the build fails on the first unit:
+One repository, one clone. No submodules, no `--recurse`, no second checkout:
 
 ```bash
-git clone --recurse-submodules <repository-url>
+git clone <repository-url>
 ```
 
-Already cloned without it? Fix an existing checkout with:
+`engine/` was a submodule until 2026-08-19, pointing at
+[Plan9BasicEngine](https://github.com/AndreMurtaX/Plan9BasicEngine). It is now
+an ordinary directory in this tree. That repository stays where it is, so old
+clones and the history in it keep resolving, but nothing builds from it any
+more. If you have a checkout from before the change, the fix is a fresh clone
+rather than a `submodule update`.
 
-```bash
-git submodule update --init --recursive
-```
+### Where a change belongs
 
-### Where a change belongs, and how far it travels
+Everything is in this tree, so a change is finished when it compiles and the
+suites are green here. The split that used to make that untrue -- an
+`engine/` commit that had to be pushed and then have its pointer bumped in two
+consumers, or the applet runner would quietly keep building the previous commit
+-- is gone.
 
-The tree spans three repositories, and which one a file sits in decides who has
-to be updated when you touch it. This is easy to get wrong, because `engine/`
-looks like an ordinary folder.
-
-| Path | Repository | Reaches |
-|---|---|---|
-| `engine/**` | Plan9BasicEngine (public) | this IDE **and** the applet runner |
-| `Libs/GUI/**` | Plan9Basic (this one) | this IDE only |
-| `Libs/**` outside `GUI/` | Plan9Basic (this one) | this IDE only |
-| everything else at the root | Plan9Basic (this one) | this IDE only |
-
-**A change under `engine/` is not finished when it compiles here.** It has to be
-committed and pushed in the submodule, then the pointer bumped in *both*
-consumers -- this repository and
-[Plan9BasicAppletRunner](https://github.com/AndreMurtaX/Plan9BasicAppletRunner)
--- or the runner keeps building against the previous commit and quietly
-diverges.
-
-```bash
-cd engine && git commit -am "..." && git push    # the engine itself
-cd ..      && git add engine && git commit       # this repository's pointer
-# then, in the runner checkout:
-cd engine && git pull && cd .. && git add engine && git commit
-```
+`engine/` still means something, even though it no longer means a repository
+boundary: it is the part meant to run without a windowing system driving it,
+which is what `tests/NoFmxProbe.dpr` builds into a console host. Three units
+under it still reach FireMonkey -- `StdLib` for `processmessages()`, `StrLib`
+for the clipboard, and `TimerLib`, which is a GUI library on purpose. Adding a
+fourth fails `tools/check-fmx-boundary.py`; nothing else notices, because a
+`uses FMX.Forms` under `engine/` compiles here exactly as well as anywhere.
 
 The trap worth naming: `Libs/GUI/` holds a hundred control, effect and animation
 libraries and looks like the home of everything GUI, but **one** GUI library
-lives in the engine instead -- `engine/Libs/GUI/TimerLib.pas`, because
+lives under `engine/` instead -- `engine/Libs/GUI/TimerLib.pas`, because
 `exec.pas` depends on it. A sweep across "the GUI libraries" that globs
-`Libs/GUI/*.pas` misses exactly that one, and it is the only one of the hundred
-that ships in the public repositories. Sweep both paths, or the exception ends
-up in the half other people build on.
+`Libs/GUI/*.pas` misses exactly that one. Sweep both paths.
 
 ### Build
 
@@ -138,6 +123,20 @@ whole file -- so they go straight to the runner:
 ```bash
 tests/bin/Plan9BasicTest.exe --gui --compile-only Website/assets/examples
 ```
+
+The engine is supposed to stay reachable from a host with no window, so the
+units under `engine/` that import FireMonkey are held to a list:
+
+```bash
+python tools/check-fmx-boundary.py
+```
+
+Three are on it, each with a reason. A fourth fails the run, and so does an
+entry that no longer describes the tree -- a list nobody has to maintain turns
+into fiction. This replaced a probe that claimed to prove the same thing by
+compiling with FMX off the search path, and never did: `dcc64` keeps the FMX
+`.dcu` files beside the RTL's own, so the exclusion excluded nothing and the
+probe linked 58 FMX units while reporting success.
 
 And the site's own links resolve or they do not:
 

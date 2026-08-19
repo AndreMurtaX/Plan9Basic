@@ -34,7 +34,6 @@ uses
   {$IFDEF LINUX64}
   Posix.Unistd,
   {$ENDIF}
-  FMX.Forms,
   exec;
 
 procedure RegisterSysFuncs(Lib: TFunctionsDictionary);

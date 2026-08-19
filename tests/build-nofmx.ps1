@@ -1,15 +1,19 @@
 <#
 .SYNOPSIS
-  Builds and runs NoFmxProbe, which proves the engine links without FireMonkey.
+  Builds and runs NoFmxProbe: the engine core in a console host, no window.
 
 .DESCRIPTION
-  Compiles tests\NoFmxProbe.dpr with the FMX unit directories removed from the
-  compiler's search path, so any reference to FireMonkey from the engine is a
-  hard compile error rather than something that quietly resolves.
+  Compiles tests\NoFmxProbe.dpr and runs a BASIC program through it, with the
+  host's PrintProc writing to stdout and its InputProc reading stdin. What that
+  demonstrates is that the interpreter runs with no windowing system driving it
+  -- INPUT included, which used to be hardwired to an FMX dialog.
 
-  This is the regression guard for the decoupling: if someone adds an FMX
-  reference back into lexer, parser, exec, basic, UnitUtils, UnitGC or
-  HandleRegistry, this build fails and the ordinary suites do not.
+  It does NOT prove the engine links without FireMonkey, though it used to say
+  so. The search path here was described as the RTL with no FMX directory on
+  it, but dcc64 keeps the FMX .dcu files in lib\Win64\release beside the RTL's
+  own, so removing the FMX *source* directories excluded nothing: this probe
+  links 58 FMX units. The unit-level boundary is checked for real, by reading
+  the uses clauses, in tools\check-fmx-boundary.py.
 #>
 [CmdletBinding()]
 param(
@@ -51,7 +55,8 @@ $binDir = Join-Path $here 'bin'
 $dcuDir = Join-Path $binDir 'nofmx'
 New-Item -ItemType Directory -Force $dcuDir | Out-Null
 
-# The RTL only, with no FMX directory anywhere on the path. dcc64 reads its
+# The RTL. This does not exclude FMX -- the FMX .dcu files live here too --
+# see tools/check-fmx-boundary.py for the check that does. dcc64 reads its
 # defaults from dcc64.cfg, so they are replaced rather than appended to.
 $rtl = Join-Path $studio.Root 'lib\Win64\release'
 $searchPath = $rtl
@@ -62,7 +67,7 @@ try {
         --no-config 'NoFmxProbe.dpr' 2>&1 |
         Where-Object { $_ -match 'Error|Fatal|Warning|lines,' }
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "the engine still needs FireMonkey (exit $LASTEXITCODE)"
+        Write-Error "the engine no longer builds into a console host (exit $LASTEXITCODE)"
         exit $LASTEXITCODE
     }
 } finally {
@@ -70,7 +75,7 @@ try {
 }
 
 $exe = Join-Path $binDir 'NoFmxProbe.exe'
-Write-Host "built without FMX: $exe"
+Write-Host "console host built: $exe"
 
 if (-not $Run) { exit 0 }
 
