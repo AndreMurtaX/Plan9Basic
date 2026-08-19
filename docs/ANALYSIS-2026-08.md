@@ -1768,5 +1768,86 @@ across 15 files — but 19 of them were inside commented-out blocks, left behind
 when those libraries were reworked. 24 live sites in 8 files, every one with the
 identical three-line shape, which is what made a mechanical sweep safe.
 
-Had that not been counted first, the sweep would have been written to handle
+Had that not been counted first, the sweep would have been written to handle
 shapes that only exist in dead code.
+
+---
+
+## 19. The flip on a real device, and why it was rolled back
+
+Attempted 2026-08-19 on a Galaxy S24 Ultra. Three real defects found, two fixed,
+and one that stopped the attempt. **The runner is back on the UI thread**; the
+engine mechanism stays, inert and tested.
+
+Recorded in the order they were found, because each was hidden behind the last.
+
+### The application stopped dying, which was the first result
+
+Before any of this, `BREAKPOINT` on Android killed the process in about three
+seconds. With the program on a worker, the applet ran, the window kept
+responding, and the system raised no complaint. That much worked on the first
+attempt.
+
+Nothing printed, though, and nothing else happened.
+
+### `YieldProc` means "pump the host's loop", which is precisely wrong on a worker
+
+`ExecuteProgram` installs the host's `YieldProc`, and the runner's is
+`Application.ProcessMessages`. On a worker that is a call into the message loop
+of a thread that does not own it, from a thread that does not own the window.
+Everything stopped there.
+
+The probe had not caught it because the probe's host sets `YieldProc` to drain
+the queue — which is what a threaded host *should* do, arrived at by writing
+the test rather than by understanding the rule. The rule is: with the VM on a
+worker, yielding is draining, and pumping belongs to the thread that pumps.
+
+### Dialogs have to be raised from the thread that owns the window
+
+With that fixed the program ran and reached `INPUT`. `TDialogServiceAsync` had
+to be wrapped in `TThread.Synchronize` in `HostConfirm` and `HostInput`, and
+then **the dialog appeared on the phone, raised from a worker**. Delphi will not
+let an anonymous method capture an open array or a `const` parameter, so the
+labels and the message are copied into locals first.
+
+### And then answering it deadlocked, which is where this stops
+
+Tapping OK produced an ANR. The chain:
+
+1. `INPUT` completes on the UI thread and calls the BASIC callback `gotIt(v)`
+2. that goes through `ExecuteUserFunction`, which is not on the VM's thread, so
+   it queues and waits
+3. the VM is parked in `esIdle` waiting for the input answer
+4. the pause loop does `continue`, which skips the instruction dispatch — and the
+   drain lives in the instruction dispatch
+
+Both wait for each other. The obvious repair, draining in the pause loop too,
+made it worse and is **not a positioning problem**: it runs a BASIC function
+while the VM is parked mid-instruction, re-entering the stack machine and
+touching the `ExecStatus` the pause itself depends on.
+
+That is a re-entrancy question, and it wants design rather than another
+twenty-minute build-deploy-tap cycle.
+
+### What was kept
+
+The engine side is sound and stays: the queue, `DrainProc` in the instruction
+loop, the output buffer, the atomic guard, and `CanPauseForHostDialog` deciding
+by thread rather than by platform. All inert, all covered by `VMThreadProbe`,
+and the suites unchanged at 387 and 614.
+
+`runner/AppletRunner.pas` is reverted. A host that half-works is worse than one
+that does not try: the device showed a window that said `Running...` forever.
+
+**What the next attempt needs**, and it is now a specific question rather than a
+vague one: *how does the VM accept a nested call while parked?* Either the pause
+becomes a state the VM can safely run other work from, or callbacks arriving
+during a pause are refused rather than queued, or the answer path stops calling
+back into BASIC while the VM is parked. Three shapes, and choosing between them
+is the work.
+
+Two things about method, since this cost a morning. Every one of these three was
+invisible to a headless test and obvious within seconds on the device — the
+probe passes and always did. And the first symptom, an application that ran and
+printed nothing, had three separate causes stacked behind it, each only visible
+once the one in front was fixed.

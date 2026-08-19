@@ -484,12 +484,29 @@ type
 //Where the VM may not park, BREAKPOINT degrades to a trace dump of the frame,
 //which is the part that still carries meaning on a device, where the
 //application is its own debugger and there is no separate window to pause.
+//
+//That degradation is no longer about the platform, though it was written when
+//it was. A host that runs the VM on a thread of its own can pause anywhere,
+//phones included, because the thread that delivers the answer is not the one
+//waiting for it.
 function CanPauseForHostDialog: Boolean;
 
 implementation
 
 function CanPauseForHostDialog: Boolean;
 begin
+  //Parking is safe whenever the thread that would answer is not the thread
+  //that parks. With the VM on a worker that is always true, on every platform,
+  //which is the whole point of moving it: the looper stays free to deliver the
+  //dialog, and BREAKPOINT can stop on a phone.
+  if TThread.Current.ThreadID <> MainThreadID then
+    Exit(True);
+
+  //On the UI thread it depends on the platform, and not because desktop is
+  //better behaved. There the pause loop pumps messages, so the answer still
+  //arrives while the VM waits. Android and iOS judge a blocked main looper by
+  //the clock rather than by what it is doing, and kill the application in about
+  //three seconds however busy that loop is.
   {$IF DEFINED(ANDROID) or DEFINED(IOS)}
   Result := False;
   {$ELSE}
