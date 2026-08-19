@@ -1446,7 +1446,7 @@ Checks if a string starts with a prefix (case-sensitive).
 
 **Syntax:**
 ```basic
-result = startsstr(prefix$, string$)
+result = startsstr(string$, prefix$)
 ```
 
 **Note:** Parameter order: prefix first, then the string to check.
@@ -1455,9 +1455,9 @@ result = startsstr(prefix$, string$)
 
 **Example:**
 ```basic
-println startsstr("Hello", "Hello World")      ' Output: 1
-println startsstr("hello", "Hello World")      ' Output: 0 (case-sensitive)
-println startsstr("Hi", "Hello World")         ' Output: 0
+println startsstr("Hello World", "Hello")      ' Output: 1
+println startsstr("Hello World", "hello")      ' Output: 0 (case-sensitive)
+println startsstr("Hello World", "Hi")         ' Output: 0
 ```
 
 ---
@@ -1470,13 +1470,13 @@ Checks if a string starts with a prefix (case-insensitive).
 
 **Syntax:**
 ```basic
-result = startstext(prefix$, string$)
+result = startstext(string$, prefix$)
 ```
 
 **Example:**
 ```basic
-println startstext("HELLO", "Hello World")     ' Output: 1
-println startstext("hello", "Hello World")     ' Output: 1
+println startstext("Hello World", "HELLO")     ' Output: 1
+println startstext("Hello World", "hello")     ' Output: 1
 ```
 
 ---
@@ -1489,7 +1489,7 @@ Checks if a string ends with a suffix (case-sensitive).
 
 **Syntax:**
 ```basic
-result = endsstr(suffix$, string$)
+result = endsstr(string$, suffix$)
 ```
 
 **Note:** Parameter order: suffix first, then the string to check.
@@ -1498,9 +1498,9 @@ result = endsstr(suffix$, string$)
 
 **Example:**
 ```basic
-println endsstr("World", "Hello World")        ' Output: 1
-println endsstr("world", "Hello World")        ' Output: 0 (case-sensitive)
-println endsstr(".txt", "document.txt")        ' Output: 1
+println endsstr("Hello World", "World")        ' Output: 1
+println endsstr("Hello World", "world")        ' Output: 0 (case-sensitive)
+println endsstr("document.txt", ".txt")        ' Output: 1
 ```
 
 ---
@@ -1513,13 +1513,13 @@ Checks if a string ends with a suffix (case-insensitive).
 
 **Syntax:**
 ```basic
-result = endstext(suffix$, string$)
+result = endstext(string$, suffix$)
 ```
 
 **Example:**
 ```basic
-println endstext("WORLD", "Hello World")       ' Output: 1
-println endstext(".TXT", "document.txt")       ' Output: 1
+println endstext("Hello World", "WORLD")       ' Output: 1
+println endstext("document.txt", ".TXT")       ' Output: 1
 ```
 
 ---
@@ -2054,8 +2054,8 @@ println ""
 println "Occurrences of 'the' (case-sensitive): "; countstr(text$, "the")
 println "Occurrences of 'fox': "; countstr(text$, "fox")
 println "Contains 'fox': "; containsstr(text$, "fox")
-println "Starts with 'The': "; startsstr("The", text$)
-println "Ends with 'quick.': "; endsstr("quick.", text$)
+println "Starts with 'The': "; startsstr(text$, "The")
+println "Ends with 'quick.': "; endsstr(text$, "quick.")
 println ""
 
 println "Last occurrence of 'fox': "; instrrev(text$, "fox")
@@ -2395,10 +2395,10 @@ instrrev(s$, find$, pos) ' Find last from position
 countstr(s$, find$)      ' Count occurrences
 containsstr(s$, find$)   ' Contains? (case-sensitive)
 containstext(s$, find$)  ' Contains? (case-insensitive)
-startsstr(pre$, s$)      ' Starts with? (case-sensitive)
-startstext(pre$, s$)     ' Starts with? (case-insensitive)
-endsstr(suf$, s$)        ' Ends with? (case-sensitive)
-endstext(suf$, s$)       ' Ends with? (case-insensitive)
+startsstr(s$, pre$)      ' Starts with? (case-sensitive)
+startstext(s$, pre$)     ' Starts with? (case-insensitive)
+endsstr(s$, suf$)        ' Ends with? (case-sensitive)
+endstext(s$, suf$)       ' Ends with? (case-insensitive)
 ```
 
 #### Comparison

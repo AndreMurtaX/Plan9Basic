@@ -83,13 +83,23 @@ inside the text survives instead of being normalised.
 
 ### 1.3 Inconsistent argument order in StrLib
 
-`containsstr(text$, part$)` but `startsstr(prefix$, text$)` and
-`endsstr(suffix$, text$)`. Inherited from Delphi's `System.StrUtils`, which is
-irregular, and not a reason for the language to be.
+**Done 2026-08-18.** All six now read `(text$, part$)`: subject first, then the
+part being asked about. The four `starts`/`ends` variants swap the arguments on
+the way through to `System.StrUtils` rather than passing them down, so the
+language stays regular where the library it wraps is not.
 
-Settle on `(text$, part$)` — subject first, as `containsstr` already does and
-as reading order suggests. Keep the old order working under a deprecated
-spelling if that is cheap; otherwise note it in the release.
+This one differs from 1.1 in a way worth keeping straight. `instr` was a bug
+against a contract its own documentation already stated. This is a **change of
+language**: the pages described the old order faithfully, so nothing was wrong,
+only uneven.
+
+**It breaks without a word.** Both arguments are strings, so
+`startsstr("Plan", text$)` still compiles and simply answers false. There is no
+error to notice. `06_strings.bas` asserts that the old spelling now fails, so
+the suite states the cost and not only the benefit.
+
+Corrected with it: four shipped applets in both copies, twelve worked examples
+and six synopsis lines in `StrLib.md`, and the calls on `strlib.html`.
 
 ### 1.4 The `progress` scale in the 17 transition effects
 

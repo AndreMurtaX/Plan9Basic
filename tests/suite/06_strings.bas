@@ -60,18 +60,31 @@ ok = 0
 if containsstr("hello world", "lo wo") <> 0 then ok = 1
 assert_eq(ok, 1, "containsstr finds a substring")
 
-rem Argument order is NOT uniform across these three, because StrLib passes
-rem straight through to Delphi's System.StrUtils, which is itself uneven:
-rem   containsstr(text$, part$)   -- text first
-rem   startsstr(prefix$, text$)   -- part first
-rem   endsstr(suffix$, text$)     -- part first
+rem All six take the text first. Delphi's System.StrUtils is uneven here --
+rem ContainsStr(AText, ASubText) but StartsStr(ASubText, AText) -- and StrLib
+rem used to pass straight through, so the language inherited the unevenness.
+rem The arguments are swapped on the way through now.
 ok = 0
-if startsstr("he", "hello") <> 0 then ok = 1
-assert_eq(ok, 1, "startsstr takes the prefix first")
+if startsstr("hello", "he") <> 0 then ok = 1
+assert_eq(ok, 1, "startsstr takes the text first")
 
 ok = 0
-if endsstr("lo", "hello") <> 0 then ok = 1
-assert_eq(ok, 1, "endsstr takes the suffix first")
+if endsstr("hello", "lo") <> 0 then ok = 1
+assert_eq(ok, 1, "endsstr takes the text first")
+
+rem The old order now answers false, which is the whole cost of the change:
+rem both arguments are strings, so it breaks without a word.
+ok = 0
+if startsstr("he", "hello") <> 0 then ok = 1
+assert_eq(ok, 0, "the old spelling no longer matches")
+
+ok = 0
+if startstext("HELLO", "he") <> 0 then ok = 1
+assert_eq(ok, 1, "startstext ignores case, text first")
+
+ok = 0
+if endstext("HELLO", "LO") <> 0 then ok = 1
+assert_eq(ok, 1, "endstext ignores case, text first")
 
 test_case("str/predicates")
 ok = 0

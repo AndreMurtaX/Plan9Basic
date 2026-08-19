@@ -25,8 +25,8 @@ PRINTLN ""
 PRINTLN "--- String Search ---"
 PRINTLN "Contains 'BASIC': "; containstext(text$, "BASIC")
 PRINTLN "Contains 'Python': "; containstext(text$, "Python")
-PRINTLN "Starts with 'Plan': "; startsstr("Plan", text$)
-PRINTLN "Ends with 'BASIC.': "; endsstr("BASIC.", text$)
+PRINTLN "Starts with 'Plan': "; startsstr(text$, "Plan")
+PRINTLN "Ends with 'BASIC.': "; endsstr(text$, "BASIC.")
 PRINTLN ""
 PRINTLN "--- Manipulation ---"
 PRINTLN "Reversed: "; reverse$(text$)

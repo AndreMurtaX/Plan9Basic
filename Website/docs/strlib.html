@@ -688,10 +688,10 @@ y = <span class="fn">val</span>(<span class="str">&quot;123abc&quot;</span>)
 <tr><td><code>countstr(s$, find$)</code></td><td><code>countstr@$$</code></td><td>Count non-overlapping occurrences</td></tr>
 <tr><td><code>containsstr(s$, find$)</code></td><td><code>containsstr@$$</code></td><td>Contains? (case-sensitive, 1/0)</td></tr>
 <tr><td><code>containstext(s$, find$)</code></td><td><code>containstext@$$</code></td><td>Contains? (case-insensitive, 1/0)</td></tr>
-<tr><td><code>startsstr(pre$, s$)</code></td><td><code>startsstr@$$</code></td><td>Starts with? (case-sensitive)</td></tr>
-<tr><td><code>startstext(pre$, s$)</code></td><td><code>startstext@$$</code></td><td>Starts with? (case-insensitive)</td></tr>
-<tr><td><code>endsstr(suf$, s$)</code></td><td><code>endsstr@$$</code></td><td>Ends with? (case-sensitive)</td></tr>
-<tr><td><code>endstext(suf$, s$)</code></td><td><code>endstext@$$</code></td><td>Ends with? (case-insensitive)</td></tr>
+<tr><td><code>startsstr(s$, pre$)</code></td><td><code>startsstr@$$</code></td><td>Starts with? (case-sensitive)</td></tr>
+<tr><td><code>startstext(s$, pre$)</code></td><td><code>startstext@$$</code></td><td>Starts with? (case-insensitive)</td></tr>
+<tr><td><code>endsstr(s$, suf$)</code></td><td><code>endsstr@$$</code></td><td>Ends with? (case-sensitive)</td></tr>
+<tr><td><code>endstext(s$, suf$)</code></td><td><code>endstext@$$</code></td><td>Ends with? (case-insensitive)</td></tr>
 </tbody></table></div>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>text$ = <span class="str">&quot;banana&quot;</span>
 <span class="kw">println</span> <span class="fn">instr</span>(text$, <span class="str">&quot;an&quot;</span>)           <span class="cmt">&#x27; 1</span>
@@ -701,8 +701,8 @@ y = <span class="fn">val</span>(<span class="str">&quot;123abc&quot;</span>)
 
 <span class="kw">println</span> <span class="fn">containsstr</span>(<span class="str">&quot;Hello&quot;</span>, <span class="str">&quot;ell&quot;</span>)   <span class="cmt">&#x27; 1</span>
 <span class="kw">println</span> <span class="fn">containstext</span>(<span class="str">&quot;Hello&quot;</span>, <span class="str">&quot;ELL&quot;</span>)  <span class="cmt">&#x27; 1</span>
-<span class="kw">println</span> <span class="fn">startsstr</span>(<span class="str">&quot;He&quot;</span>, <span class="str">&quot;Hello&quot;</span>)      <span class="cmt">&#x27; 1</span>
-<span class="kw">println</span> <span class="fn">endsstr</span>(<span class="str">&quot;.txt&quot;</span>, <span class="str">&quot;file.txt&quot;</span>)   <span class="cmt">&#x27; 1</span></pre></div></div>
+<span class="kw">println</span> <span class="fn">startsstr</span>(<span class="str">&quot;Hello&quot;</span>, <span class="str">&quot;He&quot;</span>)      <span class="cmt">&#x27; 1</span>
+<span class="kw">println</span> <span class="fn">endsstr</span>(<span class="str">&quot;file.txt&quot;</span>, <span class="str">&quot;.txt&quot;</span>)   <span class="cmt">&#x27; 1</span></pre></div></div>
 <div class="info-box"><strong>&#9432; Note:</strong> For <code>startsstr/startstext</code> and <code>endsstr/endstext</code>, the prefix/suffix is the <strong>first</strong> parameter.</div>
 </section>
 
