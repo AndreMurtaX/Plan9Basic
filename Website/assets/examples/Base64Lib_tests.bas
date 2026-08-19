@@ -265,13 +265,13 @@ urlTest1$ = "Hello"
 urlEnc1$ = b64urlencode$(urlTest1$)
 ' Should not contain +, /, or =
 passed = 1
-IF instr(urlEnc1$, "+") > 0 THEN
+IF instr(urlEnc1$, "+") >= 0 THEN
   passed = 0
 END IF
-IF instr(urlEnc1$, "/") > 0 THEN
+IF instr(urlEnc1$, "/") >= 0 THEN
   passed = 0
 END IF
-IF instr(urlEnc1$, "=") > 0 THEN
+IF instr(urlEnc1$, "=") >= 0 THEN
   passed = 0
 END IF
 dummy = reportTest("5.1 URL encode has no +/=/", passed)
@@ -280,7 +280,7 @@ dummy = reportTest("5.1 URL encode has no +/=/", passed)
 urlTest2$ = ">?"
 urlEnc2$ = b64urlencode$(urlTest2$)
 passed = 1
-IF instr(urlEnc2$, "+") > 0 THEN
+IF instr(urlEnc2$, "+") >= 0 THEN
   passed = 0
 END IF
 dummy = reportTest("5.2 URL encode converts + to -", passed)
@@ -296,8 +296,8 @@ stdEnc$ = b64encode$("Hello")
 urlEnc$ = b64urlencode$("Hello")
 ' URL version should have no padding
 passed = 0
-IF instr(stdEnc$, "=") > 0 THEN
-  IF instr(urlEnc$, "=") = 0 THEN
+IF instr(stdEnc$, "=") >= 0 THEN
+  IF instr(urlEnc$, "=") < 0 THEN
     passed = 1
   END IF
 ELSE

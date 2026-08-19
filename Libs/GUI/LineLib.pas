@@ -959,6 +959,9 @@ begin
 //    end;
 
     ClearError();
+    //Its eighty-one siblings answer 1 on success. This one did too, inside
+    //the collector block that was commented out.
+    Result.n := 1;
   except
     on E: Exception do
       SetError(ERR_INVALID_LINE, 'line_free: ' + E.Message);

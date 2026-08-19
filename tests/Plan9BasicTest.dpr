@@ -467,12 +467,48 @@ begin
   end;
 end;
 
+//A program that means to stop, and says so in its own first lines.
+//
+//Some of the shipped applets demonstrate a refusal: they hand the engine an
+//invented pointer and the correct outcome is the library aborting them. Running
+//those in smoke mode counted the intended ending as a failure.
+//
+//The alternative was a list of exceptions kept somewhere else, and a list like
+//that stops describing the tree the moment a file is renamed. This asks the
+//file.
+function DeclaresItStops(const APath: String): Boolean;
+var
+  Lines: TStringList;
+  i, Last: Integer;
+begin
+  Result := False;
+  Lines := TStringList.Create();
+  try
+    try
+      Lines.LoadFromFile(APath);
+    except
+      Exit();
+    end;
+    //Only the opening lines, so the marker is a declaration rather than
+    //something a program can wander into halfway down.
+    Last := Lines.Count - 1;
+    if Last > 19 then Last := 19;
+    for i := 0 to Last do
+      if Pos('@expect-runtime-error', LowerCase(Lines[i])) > 0 then
+        Exit(True);
+  finally
+    Lines.Free();
+  end;
+end;
+
 //A file counts as good when it passed, or -- under --expect-fail -- when it
 //did not. The negative suite exists to prove the engine rejects things.
 function FileSucceeded(const R: TFileResult): Boolean;
 begin
   if OptExpectFail then
     Result := R.Outcome <> foPass
+  else if (R.Outcome = foRuntimeError) and DeclaresItStops(R.FileName) then
+    Result := True
   else
     Result := R.Outcome = foPass;
 end;

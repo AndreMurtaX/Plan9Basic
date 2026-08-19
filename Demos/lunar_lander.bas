@@ -57,11 +57,11 @@ IF (PLATFORM$ = "Android") OR (PLATFORM$ = "iOS") THEN IS_MOBILE = 1
 LET SOUND_BASE$ = "https://plan9basic.com/assets/sounds/lunar/"
 LET SOUND_EXT$ = "mp3"
 PRINTLN "Current platform: "; PLATFORM$
-IF InStr(PLATFORM$, "Windows") <> 0 THEN SOUND_EXT$ = "wav"
+IF InStr(PLATFORM$, "Windows") >= 0 THEN SOUND_EXT$ = "wav"
 PRINTLN "Testing Windows: "; InStr(PLATFORM$, "Windows")
-IF InStr(PLATFORM$, "Linux") <> 0 THEN SOUND_EXT$ = "ogg"
+IF InStr(PLATFORM$, "Linux") >= 0 THEN SOUND_EXT$ = "ogg"
 PRINTLN "Testing Linux: "; InStr(PLATFORM$, "Linux")
-IF InStr(PLATFORM$, "Android") <> 0 THEN SOUND_EXT$ = "ogg"
+IF InStr(PLATFORM$, "Android") >= 0 THEN SOUND_EXT$ = "ogg"
 PRINTLN "Testing Android: "; InStr(PLATFORM$, "Android")
 ' --- Game Area Constants ---
 LET GAME_W = 480

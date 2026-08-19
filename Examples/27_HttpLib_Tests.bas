@@ -49,10 +49,10 @@ FUNCTION Test_QueryParams() LOCAL client#, response$, x
   LET response$ = http_get$(client#, "/get")
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: Parameters sent"
-    IF instr(response$, "Plan9Basic") > 0 THEN
+    IF instr(response$, "Plan9Basic") >= 0 THEN
       PRINTLN "Verified: 'Plan9Basic' found in response"
     END IF
-    IF instr(response$, "hello world") > 0 THEN
+    IF instr(response$, "hello world") >= 0 THEN
       PRINTLN "Verified: 'hello world' found (URL encoding works)"
     END IF
     PRINTLN ""
@@ -72,7 +72,7 @@ FUNCTION Test_CustomHeaders() LOCAL client#, response$, x
   LET response$ = http_get$(client#, "/headers")
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: Headers sent"
-    IF instr(response$, "Plan9Basic-Test") > 0 THEN
+    IF instr(response$, "Plan9Basic-Test") >= 0 THEN
       PRINTLN "Verified: Custom header found in response"
     END IF
     PRINTLN ""
@@ -93,7 +93,7 @@ FUNCTION Test_PostJson() LOCAL client#, body$, response$, x
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: POST completed"
     PRINTLN "Status: " + str$(http_status(client#))
-    IF instr(response$, "Plan9Basic") > 0 THEN
+    IF instr(response$, "Plan9Basic") >= 0 THEN
       PRINTLN "Verified: JSON data echoed back"
     END IF
     PRINTLN ""
@@ -116,7 +116,7 @@ FUNCTION Test_PostForm() LOCAL client#, form#, response$, x
   LET response$ = http_postformurl$(client#, "/post", form#)
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: Form POST completed"
-    IF instr(response$, "testuser") > 0 THEN
+    IF instr(response$, "testuser") >= 0 THEN
       PRINTLN "Verified: Form data echoed back"
     END IF
     PRINTLN ""
@@ -204,7 +204,7 @@ FUNCTION Test_BasicAuth() LOCAL client#, response$, x
   LET response$ = http_get$(client#, "/basic-auth/testuser/testpass")
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: Authentication passed"
-    IF instr(response$, "authenticated") > 0 THEN
+    IF instr(response$, "authenticated") >= 0 THEN
       PRINTLN "Verified: Response confirms authentication"
     END IF
     PRINTLN ""
@@ -223,7 +223,7 @@ FUNCTION Test_BearerAuth() LOCAL client#, response$, x
   LET response$ = http_get$(client#, "/bearer")
   IF http_ok(client#) <> 0 THEN
     PRINTLN "SUCCESS: Bearer auth accepted"
-    IF instr(response$, "my-secret-token-12345") > 0 THEN
+    IF instr(response$, "my-secret-token-12345") >= 0 THEN
       PRINTLN "Verified: Token echoed in response"
     END IF
     PRINTLN ""
@@ -286,7 +286,7 @@ FUNCTION Test_Cookies() LOCAL client#, response$, x
   PRINTLN "Cookies set: " + str$(http_cookiecount(client#))
   LET response$ = http_get$(client#, "/cookies")
   IF http_ok(client#) <> 0 THEN
-    IF instr(response$, "abc123") > 0 THEN
+    IF instr(response$, "abc123") >= 0 THEN
       PRINTLN "SUCCESS: Cookie sent and echoed"
     ELSE
       PRINTLN "WARNING: Cookie may not have been echoed"
@@ -361,7 +361,7 @@ FUNCTION Test_UserAgent() LOCAL client#, response$, x
   LET client# = http_useragent#(client#, "Plan9Basic-HttpLib/3.0 (Test Suite)")
   LET response$ = http_get$(client#, "/user-agent")
   IF http_ok(client#) <> 0 THEN
-    IF instr(response$, "Plan9Basic-HttpLib") > 0 THEN
+    IF instr(response$, "Plan9Basic-HttpLib") >= 0 THEN
       PRINTLN "SUCCESS: Custom User-Agent sent"
     ELSE
       PRINTLN "WARNING: User-Agent not found in response"
@@ -404,7 +404,7 @@ FUNCTION Test_SimplePost() LOCAL body$, response$
   LET response$ = http_simplepost$("https://httpbin.org/post", body$)
   IF http_error() = 0 THEN
     PRINTLN "SUCCESS: Simple POST completed"
-    IF instr(response$, "simple post") > 0 THEN
+    IF instr(response$, "simple post") >= 0 THEN
       PRINTLN "Verified: Data echoed back"
     END IF
   ELSE

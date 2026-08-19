@@ -22,7 +22,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 ' --- Audio Format Detection ---
 '     Windows → WAV  (Win32 native, hardware-accelerated)
 '     Linux   → OGG  (GStreamer native, open-source royalty-free)
@@ -31,9 +31,9 @@ if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE
 '     iOS     → MP3  (AVFoundation universal support)
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/snake/"
 let SOUND_EXT$ = "mp3"
-if instr(PLATFORM$, "Windows") > 0 then SOUND_EXT$ = "wav"
-if instr(PLATFORM$, "Linux")   > 0 then SOUND_EXT$ = "ogg"
-if instr(PLATFORM$, "Android") > 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
+if instr(PLATFORM$, "Linux") >= 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Android") >= 0 then SOUND_EXT$ = "ogg"
 ' --- Label Text Alignment Constants ---
 let TEXT_ALIGN_CENTER = 0
 let TEXT_ALIGN_LEADING = 1

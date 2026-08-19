@@ -40,7 +40,13 @@ def tool(name, *args):
 
 
 def applets(folder):
-    return [RUNNER, '--gui', '--compile-only', os.path.join(ROOT, *folder.split('/'))]
+    #Run them, rather than only compiling them. Compiling proved the source
+    #was valid and nothing else, and the day that changed found a library
+    #function that always answered 0, an assertion about scrollbox parents
+    #that had never been true, and eighty comparisons written for the
+    #contract instr had before 1.1 -- including the platform detection in
+    #every shipped game.
+    return [RUNNER, '--gui', '--smoke', os.path.join(ROOT, *folder.split('/'))]
 
 
 def run(label, cmd, slow=False):

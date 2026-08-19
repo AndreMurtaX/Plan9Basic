@@ -31,7 +31,7 @@ randomize()
 let PLATFORM$ = os_name$()
 let IS_MOBILE = 0
 if PLATFORM$ = "Android" or PLATFORM$ = "iOS" then IS_MOBILE = 1
-if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 or instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Game Area Constants ---
 let GAME_W = 800

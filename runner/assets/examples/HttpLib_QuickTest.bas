@@ -52,7 +52,7 @@ PRINTLN "5. Query params..."
 LET c# = http_param#(c#, "name", "Plan9")
 LET c# = http_param#(c#, "ver", "3.0")
 LET r$ = http_get$(c#, "/get")
-IF instr(r$, "Plan9") > 0 THEN
+IF instr(r$, "Plan9") >= 0 THEN
   PRINTLN "   OK - Params in response"
 ELSE
   PRINTLN "   FAILED"
@@ -62,7 +62,7 @@ LET c# = http_paramclear#(c#)
 PRINTLN "6. Custom headers..."
 LET c# = http_header#(c#, "X-Test", "Plan9Basic")
 LET r$ = http_get$(c#, "/headers")
-IF instr(r$, "Plan9Basic") > 0 THEN
+IF instr(r$, "Plan9Basic") >= 0 THEN
   PRINTLN "   OK - Header echoed"
 ELSE
   PRINTLN "   FAILED"

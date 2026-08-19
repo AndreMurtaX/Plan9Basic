@@ -1,3 +1,7 @@
+' @expect-runtime-error
+' This applet ends by handing the engine an invented pointer. The library
+' refusing it, and the program stopping, is the demonstration -- not a
+' fault. The marker tells the test runner that.
 ' ============================================================================
 ' Host callbacks — verification script
 ' ============================================================================

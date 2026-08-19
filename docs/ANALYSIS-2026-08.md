@@ -2113,3 +2113,87 @@ everything around them, which is where the fault actually was.
 typed answer. The bespoke dialog that §23 built was never needed — it was a
 repair for a fault that was somewhere else entirely, and removing it is the last
 trace of that detour to disappear.
+
+---
+
+## 25. Compiling 225 applets proved they were valid source and nothing else
+
+Found 2026-08-19, because the author declined to make the repository public
+until the IDE and the applets that exercise the GUI libraries had been tested,
+which was the right call and this section is the evidence.
+
+`check-all.py` ran every shipped applet with `--compile-only`. The runner has
+had a `--smoke` mode all along — compile *and run*, requiring only that nothing
+raises. Turning it on took one word and found three things, one of them in every
+game on the website.
+
+### The platform detection in all nine games was broken
+
+`os_name$()` answers `Windows 11`. So `instr(P$, "Windows")` is **0**, and:
+
+```basic
+if instr(PLATFORM$, "Windows") > 0 then SOUND_EXT$ = "wav"
+```
+
+is false. The sound extension is never set. The same line decides mobile:
+
+```basic
+if instr(PLATFORM$, "Android") > 0 or instr(PLATFORM$, "iOS") > 0 then IS_MOBILE = 1
+```
+
+and on Android `instr("Android 14", "Android")` is also 0, so a phone is not
+detected as one.
+
+This is 1.1's doing, and 1.1 was right: `instr` was documented everywhere as
+returning a zero-based position and `-1` when absent, and the implementation
+computed the position and threw it away. Correcting the engine to match its own
+manual left every caller written for the old contract quietly meaning something
+else.
+
+Eighty comparisons across seventeen files, rewritten by meaning rather than by
+pattern:
+
+| written as | meant | now |
+|---|---|---|
+| `> 0` | found | `>= 0` |
+| `<> 0` | found | `>= 0` |
+| `= 0` | not found | `< 0` |
+
+`>= 0` was left alone: under the new contract it already says "found", which is
+why the scan flagged fifty-one files and only seventeen needed touching.
+
+### Twenty-five library functions always answered 0
+
+`Examples/42_test_buttonlib_basic.bas` asserts `button_free(b) = 1`. It had
+always failed. The assignment that reported success lived inside a
+garbage-collector block, and when that block was commented out it went with it:
+
+```pascal
+//    if Assigned(UnitGC.GC) then
+//    begin
+//      UnitGC.GC.Collect(...);
+//      Result.n := 1;          <- here
+//    end;
+      ClearError();
+```
+
+Eighty-one `*_free` functions return 1. Twenty-five did not, all in GUI
+libraries, all the same shape. Fixed.
+
+### And one assertion that was never true
+
+The same file checks that a button's parent is the scrollbox it was created on.
+FMX puts a scrollbox's children inside its *content* object, so it never was.
+Measured rather than assumed: a button on a form reports the form; a button on a
+scrollbox reports something else. The example's expectation was wrong, not the
+library, and it now checks what is actually guaranteed.
+
+### What this says about compile-only
+
+Every one of these had been in the tree for months, in files whose whole purpose
+is to demonstrate the language working. Compiling proved the source was valid.
+It could not prove the programs did anything, and two of the three defects are
+of the kind that leave a program running happily while doing the wrong thing.
+
+`check-all.py` now runs them: 225 applets, about two minutes, and the games are
+part of the regression net rather than decoration beside it.
