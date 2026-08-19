@@ -1471,6 +1471,38 @@ it. `check-fmx-boundary.py` was built with that property on the same day and it
 was not a coincidence — it was the lesson from §12, applied once and then found
 to be needed again ten metres away.
 
-Worth asking of the rest: `tools/gen-doc-examples.py` parks claims the engine
-contradicts, `check-links.py` treats deliberately-absent targets separately.
-Both are exception lists. Neither has been watched going red.
+So the rest were asked the same question, immediately, rather than left as a
+suggestion at the end of a section.
+
+**`gen-doc-examples.py`** parks claims the engine contradicts. `PARKED` is
+empty — its one entry was `instr("Hello", "ll")`, and 1.1 resolved it by fixing
+the engine. Nothing to rot.
+
+**`check-links.py`** does not keep a list at all: it asks git, per run, which
+targets are deliberately ignored. That cannot go stale. But it had a subtler
+version of the same defect. A gitignored target *resolves* on the machine that
+has the file sitting in its working tree, so it never reaches the failure path,
+so the exception is reported only on a clone — and stays invisible on the one
+machine that could act on it. Here the run said `863 internal link(s), all
+resolve` and nothing else.
+
+It now names them on every run, whether or not they resolve:
+
+```
+2 linked file(s) git ignores, present here and nowhere the repository
+can see (65 MB):
+  Website/assets/ebooks/Computer Spacegames (1982)(Usborne Publishing).pdf
+  Website/assets/ebooks/programas_de_jogos_espaciais.pdf
+```
+
+Not a failure — they are deliberate — but 65 MB the site serves and the
+repository has never seen, which **4.6 has to decide about**: if the repository
+becomes the site, these either get committed or the links break.
+
+Writing it took three wrong versions, each caught by looking at the output
+instead of the code. It reported nothing, because `every_file()` answers
+relative to `Website/` and the open failed into an `except OSError: continue`.
+Then six files, because searching the page text counts a filename discussed in
+prose — `downloads.html` names `Translations.ini` and points at it nowhere.
+Then three, because an absolute URL has a last segment too, and
+`github.com/AndreMurtaX/Plan9Basic` ends in the name of the Linux binary.

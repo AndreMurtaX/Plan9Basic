@@ -19,6 +19,7 @@ import sys
 import glob
 import os
 import subprocess
+import urllib.parse
 from collections import defaultdict
 
 ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -63,11 +64,14 @@ def ignored_by_git(paths):
     """
     Of these repository-relative paths, the ones git is told to ignore.
 
-    Two link targets are deliberately absent from the tree: the development
-    environment the download buttons point at, built and placed at deploy time,
-    and an archived library. A clone therefore cannot resolve them, and saying
-    so as a failure would make this check useless to everyone but the machine
-    that has the untracked files sitting there.
+    Some link targets are deliberately absent from the tree. A clone cannot
+    resolve them, and calling that a failure would make this check useless to
+    everyone but the machine with the untracked files sitting there.
+
+    It used to be the download binaries and an archived library; both are gone,
+    the first because the site stopped handing out binaries in 4.4. What is left
+    is two PDFs under assets/ebooks/. See published_but_untracked(), which names
+    them on every run rather than only where they break.
 
     NUL-separated in both directions, and bytes rather than text. On Windows a
     text-mode pipe rewrites the newlines being sent, so git receives every path
@@ -96,6 +100,61 @@ def resolve(target, base, files):
     return norm(os.path.relpath(matches[0], base or '.'))
 
 
+def published_but_untracked():
+    """Files the pages link to that git ignores, and this machine happens to have.
+
+    These are the ones the check is quietest about, and they are the ones worth
+    saying out loud. A target git ignores resolves here, because the file is
+    sitting in the working tree, and resolves nowhere else -- so the run reports
+    "all resolve" on the one machine that cannot discover the problem, and lists
+    them only on a clone, where nobody is looking.
+
+    They are not defects. They are content that exists on this disk and on the
+    server and in no other place, which is worth knowing before anything decides
+    the repository is the site.
+    """
+    try:
+        res = subprocess.run(['git', 'ls-files', '--others', '--ignored',
+                              '--exclude-standard', '-z', 'Website'],
+                             capture_output=True, cwd=os.path.dirname(ROOT))
+    except OSError:
+        return []
+    on_disk = {norm(p.decode('utf-8', 'replace'))
+               for p in res.stdout.split(chr(0).encode()) if p}
+    if not on_disk:
+        return []
+
+    # Matched through LINK rather than by searching the page text, or a file
+    # merely named in prose counts as linked: downloads.html discusses
+    # Translations.ini and Plan9Basic.exe at length and points at neither.
+    #
+    # every_file() answers relative to ROOT, and an href arrives percent-encoded,
+    # so both have to be undone before comparing. The first attempt did neither
+    # and reported nothing, the OSError swallowed by the guard below.
+    names = {os.path.basename(p): p for p in on_disk}
+    hit = set()
+    for page in every_file():
+        if not page.lower().endswith(('.html', '.htm')):
+            continue
+        try:
+            with open(os.path.join(ROOT, page), encoding='utf-8',
+                      errors='replace') as f:
+                text = f.read()
+        except OSError:
+            continue
+        for _, written in LINK.findall(text):
+            # An absolute URL is not a path into this tree, and its last segment
+            # collides readily: the repository link ends in "Plan9Basic", which
+            # is exactly the name of the Linux binary.
+            if written.startswith(EXTERNAL) or '${' in written:
+                continue
+            target = written.split('#')[0].split('?')[0]
+            name = os.path.basename(urllib.parse.unquote(target))
+            if name in names:
+                hit.add(names[name])
+    return sorted(hit)
+
+
 def main():
     fix = '--fix' in sys.argv
     files = every_file()
@@ -116,6 +175,17 @@ def main():
               f'ignores, produced at deploy time:')
         for (base, target), pages in sorted(deploy.items()):
             print(f'  {len(pages):3}x  "{target}"')
+        print()
+
+    # Said on every run, not only where they fail, because the machine that has
+    # these files is the machine that would otherwise never hear about them.
+    untracked = published_but_untracked()
+    if untracked:
+        size = sum(os.path.getsize(p) for p in untracked if os.path.exists(p))
+        print(f'{len(untracked)} linked file(s) git ignores, present here and '
+              f'nowhere the repository can see ({size / 1048576:.0f} MB):')
+        for p in untracked:
+            print(f'  {p}')
         print()
 
     if not real:
