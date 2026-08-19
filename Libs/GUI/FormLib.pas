@@ -643,7 +643,7 @@ begin
   if ssAlt in Shift then ShiftStr := ShiftStr + 'A';
   if ssCommand in Shift then ShiftStr := ShiftStr + 'M';
 
-  // Signature: funcname@#nn$ (form#, keyCode, keyChar, shiftState$)
+  // Signature: funcname@#n$$ (form#, keyCode, keyChar$, shiftState$)
   Signature := LowerCase(FOnKeyDownFunc) + '@#n$$';
 
   Args[0].p := Pointer(Self);
@@ -681,7 +681,7 @@ begin
   if ssAlt in Shift then ShiftStr := ShiftStr + 'A';
   if ssCommand in Shift then ShiftStr := ShiftStr + 'M';
 
-  // Signature: funcname@#nn$ (form#, keyCode, keyChar, shiftState$)
+  // Signature: funcname@#n$$ (form#, keyCode, keyChar$, shiftState$)
   Signature := LowerCase(FOnKeyUpFunc) + '@#n$$';
 
   Args[0].p := Pointer(Self);
