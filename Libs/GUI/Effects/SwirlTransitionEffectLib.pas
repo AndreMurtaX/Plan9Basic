@@ -321,6 +321,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_swirltrans_error; Lib.Add('swirltrans_error@', Fn);
   Fn.Entry := @s_swirltrans_errormsg; Lib.Add('swirltrans_errormsg$@', Fn);
   Fn.Entry := @s_swirltrans_strerror; Lib.Add('swirltrans_strerror$@n', Fn);

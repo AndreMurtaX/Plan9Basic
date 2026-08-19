@@ -1,4 +1,4 @@
-unit IOUtilsLib;
+﻿unit IOUtilsLib;
 
 {
   IOUtilsLib - I/O Utilities Library for Plan9Basic
@@ -1048,6 +1048,8 @@ var
   FnData: TLinkFunction;
 begin
   FnData.FarCall := True;
+  //No FireMonkey here, so these run wherever the VM stands.
+  FnData.NeedsUIThread := False;
 
   // Error handling
   FnData.Entry := n_ioerror; Lib.Add('ioerror@', FnData);

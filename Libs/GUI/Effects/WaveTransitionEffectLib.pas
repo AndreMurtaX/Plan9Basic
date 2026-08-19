@@ -289,6 +289,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_wavetrans_error; Lib.Add('wavetrans_error@', Fn);
   Fn.Entry := @s_wavetrans_errormsg; Lib.Add('wavetrans_errormsg$@', Fn);
   Fn.Entry := @s_wavetrans_strerror; Lib.Add('wavetrans_strerror$@n', Fn);

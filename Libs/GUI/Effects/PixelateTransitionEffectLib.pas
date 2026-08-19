@@ -289,6 +289,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_pixelatetrans_error; Lib.Add('pixelatetrans_error@', Fn);
   Fn.Entry := @s_pixelatetrans_errormsg; Lib.Add('pixelatetrans_errormsg$@', Fn);
   Fn.Entry := @s_pixelatetrans_strerror; Lib.Add('pixelatetrans_strerror$@n', Fn);

@@ -289,6 +289,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_saturate_error; Lib.Add('saturatrans_error@', Fn);
   Fn.Entry := @s_saturate_errormsg; Lib.Add('saturatrans_errormsg$@', Fn);
   Fn.Entry := @s_saturate_strerror; Lib.Add('saturatrans_strerror$@n', Fn);

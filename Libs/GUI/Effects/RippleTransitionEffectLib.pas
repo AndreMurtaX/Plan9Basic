@@ -289,6 +289,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_rippletrans_error; Lib.Add('rippletrans_error@', Fn);
   Fn.Entry := @s_rippletrans_errormsg; Lib.Add('rippletrans_errormsg$@', Fn);
   Fn.Entry := @s_rippletrans_strerror; Lib.Add('rippletrans_strerror$@n', Fn);

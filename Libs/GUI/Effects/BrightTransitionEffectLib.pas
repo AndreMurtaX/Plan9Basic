@@ -189,6 +189,8 @@ procedure RegisterBrightTransitionEffectFuncs(Lib: TFunctionsDictionary);
 var Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_brighttrans_error; Lib.Add('brighttrans_error@', Fn);
   Fn.Entry := @s_brighttrans_errormsg; Lib.Add('brighttrans_errormsg$@', Fn);
   Fn.Entry := @s_brighttrans_strerror; Lib.Add('brighttrans_strerror$@n', Fn);

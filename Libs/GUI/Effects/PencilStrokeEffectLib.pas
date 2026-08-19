@@ -1,4 +1,4 @@
-unit PencilStrokeEffectLib;
+﻿unit PencilStrokeEffectLib;
 
 {******************************************************************************
   PencilStrokeEffectLib - Pencil Stroke Effect Library for Plan9Basic
@@ -281,6 +281,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_pencilstroke_error; Lib.Add('pencilstroke_error@', Fn);

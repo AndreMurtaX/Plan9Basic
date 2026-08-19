@@ -1,4 +1,4 @@
-unit DictLib;
+﻿unit DictLib;
 
 {******************************************************************************
   DictLib - Dictionary Library for Plan9Basic
@@ -773,6 +773,8 @@ var
   FnData: TLinkFunction;
 begin
   FnData.FarCall := True;
+  //No FireMonkey here, so these run wherever the VM stands.
+  FnData.NeedsUIThread := False;
 
   //----------------------------------------------------------------------------
   // Dictionary creation

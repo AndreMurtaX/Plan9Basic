@@ -903,6 +903,8 @@ begin
   ModuleEngine := Eng;
   ModuleOutput := OutP;
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   Fn.Entry := @n_rectani_error; Lib.Add('rectani_error@', Fn);
   Fn.Entry := @s_rectani_errormsg; Lib.Add('rectani_errormsg$@', Fn);

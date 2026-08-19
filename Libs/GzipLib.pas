@@ -1,4 +1,4 @@
-unit GzipLib;
+﻿unit GzipLib;
 
 {******************************************************************************
   GzipLib - GZIP/Deflate Compression Library for Plan9Basic
@@ -580,6 +580,8 @@ var
   FnData: TLinkFunction;
 begin
   FnData.FarCall := True;
+  //No FireMonkey here, so these run wherever the VM stands.
+  FnData.NeedsUIThread := False;
 
   // Error handling
   FnData.Entry := @n_gziperror; Lib.Add('gziperror@', FnData);

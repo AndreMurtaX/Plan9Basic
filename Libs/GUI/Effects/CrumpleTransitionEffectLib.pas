@@ -179,6 +179,8 @@ end;
 procedure RegisterCrumpleTransitionEffectFuncs(Lib: TFunctionsDictionary);
 var Fn: TLinkFunction;
 begin Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_crumpletrans_error; Lib.Add('crumpletrans_error@', Fn);
   Fn.Entry := @s_crumpletrans_errormsg; Lib.Add('crumpletrans_errormsg$@', Fn);
   Fn.Entry := @s_crumpletrans_strerror; Lib.Add('crumpletrans_strerror$@n', Fn);

@@ -1318,6 +1318,8 @@ begin
   ModuleEngine := Eng;
   ModuleOutput := OutP;
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_bmplistani_error; Lib.Add('bmplistani_error@', Fn);

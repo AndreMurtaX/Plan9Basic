@@ -1,4 +1,4 @@
-unit RegexLib;
+﻿unit RegexLib;
 
 {******************************************************************************
   RegexLib - Regular Expression Library for Plan9Basic
@@ -710,6 +710,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //No FireMonkey here, so these run wherever the VM stands.
+  Fn.NeedsUIThread := False;
 
   // Validation functions
   Fn.Entry := @p_regex_isvalid; Funcs.Add('regex_isvalid@$', Fn);

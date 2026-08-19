@@ -1,4 +1,4 @@
-unit EmbossEffectLib;
+﻿unit EmbossEffectLib;
 
 {******************************************************************************
   EmbossEffectLib - Emboss Effect Library for Plan9Basic
@@ -327,6 +327,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_emboss_error; Lib.Add('emboss_error@', Fn);

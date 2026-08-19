@@ -1,4 +1,4 @@
-unit ToonEffectLib;
+﻿unit ToonEffectLib;
 
 {******************************************************************************
   ToonEffectLib - Toon Effect Library for Plan9Basic
@@ -280,6 +280,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_toon_error; Lib.Add('toon_error@', Fn);

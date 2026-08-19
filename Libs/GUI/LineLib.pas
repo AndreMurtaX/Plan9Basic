@@ -2036,6 +2036,8 @@ begin
   ModuleOutput := OutP;
 
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_line_error; Lib.Add('line_error@', Fn);

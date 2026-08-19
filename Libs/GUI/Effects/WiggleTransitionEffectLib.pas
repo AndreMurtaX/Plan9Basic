@@ -322,6 +322,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_wiggletrans_error; Lib.Add('wiggletrans_error@', Fn);
   Fn.Entry := @s_wiggletrans_errormsg; Lib.Add('wiggletrans_errormsg$@', Fn);
   Fn.Entry := @s_wiggletrans_strerror; Lib.Add('wiggletrans_strerror$@n', Fn);

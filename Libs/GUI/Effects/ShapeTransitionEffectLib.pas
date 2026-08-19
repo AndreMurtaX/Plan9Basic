@@ -322,6 +322,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_shapetrans_error; Lib.Add('shapetrans_error@', Fn);
   Fn.Entry := @s_shapetrans_errormsg; Lib.Add('shapetrans_errormsg$@', Fn);
   Fn.Entry := @s_shapetrans_strerror; Lib.Add('shapetrans_strerror$@n', Fn);

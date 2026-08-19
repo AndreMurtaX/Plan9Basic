@@ -322,6 +322,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_rotatecrumpletrans_error; Lib.Add('rotcrumpletrans_error@', Fn);
   Fn.Entry := @s_rotatecrumpletrans_errormsg; Lib.Add('rotcrumpletrans_errormsg$@', Fn);
   Fn.Entry := @s_rotatecrumpletrans_strerror; Lib.Add('rotcrumpletrans_strerror$@n', Fn);

@@ -1,4 +1,4 @@
-unit BloomEffectLib;
+﻿unit BloomEffectLib;
 
 {******************************************************************************
   BloomEffectLib - Bloom Effect Library for Plan9Basic
@@ -428,6 +428,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_bloom_error; Lib.Add('bloom_error@', Fn);

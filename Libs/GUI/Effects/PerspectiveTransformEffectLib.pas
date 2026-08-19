@@ -1,4 +1,4 @@
-unit PerspectiveTransformEffectLib;
+﻿unit PerspectiveTransformEffectLib;
 
 {******************************************************************************
   PerspectiveTransformEffectLib - Perspective Transform Effect for Plan9Basic
@@ -569,6 +569,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_persp_error; Lib.Add('persp_error@', Fn);

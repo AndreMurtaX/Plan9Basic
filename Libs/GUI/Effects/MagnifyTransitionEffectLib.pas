@@ -194,6 +194,8 @@ end;
 procedure RegisterMagnifyTransitionEffectFuncs(Lib: TFunctionsDictionary);
 var Fn: TLinkFunction;
 begin Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
   Fn.Entry := @n_magnifytrans_error; Lib.Add('magnifytrans_error@', Fn);
   Fn.Entry := @s_magnifytrans_errormsg; Lib.Add('magnifytrans_errormsg$@', Fn);
   Fn.Entry := @s_magnifytrans_strerror; Lib.Add('magnifytrans_strerror$@n', Fn);

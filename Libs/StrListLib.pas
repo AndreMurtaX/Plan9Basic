@@ -1,4 +1,4 @@
-unit StrListLib;
+﻿unit StrListLib;
 {
   StrListLib - String List Library for Plan9Basic
   ===============================================
@@ -1035,6 +1035,8 @@ begin
   ModuleOutput := OutP;
 
   FnData.FarCall := True;
+  //No FireMonkey here, so these run wherever the VM stands.
+  FnData.NeedsUIThread := False;
 
   // Creation and destruction
   FnData.Entry := stringlist_new;         Lib.Add('strings#@', FnData);

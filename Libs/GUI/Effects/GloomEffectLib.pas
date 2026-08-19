@@ -1,4 +1,4 @@
-unit GloomEffectLib;
+﻿unit GloomEffectLib;
 
 {******************************************************************************
   GloomEffectLib - Gloom Effect Library for Plan9Basic
@@ -424,6 +424,8 @@ var
   Fn: TLinkFunction;
 begin
   Fn.FarCall := True;
+  //FireMonkey, so these run on the UI thread when the VM does not.
+  Fn.NeedsUIThread := True;
 
   // Error handling
   Fn.Entry := @n_gloom_error; Lib.Add('gloom_error@', Fn);
