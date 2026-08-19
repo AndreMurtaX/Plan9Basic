@@ -636,6 +636,34 @@ still boilerplate" has a written answer.
 
 ---
 
+## After this plan — named, not scheduled
+
+Raised by the author on 2026-08-19, while this plan was still running. Recorded
+here so it survives the end of it.
+
+**Two IDEs instead of one.** The current environment tries to be both a desktop
+development tool and a mobile applet host, and has become confusing as a result.
+The proposal is to split it: one project aimed at desktop use, one at Android
+and iOS.
+
+That is a product decision and not this plan's to take, but it is worth noting
+how squarely it lands on 2.3. The whole difficulty of moving the VM off the UI
+thread is that **the two platforms want different answers and one host has to
+give both**. `BREAKPOINT` is the clearest case: on desktop it should stop and
+show a dialog, on mobile it cannot, so today the engine degrades and both get
+the lesser behaviour. A split lets each host decide, instead of one host
+apologising.
+
+So the ordering matters. 2.3 built for one host that must satisfy both
+platforms is harder than 2.3 built for two hosts that each satisfy one, and some
+of what makes it hard would simply not arise.
+
+**Also still open:** `StdLib` and `StrLib` reach FireMonkey for
+`processmessages()`, `handlemessage()` and the clipboard (ANALYSIS §12). They
+want host callbacks, and they belong with 2.3 rather than before it.
+
+---
+
 ## Rules for the whole project
 
 - **English** in every artefact that lands in the tree: code, comments,

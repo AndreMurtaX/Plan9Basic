@@ -1549,3 +1549,65 @@ from the same state it is guarding cannot see that state change. The needed-set
 came from the disk, and the thing being checked was the disk. Nothing about
 attention fixes that, and no amount of reading the code reveals it. Running it
 does, immediately, every time.
+
+---
+
+## 15. The website is part of the product, and nothing knew
+
+Found 2026-08-19, by the author asking a question about a page rather than by
+any check.
+
+The question was small: `downloads.html` still references the compiled
+environments, is that right? The answer was no, and the answer underneath it was
+worse.
+
+**First, the small one.** 4.4 removed the download buttons and rewrote the page
+title and intro. Its commit message says the page *"now describes running what
+you built"*. That was asserted, not read. Step 1 of 3 still said **"Download the
+executable — Click the Download .exe button above"**, and so did the Linux and
+Android sections: five places telling a reader to press a button that no longer
+existed. The claim was made about content that had not been opened.
+
+**Then the real one.** Chasing it turned up what the site actually is:
+
+| Path | Fetched by |
+|---|---|
+| `assets/devenv/Translations.ini` | the IDE, first run of every install |
+| `assets/examples/ExamplesBrowser.bas` | the IDE, first run |
+| `api/examples.php` | the Examples Browser applet |
+| `assets/sounds/{lunar,missile,snake,invaders}/` | four demo games |
+
+The site is a **runtime backend**. `UnitMain.pas` line 25 fetches its
+translations from `plan9basic.com/assets/devenv/Translations.ini` on first run,
+and all of these return 200 today.
+
+Earlier the same day, `assets/devenv/` had been moved out of the publish tree
+for being unreferenced. Which it was — `grep` for `devenv` across 124 pages
+returned zero, `check-links.py` agreed, and the directory held 63 MB of
+binaries nothing pointed at. Publishing in that state would have 404ed the first
+run of every fresh installation, silently, and no check in the repository would
+have disagreed.
+
+The reason none could: **those URLs live in Pascal, not in an `href`.**
+`check-links.py` reads pages. A string constant in a `.pas` file is invisible to
+it, and the file being unreferenced *by pages* was true and irrelevant.
+
+**Fixed:** `Translations.ini` is back in the tree and now tracked — the ignore
+rule excludes the directory's contents with one exception, since git cannot
+re-include a file inside an excluded directory. And `tools/check-site-deps.py`
+asks the question `check-links` structurally cannot: for every plan9basic.com
+URL in Pascal or BASIC source, is the file in `Website/`? Both failure paths
+watched going red before it was trusted.
+
+**And one thing cannot be fixed from here.** `api/examples.php` is PHP on the
+host; its source has never been in this repository. So **an upload must merge,
+not replace** — wiping the document root and copying `Website/` over it deletes
+that endpoint. `PUBLISHING.md` now opens with that, because it is the kind of
+mistake that is made once and discovered by users.
+
+**What this adds** to §12 through §14, which were all about checks that cannot
+fail: this one is about a question no check was asking. Every checker here reads
+one language — pages, or Pascal, or BASIC — and the dependency ran between two of
+them. Coverage of each says nothing about the seam.
+
+It was found because somebody read a page and asked.

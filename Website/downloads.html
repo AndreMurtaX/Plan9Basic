@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Downloads &mdash; Plan9Basic</title>
+<title>Build &mdash; Plan9Basic</title>
 <meta name="description" content="Download Plan9Basic for Windows 64-bit, Linux 64-bit, and Android. Free and open source BASIC interpreter with 300+ built-in functions.">
 <link rel="icon" type="image/png" href="assets/img/launcher-48.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -407,7 +407,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
     <a href="./docs/language-reference.html">Language</a>
     <a href="./docs/library_guide.html">Libraries</a>
     <a href="./docs/examples.html">Examples</a>
-    <a href="./downloads.html" class="active">Downloads</a>
+    <a href="./downloads.html" class="active">Build</a>
   </nav>
   <div class="topbar-themes">
     <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>
@@ -447,7 +447,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
 <main class="main-content">
 
   <div class="page-header">
-    <div class="page-header-eyebrow">Plan9Basic &rsaquo; Downloads</div>
+    <div class="page-header-eyebrow">Plan9Basic &rsaquo; Build</div>
     <h1 class="page-title">Build Plan9Basic</h1>
     <p class="page-subtitle">
       Plan9Basic runs natively on <strong>Windows</strong>, <strong>Linux</strong>, and <strong>Android</strong>.
@@ -528,8 +528,8 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <h4>Download the executable</h4>
-          <p>Click the <strong>Download .exe</strong> button above. Save <code>Plan9Basic.exe</code> to any folder — your Desktop, <code>C:\Tools\</code>, or anywhere convenient.</p>
+          <h4>Build the executable</h4>
+          <p>Open <code>Plan9Basic.dproj</code> in RAD Studio, select the <strong>Windows 64-bit</strong> target and build, or run <code>dcc64 Plan9Basic.dpr</code> from the repository root. Either produces <code>Plan9Basic.exe</code>, which you can put in any folder — your Desktop, <code>C:\Tools\</code>, or anywhere convenient.</p>
         </div>
       </div>
       <div class="step">
@@ -562,7 +562,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         </div>
       </div>
     </div>
-    <div class="info-box">&#9432; <strong>Windows SmartScreen:</strong> On first launch Windows may show a SmartScreen warning. Click <em>"More info" &rarr; "Run anyway"</em> to proceed — the binary is safe.</div>
+    <div class="info-box">&#9432; <strong>First launch:</strong> the application fetches <code>Translations.ini</code> once, in the background, so the first run wants a network connection. After that it is cached beside the executable and never fetched again. A binary you compiled yourself does not trip SmartScreen, since it never crossed the network.</div>
 
     <h3>Passing arguments to scripts</h3>
     <p>Arguments after the script path are available via <code>paramcount</code> and <code>paramstr$(n)</code>:</p>
@@ -596,7 +596,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
           <tr><td>Architecture</td><td>x86-64 (64-bit)</td></tr>
           <tr><td>Requires</td><td>Linux kernel 4.x+ &mdash; any modern distro</td></tr>
           <tr><td>Dependencies</td><td>None &mdash; statically linked</td></tr>
-          <tr><td>Install</td><td>Download, <code>chmod +x</code>, run</td></tr>
+          <tr><td>Install</td><td>Build, <code>chmod +x</code>, run</td></tr>
         </table>
       </div>
     </div>
@@ -606,14 +606,14 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <h4>Download and make executable</h4>
-          <p>Download the binary from above, then grant it execute permission. The binary has no extension &mdash; this is normal on Linux.</p>
+          <h4>Build it, then make it executable</h4>
+          <p>Build the Linux 64-bit target from RAD Studio over PAServer, then grant the result execute permission. The binary has no extension &mdash; this is normal on Linux.</p>
         </div>
       </div>
     </div>
     <div class="code-block">
       <div class="code-titlebar"><span class="code-titlebar-title">&#9583; bash</span><div class="code-titlebar-controls"><span class="code-titlebar-btn close">&#10005;</span></div></div>
-      <div class="code-body"><pre><span class="cmt"># Download (or copy from your downloads folder)</span>
+      <div class="code-body"><pre><span class="cmt"># Copy the binary the build produced</span>
 <span class="prompt">$ </span><span class="cmd">mv ~/Downloads/Plan9Basic ~/bin/Plan9Basic</span>
 
 <span class="cmt"># Make it executable</span>
@@ -679,15 +679,15 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <h4>Download the APK</h4>
-          <p>Tap the <strong>Download .apk</strong> button above directly on your Android device, or transfer <code>Plan9Basic.apk</code> from your computer via USB or cloud storage.</p>
+          <h4>Build the APK</h4>
+          <p>Select the <strong>Android 64-bit</strong> target in RAD Studio and build. The result is <code>Plan9Basic.apk</code>, which you can install straight over USB with <code>adb install</code>, or transfer to the device however you prefer.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
           <h4>Install the APK</h4>
-          <p>Open your <strong>Downloads</strong> folder (or Files app), tap <code>Plan9Basic.apk</code>, and follow the on-screen installation prompts. Tap <em>Install</em> when asked.</p>
+          <p><code>adb install</code> puts it on a device already connected over USB. Transferred by hand instead, open your <strong>Files</strong> app, tap <code>Plan9Basic.apk</code>, and follow the on-screen prompts.</p>
         </div>
       </div>
       <div class="step">

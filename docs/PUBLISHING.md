@@ -23,6 +23,27 @@ runs, and nine documentation checks pass. If that is not green, the site is not
 ready — publishing a page whose examples do not compile is worse than publishing
 nothing, because a reader will type them in.
 
+## The site is part of the product, not a brochure
+
+Before anything else about uploading: **the running software fetches from this
+host.** Not only documentation lives here.
+
+| Path | Fetched by |
+|---|---|
+| `assets/devenv/Translations.ini` | the IDE, on the first run of every install |
+| `assets/examples/ExamplesBrowser.bas` | the IDE, on first run |
+| `api/examples.php` | the Examples Browser applet |
+| `assets/sounds/{lunar,missile,snake,invaders}/` | four of the demo games |
+
+Those URLs are written in Pascal and BASIC source, not in an `href`, so
+`check-links.py` cannot see them — it reads pages. `tools/check-site-deps.py`
+asks the question it cannot, and `check-all.py` runs it.
+
+**`api/examples.php` is not in this repository.** It is PHP on the host and its
+source has never been here, so **an upload must merge rather than replace.**
+Wiping the document root and copying `Website/` over it removes that endpoint
+and breaks the Examples Browser for everyone.
+
 ## Upload
 
 **`Website/` is the site.** Its contents are the server's document root — the
@@ -30,12 +51,16 @@ directory itself is not part of the path, so `index.html` lands at the root and
 not inside a `Website/` folder.
 
 There is nothing to assemble and nothing to leave out. Everything under it is
-published: 286 files, 94 MB, of which 124 are pages. It held one exception until
-2026-08-19, `assets/devenv/` — 63 MB of compiled binaries the download buttons
-used to point at. Nothing links them since 4.4, so they moved to `dist/devenv/`,
-outside the tree that gets uploaded. `.gitignore` still names the old path, now
-as a guard rather than a description: a build that drops binaries back in there
-will not be committed, and should not be uploaded either.
+published: 287 files, of which 124 are pages.
+
+`assets/devenv/` used to hold 63 MB of compiled binaries the download buttons
+pointed at. Nothing has linked them since 4.4, so they moved to `dist/devenv/`,
+outside the upload — **except `Translations.ini`, which stayed.** It is not
+linked by any page either, which is exactly why moving the directory wholesale
+looked safe and was not: the IDE fetches it on first run, and publishing without
+it would have 404ed every fresh installation, silently. The `.gitignore` rule
+now excludes that directory's *contents* with one exception, so the file is
+tracked and a clone can publish a working site.
 
 Two of the 286 are not in git: the PDFs under `assets/ebooks/`, about 65 MB.
 They are linked from the story on the front page, they are published, and the

@@ -72,7 +72,14 @@ archive/
 # Moved to dist/devenv/ on 2026-08-19: nothing links these since the site
 # stopped handing out binaries. Kept as a guard -- Website/ is uploaded
 # whole, so a build dropping 63 MB back in there must not be published.
-Website/assets/devenv/
+Website/assets/devenv/*
+# ...except this one. UnitMain.pas downloads it from
+# plan9basic.com/assets/devenv/Translations.ini on first run, so it is a
+# runtime dependency of every fresh install, not a build artefact. It was
+# moved out of the publish tree on 2026-08-19 for being unreferenced -- no
+# page links it -- and that would have 404ed the first run of every new
+# installation. Tracked so a clone can publish a working site.
+!Website/assets/devenv/Translations.ini
 # Third-party PDFs served by the site (~66 MB, not project source)
 Website/assets/ebooks/
 
