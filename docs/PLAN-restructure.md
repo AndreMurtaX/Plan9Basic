@@ -367,25 +367,81 @@ The runner holds exactly one unit of its own; the rest is submodule.
 
 ### 3.1 Fold the engine back in
 
-`engine/` stops being a submodule and becomes ordinary directories. The
-submodule earned its keep when there were two copies to unify; with one
-repository it is a step that only adds a way to forget.
+**Done 2026-08-19.** `engine/` is an ordinary directory: the same 26 files, byte
+for byte, at the same path, so nothing in either `.dpr` had to move. What went
+away is the ceremony — a change under `engine/` used to need three commits
+across three repositories, and forgetting the third produced no error, just a
+consumer still building the previous interpreter.
+
+`Plan9BasicEngine` stays where it is; its history and any clone pointing at it
+keep resolving.
+
+The one thing worth keeping from the split was the *meaning* of `engine/`: the
+part that runs with no windowing system driving it. That is no longer a
+repository boundary, so nothing enforced it — and it turned out nothing ever had. See 3.1b.
+
+### 3.1b The boundary was guarded by a check that could not fail
+
+**Found while writing 3.1 down.** `tests/build-nofmx.ps1` claimed to compile the
+engine "with the FMX unit directories removed from the compiler's search path,
+so any reference to FireMonkey from the engine is a hard compile error". It
+passed, and always had. Three units under `engine/` import FMX unconditionally.
+
+`dcc64` ships the FMX `.dcu` files in the RTL's own directory — 209 of
+them — so
+a search path holding "the RTL only" holds all of FireMonkey. Built with a
+detailed map and counted: **58 FMX units** linked into the program reporting it
+needed none.
+
+Replaced by `tools/check-fmx-boundary.py`, which reads the `uses` clauses and
+holds the answer as a ratchet: `StdLib` (`processmessages`), `StrLib`
+(clipboard), `TimerLib` (a GUI library on purpose). A fourth fails; so does an
+entry that stops being true. `SysLib` was a fourth, and its import was dead.
+
+`StdLib` and `StrLib` want host callbacks, the way `PrintProc` and `InputProc`
+already have them. Left named rather than done here: `processmessages()` is a
+question about which thread owns the message loop, so it belongs with the
+deferred 2.3 flip.
+
+Full account in ANALYSIS §12.
 
 ### 3.2 Fold the runner in
 
-One unit and its project files. The applet runner becomes a second target in
-the same tree, sharing the libraries it already shares.
+**Done 2026-08-19.** 32 files under `runner/`, one form and a `.dpr`. The whole
+of the port was 23 engine paths moving from `engine` to one directory up. Both
+applications build from the same tree: the IDE at 143,186 lines, the runner at
+28,072.
+
+Consolidated on the way: `LICENSE` existed in the engine and the runner and not
+at the root, which is where a repository's licence belongs — one copy now, at
+the top. `runner/.gitignore` was a strict subset of the root's, so it went.
+
+Its 20 example applets had never been checked by anything, because they shipped
+in a repository with no test runner. They compile, and `check-all.py` says so on
+every run.
 
 ### 3.3 One build, one suite
 
-A single entry point that builds every target and runs every check, so "does
-this work" has one answer.
+**Done 2026-08-19.** `tools/verify.ps1`: both application builds, both suites
+and the negative one, the console host, and every documentation check — one
+table, one exit code. A failing step does not stop the run.
+
+The gap it closes was real and larger than "four scripts instead of one":
+*nothing built the applications*. The suites link `engine/` and `Libs/`
+directly, so both shipped applications could stop compiling with every check
+green. Proving the script catches that meant breaking a build on purpose, and
+the run came back with 994 assertions and nine checks passing while one of the
+two applications did not compile.
+
+Both failure paths were watched going red before it landed — which is the
+lesson from 3.1b applied immediately.
 
 ### 3.4 Mark the old repositories obsolete
 
-Both keep their history and stay readable. Each README gains a notice at the
-top: development moved, this is here for the record, follow the link. No
-deletion.
+**Done 2026-08-19.** Both READMEs open with a notice: development moved, nothing
+was deleted, clones and submodule pointers keep resolving, and here is why the
+split was undone. `Plan9BasicEngine` also lost the paragraph describing itself
+as the shared copy consumed by two submodules, which is no longer true.
 
 ### 3.5 Make `Plan9Basic` public
 
