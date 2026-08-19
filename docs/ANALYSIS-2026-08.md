@@ -1821,13 +1821,14 @@ Tapping OK produced an ANR. The chain:
 4. the pause loop does `continue`, which skips the instruction dispatch — and the
    drain lives in the instruction dispatch
 
-Both wait for each other. The obvious repair, draining in the pause loop too,
-made it worse and is **not a positioning problem**: it runs a BASIC function
-while the VM is parked mid-instruction, re-entering the stack machine and
-touching the `ExecStatus` the pause itself depends on.
+Both wait for each other.
 
-That is a re-entrancy question, and it wants design rather than another
-twenty-minute build-deploy-tap cycle.
+> **This paragraph was wrong, and §20 corrects it.** What stood here said the
+> obvious repair — draining in the pause loop too — was not a positioning problem
+> but a re-entrancy one, running a BASIC function while the VM is parked
+> mid-instruction. That was reasoned from the code and never tested. A test
+> written the next morning showed draining while parked works, and that the
+> repair was exactly the positioning fix it had been dismissed as.
 
 ### What was kept
 
@@ -1851,3 +1852,57 @@ invisible to a headless test and obvious within seconds on the device — the
 probe passes and always did. And the first symptom, an application that ran and
 printed nothing, had three separate causes stacked behind it, each only visible
 once the one in front was fixed.
+
+---
+
+## 20. The test that should have been written first, and what it corrected
+
+Written 2026-08-19, after being asked to show the tests actually running.
+
+§19 ended with a confident diagnosis: that a call arriving while the VM is
+parked cannot be run, because a parked stack machine is stopped mid-instruction
+and re-entering it corrupts the state the pause depends on. It read well. It
+was reasoned entirely from the code, and it was **wrong**.
+
+**What the test does.** `VMThreadProbe` now parks the VM for real. A host
+installs a `ConfirmProc` that captures the callback and does not answer, the
+program hits a `BREAKPOINT`, and the VM stops in `esIdle` and stays there. The
+main thread then queues a call and the probe measures **how long the caller
+waits**, because the failure being hunted is not a wrong answer but a caller
+that is never released.
+
+It runs twice, and the second run is the one that mattered:
+
+| | caller released after |
+|---|---|
+| host with a `YieldProc` that drains | **12 ms** |
+| host with no `YieldProc` at all | **5,197 ms** — the entire script timeout |
+
+The second row is the device failure, reproduced on Windows in five seconds
+instead of a twenty-minute build-deploy-tap cycle.
+
+**And it names the real cause.** Nothing to do with re-entrancy: the first row
+re-enters a parked VM and is fine. The pause loop drained only through
+`YieldProc`, and on the device `YieldProc` had been set to nil — correctly,
+because a real FMX host's `YieldProc` pumps the message loop, which from a
+worker is exactly wrong. Removing it removed the only drain point the pause had.
+
+So the repair is the one §19 dismissed: `DrainProc` in the pause loop as well as
+in the instruction loop. Both rows now release in about 12 ms.
+
+**Why this went wrong is worth more than the bug.** The reasoning in §19 was
+plausible, specific, and produced a decision — roll back and redesign — that
+would have cost days. What made it wrong was not carelessness in the argument
+but that no argument was owed: the question was decidable by experiment in
+minutes, and the experiment was not run.
+
+The tell was there to be noticed. §19 already recorded that the probe *passed*
+while the device failed, and treated that as a limitation of headless testing.
+It was really a gap in the probe: every check ran against a VM that was
+executing, and none against one that was parked. A test suite that cannot enter
+the state a bug lives in will keep agreeing with you.
+
+**The rule, since this is the second time in two days a conclusion was reached
+by reading:** when a claim about behaviour is testable in minutes, it is not a
+conclusion until it has been tested. §12 was a check that could not fail. This
+was a diagnosis that was never made to.

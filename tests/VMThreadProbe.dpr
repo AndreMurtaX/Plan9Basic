@@ -1,4 +1,4 @@
-{******************************************************************************
+﻿{******************************************************************************
   VMThreadProbe - the VM on a thread of its own, called from another one
 
   The stack machine holds one caller at a time, whatever thread they arrive
@@ -28,6 +28,7 @@ uses
   System.SysUtils,
   System.Classes,
   System.SyncObjs,
+  System.Diagnostics,
   UnitUtils in '..\engine\UnitUtils.pas',
   lexer in '..\engine\lexer.pas',
   exec in '..\engine\exec.pas',
@@ -49,12 +50,32 @@ type
     FEngine: TBasicEngine;
     FOutput: TStringList;
     procedure Yield();
+  public
+    //True reproduces what a real FMX host must do: its YieldProc pumps the
+    //message loop, which is precisely wrong from a worker, so it has to be
+    //taken away. Everything then depends on DrainProc alone.
+    NoYieldProc: Boolean;
+  private
   protected
     procedure Execute(); override;
   public
     Started: TEvent;
-    constructor Create(AEngine: TBasicEngine; AOutput: TStringList);
+    constructor Create(AEngine: TBasicEngine; AOutput: TStringList;
+      ANoYieldProc: Boolean = False);
     destructor Destroy(); override;
+  end;
+
+//Answers a BREAKPOINT only when told to, so the VM can be caught parked.
+//
+//This is the state the first device attempt deadlocked in and no headless test
+//could reach: the VM stopped in esIdle, waiting for a host that has not
+//answered yet, while another thread wants to run BASIC.
+  THeldConfirm = class
+  public
+    Pending: TConfirmDoneProc;
+    Asked: Boolean;
+    procedure Confirm(const AMessage: String; const ADone: TConfirmDoneProc);
+    procedure AnswerYes();
   end;
 
 var
@@ -71,10 +92,30 @@ begin
   end;
 end;
 
-constructor TVMThread.Create(AEngine: TBasicEngine; AOutput: TStringList);
+procedure THeldConfirm.Confirm(const AMessage: String;
+  const ADone: TConfirmDoneProc);
+begin
+  //Held, not answered. The VM is now parked and stays parked.
+  Pending := ADone;
+  Asked := True;
+end;
+
+procedure THeldConfirm.AnswerYes();
+var
+  Done: TConfirmDoneProc;
+begin
+  Done := Pending;
+  Pending := nil;
+  if Assigned(Done) then
+    Done(True);
+end;
+
+constructor TVMThread.Create(AEngine: TBasicEngine; AOutput: TStringList;
+  ANoYieldProc: Boolean);
 begin
   FEngine := AEngine;
   FOutput := AOutput;
+  NoYieldProc := ANoYieldProc;
   Started := TEvent.Create(nil, True, False, '');
   inherited Create(False);
 end;
@@ -95,7 +136,10 @@ end;
 procedure TVMThread.Execute();
 begin
   FEngine.ClaimVMThread();
-  FEngine.YieldProc := Yield;
+  if NoYieldProc then
+    FEngine.YieldProc := nil
+  else
+    FEngine.YieldProc := Yield;
   Started.SetEvent();
   try
     FEngine.ExecuteProgram(FOutput);
@@ -121,6 +165,102 @@ const
     '  LET x = processmessages()' + sLineBreak +
     'NEXT k' + sLineBreak +
     'END';
+
+//The VM stops at a BREAKPOINT and waits for an answer. While it waits, another
+//thread wants to run BASIC.
+//
+//This is what the applet hit on the device and what nothing here could reach
+//before: every existing check runs against a VM that is executing, never one
+//that is parked. A parked stack machine is stopped in the middle of an
+//instruction, so it cannot simply be asked to run something else, and the
+//caller that asks must not be left waiting for an answer that will never come.
+//
+//What is required is not that the call succeeds -- refusing it is a defensible
+//answer -- but that the caller is *released*, one way or the other, rather than
+//held until something times out.
+procedure CheckPausedHandover(ANoYieldProc: Boolean);
+var
+  Engine: TBasicEngine;
+  Output, Source: TStringList;
+  Worker: TVMThread;
+  Held: THeldConfirm;
+  RetType: TExprKind;
+  RetValue: TAsmData;
+  Args: array of TAsmData;
+  Waited: Integer;
+  Clock: TStopwatch;
+  Elapsed: Int64;
+begin
+  Engine := TBasicEngine.Create();
+  Output := TStringList.Create();
+  Source := TStringList.Create();
+  Held := THeldConfirm.Create();
+  try
+    StdLib.RegisterStdFuncs(Engine.Functions);
+    NumLib.RegisterNumFuncs(Engine.Functions);
+    StrLib.RegisterStrFuncs(Engine.Functions);
+    ArrayLib.RegisterArrayFuncs(Engine.Functions);
+
+    Engine.ConfirmProc := Held.Confirm;
+    Engine.ScriptTimeOut := 5;
+
+    Source.Text :=
+      'FUNCTION ping(n)' + sLineBreak +
+      '  RETURN n + 1' + sLineBreak +
+      'END FUNCTION' + sLineBreak +
+      'TRACEON' + sLineBreak +
+      'BREAKPOINT "parked here"' + sLineBreak +
+      'TRACEOFF' + sLineBreak +
+      'END';
+
+    if Engine.Compile(Source) <> 0 then
+    begin
+      Check('the parked-VM program compiles', False);
+      Exit();
+    end;
+
+    Worker := TVMThread.Create(Engine, Output, ANoYieldProc);
+    try
+      Worker.Started.WaitFor(2000);
+
+      //Wait for the VM to actually reach the breakpoint and park.
+      Waited := 0;
+      while (not Held.Asked) and (Waited < 5000) do
+      begin
+        Sleep(20);
+        Inc(Waited, 20);
+      end;
+      Check('the VM reached the breakpoint and parked', Held.Asked);
+
+      SetLength(Args, 1);
+      Args[0] := Default(TAsmData);
+      Args[0].n := 41;
+
+      Clock := TStopwatch.StartNew();
+      Engine.ExecuteUserFunction(Output, 'ping@n', Args, RetType, RetValue);
+      Elapsed := Clock.ElapsedMilliseconds;
+
+      //Either answer it or refuse it, but come back. Held until a timeout is
+      //the one outcome that shows up as a frozen window.
+      Writeln('        (the caller waited ', Elapsed, ' ms)');
+      Check('a call arriving during a pause releases its caller promptly',
+            Elapsed < 2000);
+
+      //And the pause itself has to survive being asked.
+      Held.AnswerYes();
+      Worker.WaitFor();
+      Check('the program still finishes after the breakpoint is answered',
+            True);
+    finally
+      Worker.Free();
+    end;
+  finally
+    Held.Free();
+    Source.Free();
+    Output.Free();
+    Engine.Free();
+  end;
+end;
 
 var
   Engine: TBasicEngine;
@@ -220,6 +360,14 @@ begin
 
     //The thread is gone, so calls run in place again.
     Check('after release, nothing is queued', not Engine.CallsMustBeQueued());
+
+    Writeln;
+    Writeln('  --- a call arriving while the VM is parked ---');
+    Writeln('  (with a YieldProc that drains, as a console host can have)');
+    CheckPausedHandover(False);
+    Writeln;
+    Writeln('  (with no YieldProc at all, as an FMX host on a worker must be)');
+    CheckPausedHandover(True);
   finally
     Source.Free();
     Output.Free();

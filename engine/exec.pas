@@ -1089,6 +1089,17 @@ begin
     begin
       if Assigned(FYieldProc) then
         FYieldProc();
+      //Parked is where draining matters most, and where it was missing. Idle
+      //means the VM is waiting for the host to answer -- a BREAKPOINT, an
+      //INPUT -- and answering is exactly when a host runs BASIC again. Without
+      //this a caller waits out the whole script timeout, which on a device is
+      //a window that has stopped responding.
+      //
+      //A console host can reach this through YieldProc instead, and the first
+      //version of this only worked that way. An FMX host cannot: its YieldProc
+      //pumps the message loop, which from a worker is wrong, so it has none.
+      if Assigned(FDrainProc) then
+        FDrainProc();
       // FIX #10: Prevent 100% CPU usage during breakpoint/pause.
       // Without sleep, this tight loop burns all CPU resources.
       // On mobile devices this drains battery and can trigger
