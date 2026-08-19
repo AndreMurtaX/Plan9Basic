@@ -200,6 +200,8 @@ a:hover { text-shadow: 0 0 10px var(--glow-color); }
 .topbar-right {
   margin-left: auto; display: flex; align-items: center; gap: 1rem;
 }
+.topbar-right a { color: var(--text-dim); font-size: 0.7rem; }
+.topbar-right a:hover { color: var(--accent); }
 
 .theme-btn {
   background: transparent; border: 1px solid var(--border);
@@ -867,6 +869,7 @@ a:hover { text-shadow: 0 0 10px var(--glow-color); }
     <span style="color:var(--text-secondary)">Examples</span>
   </div>
   <div class="topbar-right">
+    <a href="library_guide.html">Libraries</a>
     <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>
   </div>
 </div>

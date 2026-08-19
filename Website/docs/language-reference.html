@@ -128,6 +128,8 @@ body::after {
 .topbar-right {
   margin-left: auto; display: flex; align-items: center; gap: 1rem;
 }
+.topbar-right a { color: var(--text-dim); font-size: 0.7rem; }
+.topbar-right a:hover { color: var(--accent); }
 
 .theme-btn {
   background: transparent; border: 1px solid var(--border);
@@ -437,6 +439,7 @@ body::after {
     <span style="color:var(--text-secondary)">Language Reference</span>
   </div>
   <div class="topbar-right">
+    <a href="library_guide.html">Libraries</a>
     <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>
   </div>
 </div>
