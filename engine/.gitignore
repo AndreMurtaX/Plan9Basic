@@ -1,0 +1,59 @@
+# ---------------------------------------------------------------
+# Plan9Basic — .gitignore
+# RAD Studio / Delphi FireMonkey project
+# ---------------------------------------------------------------
+
+# ----- Compiler output (platform build folders) -----
+Win32/
+Win64/
+Win64x/
+WinARM64EC/
+Linux64/
+Android/
+Android64/
+OSX32/
+OSX64/
+OSXARM64/
+iOSDevice32/
+iOSDevice64/
+iOSSimARM64/
+iOSSimulator/
+
+# ----- Delphi compiled-unit artefacts -----
+*.dcu
+*.dcp
+*.dpu
+*.hpp
+
+# ----- C++ object / static-library files -----
+*.o
+*.a
+
+# ----- Executables and native libraries -----
+*.exe
+*.dll
+*.so
+*.dylib
+*.apk
+*.ipa
+*.aab
+
+# ----- Auto-generated resource / symbol files -----
+*.res
+*.rsm
+
+# ----- IDE and user-specific files -----
+*.dsk
+*.~dsk
+*.dproj.local
+*.identcache
+*.tvsconfig
+*.stat
+__history/
+__recovery/
+
+# ----- Miscellaneous -----
+*.bak
+*.tmp
+Thumbs.db
+.DS_Store
