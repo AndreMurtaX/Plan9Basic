@@ -445,10 +445,19 @@ as the shared copy consumed by two submodules, which is no longer true.
 
 ### 3.5 Make `Plan9Basic` public
 
-Last step of the phase, and only once the tree is clean and every check passes.
-Flipping a private repository to public is not reversible in any meaningful
-sense — the content is out — so it happens deliberately, at the end, and I will
-confirm before doing it.
+**Held, 2026-08-19, at the author's decision.** The engineering side is done and
+the tree was audited for it: 68 commits, one author, no secret in the history,
+no file with a sensitive name ever added and removed, no absolute path from a
+developer's machine. Every check passes. Flipping a private repository to
+public is not reversible in any meaningful sense — the content is out — so it
+waits for a deliberate go-ahead rather than arriving as the tail of a long pass.
+
+The obsolete notices in 3.4 went out first, so both old repositories now name a
+destination that does not open yet. They say so, in as many words, rather than
+leaving a reader at an unexplained 404. Removing that paragraph from both is
+part of doing this step.
+
+Nothing else in the plan waits on it: Phase 4 rebuilds the site either way.
 
 ---
 
