@@ -285,12 +285,35 @@ target.
 
 ### 2.3 Move the VM off the UI thread
 
-125 `Application.ProcessMessages` calls remain in the GUI libraries. The engine
-itself is already free of them — that was done in section 10 — so what remains
-is the libraries and the hosts.
+**Started 2026-08-19. The seam is in; the flip is not.**
 
-FireMonkey is not thread-safe, so every GUI call becomes a marshalled call. That
-is the real cost and the reason this is a phase rather than a task.
+The `ProcessMessages` part of this item was already done — see 2.1. What is real
+is that FireMonkey is not thread-safe and 3,899 GUI functions touch it.
+
+That number turned out not to be the cost. **The VM reaches every one of them
+through seven call sites**, and now through one method, `TExec.CallNative`. So
+the handover belongs in the engine and not in the libraries.
+
+What is in place:
+
+- `TLinkFunction.NeedsUIThread` — a library sets it once in its `Register`
+  procedure before its first `Add`, because the record is copied by value into
+  every entry. One line marks a whole library.
+- `TExec.MarshalProc` — a host installs it to hand a call to the thread
+  FireMonkey belongs to. The call travels in fields rather than parameters,
+  because `Synchronize` takes a parameterless method and an open array cannot be
+  captured.
+- All seven dispatch sites routed through `CallNative`.
+
+All of it is inert. With no marshaller installed `CallNative` calls straight
+through, which is what the sites did before, and the suites and the no-FMX probe
+confirm nothing moved.
+
+**What remains** is the flip: setting the flag in the 101 GUI libraries, a host
+that runs `ExecuteProgram` on a worker thread and installs a marshaller, and
+proving it on a device. Staged deliberately — the seam is worth having on its
+own and is testable in a way the flip is not, and the flip is where a mistake
+costs a hung application rather than a failed assertion.
 
 ### 2.4 What that unlocks
 
