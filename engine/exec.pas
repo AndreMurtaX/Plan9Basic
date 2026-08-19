@@ -1222,7 +1222,10 @@ begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit();
   end;
-  numF.Entry := ProgramFunctions[farFuncSign].Entry; //get entry point
+  //The whole record: the entry point and the flags that travel with it.
+  //Copying only Entry left NeedsUIThread reading stack garbage, which is
+  //why the marshalling seam never fired.
+  numF := ProgramFunctions[farFuncSign]; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1284,7 +1287,10 @@ begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit;
   end;
-  ptrF.Entry := ProgramFunctions[farFuncSign].Entry; //get entry point
+  //The whole record: the entry point and the flags that travel with it.
+  //Copying only Entry left NeedsUIThread reading stack garbage, which is
+  //why the marshalling seam never fired.
+  ptrF := ProgramFunctions[farFuncSign]; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1346,7 +1352,10 @@ begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit;
   end;
-  strF.Entry := ProgramFunctions[farFuncSign].Entry; //get entry point
+  //The whole record: the entry point and the flags that travel with it.
+  //Copying only Entry left NeedsUIThread reading stack garbage, which is
+  //why the marshalling seam never fired.
+  strF := ProgramFunctions[farFuncSign]; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1905,7 +1914,7 @@ begin
 
     //If we reach this point, that's because the function signature points to a
     //"FAR" function.
-    farF.Entry := programFunctions[FnSignt].Entry;
+    farF := programFunctions[FnSignt]; //entry point and flags
     //Value pushed during "FnParams" formation (few lines above)
     n := Trunc(PopAsmData(ekNumber).n);
     try
@@ -2050,7 +2059,7 @@ begin
 
               //If we reach this point, that's because the function signature points to a
               //"FAR" function.
-              farF.Entry := programFunctions[FnSignt].Entry;
+              farF := programFunctions[FnSignt]; //entry point and flags
               try
                 SetLength(Args, 1); //allocate parameters
               except
@@ -2142,7 +2151,7 @@ begin
 
               //If we reach this point, that's because the function signature points to a
               //"FAR" function.
-              farF.Entry := programFunctions[FnSignt].Entry;
+              farF := programFunctions[FnSignt]; //entry point and flags
               try
                 SetLength(Args, 1); //allocate parameters
               except
@@ -2384,7 +2393,7 @@ begin
 
     //If we reach this point, that's because the function signature points to a
     //"FAR" function.
-    farF.Entry := programFunctions[FnSignt].Entry;
+    farF := programFunctions[FnSignt]; //entry point and flags
     //Value pushed during "FnParams" formation (few lines above)
     n := Trunc(PopAsmData(ekNumber).n);
     try

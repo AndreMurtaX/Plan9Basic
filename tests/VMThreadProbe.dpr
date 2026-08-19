@@ -70,6 +70,11 @@ type
 //This is the state the first device attempt deadlocked in and no headless test
 //could reach: the VM stopped in esIdle, waiting for a host that has not
 //answered yet, while another thread wants to run BASIC.
+  TMarshalHost = class
+  public
+    procedure Marshal(const AProc: TThreadMethod);
+  end;
+
   THeldConfirm = class
   public
     Pending: TConfirmDoneProc;
@@ -80,6 +85,17 @@ type
 
 var
   Failures: Integer = 0;
+  //Where a NeedsUIThread library function actually executed. The GUI libraries
+  //cannot be linked here -- that would drag FireMonkey into a console probe and
+  //defeat the point -- so one stands in for all 96 of them.
+  MarkedRanOnThread: TThreadID = 0;
+
+function n_where_did_i_run(var Args: Array of TAsmData): TAsmData;
+begin
+  Result := Default(TAsmData);
+  MarkedRanOnThread := TThread.Current.ThreadID;
+  Result.n := 1;
+end;
 
 procedure Check(const AWhat: String; ACondition: Boolean);
 begin
@@ -124,6 +140,13 @@ destructor TVMThread.Destroy();
 begin
   Started.Free();
   inherited Destroy();
+end;
+
+//What an FMX host installs: run this on the thread that owns the window, and
+//do not come back until it has.
+procedure TMarshalHost.Marshal(const AProc: TThreadMethod);
+begin
+  TThread.Synchronize(nil, AProc);
 end;
 
 procedure TVMThread.Yield();
@@ -178,6 +201,81 @@ const
 //What is required is not that the call succeeds -- refusing it is a defensible
 //answer -- but that the caller is *released*, one way or the other, rather than
 //held until something times out.
+//A library call that touches FireMonkey must run on the thread that owns the
+//window, whatever thread the VM is on. That is what MarshalProc is for, and
+//until now nothing exercised it: the seam has been inert since it was built.
+//
+//The GUI libraries cannot be linked into a console probe without dragging in
+//the 58 FMX units the whole boundary exists to keep out, so one registered
+//function stands in for all 96 that carry the flag. It records the thread it
+//ran on, which is the only thing the seam is responsible for.
+procedure CheckMarshalling();
+var
+  Engine: TBasicEngine;
+  Output, Source: TStringList;
+  Worker: TVMThread;
+  Host: TMarshalHost;
+  Fn: TLinkFunction;
+  Waited: Integer;
+begin
+  Engine := TBasicEngine.Create();
+  Output := TStringList.Create();
+  Source := TStringList.Create();
+  Host := TMarshalHost.Create();
+  try
+    StdLib.RegisterStdFuncs(Engine.Functions);
+    NumLib.RegisterNumFuncs(Engine.Functions);
+
+    Fn.FarCall := True;
+    Fn.Entry := n_where_did_i_run;
+    Fn.NeedsUIThread := True;
+    Engine.Functions.Add('marked@', Fn);
+
+    Engine.ScriptTimeOut := 10;
+    Source.Text :=
+      'LET x = marked()' + sLineBreak +
+      'LET k = 0' + sLineBreak +
+      'FOR k = 1 TO 200000' + sLineBreak +
+      '  LET y = k' + sLineBreak +
+      'NEXT k' + sLineBreak +
+      'END';
+
+    if Engine.Compile(Source) <> 0 then
+    begin
+      Check('the marshalling program compiles', False);
+      Exit();
+    end;
+
+    MarkedRanOnThread := 0;
+    Engine.Parser.exec.MarshalProc := Host.Marshal;
+
+    Worker := TVMThread.Create(Engine, Output, True);
+    try
+      Worker.Started.WaitFor(2000);
+      //Synchronize needs this thread to keep answering, exactly as a host's
+      //message loop would.
+      Waited := 0;
+      while (not Worker.Finished) and (Waited < 10000) do
+      begin
+        CheckSynchronize(10);
+        Inc(Waited, 10);
+      end;
+      Worker.WaitFor();
+    finally
+      Worker.Free();
+    end;
+
+    Check('the marked function ran', MarkedRanOnThread <> 0);
+    Check('and it ran on the main thread, not the VM thread',
+          MarkedRanOnThread = MainThreadID);
+  finally
+    Host.Free();
+    Source.Free();
+    Output.Free();
+    Engine.Free();
+  end;
+end;
+
 procedure CheckPausedHandover(ANoYieldProc: Boolean);
 var
   Engine: TBasicEngine;
@@ -368,6 +466,10 @@ begin
     Writeln;
     Writeln('  (with no YieldProc at all, as an FMX host on a worker must be)');
     CheckPausedHandover(True);
+
+    Writeln;
+    Writeln('  --- a library call that must touch the UI thread ---');
+    CheckMarshalling();
   finally
     Source.Free();
     Output.Free();
