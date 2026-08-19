@@ -360,11 +360,36 @@ device in hand and a clear head rather than the end of a long pass.
 
 ### 2.4 What that unlocks
 
-- `BREAKPOINT` pauses on Android and iOS instead of degrading to a trace dump.
-- Asynchronous HTTP becomes buildable, which is the section the website
-  advertised for functions that were never written.
-- A long-running script stops freezing the interface.
-- The `TThread.Sleep(16)` patch in the pause loop goes away.
+**Settled 2026-08-19, and one of the four was wrong.**
+
+**A long-running script stops freezing the interface.** Done and watched: the
+applet scrolls thirty lines while the window keeps redrawing, and its own
+self-test asserts the run reaches `Done.`
+
+**`BREAKPOINT` can pause where it used to degrade.** `CanPauseForHostDialog`
+decides by thread rather than by platform now, so a host with the VM on a worker
+can park anywhere — the looper stays free to deliver the dialog. Confirmed on
+Windows, where the dialog appears and answering it resumes.
+
+*Not confirmed on a device.* The phone was disconnected before this landed, and
+the claim is exactly the kind this project has learned not to make from
+reasoning. It is implemented and untested there.
+
+**Asynchronous HTTP becomes buildable.** Still true, still not built. It is
+feature work rather than restructuring, and it is the section `httplib.html`
+advertised for six functions that were never written — so building it would
+make an old lie true, which is a pleasing way to close that particular loop.
+
+**The `TThread.Sleep(16)` patch does not go away, and cannot.** This item was
+written before the queue existed. The sleep was a throttle, stopping a parked VM
+from burning a core while it waited for the host to answer. It is now also the
+interval at which a parked VM *answers queued calls*: `DrainProc` runs in that
+loop, and replacing the sleep with a blocking wait would stop it draining —
+which is precisely the deadlock ANALYSIS §20 was written about.
+
+So the line stays, and its comment now explains both reasons rather than one.
+16 ms is no longer only a battery figure; it is the latency a click waits when
+it arrives while the VM is parked.
 
 ---
 

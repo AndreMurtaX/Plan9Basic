@@ -1100,10 +1100,16 @@ begin
       //pumps the message loop, which from a worker is wrong, so it has none.
       if Assigned(FDrainProc) then
         FDrainProc();
-      // FIX #10: Prevent 100% CPU usage during breakpoint/pause.
-      // Without sleep, this tight loop burns all CPU resources.
-      // On mobile devices this drains battery and can trigger
-      // Android ANR or iOS watchdog. 16ms ≈ 60fps refresh rate.
+      // Two reasons, and the second arrived later than the first.
+      //
+      // Without a sleep this loop burns a core while the VM waits for the host
+      // to answer, which on a device drains the battery and can trip the
+      // Android ANR or the iOS watchdog. 16 ms is about one frame.
+      //
+      // It is also the interval at which a parked VM answers what another
+      // thread has queued, because DrainProc above runs here and nowhere else
+      // while execution is stopped. Replacing this with a blocking wait would
+      // stop that draining, which is the deadlock in ANALYSIS 20.
       TThread.Sleep(16);
       continue;
     end;
