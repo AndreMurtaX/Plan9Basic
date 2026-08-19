@@ -468,16 +468,49 @@ Nothing else in the plan waits on it.
 
 ### 4.1 Inventory what is actually published
 
-The copy on disk is not necessarily the copy online. Read the live site at
-<https://plan9basic.com/> and record what it publishes, what it links to, and
-what the disk copy does not have.
+**Done 2026-08-19, and it inverted the expectation.** The instruction was not to
+trust the disk copy. The drift is real and runs the other way: the disk is
+ahead, and the published site is stale by 111 files.
+
+`plan9basic.com` predates 2026-08-18, so every Phase 1 correction is unpublished.
+Verified page by page against the live instance rather than assumed:
+
+| Live now | Actually |
+|---|---|
+| `httplib.html` has an "Asynchronous HTTP (Polling)" section with six functions and a worked example | none of the six exist; HttpLib registers 92 and none is asynchronous |
+| `strlib.html` gives `startsstr(pre$, s$)` | the prefix is the second argument, since 1.3 |
+| `language-reference.html` opens dictionaries with `dict_new#(0)` | never existed |
+
+Bracketed by testing corrections either side of the date: the `instr` wording is
+live and correct, because there the documentation was right and the engine was
+wrong. That is what dates the copy.
+
+Nothing in the tree publishes the site, which is the real finding and became
+**4.6**.
 
 ### 4.2 Rebuild the documentation from the corrected language
 
-Every page describes the language as it is after Phase 1 and Phase 2. The
-existing checkers — `check-docs`, `check-anchors`, `check-links`,
-`check-doc-blocks`, `gen-doc-examples` — are the acceptance criterion, and they
-already know how to tell a page it is wrong.
+**Done 2026-08-19.** Phase 1's corrections were already in `Website/` — that is
+what the 111 unpublished files are. So this item was mostly a search for what
+the checkers structurally cannot see: prose that contradicts the language while
+every signature and every code block stays valid.
+
+Two real defects, and one false alarm worth recording. `instr` is described
+correctly everywhere, and the `0-100` hits under `Libs/GUI/` turned out to be
+`IntAnimationLib` animating a `Tag` between 0 and 100, which is a different
+thing from a transition's `progress`.
+
+**`BREAKPOINT` was documented as pausing.** It has not paused on Android or iOS
+since the degradation landed. Both the reference and the User Guide now say so,
+with the output format checked against the code that emits it.
+
+**The checkers themselves had rotted**, in two different ways, and that is
+written up as ANALYSIS §13. Briefly: `check-doc-blocks` excused five code blocks
+in files retired with the AI archive, noticed, printed a notice, and returned
+zero — so `check-all` had been printing a deleted filename where a verdict
+belongs. And `check-links` never mentioned the 65 MB of ebooks the site serves
+from outside the repository, because a gitignored target resolves fine on the
+machine that has the file.
 
 ### 4.3 Reorganise, keeping the look
 
@@ -486,9 +519,22 @@ time, with a navigation that had 99 pages pointing at a file that was not there.
 
 ### 4.4 Remove the download section
 
-No more compiled binaries. The site points at the repository, and building is
-the documented path. The `assets/devenv/` links and the buttons that use them
-go with it.
+**Done 2026-08-19.** Six buttons across two pages pointed into
+`Website/assets/devenv/`: 63 MB of executables that were never in the
+repository, gitignored, placed by hand at publish time. The site was handing out
+artefacts that existed on exactly one machine, and nothing in the tree could say
+whether they matched it.
+
+The section keeps its shape and its stylesheet; the three cards now offer the
+IDE, the applet runner and the engine, each pointing at the directory it lives
+in. `#download` became `#source`.
+
+`downloads.html` keeps every platform note — what Windows, Linux and Android each
+need is still true, and now describes running what you built.
+
+One thing did not survive review: the rewritten header carried a
+`section-subtitle`, and the stylesheet has no such class. The other six headers
+are a label and a title, so this one is too.
 
 ### 4.6 Close the gap between the tree and the site
 
