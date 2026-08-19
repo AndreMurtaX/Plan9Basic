@@ -598,10 +598,28 @@ layout Pages expects — can be committed before any of it, and sit inert.
 
 ### 4.5 Tell the story of the evolution
 
-Keep the voice: informal, impersonal, the one that already says *"Write code
-like it's the 80s. Run it like it's now."* The page explains what changed and
-why, in the same register as the rest of the site — not a changelog, an
-explanation.
+**Done 2026-08-19.** The front page already had a story section with two blocks,
+ORIGIN and VISION, so the evolution became a third rather than a new page:
+**THE 2026 REBUILD**, seven paragraphs, in the register of VISION rather than
+ORIGIN — impersonal, since it is about the project and not the memory that
+started it.
+
+What it says, because it is the honest shape of the year: a project that grows
+by addition long enough stops being one project; three repositories meant a
+one-line fix took three commits and forgetting the third produced no error at
+all. So 2026 was the year it got measured rather than extended, and most of what
+that found was not where it was expected.
+
+It names the uncomfortable parts rather than the flattering ones. That the
+documentation was right and the code was wrong, nearly every time. That a test
+had been passing for months while proving nothing, because the framework it
+claimed to exclude was never excluded and it linked 58 of those units on every
+run. That a check is not evidence until it has been watched failing.
+
+It closes on the only claim worth making about the pages themselves: they are
+verified against the language on every run, which is the sole honest reason to
+say they are accurate. And then: *"None of this is visible in a program you
+write. That is rather the point."*
 
 ---
 

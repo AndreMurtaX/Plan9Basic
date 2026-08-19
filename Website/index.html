@@ -1436,6 +1436,16 @@ Ready.
       <div class="story-label">VISION</div>
       <p>The goal has always been the same: keep the floor as low as possible while raising the ceiling as high as it can go. More libraries, more platforms, richer tooling, but always with the same principle underneath: <em>the complexity should live in what you build, not in getting started.</em></p>
     </div>
+    <div class="story-block reveal">
+      <div class="story-label">THE 2026 REBUILD</div>
+      <p>A project that grows by addition for long enough stops being one project. Plan9Basic had reached three repositories &mdash; the interpreter, the IDE that hosts it, and a runner for shipping applets &mdash; with the interpreter pulled into the other two as a submodule. That is tidy on a diagram. In practice a one-line fix to the interpreter took three commits across three places, and forgetting the third produced no error at all: the runner simply kept building the previous version, quietly, for as long as nobody noticed.</p>
+      <p>So 2026 was the year the project got <em>measured</em> rather than extended. That turned out to be a different kind of work, and most of what it found was not where it was expected to be.</p>
+      <p>Several language bugs were sitting in plain sight, and in nearly every case <strong>the documentation was right and the code was wrong</strong>. <code>instr</code> was documented as returning a position and returned a flag &mdash; the implementation had computed the position and then thrown it away. Four string predicates took their arguments in the opposite order from the one every page described. A pair of functions that saved text and read it back was not, quite, a round trip. Fixing those meant changing the interpreter to match its own manual, which says something good about the manual and something poor about the tests.</p>
+      <p>So the tests came next, and the ones that already existed were audited rather than trusted. One had been passing for months while proving nothing. It claimed to show the interpreter needed no graphics framework, by compiling with that framework removed from the search path &mdash; except the compiler keeps those files beside the standard library, so nothing was ever removed. It linked 58 of them on every run and reported success. Another kept a list of known problems and never noticed that five of the files on the list had been deleted.</p>
+      <p>The lesson generalises, and it is not a comfortable one: <em>a check is not evidence until it has been watched failing.</em> Everything added since gets deliberately broken once, first, to see it go red.</p>
+      <p>The three repositories are one. A single command builds both applications, runs a thousand assertions, and checks that every documented function exists, that every code example on this site compiles, and that every worked result it promises is what the interpreter actually prints. These pages are verified against the language on every run, which is the only honest reason to claim they are accurate.</p>
+      <p>None of this is visible in a program you write. That is rather the point.</p>
+    </div>
   </div>
 </section>
 

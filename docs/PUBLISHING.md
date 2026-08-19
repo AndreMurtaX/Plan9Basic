@@ -23,33 +23,39 @@ runs, and nine documentation checks pass. If that is not green, the site is not
 ready — publishing a page whose examples do not compile is worse than publishing
 nothing, because a reader will type them in.
 
-## Assemble the upload
+## Upload
+
+**`Website/` is the site.** Its contents are the server's document root — the
+directory itself is not part of the path, so `index.html` lands at the root and
+not inside a `Website/` folder.
+
+There is nothing to assemble and nothing to leave out. Everything under it is
+published: 286 files, 94 MB, of which 124 are pages. It held one exception until
+2026-08-19, `assets/devenv/` — 63 MB of compiled binaries the download buttons
+used to point at. Nothing links them since 4.4, so they moved to `dist/devenv/`,
+outside the tree that gets uploaded. `.gitignore` still names the old path, now
+as a guard rather than a description: a build that drops binaries back in there
+will not be committed, and should not be uploaded either.
+
+Two of the 286 are not in git: the PDFs under `assets/ebooks/`, about 65 MB.
+They are linked from the story on the front page, they are published, and the
+repository has never contained them. A fresh clone therefore cannot produce a
+complete upload — which is one of the things 4.6 has to settle.
+
+## Assemble a copy, if you want one
 
 ```bash
 python tools/package-site.py
 ```
 
-This writes `dist/site/` and `dist/site.manifest.txt`. Pass `--zip` for a single
-archive instead, if that suits the FTP client better.
+Not required, since `Website/` is already the tree. What it adds is a copy with
+a manifest of sizes and checksums — useful for confirming an upload arrived
+intact — and a check that every linked file which git ignores is actually on
+this disk. If one is missing it **stops**, rather than producing an upload with
+a broken link in it. `--zip` makes an archive instead, for clients that prefer
+one transfer.
 
-What it collects:
-
-- every file under `Website/` that git tracks — 284 of them, the ones review has
-  seen
-- every file the pages link to that git deliberately ignores, and that exists on
-  this disk
-
-The second category is currently two PDFs under `assets/ebooks/`, about 65 MB.
-They are published, they are linked, and the repository has never contained
-them. If a linked file of that kind is missing from this machine, the packager
-**stops** rather than producing an upload with a broken link in it — that
-condition is an error here instead of a discovery in somebody's browser.
-
-## Upload
-
-The contents of `dist/site/` become the server's document root — the directory
-itself is not part of the path. `index.html` must land at the root, not inside a
-`site/` folder.
+It writes into `dist/`, which is gitignored.
 
 `dist/` is gitignored, so nothing assembled here is ever committed.
 
