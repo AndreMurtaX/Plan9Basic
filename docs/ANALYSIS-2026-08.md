@@ -2258,3 +2258,34 @@ and the filter now requires it, in all three places that had it.
 
 Same shape as the scheme test in §13's neighbourhood: `'httplib.html'` starts
 with `'http'`. A substring test wants the delimiter that makes it a token.
+
+---
+
+## 27. The IDE's own features, as opposed to the engine reached through it
+
+Done 2026-08-19, extending §26. Running a program proves the engine works. These
+are the things that *are* the IDE, and a fault in any of them loses somebody's
+work, which is the worst thing a text editor can do:
+
+- the editor and the program buffer staying two copies of one thing, in both
+  directions
+- switching between command and editor mode without disturbing the program
+- save then load returning what was saved, and not leaving the previous program
+  behind
+- replace-all replacing all of them
+
+**Watched failing.** `SyncEditorToProgram` was broken on purpose — one line, made
+to assign an empty string — and the run answered:
+
+```
+FAIL - IDE feature: program -> editor did not carry the text
+```
+
+**And it littered.** The save-and-load check calls `CmdSave`, which writes into
+the user's own documents folder, and the first run left `p9b-selftest-tmp.bas`
+sitting among their real programs. A test that leaves a file in somebody's
+working directory is not finished. It deletes it now.
+
+That is a small thing with a general shape worth keeping: a test that exercises
+a host exercises the host's *side effects* too, and the ones that reach outside
+the repository are the ones nobody looks for.

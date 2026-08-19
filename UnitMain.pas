@@ -242,6 +242,7 @@ type
     procedure CmdList(const Args: string);
     procedure CmdRun();
     procedure SelfTestTick(Sender: TObject);
+    function SelfTestFeatures(): String;
     procedure CmdLoad(const Filename: string);
     procedure CmdSave(const Filename: string);
     procedure CmdFiles();
@@ -2622,10 +2623,86 @@ const
     'PRINTLN "p9b-selftest end"' + sLineBreak +
     'END';
 
+//The IDE's own features, as opposed to the engine reached through it.
+//
+//Running a program proves the engine works. These are the things that are the
+//IDE: getting code from the editor into the program buffer, saving it, loading
+//it back, switching modes, and the search that edits somebody's source. A fault
+//in any of them loses work, which is the worst thing a text editor can do.
+//
+//Answers an empty string when everything held, or the first failure it found.
+function TfrmMain.SelfTestFeatures(): String;
+var
+  Original, RoundTripped: String;
+  TempName: String;
+begin
+  Result := '';
+
+  //--- the editor and the program buffer are two copies of one thing ---
+  FProgram.Text := 'PRINTLN "one"' + sLineBreak + 'PRINTLN "two"';
+  SyncEditorToProgram();
+  if Pos('PRINTLN "two"', Editor.Text) = 0 then
+    Exit('program -> editor did not carry the text');
+
+  Editor.Text := 'PRINTLN "three"' + sLineBreak + 'PRINTLN "four"';
+  SyncProgramToEditor();
+  if FProgram.Count <> 2 then
+    Exit('editor -> program produced ' + IntToStr(FProgram.Count) +
+         ' line(s), not 2');
+  if Pos('four', FProgram.Text) = 0 then
+    Exit('editor -> program lost a line');
+
+  //--- switching modes must not disturb the program ---
+  Original := FProgram.Text;
+  SetInterfaceMode(imEditor);
+  SetInterfaceMode(imCommand);
+  if FProgram.Text <> Original then
+    Exit('switching interface mode changed the program');
+
+  //--- save and load are a round trip, or somebody loses a file ---
+  TempName := 'p9b-selftest-tmp';
+  CmdSave(TempName);
+  FProgram.Text := 'PRINTLN "replaced"';
+  CmdLoad(TempName);
+  RoundTripped := FProgram.Text;
+  if Pos('three', RoundTripped) = 0 then
+    Exit('save then load did not return the program');
+  if Pos('replaced', RoundTripped) > 0 then
+    Exit('load left the previous program behind');
+
+  //Tidied away. CmdSave writes into the user's own documents folder, and a
+  //test has no business leaving a file there -- the first run of this left
+  //p9b-selftest-tmp.bas sitting among somebody's real programs.
+  try
+    if System.IOUtils.TFile.Exists(
+         System.IOUtils.TPath.Combine(GetBasePath(), TempName + '.bas')) then
+      System.IOUtils.TFile.Delete(
+        System.IOUtils.TPath.Combine(GetBasePath(), TempName + '.bas'));
+  except
+    //Leaving it is untidy, not a failure of what is being tested.
+  end;
+
+  //--- new empties it ---
+  FProgram.Text := 'PRINTLN "something"';
+  FProgram.Clear();
+  if FProgram.Count <> 0 then
+    Exit('clearing the program left ' + IntToStr(FProgram.Count) + ' line(s)');
+
+  //--- replace-all edits the source it is given ---
+  Editor.Text := 'aa bb aa';
+  FedtSearch.Text := 'aa';
+  FedtReplace.Text := 'zz';
+  DoReplaceAll();
+  if Pos('aa', Editor.Text) > 0 then
+    Exit('replace all left an occurrence behind: ' + Editor.Text);
+  if Pos('zz bb zz', Editor.Text) = 0 then
+    Exit('replace all produced: ' + Editor.Text);
+end;
+
 procedure TfrmMain.SelfTestTick(Sender: TObject);
 var
   Report: TStringList;
-  Text, Verdict: String;
+  Text, Verdict, Feature: String;
   Code, Wanted: Integer;
 begin
   Inc(FSelfTestElapsed, FSelfTestTimer.Interval);
@@ -2659,7 +2736,7 @@ begin
   else
   begin
     Code := 0;
-    Verdict := 'OK - the IDE compiled and ran a program, and its console agrees';
+    Verdict := 'OK - the IDE ran a program and its own features hold';
     if (Pos('PASS arithmetic', Text) = 0) or
        (Pos('PASS strings', Text) = 0) or
        (Pos('PASS gui controls', Text) = 0) or
@@ -2668,6 +2745,15 @@ begin
     begin
       Verdict := 'FAIL - not all ' + IntToStr(Wanted) + ' checks reported PASS';
       Code := 1;
+    end
+    else
+    begin
+      Feature := SelfTestFeatures();
+      if Feature <> '' then
+      begin
+        Verdict := 'FAIL - IDE feature: ' + Feature;
+        Code := 1;
+      end;
     end;
   end;
 
