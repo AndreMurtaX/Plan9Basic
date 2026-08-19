@@ -2005,3 +2005,68 @@ where nobody will. One press of Run answers it.
 back a flip whose core was unproven and whose failure was a window that said
 `Running...` forever. This one has its core on screen. What remains is one
 dialog on one path, named, with the check that settles it.
+
+---
+
+## 23. One symptom read as two, and a deadlock of my own making
+
+Found 2026-08-19, after four wrong diagnoses. The applet's `INPUT` dialog opened
+with its title and nothing inside it, and the application stopped responding.
+
+**The cause, in one line:** `VMWorkerDone` is the worker's `OnTerminate`
+handler, and it called `FreeAndNil(FVMWorker)`.
+
+`OnTerminate` runs on the UI thread, through `Synchronize`, called from the
+worker's own epilogue while the worker is still alive waiting for it to return.
+`TThread.Free` calls `WaitFor`. So the UI thread waited for a worker that was
+waiting for the UI thread. Neither moved again.
+
+Fixed with `FreeOnTerminate := True` and a handler that only clears the
+reference.
+
+**The blank dialog was the same event.** The window had been shown a moment
+earlier and the UI thread froze before it could paint. Two symptoms, one cause,
+and treating them as two is what cost the morning.
+
+### Four diagnoses, each confidently wrong
+
+1. **`Synchronize` versus `Queue`.** `INPUT` does not park the VM, so holding
+   the worker inside the dialog's construction is wrong. True, and irrelevant.
+2. **The lifetime of the open arrays.** An open array parameter is the caller's
+   memory and `FMX` shows that dialog with `Show`, not `ShowModal`, so it might
+   read its prompts after the frame is gone. Plausible, testable, tested — and
+   the data was correct at every point measured.
+3. **FireMonkey discarding what it was given.** Written down as a conclusion
+   with a diagnostic to back it: caption, prompt and default all present, on the
+   main thread, immediately before the call, blank window after. Correct input,
+   blank output, therefore FMX. The reasoning was sound and the premise — that
+   the window had rendered at all — was false.
+4. So the dialog was rebuilt by hand, forty lines, full control. **It came up
+   blank too.**
+
+### The signal that was there to be read
+
+Point 4 was the answer and it was mistaken for another failure. Two
+implementations sharing nothing but their surroundings, failing identically,
+point at the surroundings. Instead of reading it that way, the investigation
+carried on inside the second implementation.
+
+Every measurement taken was of the dialog's *contents*. The bug was in what ran
+*after* it: the seven lines of thread teardown that nobody had looked at,
+because the dialog was where the symptom appeared.
+
+**The rule this leaves:** when two independent implementations of a thing fail
+the same way, stop investigating the thing. And when a symptom has two
+descriptions — "it renders blank" and "it freezes" — check whether they are one
+event before hunting two causes.
+
+### What it cost, and what would have prevented it
+
+Six build-and-run cycles, each needing a human to press a button, because the
+applet has no automated test of any kind. Everything about it has been validated
+by eye since it was written.
+
+That is the standing gap this episode exposed, and it is worth more than the
+bug: `VMThreadProbe` covers the engine's threading thoroughly and the host's not
+at all. A host harness that drives Run, answers the dialogs and reads the output
+would have found this in one run, alone, in seconds.

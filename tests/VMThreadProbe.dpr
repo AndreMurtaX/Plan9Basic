@@ -70,6 +70,20 @@ type
 //This is the state the first device attempt deadlocked in and no headless test
 //could reach: the VM stopped in esIdle, waiting for a host that has not
 //answered yet, while another thread wants to run BASIC.
+  //Records what INPUT actually handed the host, and answers later rather than
+  //at once -- which is what a real host does when it queues a dialog instead
+  //of blocking inside one.
+  TRecordingInput = class
+  public
+    Caption: String;
+    Labels: TArray<String>;
+    Defaults: TArray<String>;
+    Called: Boolean;
+    Pending: TInputDoneProc;
+    procedure Input(const ACaption: String; const ALabels: array of String;
+                    const ADefaults: array of String; const ADone: TInputDoneProc);
+  end;
+
   TMarshalHost = class
   public
     procedure Marshal(const AProc: TThreadMethod);
@@ -144,6 +158,25 @@ end;
 
 //What an FMX host installs: run this on the thread that owns the window, and
 //do not come back until it has.
+procedure TRecordingInput.Input(const ACaption: String;
+  const ALabels: array of String; const ADefaults: array of String;
+  const ADone: TInputDoneProc);
+var
+  i: Integer;
+begin
+  //Copied here and now. An open array parameter is only the caller's memory,
+  //and this returns before the answer is given.
+  Caption := ACaption;
+  SetLength(Labels, Length(ALabels));
+  for i := 0 to High(ALabels) do
+    Labels[i] := ALabels[i];
+  SetLength(Defaults, Length(ADefaults));
+  for i := 0 to High(ADefaults) do
+    Defaults[i] := ADefaults[i];
+  Called := True;
+  Pending := ADone;
+end;
+
 procedure TMarshalHost.Marshal(const AProc: TThreadMethod);
 begin
   TThread.Synchronize(nil, AProc);
@@ -209,6 +242,80 @@ const
 //the 58 FMX units the whole boundary exists to keep out, so one registered
 //function stands in for all 96 that carry the flag. It records the thread it
 //ran on, which is the only thing the seam is responsible for.
+//What INPUT hands a host, with the VM on a thread of its own.
+//
+//The applet's INPUT dialog opened with its title and nothing else, twice, under
+//two different marshalling strategies. Three things could produce that and only
+//one is the host's fault: the engine passing empty arrays, the copy losing
+//them, or the closure failing to hold them. This asks the first two, which are
+//the ones a console probe can reach.
+procedure CheckInputArrays();
+var
+  Engine: TBasicEngine;
+  Output, Source: TStringList;
+  Worker: TVMThread;
+  Rec: TRecordingInput;
+  Waited: Integer;
+begin
+  Engine := TBasicEngine.Create();
+  Output := TStringList.Create();
+  Source := TStringList.Create();
+  Rec := TRecordingInput.Create();
+  try
+    StdLib.RegisterStdFuncs(Engine.Functions);
+    NumLib.RegisterNumFuncs(Engine.Functions);
+    StrLib.RegisterStrFuncs(Engine.Functions);
+
+    Engine.InputProc := Rec.Input;
+    Engine.ScriptTimeOut := 10;
+
+    Source.Text :=
+      'FUNCTION gotValue(v)' + sLineBreak +
+      '  RETURN 0' + sLineBreak +
+      'END FUNCTION' + sLineBreak +
+      'INPUT "Plan9Basic", "Type a number:", 42, gotValue' + sLineBreak +
+      'END';
+
+    if Engine.Compile(Source) <> 0 then
+    begin
+      Check('the INPUT program compiles', False);
+      Writeln('        (', Engine.ErrorMessage, ')');
+      Exit();
+    end;
+
+    Worker := TVMThread.Create(Engine, Output, True);
+    try
+      Waited := 0;
+      while (not Rec.Called) and (Waited < 5000) do
+      begin
+        Sleep(20);
+        Inc(Waited, 20);
+      end;
+      Worker.WaitFor();
+    finally
+      Worker.Free();
+    end;
+
+    Check('INPUT asked the host', Rec.Called);
+    Check('and gave it the caption', Rec.Caption = 'Plan9Basic');
+    if Length(Rec.Labels) <> 1 then
+      Writeln('        (labels count = ', Length(Rec.Labels), ')');
+    Check('and one label', Length(Rec.Labels) = 1);
+    Check('with the prompt the program wrote',
+          (Length(Rec.Labels) = 1) and (Rec.Labels[0] = 'Type a number:'));
+    if Length(Rec.Defaults) <> 1 then
+      Writeln('        (defaults count = ', Length(Rec.Defaults), ')');
+    Check('and one default', Length(Rec.Defaults) = 1);
+    Check('carrying the value the program supplied',
+          (Length(Rec.Defaults) = 1) and (Rec.Defaults[0] = '42'));
+  finally
+    Rec.Free();
+    Source.Free();
+    Output.Free();
+    Engine.Free();
+  end;
+end;
+
 procedure CheckMarshalling();
 var
   Engine: TBasicEngine;
@@ -470,6 +577,10 @@ begin
     Writeln;
     Writeln('  --- a library call that must touch the UI thread ---');
     CheckMarshalling();
+
+    Writeln;
+    Writeln('  --- what INPUT hands the host ---');
+    CheckInputArrays();
   finally
     Source.Free();
     Output.Free();

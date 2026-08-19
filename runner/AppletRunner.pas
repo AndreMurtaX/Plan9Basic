@@ -112,6 +112,7 @@ uses
   NumLib, DateTimeLib, JsonLib, ConfigLib, Base64Lib, ZipLib,
   PlatformInfoLib, HttpLib, AILib, RAGLib;
 
+
 type
   TfrmAppletRunner = class(TForm)
   private
@@ -149,6 +150,15 @@ type
     FVMWorker: TThread;
     FDrainTimer: TTimer;
     FRunFailure: String;
+    // What the pending INPUT dialog was given. Held on the form rather than in
+    // the closure that raises it, because an open array parameter is a pointer
+    // into the caller's memory and FMX shows that dialog with Show, not
+    // ShowModal: the call returns at once and the window reads its prompts when
+    // it paints, by which time a closure's frame is gone. The diagnostic that
+    // found this recorded correct values at call time and a blank window after.
+    FInputCaption: String;
+    FInputLabels: TArray<String>;
+    FInputValues: TArray<String>;
     procedure VMWorkerBody();
     procedure VMWorkerDone(Sender: TObject);
     procedure DrainTimerTick(Sender: TObject);
@@ -244,38 +254,24 @@ procedure TfrmAppletRunner.HostInput(const ACaption: String;
   const ALabels: array of String; const ADefaults: array of String;
   const ADone: TInputDoneProc);
 var
-  Values: TArray<String>;
-  Labels: TArray<String>;
-  Caption: String;
   I: Integer;
 begin
-  // Delphi will not let an anonymous method capture an open array or a const
-  // parameter, so everything the dialog needs is copied into locals first.
-  SetLength(Values, Length(ADefaults));
+  // Copied onto the form. An open array parameter is only the caller's memory
+  // and this returns before the window is built.
+  SetLength(FInputValues, Length(ADefaults));
   for I := 0 to High(ADefaults) do
-    Values[I] := ADefaults[I];
-  SetLength(Labels, Length(ALabels));
+    FInputValues[I] := ADefaults[I];
+  SetLength(FInputLabels, Length(ALabels));
   for I := 0 to High(ALabels) do
-    Labels[I] := ALabels[I];
-  Caption := ACaption;
+    FInputLabels[I] := ALabels[I];
+  FInputCaption := ACaption;
 
-  // Queued rather than synchronized, and the difference matters. INPUT does
-  // not park the VM -- the script carries on and the answer arrives later
-  // through gotValue -- so there is nothing for the worker to wait for, and
-  // holding it inside the dialog's construction produced a window that opened
-  // blank. BREAKPOINT is the opposite case and does use Synchronize: there the
-  // VM is parked and the answer is what releases it.
-  //
-  // NOT YET SEEN WORKING. The blank window was observed once, with Synchronize;
-  // this is the reasoned repair and no run has confirmed it. Everything else in
-  // the flip was watched on screen -- the worker, the draining output, the
-  // BREAKPOINT dialog raised from the worker and answered -- but the synthetic
-  // clicks driving that session stopped reaching the dialogs before this path
-  // could be reached a second time. One press of Run answers it.
+  // Queued, so the worker is not held while the window is built. INPUT does
+  // not park the VM: the script carries on and the answer arrives later.
   TThread.Queue(nil,
     procedure
     begin
-      TDialogServiceAsync.InputQuery(Caption, Labels, Values,
+      TDialogServiceAsync.InputQuery(FInputCaption, FInputLabels, FInputValues,
         procedure(const AResult: TModalResult; const AValues: array of string)
         begin
           ADone(AResult = mrOk, AValues);
@@ -696,7 +692,12 @@ begin
   FRunFailure := '';
 
   FVMWorker := TThread.CreateAnonymousThread(VMWorkerBody);
-  FVMWorker.FreeOnTerminate := False;
+  // The thread frees itself. It must not be freed from VMWorkerDone: that is
+  // its OnTerminate handler, which runs on the UI thread through Synchronize
+  // while the worker is still alive waiting for it to return. TThread.Free
+  // calls WaitFor, so the UI thread would wait for a worker that is waiting for
+  // the UI thread. See ANALYSIS 23.
+  FVMWorker.FreeOnTerminate := True;
   FVMWorker.OnTerminate := VMWorkerDone;
   FVMWorker.Start();
 end;
@@ -740,7 +741,8 @@ begin
   else
     SetStatus('Done.');
 
-  FreeAndNil(FVMWorker);
+  //Only the reference. The thread disposes of itself.
+  FVMWorker := nil;
 end;
 
 procedure TfrmAppletRunner.DrainTimerTick(Sender: TObject);
