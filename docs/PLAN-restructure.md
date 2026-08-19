@@ -490,6 +490,35 @@ No more compiled binaries. The site points at the repository, and building is
 the documented path. The `assets/devenv/` links and the buttons that use them
 go with it.
 
+### 4.6 Close the gap between the tree and the site
+
+**Added 2026-08-19, from what 4.1 found.** The published site predates
+2026-08-18 and therefore every documentation correction in Phase 1. Live right
+now: six HTTP functions that do not exist, with a worked polling example; four
+predicates documented with their arguments the wrong way round; and
+`dict_new#(0)`, a constructor that never existed, as the first line a reader
+meets about dictionaries. 111 corrected files have never been published.
+
+Nothing in the repository publishes the site. It goes up by FTP, by hand, and
+the tree holds no record of how — which is why a month of corrections could sit
+in `Website/` without anyone noticing they had not shipped.
+
+**Interim, and it works today.** A script that assembles exactly what belongs on
+the server into one directory, so the manual step is a copy rather than a
+judgement about which of 124 pages changed. Plus the procedure, written down, in
+the repository.
+
+**The endgame is to delete the manual step, not to automate it.** Once the
+repository is public (3.5), GitHub Pages can serve `Website/` directly, and
+publishing becomes a consequence of the push that is already happening. The
+drift this item exists to fix stops being possible rather than becoming easier
+to fix.
+
+That needs three one-time acts from the author, none of which involve handing
+over a credential: making the repository public, enabling Pages, and pointing
+the domain's DNS at GitHub. Everything on this side — workflow, `CNAME`, the
+layout Pages expects — can be committed before any of it, and sit inert.
+
 ### 4.5 Tell the story of the evolution
 
 Keep the voice: informal, impersonal, the one that already says *"Write code
