@@ -514,8 +514,39 @@ machine that has the file.
 
 ### 4.3 Reorganise, keeping the look
 
-The CSS stays. What changes is the arrangement: 124 pages that grew one at a
-time, with a navigation that had 99 pages pointing at a file that was not there.
+**Done 2026-08-19.** The arrangement turned out to be sound and the navigation
+inverted, which measuring found and reading would not have.
+
+All 124 pages are reachable from the front page — no orphans. But counting who
+links to whom:
+
+| Page | Links in | Links out |
+|---|---:|---:|
+| `library_guide.html` | 3 | **121** |
+| `language-reference.html` | **120** | 1 |
+
+The site had a directory, organised into ten sections, listing every library
+page. Almost nothing pointed at it. Meanwhile the page 120 others put in their
+top bar was a dead end. Getting from one library's page to another's cost three
+hops through the front page, and a reader had no way to learn the directory
+existed.
+
+So the fix is one link, in the markup and classes already there: `Libraries`
+beside `Language`, on 116 pages. Four more had no library navigation at all —
+`language-reference.html` itself, `examples.html` and the two AI pages — and
+now do.
+
+Those two docs pages use a different top bar from the other 120: a breadcrumb
+and a `topbar-right`. The link went in `topbar-right`, for two reasons. The
+breadcrumb is `display:none` under the mobile media query, and Libraries is a
+sibling of those pages rather than a step in the path to them. Confirmed in a
+browser at 682px, where the breadcrumb is already gone and the new link is not.
+
+Two CSS lines were added, `.topbar-right a` and its hover, because that slot had
+never held a link. Nothing was replaced.
+
+Result: the directory went from 3 inbound links to 123. 863 links became 987,
+all resolving, and 1,749 fragments still name something.
 
 ### 4.4 Remove the download section
 
