@@ -387,7 +387,7 @@ form_show(frm#)
 '  KEYBOARD EVENT HANDLERS (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   ' Left=37, Right=39, Up=38, Down=40
   if keyCode = 37 then
     let rotateL = 1
@@ -410,7 +410,7 @@ function OnKeyDown(sender#, keyCode, keyChar$)
   end if
 end function
 
-function OnKeyUp(sender#, keyCode, keyChar$)
+function OnKeyUp(sender#, keyCode, keyChar$, shiftState$)
   if keyCode = 37 then
     let rotateL = 0
   end if

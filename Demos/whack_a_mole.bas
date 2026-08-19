@@ -331,7 +331,7 @@ form_show(frm#)
 '  EVENT HANDLERS
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   if keyCode = 38 then
     if running = 0 then
       if gameOver = 1 then

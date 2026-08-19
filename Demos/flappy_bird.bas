@@ -333,7 +333,7 @@ form_show(frm#)
 '  KEYBOARD EVENT HANDLER (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$)
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$)
   ' Up=38, Space detected via keyChar$
   if running = 0 then
     if keyCode = 38 then

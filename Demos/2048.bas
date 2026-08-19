@@ -287,7 +287,7 @@ SpawnTile()
 '  KEYBOARD EVENT HANDLER (Desktop)
 ' ============================================================
 
-function OnKeyDown(sender#, keyCode, keyChar$) local moved
+function OnKeyDown(sender#, keyCode, keyChar$, shiftState$) local moved
   ' R = restart
   if keyChar$ = "r" then
     ResetGame()

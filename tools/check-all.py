@@ -69,6 +69,7 @@ def main():
         ('fragments', tool('check-anchors.py'), False),
         ('fmx boundary', tool('check-fmx-boundary.py'), False),
         ('site deps', tool('check-site-deps.py'), False),
+        ('callbacks', tool('check-callbacks.py'), False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]
