@@ -4602,3 +4602,64 @@ have no exclusion either. Checked rather than assumed: only
 `IntelligenceEngine.pas` in the archive contains anything they look for, and
 none of the six walks a path that reaches it. Left alone -- adding a guard
 against a case that cannot arise is a comment pretending to be code.
+
+## 60. The AI libraries needed neither credentials nor a network
+
+The author asked whether `AILib` and `RAGLib` could be tested against Ollama,
+which is installed on this machine. They can, and the premise this document had
+been repeating -- "needs credentials and a network" -- was wrong about both, in
+different ways.
+
+**`RAGLib` needs nothing at all.** The unit contains no HTTP call, no client and
+no embedding: it is a local retrieval index over markdown files, scored by tag
+and function name. `tests/gui/20_rag.bas` builds its own two-document knowledge
+base under `bin\`, rebuilds the index and asks questions of it. 13/13, entirely
+hermetic. It had been written off because it sits in `Libs/AI/`.
+
+**`AILib` was built for a local model and had never been pointed at one.**
+`ai_client#("ollama", "")` resolves to `http://localhost:11434/v1/chat/completions`
+with no key -- the provider table has known `ollama` and `lmstudio` all along.
+45/45 now, against `qwen2.5:7b` running here.
+
+### How it runs without becoming a dependency
+
+A clone has no Ollama, so this cannot be a required step, and it must not be a
+silently-passing one either -- that is the failure this project spent a week
+removing from the applets. `tests/local/` is outside the ordinary suite, and
+`verify.ps1` gained a step that probes `localhost:11434` first and reports one
+of three things: the run, `skipped - no model answering`, or `skipped -
+qwen2.5:7b not pulled (have: ...)`. Both skip paths were exercised rather than
+assumed.
+
+The distinction from the applets matters: this is **localhost**. No third party,
+no internet, nothing that can be down because somebody else's server is.
+
+### Three traps, all found by asserting the obvious and being wrong
+
+**`ai_endpoint#` is not another spelling of `ai_baseurl#`.** The base is a URL
+and the endpoint is a **path appended to it** -- the request goes to
+`FBaseUrl + FEndpoint`. Handing the full address to the second one sends it
+twice and answers 404. Both spellings are now pinned, including the composition.
+
+**The `ai_conversation_*` family takes a conversation, not a client** -- including
+`ai_conversation_tokens` and `ai_conversation_last$`, which read like more client
+accounting. Given a client they answer "Invalid conversation pointer", which is
+the library being right and the name being inviting. `ai_tokensin` and
+`ai_tokensout` are the ones that take the client.
+
+**`rag_doc$` answers the error message as though it were content.** A missing id
+returns `Error: RAGEngine: Document not found: ...`, and a caller cannot tell it
+from a document that begins that way. Left alone: `RAGLib` has no `rag_error` to
+ask, so the string is the only channel it has. Pinned as it stands.
+
+### The one assertion about content
+
+Everything else in the AI file asserts that a request went out, a reply came
+back and the library reported no error -- never what the model chose to say,
+which would be asserting the model. The exception is deliberate: a second chat
+turn asks for a name given only in the first. No model can answer that unless
+the library is actually sending the history, and the name appears nowhere in the
+question. That one is about `AILib` and not about `qwen`.
+
+Coverage 93.8% to 95.1%. What is left needs a loopback server (`HttpLib`'s 39
+verbs) or a message loop turning (the animation libraries).

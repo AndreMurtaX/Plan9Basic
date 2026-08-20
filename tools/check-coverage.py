@@ -30,7 +30,13 @@ from collections import defaultdict
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CODE_GLOBS = ['Libs/**/*.pas', 'engine/Libs/**/*.pas']
-TEST_GLOBS = ['tests/suite/*.bas', 'tests/gui/*.bas', 'tests/negative/*.bas']
+TEST_GLOBS = ['tests/suite/*.bas', 'tests/gui/*.bas', 'tests/negative/*.bas',
+              # tests/local/ needs something the machine may not have -- a model
+              # on localhost. verify.ps1 reports that step as skipped rather than
+              # failed. Counted here because the functions are covered wherever the
+              # step does run, and a count that ignored them would understate what
+              # is tested on a machine that has one.
+              'tests/local/*.bas']
 
 REGISTER = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)'")
 VARIADIC = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)' *\+")

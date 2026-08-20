@@ -221,6 +221,39 @@ Step 'applet self-test' {
     if (Test-Path $out) { (Get-Content $out | Select-Object -First 1).Trim() }
 }
 
+# A model running on this machine, if there is one.
+#
+# AILib was built with a local provider in mind -- ai_client#("ollama", "")
+# resolves to http://localhost:11434 with no key -- and nothing had ever called
+# it. Its 45 functions were written off as "needs credentials and a network",
+# and they need neither.
+#
+# A clone has no Ollama, so this cannot be a required step. It cannot be a
+# silently-passing one either: a step that reports green whether or not it ran
+# anything is the failure mode this project spent a week removing from the
+# applets. So it probes first and says which of the two happened.
+Step 'local model' {
+    $probe = $null
+    try {
+        $probe = Invoke-WebRequest -Uri 'http://localhost:11434/api/tags' `
+                                   -TimeoutSec 3 -UseBasicParsing -ErrorAction Stop
+    } catch { }
+    if ($null -eq $probe) {
+        'skipped - no model answering on localhost:11434'
+    } else {
+        $names = ($probe.Content | ConvertFrom-Json).models | ForEach-Object { $_.name }
+        $file = Join-Path $tests 'local_ai_ollama.bas'
+        # The file names the model it wants; if that one is not pulled, say so
+        # rather than fail on an error the machine cannot help.
+        if ($names -notcontains 'qwen2.5:7b') {
+            "skipped - qwen2.5:7b not pulled (have: $($names -join ', '))"
+        } else {
+            (& (Join-Path $tests 'bin\Plan9BasicTest.exe') --gui $file 2>&1 | Out-String) -split "`n" |
+                Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
+        }
+    }
+}
+
 Step 'documentation' {
     $args = @((Join-Path $root 'tools\check-all.py'))
     if ($Quick) { $args += '--quick' }
