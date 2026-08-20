@@ -348,92 +348,52 @@ end;
 
 procedure TBasEllipse.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    Self.OnClick := InternalOnClick
-  else
-    Self.OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasEllipse.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then
-    Self.OnDblClick := InternalOnDblClick
-  else
-    Self.OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasEllipse.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    Self.OnMouseDown := InternalOnMouseDown
-  else
-    Self.OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasEllipse.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    Self.OnMouseUp := InternalOnMouseUp
-  else
-    Self.OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasEllipse.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseMove := InternalOnMouseMove
-  else
-    Self.OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasEllipse.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    Self.OnMouseEnter := InternalOnMouseEnter
-  else
-    Self.OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasEllipse.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseLeave := InternalOnMouseLeave
-  else
-    Self.OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasEllipse.SetOnMouseWheelFunc(const Value: String);
 begin
-  FOnMouseWheelFunc := Value;
-  if Value <> '' then
-    Self.OnMouseWheel := InternalOnMouseWheel
-  else
-    Self.OnMouseWheel := nil;
+  ControlCommon.BindMouseWheel(Self, Value, FOnMouseWheelFunc, InternalOnMouseWheel);
 end;
 
 procedure TBasEllipse.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    Self.OnResize := InternalOnResize
-  else
-    Self.OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 procedure TBasEllipse.SetOnResizedFunc(const Value: String);
 begin
-  FOnResizedFunc := Value;
-  if Value <> '' then
-    Self.OnResized := InternalOnResized
-  else
-    Self.OnResized := nil;
+  ControlCommon.BindResized(Self, Value, FOnResizedFunc, InternalOnResized);
 end;
 
 procedure TBasEllipse.SetOnPaintFunc(const Value: String);

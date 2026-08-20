@@ -935,74 +935,42 @@ end;
 
 procedure TBasMediaPlayerControl.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    OnClick := InternalOnClick
-  else
-    OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasMediaPlayerControl.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then
-    OnDblClick := InternalOnDblClick
-  else
-    OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasMediaPlayerControl.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    OnMouseDown := InternalOnMouseDown
-  else
-    OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasMediaPlayerControl.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    OnMouseUp := InternalOnMouseUp
-  else
-    OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasMediaPlayerControl.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    OnMouseMove := InternalOnMouseMove
-  else
-    OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasMediaPlayerControl.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    OnMouseEnter := InternalOnMouseEnter
-  else
-    OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasMediaPlayerControl.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    OnMouseLeave := InternalOnMouseLeave
-  else
-    OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasMediaPlayerControl.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    OnResize := InternalOnResize
-  else
-    OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 function TBasMediaPlayerControl.GetCurrentState(): TMediaState;

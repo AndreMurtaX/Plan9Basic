@@ -305,110 +305,62 @@ end;
 
 procedure TBasProgressBar.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    OnClick := InternalOnClick
-  else
-    OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasProgressBar.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then
-    OnDblClick := InternalOnDblClick
-  else
-    OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasProgressBar.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    OnMouseDown := InternalOnMouseDown
-  else
-    OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasProgressBar.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    OnMouseUp := InternalOnMouseUp
-  else
-    OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasProgressBar.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    OnMouseMove := InternalOnMouseMove
-  else
-    OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasProgressBar.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    OnMouseEnter := InternalOnMouseEnter
-  else
-    OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasProgressBar.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    OnMouseLeave := InternalOnMouseLeave
-  else
-    OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasProgressBar.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    OnResize := InternalOnResize
-  else
-    OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 procedure TBasProgressBar.SetOnDragEnterFunc(const Value: String);
 begin
-  FOnDragEnterFunc := Value;
-  if Value <> '' then
-    OnDragEnter := InternalOnDragEnter
-  else
-    OnDragEnter := nil;
+  ControlCommon.BindDragEnter(Self, Value, FOnDragEnterFunc, InternalOnDragEnter);
 end;
 
 procedure TBasProgressBar.SetOnDragOverFunc(const Value: String);
 begin
-  FOnDragOverFunc := Value;
-  if Value <> '' then
-    OnDragOver := InternalOnDragOver
-  else
-    OnDragOver := nil;
+  ControlCommon.BindDragOver(Self, Value, FOnDragOverFunc, InternalOnDragOver);
 end;
 
 procedure TBasProgressBar.SetOnDragDropFunc(const Value: String);
 begin
-  FOnDragDropFunc := Value;
-  if Value <> '' then
-    OnDragDrop := InternalOnDragDrop
-  else
-    OnDragDrop := nil;
+  ControlCommon.BindDragDrop(Self, Value, FOnDragDropFunc, InternalOnDragDrop);
 end;
 
 procedure TBasProgressBar.SetOnDragLeaveFunc(const Value: String);
 begin
-  FOnDragLeaveFunc := Value;
-  if Value <> '' then
-    OnDragLeave := InternalOnDragLeave
-  else
-    OnDragLeave := nil;
+  ControlCommon.BindDragLeave(Self, Value, FOnDragLeaveFunc, InternalOnDragLeave);
 end;
 
 // Internal event handlers

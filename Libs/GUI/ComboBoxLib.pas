@@ -299,114 +299,82 @@ end;
 
 procedure TBasComboBox.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then Self.OnClick := InternalOnClick
-  else Self.OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasComboBox.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then Self.OnDblClick := InternalOnDblClick
-  else Self.OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasComboBox.SetOnEnterFunc(const Value: String);
 begin
-  FOnEnterFunc := Value;
-  if Value <> '' then Self.OnEnter := InternalOnEnter
-  else Self.OnEnter := nil;
+  ControlCommon.BindEnter(Self, Value, FOnEnterFunc, InternalOnEnter);
 end;
 
 procedure TBasComboBox.SetOnExitFunc(const Value: String);
 begin
-  FOnExitFunc := Value;
-  if Value <> '' then Self.OnExit := InternalOnExit
-  else Self.OnExit := nil;
+  ControlCommon.BindExit(Self, Value, FOnExitFunc, InternalOnExit);
 end;
 
 procedure TBasComboBox.SetOnKeyDownFunc(const Value: String);
 begin
-  FOnKeyDownFunc := Value;
-  if Value <> '' then Self.OnKeyDown := InternalOnKeyDown
-  else Self.OnKeyDown := nil;
+  ControlCommon.BindKeyDown(Self, Value, FOnKeyDownFunc, InternalOnKeyDown);
 end;
 
 procedure TBasComboBox.SetOnKeyUpFunc(const Value: String);
 begin
-  FOnKeyUpFunc := Value;
-  if Value <> '' then Self.OnKeyUp := InternalOnKeyUp
-  else Self.OnKeyUp := nil;
+  ControlCommon.BindKeyUp(Self, Value, FOnKeyUpFunc, InternalOnKeyUp);
 end;
 
 procedure TBasComboBox.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then Self.OnMouseDown := InternalOnMouseDown
-  else Self.OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasComboBox.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then Self.OnMouseUp := InternalOnMouseUp
-  else Self.OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasComboBox.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then Self.OnMouseMove := InternalOnMouseMove
-  else Self.OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasComboBox.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then Self.OnMouseEnter := InternalOnMouseEnter
-  else Self.OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasComboBox.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then Self.OnMouseLeave := InternalOnMouseLeave
-  else Self.OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasComboBox.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then Self.OnResize := InternalOnResize
-  else Self.OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 procedure TBasComboBox.SetOnDragEnterFunc(const Value: String);
 begin
-  FOnDragEnterFunc := Value;
-  if Value <> '' then Self.OnDragEnter := InternalOnDragEnter
-  else Self.OnDragEnter := nil;
+  ControlCommon.BindDragEnter(Self, Value, FOnDragEnterFunc, InternalOnDragEnter);
 end;
 
 procedure TBasComboBox.SetOnDragOverFunc(const Value: String);
 begin
-  FOnDragOverFunc := Value;
-  if Value <> '' then Self.OnDragOver := InternalOnDragOver
-  else Self.OnDragOver := nil;
+  ControlCommon.BindDragOver(Self, Value, FOnDragOverFunc, InternalOnDragOver);
 end;
 
 procedure TBasComboBox.SetOnDragDropFunc(const Value: String);
 begin
-  FOnDragDropFunc := Value;
-  if Value <> '' then Self.OnDragDrop := InternalOnDragDrop
-  else Self.OnDragDrop := nil;
+  ControlCommon.BindDragDrop(Self, Value, FOnDragDropFunc, InternalOnDragDrop);
 end;
 
 procedure TBasComboBox.SetOnDragLeaveFunc(const Value: String);
 begin
-  FOnDragLeaveFunc := Value;
-  if Value <> '' then Self.OnDragLeave := InternalOnDragLeave
-  else Self.OnDragLeave := nil;
+  ControlCommon.BindDragLeave(Self, Value, FOnDragLeaveFunc, InternalOnDragLeave);
 end;
 
 procedure TBasComboBox.ExecuteCallback(const FuncSignature: String; const Args: array of TAsmData);

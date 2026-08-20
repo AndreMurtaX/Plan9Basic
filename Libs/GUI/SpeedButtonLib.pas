@@ -284,101 +284,57 @@ end;
 
 procedure TBasSpeedButton.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    Self.OnClick := InternalOnClick
-  else
-    Self.OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasSpeedButton.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    Self.OnMouseDown := InternalOnMouseDown
-  else
-    Self.OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasSpeedButton.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    Self.OnMouseUp := InternalOnMouseUp
-  else
-    Self.OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasSpeedButton.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseMove := InternalOnMouseMove
-  else
-    Self.OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasSpeedButton.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    Self.OnMouseEnter := InternalOnMouseEnter
-  else
-    Self.OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasSpeedButton.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseLeave := InternalOnMouseLeave
-  else
-    Self.OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasSpeedButton.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    Self.OnResize := InternalOnResize
-  else
-    Self.OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 procedure TBasSpeedButton.SetOnDragEnterFunc(const Value: String);
 begin
-  FOnDragEnterFunc := Value;
-  if Value <> '' then
-    Self.OnDragEnter := InternalOnDragEnter
-  else
-    Self.OnDragEnter := nil;
+  ControlCommon.BindDragEnter(Self, Value, FOnDragEnterFunc, InternalOnDragEnter);
 end;
 
 procedure TBasSpeedButton.SetOnDragOverFunc(const Value: String);
 begin
-  FOnDragOverFunc := Value;
-  if Value <> '' then
-    Self.OnDragOver := InternalOnDragOver
-  else
-    Self.OnDragOver := nil;
+  ControlCommon.BindDragOver(Self, Value, FOnDragOverFunc, InternalOnDragOver);
 end;
 
 procedure TBasSpeedButton.SetOnDragDropFunc(const Value: String);
 begin
-  FOnDragDropFunc := Value;
-  if Value <> '' then
-    Self.OnDragDrop := InternalOnDragDrop
-  else
-    Self.OnDragDrop := nil;
+  ControlCommon.BindDragDrop(Self, Value, FOnDragDropFunc, InternalOnDragDrop);
 end;
 
 procedure TBasSpeedButton.SetOnDragLeaveFunc(const Value: String);
 begin
-  FOnDragLeaveFunc := Value;
-  if Value <> '' then
-    Self.OnDragLeave := InternalOnDragLeave
-  else
-    Self.OnDragLeave := nil;
+  ControlCommon.BindDragLeave(Self, Value, FOnDragLeaveFunc, InternalOnDragLeave);
 end;
 
 procedure TBasSpeedButton.ExecuteCallback(const FuncSignature: String; const Args: array of TAsmData);

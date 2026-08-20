@@ -959,110 +959,62 @@ end;
 
 procedure TBasStringGrid.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    Self.OnClick := InternalOnClick
-  else
-    Self.OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasStringGrid.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then
-    Self.OnDblClick := InternalOnDblClick
-  else
-    Self.OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasStringGrid.SetOnEnterFunc(const Value: String);
 begin
-  FOnEnterFunc := Value;
-  if Value <> '' then
-    Self.OnEnter := InternalOnEnter
-  else
-    Self.OnEnter := nil;
+  ControlCommon.BindEnter(Self, Value, FOnEnterFunc, InternalOnEnter);
 end;
 
 procedure TBasStringGrid.SetOnExitFunc(const Value: String);
 begin
-  FOnExitFunc := Value;
-  if Value <> '' then
-    Self.OnExit := InternalOnExit
-  else
-    Self.OnExit := nil;
+  ControlCommon.BindExit(Self, Value, FOnExitFunc, InternalOnExit);
 end;
 
 procedure TBasStringGrid.SetOnKeyDownFunc(const Value: String);
 begin
-  FOnKeyDownFunc := Value;
-  if Value <> '' then
-    Self.OnKeyDown := InternalOnKeyDown
-  else
-    Self.OnKeyDown := nil;
+  ControlCommon.BindKeyDown(Self, Value, FOnKeyDownFunc, InternalOnKeyDown);
 end;
 
 procedure TBasStringGrid.SetOnKeyUpFunc(const Value: String);
 begin
-  FOnKeyUpFunc := Value;
-  if Value <> '' then
-    Self.OnKeyUp := InternalOnKeyUp
-  else
-    Self.OnKeyUp := nil;
+  ControlCommon.BindKeyUp(Self, Value, FOnKeyUpFunc, InternalOnKeyUp);
 end;
 
 procedure TBasStringGrid.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    Self.OnMouseDown := InternalOnMouseDown
-  else
-    Self.OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasStringGrid.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    Self.OnMouseUp := InternalOnMouseUp
-  else
-    Self.OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasStringGrid.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseMove := InternalOnMouseMove
-  else
-    Self.OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasStringGrid.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    Self.OnMouseEnter := InternalOnMouseEnter
-  else
-    Self.OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasStringGrid.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    Self.OnMouseLeave := InternalOnMouseLeave
-  else
-    Self.OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasStringGrid.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    Self.OnResize := InternalOnResize
-  else
-    Self.OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 { Callback execution }

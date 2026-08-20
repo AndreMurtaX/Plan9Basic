@@ -420,137 +420,77 @@ end;
 
 procedure TBasLine.SetOnClickFunc(const Value: String);
 begin
-  FOnClickFunc := Value;
-  if Value <> '' then
-    OnClick := InternalOnClick
-  else
-    OnClick := nil;
+  ControlCommon.BindClick(Self, Value, FOnClickFunc, InternalOnClick);
 end;
 
 procedure TBasLine.SetOnDblClickFunc(const Value: String);
 begin
-  FOnDblClickFunc := Value;
-  if Value <> '' then
-    OnDblClick := InternalOnDblClick
-  else
-    OnDblClick := nil;
+  ControlCommon.BindDblClick(Self, Value, FOnDblClickFunc, InternalOnDblClick);
 end;
 
 procedure TBasLine.SetOnMouseDownFunc(const Value: String);
 begin
-  FOnMouseDownFunc := Value;
-  if Value <> '' then
-    OnMouseDown := InternalOnMouseDown
-  else
-    OnMouseDown := nil;
+  ControlCommon.BindMouseDown(Self, Value, FOnMouseDownFunc, InternalOnMouseDown);
 end;
 
 procedure TBasLine.SetOnMouseUpFunc(const Value: String);
 begin
-  FOnMouseUpFunc := Value;
-  if Value <> '' then
-    OnMouseUp := InternalOnMouseUp
-  else
-    OnMouseUp := nil;
+  ControlCommon.BindMouseUp(Self, Value, FOnMouseUpFunc, InternalOnMouseUp);
 end;
 
 procedure TBasLine.SetOnMouseMoveFunc(const Value: String);
 begin
-  FOnMouseMoveFunc := Value;
-  if Value <> '' then
-    OnMouseMove := InternalOnMouseMove
-  else
-    OnMouseMove := nil;
+  ControlCommon.BindMouseMove(Self, Value, FOnMouseMoveFunc, InternalOnMouseMove);
 end;
 
 procedure TBasLine.SetOnMouseEnterFunc(const Value: String);
 begin
-  FOnMouseEnterFunc := Value;
-  if Value <> '' then
-    OnMouseEnter := InternalOnMouseEnter
-  else
-    OnMouseEnter := nil;
+  ControlCommon.BindMouseEnter(Self, Value, FOnMouseEnterFunc, InternalOnMouseEnter);
 end;
 
 procedure TBasLine.SetOnMouseLeaveFunc(const Value: String);
 begin
-  FOnMouseLeaveFunc := Value;
-  if Value <> '' then
-    OnMouseLeave := InternalOnMouseLeave
-  else
-    OnMouseLeave := nil;
+  ControlCommon.BindMouseLeave(Self, Value, FOnMouseLeaveFunc, InternalOnMouseLeave);
 end;
 
 procedure TBasLine.SetOnMouseWheelFunc(const Value: String);
 begin
-  FOnMouseWheelFunc := Value;
-  if Value <> '' then
-    OnMouseWheel := InternalOnMouseWheel
-  else
-    OnMouseWheel := nil;
+  ControlCommon.BindMouseWheel(Self, Value, FOnMouseWheelFunc, InternalOnMouseWheel);
 end;
 
 procedure TBasLine.SetOnResizeFunc(const Value: String);
 begin
-  FOnResizeFunc := Value;
-  if Value <> '' then
-    OnResize := InternalOnResize
-  else
-    OnResize := nil;
+  ControlCommon.BindResize(Self, Value, FOnResizeFunc, InternalOnResize);
 end;
 
 procedure TBasLine.SetOnResizedFunc(const Value: String);
 begin
-  FOnResizedFunc := Value;
-  if Value <> '' then
-    OnResized := InternalOnResized
-  else
-    OnResized := nil;
+  ControlCommon.BindResized(Self, Value, FOnResizedFunc, InternalOnResized);
 end;
 
 procedure TBasLine.SetOnPaintFunc(const Value: String);
 begin
-  FOnPaintFunc := Value;
-  if Value <> '' then
-    OnPainting := InternalOnPaint
-  else
-    OnPainting := nil;
+  ControlCommon.BindPaint(Self, Value, FOnPaintFunc, InternalOnPaint);
 end;
 
 procedure TBasLine.SetOnDragEnterFunc(const Value: String);
 begin
-  FOnDragEnterFunc := Value;
-  if Value <> '' then
-    OnDragEnter := InternalOnDragEnter
-  else
-    OnDragEnter := nil;
+  ControlCommon.BindDragEnter(Self, Value, FOnDragEnterFunc, InternalOnDragEnter);
 end;
 
 procedure TBasLine.SetOnDragOverFunc(const Value: String);
 begin
-  FOnDragOverFunc := Value;
-  if Value <> '' then
-    OnDragOver := InternalOnDragOver
-  else
-    OnDragOver := nil;
+  ControlCommon.BindDragOver(Self, Value, FOnDragOverFunc, InternalOnDragOver);
 end;
 
 procedure TBasLine.SetOnDragDropFunc(const Value: String);
 begin
-  FOnDragDropFunc := Value;
-  if Value <> '' then
-    OnDragDrop := InternalOnDragDrop
-  else
-    OnDragDrop := nil;
+  ControlCommon.BindDragDrop(Self, Value, FOnDragDropFunc, InternalOnDragDrop);
 end;
 
 procedure TBasLine.SetOnDragLeaveFunc(const Value: String);
 begin
-  FOnDragLeaveFunc := Value;
-  if Value <> '' then
-    OnDragLeave := InternalOnDragLeave
-  else
-    OnDragLeave := nil;
+  ControlCommon.BindDragLeave(Self, Value, FOnDragLeaveFunc, InternalOnDragLeave);
 end;
 
 procedure TBasLine.InternalOnClick(Sender: TObject);

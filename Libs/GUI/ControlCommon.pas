@@ -53,8 +53,8 @@ unit ControlCommon;
 interface
 
 uses
-  System.SysUtils, System.UITypes, System.Classes,
-  FMX.Types,
+  System.SysUtils, System.UITypes, System.Classes, System.Types,
+  FMX.Types, FMX.Controls, FMX.Graphics,
   basic, exec, UnitGC, HandleRegistry;
 
 const
@@ -134,6 +134,59 @@ function ParentIsValid(P: Pointer; const FuncName: String; out Msg: String): Boo
 //GlobalCallbackBusy is what stops an event fired from inside a callback from
 //re-entering the VM, and SkipProcessMessages stops the callback from pumping
 //the message loop underneath its own caller.
+//Wiring a BASIC callback name to an FMX event, once per event rather than
+//once per control. 369 of the 420 setters across the GUI libraries were the
+//same five lines with three identifiers changed:
+//
+//    FOnClickFunc := Value;
+//    if Value <> '' then Self.OnClick := InternalOnClick
+//    else Self.OnClick := nil;
+//
+//ANALYSIS 9 recorded that as a boundary, because Delphi cannot abstract over
+//a property name at compile time. It cannot -- and it does not have to. The
+//name is fixed inside the helper, and there are 19 names against 369 sites.
+//
+//The field is passed by reference because it is a field and may be; the
+//property is assigned inside, because a property may not.
+procedure BindClick(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TNotifyEvent);
+procedure BindDblClick(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TNotifyEvent);
+procedure BindMouseEnter(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TNotifyEvent);
+procedure BindMouseLeave(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TNotifyEvent);
+procedure BindResize(AControl: TControl; const AName: String;
+                      var AField: String; AHandler: TNotifyEvent);
+procedure BindResized(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TNotifyEvent);
+procedure BindEnter(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TNotifyEvent);
+procedure BindExit(AControl: TControl; const AName: String;
+                    var AField: String; AHandler: TNotifyEvent);
+procedure BindDragLeave(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TNotifyEvent);
+procedure BindMouseDown(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TMouseEvent);
+procedure BindMouseUp(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TMouseEvent);
+procedure BindMouseMove(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TMouseMoveEvent);
+procedure BindMouseWheel(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TMouseWheelEvent);
+procedure BindKeyDown(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TKeyEvent);
+procedure BindKeyUp(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TKeyEvent);
+procedure BindPaint(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TOnPaintEvent);
+procedure BindDragEnter(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TDragEnterEvent);
+procedure BindDragOver(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TDragOverEvent);
+procedure BindDragDrop(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TDragDropEvent);
+
 procedure RunCallback(Engine: TBasicEngine; Output: TStrings;
                       const FuncSignature: String; const Args: array of TAsmData;
                       const Owner: String);
@@ -323,4 +376,196 @@ begin
   Result := CallbackCore(Engine, Output, FuncSignature, Args, Owner);
 end;
 
+
+{ Event binding }
+
+procedure BindClick(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnClick := AHandler
+  else
+    AControl.OnClick := nil;
+end;
+
+procedure BindDblClick(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnDblClick := AHandler
+  else
+    AControl.OnDblClick := nil;
+end;
+
+procedure BindMouseEnter(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseEnter := AHandler
+  else
+    AControl.OnMouseEnter := nil;
+end;
+
+procedure BindMouseLeave(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseLeave := AHandler
+  else
+    AControl.OnMouseLeave := nil;
+end;
+
+procedure BindResize(AControl: TControl; const AName: String;
+                      var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnResize := AHandler
+  else
+    AControl.OnResize := nil;
+end;
+
+procedure BindResized(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnResized := AHandler
+  else
+    AControl.OnResized := nil;
+end;
+
+procedure BindEnter(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnEnter := AHandler
+  else
+    AControl.OnEnter := nil;
+end;
+
+procedure BindExit(AControl: TControl; const AName: String;
+                    var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnExit := AHandler
+  else
+    AControl.OnExit := nil;
+end;
+
+procedure BindDragLeave(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnDragLeave := AHandler
+  else
+    AControl.OnDragLeave := nil;
+end;
+
+procedure BindMouseDown(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TMouseEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseDown := AHandler
+  else
+    AControl.OnMouseDown := nil;
+end;
+
+procedure BindMouseUp(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TMouseEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseUp := AHandler
+  else
+    AControl.OnMouseUp := nil;
+end;
+
+procedure BindMouseMove(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TMouseMoveEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseMove := AHandler
+  else
+    AControl.OnMouseMove := nil;
+end;
+
+procedure BindMouseWheel(AControl: TControl; const AName: String;
+                          var AField: String; AHandler: TMouseWheelEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnMouseWheel := AHandler
+  else
+    AControl.OnMouseWheel := nil;
+end;
+
+procedure BindKeyDown(AControl: TControl; const AName: String;
+                       var AField: String; AHandler: TKeyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnKeyDown := AHandler
+  else
+    AControl.OnKeyDown := nil;
+end;
+
+procedure BindKeyUp(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TKeyEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnKeyUp := AHandler
+  else
+    AControl.OnKeyUp := nil;
+end;
+
+procedure BindPaint(AControl: TControl; const AName: String;
+                     var AField: String; AHandler: TOnPaintEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnPainting := AHandler
+  else
+    AControl.OnPainting := nil;
+end;
+
+procedure BindDragEnter(AControl: TControl; const AName: String;
+                         var AField: String; AHandler: TDragEnterEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnDragEnter := AHandler
+  else
+    AControl.OnDragEnter := nil;
+end;
+
+procedure BindDragOver(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TDragOverEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnDragOver := AHandler
+  else
+    AControl.OnDragOver := nil;
+end;
+
+procedure BindDragDrop(AControl: TControl; const AName: String;
+                        var AField: String; AHandler: TDragDropEvent);
+begin
+  AField := AName;
+  if AName <> '' then
+    AControl.OnDragDrop := AHandler
+  else
+    AControl.OnDragDrop := nil;
+end;
 end.
