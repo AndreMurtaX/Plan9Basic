@@ -721,6 +721,7 @@ item# = <span class="fn">json_pop#</span>(scores#)
 <span class="fn">json_removeat#</span>(scores#, <span class="num">1</span>)            <span class="cmt">&#x27; remove 92</span>
 <span class="kw">println</span> <span class="fn">json_stringify$</span>(scores#)      <span class="cmt">&#x27; [85,78]</span></pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> JSON array indices are <strong>0-based</strong>, unlike Plan9Basic arrays which are 1-based.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>json_count()</code> counts <strong>object keys only</strong>. On an array it answers <strong>0</strong> &mdash; which reads exactly like an empty array. Use <code>json_len()</code>, which handles both.</div>
 </section>
 
 <section class="doc-section" id="paths">

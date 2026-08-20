@@ -613,6 +613,9 @@ body::after {
 <span class="kw">end</span> <span class="kw">while</span>
 <span class="fn">sql_finalize</span>(cursor#)</pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> Always use parameter binding (<code>:name</code> or <code>?</code>) instead of string concatenation to prevent SQL injection.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> Parameter and column indices are <strong>0-based</strong>. SQLite&rsquo;s own C API is 1-based, so the obvious guess binds the wrong parameter &mdash; quietly.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> A query is <strong>not positioned on a row until <code>sql_step()</code> has been called</strong>. Before the first step <code>sql_eof()</code> answers true and every getter answers empty or zero, which reads exactly like an empty table. Always step before reading.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>sql_bindjson#()</code> matches parameters <strong>by name</strong>, so the statement must be written with named parameters (<code>:name</code>). A statement full of question marks binds nothing at all, and says nothing about it.</div>
 </section>
 
 <section class="doc-section" id="statements">

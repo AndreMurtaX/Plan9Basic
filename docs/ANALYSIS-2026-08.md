@@ -4501,3 +4501,60 @@ That is 57 of the 58 without a sound card, an audio file or a network.
 `AILib` 0/45 and `RAGLib` 0/13 need credentials and a network. The 39 verbs and
 response accessors of `HttpLib` need a loopback server. The animation libraries
 need a message loop turning. Everything else is now covered.
+
+## 58. The findings were reaching the tests and not the reader
+
+Asked by the author, and the answer was no.
+
+Eleven behaviours were found by writing a test that asserted the opposite and
+watching it fail. Every one was written down -- in a comment above the
+assertion, and in this document. Neither is a place anybody reading
+plan9basic.com will ever look.
+
+The first check of this was too loose to be worth anything: grepping the site
+for the words in each finding reported all seven present. Reading the matches
+showed the pages mention the *function* and not the caveat -- "Set volume" with
+no hint that it is discarded before a track is loaded, "Select all items" with
+no hint that it reaches one row. A search that answers yes to everything is a
+search that answers nothing.
+
+Checked properly, six of seven were absent. The seventh, `http_urlencode$`, was
+correct on the page only because the code had been changed to match it.
+
+### One page was carrying the opposite
+
+`regexlib.html` said `regex_findpos()` returns 1-based positions "(consistent
+with other Plan9Basic string functions)". That was true when it was written and
+stopped being true when Phase 1.1 corrected `instr` to answer a position rather
+than a flag. The markdown had already been fixed; the HTML, which is the file
+people actually read, had not. It now states the difference and why it exists.
+
+### What went onto the site
+
+Eleven `warning-box` entries across ten pages, in the convention the site
+already had:
+
+| page | what a reader would otherwise discover the hard way |
+|---|---|
+| `sqlitelib` | bind and column indices are 0-based; a query is not on a row until `sql_step`; `sql_bindjson#` matches by name |
+| `jsonlib` | `json_count` is object keys only, and answers 0 for an array |
+| `regexlib` | `regex_findpos` is 1-based where `instr` is 0-based |
+| `strlib` | `alcase$`/`aucase$` follow the locale; `lfill$`/`rfill$` take a character code |
+| `numlib` | `int` floors and `fix` truncates |
+| `ioutilslib` | `path_matchespattern`'s flag is case-SENSITIVE |
+| `strlistlib` | the save and load family answers a line count |
+| `gui/memolib` | a bare line feed is stored as CRLF |
+| `gui/listboxlib` | `listbox_selectall` reaches one row unless multiselect is on |
+| `gui/mediaplayerlib` | the volume is discarded until a track is loaded |
+| `gui/imagelib` | a picture can come from the network, and the same rule reaches every effect, the sprite sheet and the media player |
+
+`New docs/` was left alone: `package-site.py` does not ship it, so it is not
+what a reader sees.
+
+### What is not solved
+
+Nothing checks this. `check-docs.py` holds the *signatures* to the code and
+`check-event-docs.py` holds the *event shapes*, so a function that changes arity
+cannot drift unnoticed. A function that keeps its shape and surprises the caller
+has no such guard, which is exactly how `regexlib.html` came to be carrying a
+claim the engine had contradicted for weeks.

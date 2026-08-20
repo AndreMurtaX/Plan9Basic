@@ -526,6 +526,7 @@ body::after {
 <span class="kw">println</span> <span class="fn">frac</span>(<span class="num">3.75</span>)    <span class="cmt">&#x27; 0.75</span>
 <span class="kw">println</span> <span class="fn">frac</span>(<span class="num">-3.75</span>)   <span class="cmt">&#x27; -0.75</span></pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> <code>cint()</code>/<code>fix()</code> truncate toward zero, but <code>int()</code> is the floor function. For negative numbers: <code>cint(-3.7)</code> = -3, <code>int(-3.7)</code> = -4.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>int()</code> rounds <strong>down</strong> and <code>fix()</code> truncates <strong>towards zero</strong>. They agree on positive numbers and part the first time one goes below zero: <code>int(-3.7)</code> is <strong>-4</strong> and <code>fix(-3.7)</code> is <strong>-3</strong>.</div>
 </section>
 
 <section class="doc-section" id="basic-math">

@@ -665,6 +665,7 @@ body::after {
 <span class="cmt">&#x27; Copy entire directory</span>
 <span class="kw">let</span> result = <span class="fn">dir_copy</span>(<span class="str">&quot;project&quot;</span>, <span class="str">&quot;project_backup&quot;</span>)</pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> <code>dir_delete(path$)</code> without the recursive flag only deletes <em>empty</em> directories. Use <code>dir_delete(path$, 1)</code> to delete a directory and all its contents.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> The third argument of <code>path_matchespattern()</code> is <strong>case-SENSITIVE</strong>, not case-insensitive: passing 1 makes the comparison strict, and the two-argument form is the lenient one.</div>
 </section>
 
 <section class="doc-section" id="dir-list">

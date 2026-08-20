@@ -935,6 +935,7 @@ body::after {
 <tr><td>Start volume at 0.7</td><td>Safer than full volume; let the user adjust</td></tr>
 </tbody></table></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> Always call <code>media_stop(player#)</code> before <code>media_free(player#)</code>. Freeing a player during active playback may cause issues on some platforms.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> The <strong>volume and position are not kept until a track is loaded</strong>. With no media in the player, <code>media_volume#()</code> is discarded and <code>media_volume()</code> answers the default of 1 whatever was asked for; a seek leaves the position at the start. Load first, then set the level.</div>
 </section>
 
 <section class="doc-section" id="quick-ref">

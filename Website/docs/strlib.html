@@ -597,6 +597,8 @@ x = <span class="fn">val</span>(<span class="str">&quot;123&quot;</span>)       
 y = <span class="fn">val</span>(<span class="str">&quot;123abc&quot;</span>)
 <span class="kw">println</span> <span class="fn">valcode</span>()           <span class="cmt">&#x27; 4 (error at position 4)</span></pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> <code>str$()</code> uses the system locale (comma in Brazil/Europe, period in US). Use <code>stri$()</code> when generating JSON, CSV, or any data for interchange between systems.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>alcase$()</code> and <code>aucase$()</code> are <strong>Ansi</strong>, not &ldquo;all&rdquo;. They follow the locale, where <code>lcase$()</code> and <code>ucase$()</code> know only <code>a-z</code>. The two pairs agree on plain ASCII and part on every accented letter: <code>ucase$("a&ccedil;&atilde;o")</code> leaves the accents alone and <code>aucase$("a&ccedil;&atilde;o")</code> raises them.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>lfill$()</code> and <code>rfill$()</code> take the fill as a <strong>character code</strong>, not a string: <code>lfill$("42", 5, asc("0"))</code>.</div>
 </section>
 
 <section class="doc-section" id="substring">

@@ -603,7 +603,7 @@ pos = <span class="fn">regex_findpos</span>(<span class="str">&quot;\d&quot;</sp
 <span class="cmt">&#x27; Length of first match</span>
 ln = <span class="fn">regex_findlen</span>(<span class="str">&quot;\d+&quot;</span>, <span class="str">&quot;abc123def&quot;</span>)
 <span class="kw">println</span> <span class="str">&quot;Match length: &quot;</span>; ln  <span class="cmt">&#x27; 3</span></pre></div></div>
-<div class="warning-box"><strong>&#9888; Warning:</strong> <code>regex_findpos()</code> returns <strong>1-based</strong> positions (consistent with other Plan9Basic string functions). Returns 0 when no match is found.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>regex_findpos()</code> returns <strong>1-based</strong> positions and <strong>0</strong> when there is no match &mdash; <em>unlike</em> <code>instr()</code>, which is 0-based and answers <strong>-1</strong>. For the same match in the same string the two differ by one, and on failure they disagree entirely. This note used to claim they were consistent; that stopped being true when <code>instr()</code> was corrected to answer a position rather than a flag.</div>
 </section>
 
 <section class="doc-section" id="findall">

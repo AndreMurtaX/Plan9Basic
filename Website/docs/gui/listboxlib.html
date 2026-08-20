@@ -645,6 +645,7 @@ body::after {
     <span class="fn">listbox_itemindex#</span>(lst#, pos)
 <span class="kw">endif</span></pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> <code>listbox_itemindex</code> returns <strong>-1</strong> when no item is selected. Always check before using the index to access item text.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>listbox_selectall()</code> reaches <strong>one row only</strong> while the box is single-select, which is what it is by default. Turn <code>listbox_multiselect#()</code> on first if you mean all of them.</div>
 </section>
 
 <section class="doc-section" id="multiselect">

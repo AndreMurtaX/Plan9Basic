@@ -631,6 +631,7 @@ body::after {
 <span class="cmt">&#x27; Clear to a color</span>
 <span class="fn">image_clear#</span>(img#, <span class="str">&quot;#336699&quot;</span>)</pre></div></div>
 <div class="warning-box"><strong>&#9888; Warning:</strong> <code>image_bitmapwidth</code> / <code>image_bitmapheight</code> return the actual pixel size of the loaded image, which is different from <code>image_width</code> / <code>image_height</code> which return the control size on the form.</div>
+<div class="warning-box"><strong>&#9888; Warning:</strong> <code>image_load()</code> reads a <strong>source</strong>, not just a path: an argument beginning <code>http://</code> or <code>https://</code> is fetched from the network, and anything else is opened as a file. The prefix is matched without regard to case; any other scheme (<code>ftp://</code>) is treated as a file name. The same rule reaches the target of every transition effect &mdash; <code>fadetrans_loadtarget#()</code> and its twenty-one siblings &mdash; the sprite sheet of <code>bmplistani_loadspritesheet#()</code> and <code>media_load#()</code>.</div>
 </section>
 
 <section class="doc-section" id="wrapmode">
