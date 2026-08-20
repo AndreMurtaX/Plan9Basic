@@ -2512,3 +2512,74 @@ repository and the running site:
 
 None of it is fatal. `SetError` records and does not halt, so a game whose sound
 will not load runs without it. It is silent in both senses.
+
+
+## 30. The site cannot become the repository until an applet stops POSTing
+
+Written 2026-08-19, taking PLAN 4.6's remaining half: the GitHub Pages layout,
+which the plan said could be committed early and sit inert.
+
+### The inert half
+
+`Website/CNAME` names `plan9basic.com`, so the domain follows rather than the
+`github.io` address. `Website/.nojekyll` stops Pages running Jekyll over a site
+that is already built. `.github/workflows/pages.yml` runs `check-all.py --quick`
+and then uploads `Website/` as the document root — the directory itself is not
+part of the path, which is the same rule the FTP procedure already states.
+
+None of it does anything until the repository is public and Pages is enabled.
+Committing it early is the point: it can be read and corrected while nothing
+depends on it, so the day the switch is thrown is a switch and not a project.
+
+`tools/check-pages.py` holds the layout, and all five ways it can fail were
+watched failing: no `.nojekyll`, a `CNAME` naming a domain the pages do not
+link to, a missing workflow, a new dynamic endpoint, and a linked file left out
+of git.
+
+### What building it found
+
+The interesting part was not the layout. Pages serves **static files, over GET,
+and only what git tracks**, and reading the site against those three words turned
+up something the plan had not accounted for.
+
+`api/examples.php` is PHP on the host. `check-site-deps.py` already knew it was
+server-only, and the note in `PUBLISHING.md` already said an upload must merge
+rather than replace because of it. What nobody had said is what happens when
+there is no server to merge with.
+
+Asked directly, it answers 200 with 70,058 bytes of `application/json`: a
+catalogue of every example, `{"status": "ok", "data": [...]}`, with a name,
+description, category, level and download path for each. Nothing in it depends
+on the request — the applet posts `{}`.
+
+So it looks like a file. It is not, twice over. Pages runs no PHP, which is the
+obvious half; and **Pages answers no POST**, which is the half that matters,
+because it means a static `examples.json` sitting at that path would return 405
+to the applet exactly as reliably as the PHP would return 404.
+
+The applet has to ask by GET. That is three lines in
+`Website/assets/examples/ExamplesBrowser.bas`, and it is not a repair: the IDE
+fetches that file from the site on the first run of every installation, so
+changing it here changes what every install does. Shipped behaviour, and the
+author's call rather than mine.
+
+The two ebooks are the second blocker and a plainer one: about 68 MB of PDF,
+linked from the story on the front page, present on this disk, excluded by
+`.gitignore`. Pages serves what git tracks, so on the day of the switch they are
+404s. Git will hold 68 MB without complaint; it is a change in how they are
+handled and therefore a choice.
+
+### Recorded in a check rather than a note
+
+Both lists live in `check-pages.py`, and it fails in either direction: a new
+dynamic endpoint that nobody declared, a new linked file left out of git, or one
+of these settled and the record left stale. The reason is the same one that
+produced this whole month — a note saying "still open" outlives the thing it
+described, and nothing notices.
+
+Which had already happened. The plan carried an item reading *"Also still open:
+`StdLib` and `StrLib` reach FireMonkey"*, and they do not: they go through
+`HostServices` now, both hosts install all four services,
+`check-fmx-boundary.py` reports one unit reaching FMX and it is `TimerLib` by
+design, and `tests/suite/17_host_services.bas` covers it. The work was done and
+the note was not. Corrected.
