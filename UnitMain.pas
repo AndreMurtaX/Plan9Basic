@@ -2649,6 +2649,20 @@ const
     'PRINTLN "p9b-selftest end"' + sLineBreak +
     'END';
 
+  //BREAKPOINT is inert until trace is on, so proving anything about it means
+  //turning trace on around the one statement.
+  //
+  //Only where the VM may not park. Where it may -- the desktop IDE, which runs
+  //the VM on the UI thread and can pump a modal dialog from inside the wait --
+  //BREAKPOINT is supposed to stop and ask, and a self-test that stops and asks
+  //never finishes. The claim under test is the other one: where parking would
+  //hang the platform, the frame is reported and execution carries on.
+  SELFTEST_BREAKPOINT =
+    'TRACE 1' + sLineBreak +
+    'BREAKPOINT "selftest frame", a' + sLineBreak +
+    'TRACE 0' + sLineBreak +
+    'PRINTLN "  PASS breakpoint returned control"' + sLineBreak;
+
 //The IDE's own features, as opposed to the engine reached through it.
 //
 //Running a program proves the engine works. These are the things that are the
@@ -2768,7 +2782,13 @@ begin
   begin
     //One tick's grace so the window and the engine are up first.
     FSelfTestStarted := True;
-    FProgram.Text := SELFTEST_PROGRAM;
+    if CanPauseForHostDialog then
+      FProgram.Text := SELFTEST_PROGRAM
+    else
+      FProgram.Text := StringReplace(SELFTEST_PROGRAM,
+        'PRINTLN "p9b-selftest end"',
+        SELFTEST_BREAKPOINT + 'PRINTLN "p9b-selftest end"',
+        [rfReplaceAll]);
     CmdRun();
     Exit();
   end;

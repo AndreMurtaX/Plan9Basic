@@ -3916,3 +3916,82 @@ sections 45 and 46 in this document.
 What remains is a trap only for somebody who learns one library and assumes
 another: `rectangle_onmousedown` and `checkbox_onmousedown` hand over the same
 five values in different orders. The pages now say so, one library at a time.
+
+## 49. Android had not been broken; it had not been looked at
+
+The APK in the tree was dated 16 March. It predates the handle registry, the
+per-module state, the VM seam, and every one of the event repairs in sections
+45 and 46. Nobody had installed the IDE on a phone this year, so the platform
+had no verdict at all -- neither good nor bad, simply unmeasured. Had anyone
+installed it, they would have met the same dead GUI events the author met on
+the desktop.
+
+Packaging it again took four failures, and only the last was interesting.
+
+**Three were one lock.** `msbuild /t:Build;Deploy` stopped with `E0018 Unable to
+delete directory` on `assets/deployinfo`, then on `bin`, then on
+`Plan9Basic.classes`. `bin` was empty and still would not go, which is the
+signature of an open handle rather than a permission. It was `adb`, holding the
+output tree since some earlier install. Killing the process is not enough --
+the daemon restarts on demand -- and only `adb kill-server` released it. Three
+attempts were spent treating each directory as a fresh problem.
+
+**One was real.** `r8` then failed with `NoSuchFileException` on nine of the
+Android support libraries: `kotlin-stdlib-1.8.22`, `annotations-13.0`,
+`core-1.15.0` and six more. The project file listed the libraries of an older
+RAD Studio; the 37.0 installation ships `kotlin-stdlib-2.1.21`,
+`annotations-23.0.0`, `core-1.17.0`. Three of the nine have no successor
+because Kotlin 2.x folded `stdlib-common`, `-jdk7` and `-jdk8` into
+`kotlin-stdlib`, and two new ones arrived as dependencies of `core` 1.17.
+
+Both `EnabledSysJars` lists were rewritten by a script that refuses to write
+unless the result is *exactly* the set of jars the installation ships. That
+guard is what confirmed the reading: the stale list was the complete set of an
+earlier installation, so the corrected one is the complete set of this one.
+An upgrade of the IDE will break this again, and the same script will fix it.
+
+### The device now reports its own verdict
+
+The IDE self-test ran from a command-line switch, and an activity started by a
+launcher has no command line -- the one host most worth measuring was the one
+that could not be measured unattended. It now also starts when a file named
+`selftest.run` appears in the app's documents, which `adb` can place, and
+writes `ide-selftest.out` where `adb` can read it. The phone answered:
+
+    OK - the IDE ran a program and its own features hold
+      PASS arithmetic
+      PASS strings
+      PASS gui controls
+      PASS free reports success
+      PASS instr answers a position
+
+A false alarm along the way is worth recording, because it is the same mistake
+this document keeps finding: the trigger appeared to be ignored, and the
+suspicion fell on the app. The app was innocent. An earlier call in the same
+session had launched it already, so the second launch only brought a running
+activity to the front and `FormCreate` never ran again. The binary was checked
+for the literals -- present, UTF-16, as Delphi stores them -- before the actual
+cause was found in the sequence of commands, not in the code.
+
+### What BREAKPOINT proves, and where
+
+`BREAKPOINT` is inert while trace is off: it clears its arguments from the
+stack and returns. A check that merely executed it would prove nothing, so the
+self-test turns trace on around the single statement.
+
+With trace on the behaviour **diverges by host**, and that divergence is the
+whole point of section 2.3's open item. The desktop IDE runs the VM on the UI
+thread, `CanPauseForHostDialog` answers True, and `BREAKPOINT` is supposed to
+stop and ask -- a self-test that stops and asks never finishes. Android answers
+False, and the claim under test is that one: where parking would have the
+platform kill the process, the frame is reported and execution carries on.
+
+So the check is conditioned on the same predicate the engine consults. It runs
+on the phone and not on the desktop, and that is not a gap being hidden: on the
+desktop the correct behaviour requires a human finger, and no unattended run
+can supply one.
+
+What is still unmeasured on Android is touch. The self-test runs a program and
+reads the console; it presses nothing. Given that the two defects found this
+month were both about events reaching the interpreter, that limit is worth
+stating plainly rather than leaving for somebody to discover.
