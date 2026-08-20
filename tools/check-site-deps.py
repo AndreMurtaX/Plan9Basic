@@ -27,11 +27,12 @@ SITE = os.path.join(ROOT, 'Website')
 URL = re.compile(r'https?://(?:www\.)?plan9basic\.com/([A-Za-z0-9_./-]*)')
 
 # Paths served by the host that are not files in this tree, and why.
-SERVER_ONLY = {
-    'api/examples.php':
-        'a PHP endpoint on the host; its source has never been in this '
-        'repository, so an upload must merge rather than replace',
-}
+#
+# Empty since 2026-08-19. It held `api/examples.php`, a PHP endpoint whose
+# source was never here, which is why an upload had to merge rather than
+# replace. The Examples Browser now reads `api/examples.json`, a file in this
+# tree, so the site is entirely files again and an upload can be an upload.
+SERVER_ONLY = {}
 
 # Build output carries copies of tracked sources; the originals are checked.
 SKIP = ('Android64', 'Win64', 'Linux64', 'Win32', 'OSX64', 'dist', '__history')

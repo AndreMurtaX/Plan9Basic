@@ -1,10 +1,10 @@
 ﻿' =============================================================================
 ' Plan9BASIC Example Browser
-' Fetches and displays examples from https://plan9basic.com/api/examples.php
+' Fetches and displays examples from https://plan9basic.com/api/examples.json
 ' Downloads selected examples to the platform documents folder.
 '
 ' Uses:
-'   - HttpLib     : http_client#(), http_setheader#(), http_post$(), http_get$(), http_error(), http_errormsg$()
+'   - HttpLib     : http_client#(), http_get$(), http_error(), http_errormsg$()
 '   - JsonLib     : json_parse#(), json_get#(), json_len(), json_item#(), json_gets$()
 '   - StringGridLib : stringgrid#(), stringgrid_addcolumn#(), etc.
 '   - IOUtilsLib  : dir_exists(), dir_create(), path_combine$(), file_writealltext()
@@ -114,9 +114,10 @@ RETURN
 ' =============================================================================
 FUNCTION LoadExamples() LOCAL response$, parsed#, status$, count, i, item#, name$, desc$, cat$
   label_text#(statusLbl#, "Fetching example list from plan9basic.com ...")
-  PRINTLN "POST https://plan9basic.com/api/examples.php"
-  http_header#(http#, "Content-Type", "application/json")
-  response$ = http_post$(http#, "https://plan9basic.com/api/examples.php", "{}")
+  ' A file, fetched by GET. It was a PHP endpoint answering a POST, and
+  ' neither half of that is served by static hosting -- see docs/PUBLISHING.md.
+  PRINTLN "GET https://plan9basic.com/api/examples.json"
+  response$ = http_get$(http#, "https://plan9basic.com/api/examples.json")
   IF http_error() <> 0 THEN
     label_text#(statusLbl#, "Network error: " + http_errormsg$())
     PRINTLN "HTTP error: " + http_errormsg$()
@@ -127,7 +128,8 @@ FUNCTION LoadExamples() LOCAL response$, parsed#, status$, count, i, item#, name
     PRINTLN "Empty response received."
     RETURN 0
   END IF
-  ' Parse the outer envelope: { "status": "ok", "data": [...] }
+  ' Parse the outer envelope: { "status": "ok", "data": [...] } -- unchanged
+  ' from what the endpoint sent, so nothing below had to move.
   parsed# = json_parse#(response$)
   IF PntToNum(parsed#) = 0 THEN
     label_text#(statusLbl#, "Error: Could not parse server response as JSON.")

@@ -650,8 +650,19 @@ than a repair, and therefore the author's to take.
 The two ebooks are the second: 68 MB linked from the front page, on this disk,
 excluded by `.gitignore`, and 404 the moment Pages is what serves them.
 
-Both are recorded in `check-pages.py` rather than in a note, so the tree cannot
+Both were recorded in `check-pages.py` rather than in a note, so the tree cannot
 quietly grow a third.
+
+**The endpoint is settled, on the author's decision, 2026-08-19.** The catalogue
+is `Website/api/examples.json` — 97 records, the envelope and the field names
+exactly as the endpoint sent them, so nothing in the applet's parsing had to
+move — and `ExamplesBrowser.bas` GETs it. `check-examples-catalog.py` holds the
+catalogue against the directory it describes, and
+`tests/suite/18_examples_catalog.bas` walks the applet's own path over the real
+file. `SERVER_ONLY` and `DYNAMIC` are both empty now: the site is entirely
+files, and an upload can replace rather than merge.
+
+**The ebooks remain**, and they are the last thing between the tree and Pages.
 
 ### 4.5 Tell the story of the evolution
 

@@ -39,10 +39,21 @@ Those URLs are written in Pascal and BASIC source, not in an `href`, so
 `check-links.py` cannot see them — it reads pages. `tools/check-site-deps.py`
 asks the question it cannot, and `check-all.py` runs it.
 
-**`api/examples.php` is not in this repository.** It is PHP on the host and its
-source has never been here, so **an upload must merge rather than replace.**
-Wiping the document root and copying `Website/` over it removes that endpoint
-and breaks the Examples Browser for everyone.
+**`api/examples.php` used to make this a merge rather than a replace.** It was
+PHP on the host, its source was never here, and wiping the document root would
+have removed it. Since 2026-08-19 the Examples Browser reads
+`api/examples.json`, a file in this tree, so **the site is entirely files and an
+upload can replace.** The PHP endpoint can stay where it is or go; nothing asks
+it anything.
+
+**Upload `api/examples.json` before or with the applet, never after.** They are
+two files that changed together: `assets/examples/ExamplesBrowser.bas` now GETs
+the JSON, and the IDE fetches that applet from this site on the first run of
+every installation. An upload carrying the applet without the catalogue gives
+every fresh install a 404 where its example list should be.
+`tools/check-examples-catalog.py` keeps the catalogue and the directory it
+describes in step; nothing but this paragraph keeps them in step with the
+upload.
 
 ## Upload
 

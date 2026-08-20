@@ -33,12 +33,12 @@ SITE = os.path.join(ROOT, 'Website')
 FLOW = os.path.join(ROOT, '.github', 'workflows', 'pages.yml')
 
 #Referenced paths the host executes rather than serves. Pages runs nothing.
-DYNAMIC = {
-    'api/examples.php':
-        'the Examples Browser applet POSTs to it for its catalogue. Pages '
-        'answers no POST and runs no PHP, so this needs a static catalogue '
-        'and an applet that GETs it',
-}
+#
+#Empty since 2026-08-19, and it was emptied rather than waived: `api/examples.php`
+#was the one entry, and the Examples Browser now GETs `api/examples.json` from
+#this tree instead. `tools/check-examples-catalog.py` keeps that file and the
+#directory it describes in step.
+DYNAMIC = {}
 
 #Linked from a page, present on this disk, and not in git. Pages serves what
 #git tracks, so on Pages these are 404 until they are committed.

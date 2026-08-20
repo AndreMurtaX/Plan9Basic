@@ -19,6 +19,8 @@ made it.
     the Pages layout         check-pages.py     is the tree laid out the way
                                                 Pages expects, and what would
                                                 not survive the switch
+    the examples catalogue   check-examples-catalog  does the list the browser
+                                                reads match the files beside it
 
 Everything here is read-only. The generators that write files --
 gen-doc-examples.py and check-doc-blocks.py --baseline -- are run by hand, since
@@ -77,6 +79,7 @@ def main():
         ('callbacks', tool('check-callbacks.py'), False),
         ('site examples', tool('check-site-examples.py'), False),
         ('pages layout', tool('check-pages.py'), False),
+        ('examples catalogue', tool('check-examples-catalog.py'), False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]
