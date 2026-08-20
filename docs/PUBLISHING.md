@@ -96,8 +96,45 @@ makes the drift less likely rather than impossible. The intended end state is
 that the repository *is* the site: GitHub Pages serving `Website/` directly, so
 publishing is a consequence of the push that already happens.
 
-That waits on the repository being public, which is the last step of the project
-(PLAN 3.5). It also needs a decision about the two ebooks: served from the
-repository, they have to be *in* the repository. 65 MB is not a problem for git,
-but it is a change from how they are handled now, so it is a choice rather than
-an assumption.
+### What is already committed, and inert
+
+- `Website/CNAME` — `plan9basic.com`, so the domain follows rather than the
+  `github.io` address
+- `Website/.nojekyll` — Pages runs Jekyll otherwise, which drops any path
+  beginning with an underscore
+- `.github/workflows/pages.yml` — runs `check-all.py --quick` and then uploads
+  `Website/` as the document root
+
+None of it does anything until the repository is public and Pages is enabled.
+It is committed early so it can be reviewed while nothing depends on it: the day
+the switch is thrown should be a switch and not a project.
+
+`tools/check-pages.py` checks that layout, and `check-all.py` runs it.
+
+### What the switch would break, today
+
+Pages serves **static files, over GET, and only what git tracks**. Three
+consequences, and the first is the one nobody had written down:
+
+**`api/examples.php` stops existing.** It is PHP, and Pages runs nothing. It
+answers the Examples Browser applet with a 70 KB catalogue of every example, and
+the applet asks by `http_post$` with an empty body. Pages answers no POST at
+all, so a static `examples.json` would not stand in for it either — the applet
+has to ask by GET. The applet is fetched from this site on first run, so
+correcting it here corrects it for every installation; that is a change to
+shipped behaviour and therefore a decision, not a repair.
+
+**The two ebooks become 404s.** About 68 MB of PDF, linked from the story on the
+front page, present on this disk and excluded by `.gitignore`. Served from the
+repository, they have to be *in* the repository. Git handles 68 MB, but it is a
+change from how they are handled now.
+
+**Nothing merges any more.** The FTP procedure above says an upload must merge
+rather than replace, because `api/examples.php` lives only on the host. Under
+Pages there is no merge: the artifact *is* the site. That is the point, and it
+is also why the endpoint has to be settled first rather than afterwards.
+
+`check-pages.py` holds both lists. They are not a to-do; they are what is true,
+and the check fails when the tree stops matching them — a new dynamic endpoint,
+a new linked file left out of git, or one of these settled and the record not
+updated.

@@ -1,0 +1,66 @@
+# Serve Website/ from GitHub Pages.
+#
+# Inert until the repository is public and Pages is enabled (PLAN 3.5). It is
+# committed early on purpose: everything on this side can be reviewed and
+# corrected while nothing depends on it, so the day the switch is thrown is a
+# switch and not a project.
+#
+# Two things on the live site would not survive this unchanged, and
+# tools/check-pages.py is what says so out loud:
+#
+#   api/examples.php   PHP, and Pages serves static files only. The Examples
+#                      Browser applet POSTs to it, and Pages answers no POST
+#                      at all, so a static file would not stand in for it
+#                      either.
+#   assets/ebooks/     two PDFs, about 65 MB, linked from the front page and
+#                      never committed. Pages serves what is committed, so
+#                      they have to enter the repository or stop being linked.
+#
+# Until both are settled, enabling this would take the site backwards, which is
+# the failure PLAN 4.6 exists to prevent.
+name: Publish the site
+
+on:
+  push:
+    branches: [main]
+    paths: ['Website/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time, and let a running one finish: a half-uploaded site is
+# the state this whole item exists to avoid.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The checks that read files rather than compile: they are what stands
+      # between a correction and a page that contradicts it.
+      - run: python tools/check-all.py --quick
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      # Website/ is the document root. The directory itself is not part of the
+      # path, so index.html lands at the root.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: Website
+      - id: deployment
+        uses: actions/deploy-pages@v4

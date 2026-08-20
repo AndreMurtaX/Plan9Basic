@@ -630,6 +630,29 @@ over a credential: making the repository public, enabling Pages, and pointing
 the domain's DNS at GitHub. Everything on this side — workflow, `CNAME`, the
 layout Pages expects — can be committed before any of it, and sit inert.
 
+**The inert half is in, 2026-08-19.** `Website/CNAME`, `Website/.nojekyll` and
+`.github/workflows/pages.yml`, which runs `check-all.py --quick` and then
+uploads `Website/` as the document root. `tools/check-pages.py` holds the layout
+and `check-all.py` runs it; all five ways it can fail were watched failing.
+
+**And building it named a blocker nobody had.** Pages serves static files, over
+GET, and only what git tracks.
+
+`api/examples.php` is PHP on the host, and the Examples Browser applet asks it
+for its catalogue with `http_post$` and an empty body. Under Pages the endpoint
+does not run — and because Pages answers no POST at all, a static
+`examples.json` would not stand in for it either. The applet has to ask by GET.
+
+It is fetched from the site on first run of every installation, so correcting it
+here corrects it everywhere, which makes it a change to shipped behaviour rather
+than a repair, and therefore the author's to take.
+
+The two ebooks are the second: 68 MB linked from the front page, on this disk,
+excluded by `.gitignore`, and 404 the moment Pages is what serves them.
+
+Both are recorded in `check-pages.py` rather than in a note, so the tree cannot
+quietly grow a third.
+
 ### 4.5 Tell the story of the evolution
 
 **Done 2026-08-19.** The front page already had a story section with two blocks,
@@ -692,9 +715,13 @@ So the ordering matters. 2.3 built for one host that must satisfy both
 platforms is harder than 2.3 built for two hosts that each satisfy one, and some
 of what makes it hard would simply not arise.
 
-**Also still open:** `StdLib` and `StrLib` reach FireMonkey for
-`processmessages()`, `handlemessage()` and the clipboard (ANALYSIS §12). They
-want host callbacks, and they belong with 2.3 rather than before it.
+**~~Also still open:~~ Closed with 2.3, and this note outlived it.** `StdLib`
+and `StrLib` reached FireMonkey for `processmessages()`, `handlemessage()` and
+the clipboard (ANALYSIS §12). They now go through `engine/utils/HostServices.pas`
+— four procedure variables, unassigned meaning the service does not exist — and
+both hosts install all four. `check-fmx-boundary.py` reports one unit reaching
+FMX, `TimerLib`, which is a GUI library by design. `tests/suite/17_host_services.bas`
+covers it.
 
 ---
 
