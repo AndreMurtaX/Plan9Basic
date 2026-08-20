@@ -3694,16 +3694,28 @@ the first probe used `onresize`, which failed even on `arc` — a programmatic
 resize does not raise it — and without a control that works, that would have
 read as "arc is broken too".
 
-### What could not be proved, and was not asserted
+### What could not be proved -- and was, once the author pushed
 
-After the repair `trackbar_onchange` still does not fire. The value does move,
-0 to 42 inside a 0..100 range, and `ControlCommon.CallbackCore` exits silently
-on `not Assigned(Engine)` **and** stays silent when FMX simply never raises the
-event. From BASIC the two are indistinguishable.
+`trackbar_onchange` still did not fire after the repair. `CallbackCore` exits
+silently on a nil engine **and** stays silent when FMX never raises the event,
+so from BASIC the two are indistinguishable, and the assertion was left out
+rather than left green.
 
-So the assertion was removed rather than left green. It is written into
-`tests/gui/11_form_events.bas` as an open question. A passing assertion there
-would be me manufacturing an answer I do not have.
+The author asked whether Embarcadero's own sources were worth reading properly.
+They were, and they answered a different question than the one asked.
+
+`TValueRangeTrack.DoChanged` calls `FTrack.DoTracking`, so a programmatic write
+raises **`OnTracking`** first, and `OnChange` follows through `DoAfterChange`.
+Real, and not the explanation: measured, **neither** fired, which did not match
+the reading.
+
+**Because the repair had broken it.** `ProgressBarLib` and `TrackBarLib` assign
+the parent inside an `if/else` -- one branch for a form, one for a control --
+and the automated move put the engine lookup after the *first* `Parent :=` it
+found, which is inside the `else`. It compiled. Whenever the parent was a form,
+the lookup was skipped entirely.
+
+Corrected, both events fire, and both are asserted. See section 46.
 
 ### What holds it now
 
@@ -3724,3 +3736,68 @@ expensive: **a silent exit is indistinguishable from nothing to do.** Every one
 of those was found by running something rather than reading it, and this one
 needed a person at a keyboard because the last mile is a key press. The suite
 now covers the mile before it.
+
+
+## 46. The repair broke two of the seven, and the check said nothing
+
+Written 2026-08-20, closing the open question section 45 left.
+
+### An automated move that could not see a branch
+
+Section 45 reordered 17 sites so the engine lookup came after the parent was
+set. The script moved the block to just after the first `X.Parent :=` line it
+found within the window. In four of them that line is **inside an `else`**:
+
+```pascal
+if TObject(Args[0].p) is TCommonCustomForm then
+  tb.Parent := TCommonCustomForm(Args[0].p)
+else
+begin
+  ParentObj := TFmxObject(Args[0].p);
+  tb.Parent := ParentObj;
+  if EngineOf(tb, Eng, Outp) then ...   <- landed here
+end;
+```
+
+Valid Pascal, so it built. A trackbar or progress bar parented to a **form** --
+the ordinary case, and the one every test uses -- skipped the lookup entirely
+and kept the nil engine section 45 was written to remove.
+
+`Label`, `Layout`, `Panel` and `Rectangle` have no branch there and came out
+correct, which is why the form-level test passed and hid it.
+
+### And the check I had just written passed on it
+
+`tools/check-engine-lookup.py` reported *ok, 74 constructions* over the broken
+tree. It counted `begin`/`end` to know whether the lookup sat inside a branch,
+and the pattern it counted with was `begin`.
+
+The generator wrote `''` inside an ordinary Python string, where `` is the
+**backspace escape**, not a regular-expression word boundary. The check was
+looking for a control character. It matched nothing, depth stayed 0, and every
+site read as sound.
+
+That is the third form the same rule has taken in this project -- a heredoc
+eating a backslash -- and the first where the casualty was a checker rather than
+an edit. Rebuilt with `chr(92)`, it now names all four sites in the commit that
+introduced them, and clears the corrected tree.
+
+### The answer, finally
+
+With the lookup outside the branch, **both** trackbar events fire:
+`ontracking` on the write and `onchange` after it. The FMX reading in section 45
+was correct about the order and irrelevant to the symptom; the symptom was mine
+throughout.
+
+`tests/gui/11_form_events.bas` asserts both, and is at eight assertions.
+
+### What this cost, and what it is worth
+
+Four turns and two wrong explanations -- FMX semantics, then an unprovable
+question -- to reach a defect I had introduced twenty minutes earlier while
+fixing a defect I had introduced in Phase 2.2.
+
+The pattern is worth stating plainly. **An automated edit that does not
+understand structure will produce something that compiles**, and a check written
+in the same sitting is written by the same mistaken hand. The verification that
+caught it was neither: it was running the thing and not believing the reading.
