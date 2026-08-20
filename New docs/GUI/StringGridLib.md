@@ -170,8 +170,8 @@ form_show(frm#)
 
 | Function | Description |
 |----------|-------------|
-| `stringgrid_sort(grid#, col, ascending)` | Sort by column (text) |
-| `stringgrid_sortnum(grid#, col, ascending)` | Sort by column (numeric) |
+| `stringgrid_sort(grid#, col, descending)` | Sort by column (text). **0 sorts A to Z**, non-zero reverses. |
+| `stringgrid_sortnum(grid#, col, descending)` | Sort by column (numeric). **0 sorts low to high**, non-zero reverses. |
 
 ### Clipboard
 

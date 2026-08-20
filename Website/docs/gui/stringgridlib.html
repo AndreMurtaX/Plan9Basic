@@ -738,8 +738,8 @@ body::after {
 <section class="doc-section" id="sorting">
 <h2>Sorting</h2>
 <div class="table-wrap"><table><thead><tr><th>Function</th><th>Signature</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>stringgrid_sort(grid#, col, asc)</code></td><td><code>stringgrid_sort@#nn</code></td><td>Sort by column using text (alphabetical) comparison</td></tr>
-<tr><td><code>stringgrid_sortnum(grid#, col, asc)</code></td><td><code>stringgrid_sortnum@#nn</code></td><td>Sort by column using numeric comparison</td></tr>
+<tr><td><code>stringgrid_sort(grid#, col, desc)</code></td><td><code>stringgrid_sort@#nn</code></td><td>Sort by column using text (alphabetical) comparison. <strong>0 sorts A to Z</strong>; a non-zero value reverses it.</td></tr>
+<tr><td><code>stringgrid_sortnum(grid#, col, desc)</code></td><td><code>stringgrid_sortnum@#nn</code></td><td>Sort by column using numeric comparison. <strong>0 sorts low to high</strong>; a non-zero value reverses it.</td></tr>
 </tbody></table></div>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Sort by name alphabetically (ascending)</span>
 <span class="fn">stringgrid_sort</span>(grid#, <span class="num">0</span>, <span class="num">1</span>)

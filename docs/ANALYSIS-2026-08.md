@@ -4288,3 +4288,55 @@ What is left needs a decision rather than more writing:
 And a tier that still needs only writing: `StringGridLib` 60/110, `PathLib`
 78/104, `ListBoxLib`, `ComboBoxLib`, `ImageLib`, `MemoLib`, `TimerLib` 0/15 --
 all mapped already by the applets.
+
+## 54. The applet was the authority, and it stopped a repair
+
+`StringGridLib` 60/110 to 110/110 and `TimerLib` 0/15 to 15/15. The surface
+crosses 90%.
+
+### What nearly went wrong
+
+`stringgrid_sort` reads its third argument as `Ascending := Args[2].n = 0`, so
+**zero sorts A to Z** and non-zero reverses. Every page describing it names that
+argument `ascending`, `asc` or `sortAsc` -- a flag called "ascending" that sorts
+ascending when you pass false.
+
+That is exactly the shape of the defects this document has been recording, and
+the repair was obvious: make the code match the name. It would have been wrong.
+`Examples/66_StringGrid_NewFeatures_Demo.bas` reads
+
+    stringgrid_sort(grid#, 1, 0)  ' Column 1 (Name), Ascending
+
+so the author knew the convention when the demo was written. The code and the
+program agree; only the documentation is wrong, and the fix is to the pages.
+They now say **descending**, and spell out that 0 sorts A to Z.
+
+Section 50 recorded an applet catching an over-correction after the fact. This
+one caught it before, and the difference matters: the suites would have gone
+green on the inverted version, because the suites are written from the same
+reading of the documentation that produced the mistake. A program somebody
+actually ran is the only thing in the repository that carries the original
+intent.
+
+### Two conventions, both worth writing down
+
+**Cell accessors take the COLUMN first**: `stringgrid_cell$(grid#, col, row)`,
+not row and then column. Every one of the six typed accessors is the same way
+round. This file had them backwards on its first run and read a progress value
+out of a text cell -- no error, just the wrong number, which is the failure mode
+that survives a test suite.
+
+**A control can hold the focus with no window on screen.** `stringgrid_focus`
+followed by `stringgrid_isfocused` answers true on a form that was never shown:
+focus belongs to the form, not to the desktop.
+
+### TimerLib, and what a timer cannot be asked here
+
+15/15, and none of them is that a timer fires. `OnTimer` arrives on the message
+loop and this runner has none to pump, so a test that waited for a tick would
+wait forever. The file covers the object -- interval, enabled, tag, handler
+name, the three verbs, the handle guard -- and says at its head that the firing
+belongs to the applets, where a window is running.
+
+`TimerLib` is also the one non-drawing library that genuinely reaches FireMonkey,
+which `check-fmx-boundary.py` has reported all along: a timer is a `TTimer`.
