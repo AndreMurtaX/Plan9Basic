@@ -26,6 +26,9 @@ const
   // Update these to match your actual hosting location before distribution.
   URL_TRANSLATIONS = 'https://www.plan9basic.com/assets/devenv/Translations.ini';
   URL_EXAMPLES_BROWSER = 'https://www.plan9basic.com/assets/examples/ExamplesBrowser.bas';
+  //Chosen so no file on disk can answer to it: a real name never starts with
+  //a colon, and the picker only ever offers names it read from the directory.
+  PICK_EXAMPLES = ':examples';
 
 type
   TInterfaceMode = (imCommand, imEditor);
@@ -292,6 +295,9 @@ type
     procedure PopulateFilePicker(ACallback: TProc<string>);
     procedure HideFilePicker();
     procedure FilePickerItemClick(Sender: TObject);
+    //The row that opens the online catalogue rather than a file on disk. A
+    //name no file can have, because a real one would collide with it.
+    procedure AddExamplesRow(AFontFamily: String; AFontSize, AItemH: Single);
     procedure FilePickerCloseClick(Sender: TObject);
 
     function IsKeyword(const Word: string): Boolean;
@@ -1172,7 +1178,17 @@ begin
       PopulateFilePicker(
         procedure(AFilename: string)
         begin
-          if AFilename <> '' then
+          if AFilename = '' then
+            Exit();
+          //The catalogue row loads the browser AND runs it. Loading alone would
+          //leave somebody looking at a program when what they asked for was the
+          //list it fetches.
+          if AFilename = PICK_EXAMPLES then
+          begin
+            CmdLoad('ExamplesBrowser.bas');
+            CmdRun();
+          end
+          else
             CmdLoad(AFilename);
         end);
     end);
@@ -1311,7 +1327,10 @@ begin
     Exit();
   end;
 
-  if Length(Files) = 0 then
+  //An empty directory used to close the picker before it opened, which on a
+  //fresh install is exactly when somebody most needs the catalogue.
+  if (Length(Files) = 0) and
+     not System.IOUtils.TFile.Exists(System.IOUtils.TPath.Combine(GetBasePath(), 'ExamplesBrowser.bas')) then
   begin
     PrintLn(_('NoBasFilesFound'));
     PrintReady();
@@ -1383,6 +1402,10 @@ begin
     Btn.OnClick := FilePickerItemClick;
   end;
 
+  //Added last so that Align := Top puts it first: FireMonkey stacks
+  //top-aligned children in reverse order of creation.
+  AddExamplesRow(FontFamily, FontSize, ItemH);
+
   // Show the overlay
   FLayoutFilePicker.Visible := True;
   FLayoutFilePicker.BringToFront;
@@ -1392,6 +1415,38 @@ begin
   LayoutConsole.Enabled := False;
   LayoutEditor.Enabled := False;
   LayoutInput.Enabled := False;
+end;
+
+//A row that is not a file. It sits above the list, says what it does, and
+//runs the browser rather than loading it -- which is the difference between
+//"here is a program about examples" and "here are the examples".
+procedure TfrmMain.AddExamplesRow(AFontFamily: String; AFontSize, AItemH: Single);
+var
+  Btn: TSpeedButton;
+  T: TThemeColors;
+begin
+  //Only when the browser is actually there. It arrives on the first run with a
+  //network, and offering a row that cannot work is worse than offering none.
+  if not System.IOUtils.TFile.Exists(System.IOUtils.TPath.Combine(GetBasePath(), 'ExamplesBrowser.bas')) then
+    Exit();
+
+  T := FThemes[FCurrentTheme];
+  Btn := TSpeedButton.Create(FScrollFilePicker);
+  Btn.Parent := FScrollFilePicker;
+  Btn.Align := TAlignLayout.Top;
+  Btn.Height := AItemH;
+  Btn.StyledSettings := [];
+  Btn.TextSettings.Font.Family := AFontFamily;
+  Btn.TextSettings.Font.Size := AFontSize;
+  Btn.TextSettings.Font.Style := [TFontStyle.fsBold];
+  Btn.TextSettings.FontColor := T.Foreground;
+  Btn.TextSettings.HorzAlign := TTextAlign.Leading;
+  Btn.Margins.Left := 5;
+  Btn.Margins.Right := 5;
+  Btn.Margins.Top := 1;
+  Btn.Text := '  ' + _('FilePickerExamplesRow');
+  Btn.TagString := PICK_EXAMPLES;
+  Btn.OnClick := FilePickerItemClick;
 end;
 
 procedure TfrmMain.HideFilePicker();
@@ -2678,6 +2733,24 @@ var
   WelcomeLines: Integer;
 begin
   Result := '';
+
+  //--- the catalogue row is offered exactly when it can work ---
+  //
+  //The row itself is built with the picker on screen and chosen by a tap, so
+  //neither can be reached from here. What can: the condition it hangs on, and
+  //the sentinel it carries. A sentinel that a real file could answer to would
+  //send somebody to the catalogue when they asked for their own program.
+  if PICK_EXAMPLES = '' then
+    Exit('the catalogue sentinel is empty');
+  if System.IOUtils.TPath.GetFileName(PICK_EXAMPLES) = PICK_EXAMPLES then
+    if System.IOUtils.TPath.HasValidFileNameChars(PICK_EXAMPLES, False) then
+      Exit('the catalogue sentinel is a name a file could have');
+
+  //And the file it stands for is the one EnsureRequiredFiles fetches, so a
+  //rename on either side stops the row being offered rather than offering one
+  //that opens nothing.
+  if not URL_EXAMPLES_BROWSER.EndsWith('/ExamplesBrowser.bas') then
+    Exit('the browser url and the file the picker looks for have parted');
 
   //--- the editor and the program buffer are two copies of one thing ---
   FProgram.Text := 'PRINTLN "one"' + sLineBreak + 'PRINTLN "two"';
