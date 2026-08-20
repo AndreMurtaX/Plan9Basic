@@ -115,6 +115,9 @@ type
     FCurrentTheme: TColorTheme;
     FThemes: array[TColorTheme] of TThemeColors;
     FConsole: TBasicConsole;
+    //How many lines the welcome block left behind, so a later reprint can tell
+    //whether anything has been added since. See PrintWelcomeBlock.
+    FWelcomeLines: Integer;
 
     // --- Self-test ---------------------------------------------------------
     // Run with --selftest and the IDE loads a program, runs it, checks its own
@@ -264,6 +267,11 @@ type
     procedure Print(const Text: string);
     procedure PrintLn(const Text: string = '');
     procedure PrintReady();
+    //The banner, in one place, because it is printed twice: at startup and
+    //again if translations arrive afterwards.
+    procedure PrintWelcomeBlock();
+    //True while the console still holds exactly what PrintWelcomeBlock left.
+    function ConsoleHoldsOnlyWelcome(): Boolean;
     procedure PrintError(const Msg: string);
     procedure PrintSyntaxError();
 
@@ -632,15 +640,7 @@ begin
   Console.Visible := False;
 
   // Welcome message
-  PrintLn('Plan9 BASIC v' + VERSION);
-  {$IF Defined(ANDROID) or Defined(IOS)}
-  PrintLn(_('WelcomeMobileTip'));
-  {$ELSE}
-  PrintLn(_('WelcomeDesktopTip'));
-  {$ENDIF}
-  PrintLn(_('WelcomeModeTip'));
-  PrintLn();
-  PrintReady();
+  PrintWelcomeBlock();
 
   UpdateStatusBar();
   edtCommand.SetFocus();
@@ -2405,13 +2405,19 @@ begin
               LanguageManager := TTranslationManager.Create(TransPath);
               // Refresh all translated UI elements (toolbar, status bar, hints)
               RefreshTranslatedUI();
-              // Reprint the welcome block now that translations are available
-              CmdCls();
-              PrintLn('Plan9 BASIC v' + VERSION);
-              PrintLn(_('WelcomeDesktopTip'));
-              PrintLn(_('WelcomeModeTip'));
-              PrintLn();
-              PrintReady();
+              // Reprint the welcome block in the language that just arrived --
+              // but only while reprinting cannot cost anything. This runs on
+              // the first launch of a fresh installation, which is also when
+              // somebody is most likely to be typing at it, and it used to
+              // clear the console unconditionally: run a program while the
+              // download is in flight and your output went with the banner.
+              // Nobody chose that; it was a side effect of reprinting a header.
+              if ConsoleHoldsOnlyWelcome() then
+              begin
+                CmdCls();
+                PrintWelcomeBlock();
+              end;
+              // Said either way, because it is news in both cases.
               PrintLn(_('TranslationsLoaded'));
             end;
           end);
@@ -2635,6 +2641,7 @@ function TfrmMain.SelfTestFeatures(): String;
 var
   Original, RoundTripped: String;
   TempName: String;
+  WelcomeLines: Integer;
 begin
   Result := '';
 
@@ -2697,6 +2704,36 @@ begin
     Exit('replace all left an occurrence behind: ' + Editor.Text);
   if Pos('zz bb zz', Editor.Text) = 0 then
     Exit('replace all produced: ' + Editor.Text);
+
+  //--- arriving translations must not take the console with them ---
+  //On the first launch of a fresh installation the IDE downloads
+  //Translations.ini and reprints its banner in the new language. It used to
+  //clear the console to do it, so a program run while the download was in
+  //flight lost its output -- to a user as much as to this test, which is how
+  //it was found (ANALYSIS 26). The reprint now asks first, and this is that
+  //question, put both ways.
+  //
+  //The console holds this test's program output right now, so the answer has
+  //to be no.
+  if ConsoleHoldsOnlyWelcome() then
+    Exit('the console holds ' + IntToStr(FConsole.Lines.Count) +
+         ' line(s) of program output and still reports itself untouched');
+
+  WelcomeLines := FWelcomeLines;
+  try
+    //And yes exactly when nothing has been added since the banner.
+    FWelcomeLines := FConsole.Lines.Count;
+    if not ConsoleHoldsOnlyWelcome() then
+      Exit('nothing has been printed since the banner and it still refuses ' +
+           'to reprint');
+
+    //One more line, and it refuses again.
+    PrintLn('p9b-selftest: a line the banner did not print');
+    if ConsoleHoldsOnlyWelcome() then
+      Exit('a line was printed after the banner and it did not notice');
+  finally
+    FWelcomeLines := WelcomeLines;
+  end;
 end;
 
 procedure TfrmMain.SelfTestTick(Sender: TObject);
@@ -3865,6 +3902,27 @@ procedure TfrmMain.PrintReady();
 begin
   PrintLn(_('ReadyMsg'));
   PrintLn('');
+end;
+
+procedure TfrmMain.PrintWelcomeBlock();
+begin
+  PrintLn('Plan9 BASIC v' + VERSION);
+  {$IF Defined(ANDROID) or Defined(IOS)}
+  PrintLn(_('WelcomeMobileTip'));
+  {$ELSE}
+  PrintLn(_('WelcomeDesktopTip'));
+  {$ENDIF}
+  PrintLn(_('WelcomeModeTip'));
+  PrintLn();
+  PrintReady();
+  //Remembered so a later reprint can tell whether the console still holds
+  //only this, or whether somebody has used the thing in the meantime.
+  FWelcomeLines := FConsole.Lines.Count;
+end;
+
+function TfrmMain.ConsoleHoldsOnlyWelcome(): Boolean;
+begin
+  Result := (FConsole <> nil) and (FConsole.Lines.Count = FWelcomeLines);
 end;
 
 procedure TfrmMain.PrintError(const Msg: string);
