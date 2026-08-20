@@ -90,6 +90,7 @@ def main():
         ('event binding', tool('check-event-binding.py'), False),
         ('generated suites', [sys.executable, os.path.join(ROOT, 'tests', 'gen_property_suite.py'), '--check'], False),
         ('generated effects', [sys.executable, os.path.join(ROOT, 'tests', 'gen_effects_suite.py'), '--check'], False),
+        ('generated lifecycle', [sys.executable, os.path.join(ROOT, 'tests', 'gen_lifecycle_suite.py'), '--check'], False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]
