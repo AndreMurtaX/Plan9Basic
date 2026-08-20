@@ -3801,3 +3801,41 @@ The pattern is worth stating plainly. **An automated edit that does not
 understand structure will produce something that compiles**, and a check written
 in the same sitting is written by the same mistaken hand. The verification that
 caught it was neither: it was running the thing and not believing the reading.
+
+
+## 47. Confirmed by somebody playing it
+
+Written 2026-08-20. The author ran `flappy_bird` and reported a score of 13 with
+the game-over screen up.
+
+### What one screenshot proves that the suite cannot
+
+A score of 13 is not one assertion, it is the whole chain in sequence:
+
+- **the keyboard** started the game and flapped, thirteen gaps' worth
+- **the timer** ran `GameLoop` on every frame, so `timer_ontimer` reaches the
+  interpreter across the thread the host runs the VM on
+- pipes spawned, moved, and were recycled off-screen
+- **collision** ended the run, which means the geometry reads back what it wrote
+- the score label updated and the high score was kept
+
+Sections 45 and 46 fixed the delivery and pinned everything up to the dispatcher.
+The last step — a real key, from a real keyboard, into a real window, driving a
+real game loop — is the one no headless test reaches, and it is the one that had
+been broken since Phase 2.2 without anything noticing.
+
+### What it does not prove
+
+The suite runs the nine games to completion, which shows they build and finish,
+not that they play. This screenshot shows one of them playing. The other eight
+share every mechanism it used and none has been played since the repair.
+
+Sound is still missing for six of the twenty files `snake` and `space_invaders`
+ask for, which is silent by design and unrelated.
+
+### The diagnostic that found it, kept
+
+`Demos/_keytest.bas` is committed rather than left loose. It was written to
+bisect this, deleted once as redundant when the headless test landed -- and it
+was not redundant, because the headless test stops exactly where this one
+starts. It counts keys and clicks, which are the two paths that were dead.
