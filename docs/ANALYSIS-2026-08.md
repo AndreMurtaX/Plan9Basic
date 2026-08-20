@@ -208,6 +208,29 @@ See section 7.
 
 ### 3.8 Massive boilerplate in the GUI libraries
 
+**Measured again 2026-08-19, and this entry understated it.** The effects half
+moved and the wrappers did not, and the wrappers are where the code is.
+
+| | units | lines | share |
+|---|---|---|---|
+| control wrappers (`Libs/GUI/` outside `Effects/`) | 29 | 78,836 | 51% |
+| engine | | 27,837 | 18% |
+| effects (`Libs/GUI/Effects/`) | 65 | 25,100 | 16% |
+| other libraries | | 13,845 | 9% |
+| host, tests, runner | | 7,970 | 5% |
+| **total** | | **153,588** | |
+
+The effects were the part Front 5 took: all 64 units now share
+`EffectCommon.pas`, 193 lines, and the total came down from 27,184 to 24,907.
+
+The wrappers are 28 `*Lib.pas` files from 566 to 3,560 lines, and they are
+**51% of the project on their own** — not the parenthesis this entry gave them.
+Together with the effects it is 68%, where the entry said half. That is the
+Phase 5 boundary, and the number is the argument for it being a boundary rather
+than an oversight.
+
+*(original entry below)*
+
 64 effect units total 27,184 lines. Comparing any two, about 95% of the content
 is identical up to names. The same holds for the control wrappers (2,000 to
 3,600 lines each, mostly property `get`/`set`). Half the project is code that
@@ -2966,6 +2989,21 @@ the state itself were the defect.
 `tools/check-module-state.py`, failing in both directions: a unit that declares
 one of these and never reads it, and a name in its list that has stopped
 reading. Watched failing both ways, plus a unit reading it without being listed.
+
+### 3.8 was measured too, and was wrong the other way
+
+While in section 3, the last entry without a resolution on it. It says 64 effect
+units total 27,184 lines and puts the control wrappers in a parenthesis, then
+concludes that half the project is code a generator would produce.
+
+The effects are 24,907 lines now and all 64 share `EffectCommon.pas`, which is
+Front 5's work and this entry never learned about. The wrappers are 78,836
+lines, **51% of the project by themselves**, and with the effects 68%.
+
+So the entry was stale about the half that had been repaired and understated the
+half that had not — and the understatement is the one that matters, because it
+is the argument for Phase 5 being a boundary rather than an omission, and it was
+filed in brackets.
 
 ### The sixth of these in two days
 
