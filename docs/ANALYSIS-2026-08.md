@@ -1419,12 +1419,22 @@ and worth guarding — the interpreter running in a program with no form, no
 `Application` and no window, `INPUT` included, reading stdin through the host
 callback that replaced the FMX dialog. That was always what it proved.
 
-**Left as named work, not fixed here.** `StdLib` and `StrLib` want the
-treatment `PrintProc` and `InputProc` already got: a host callback, so the
-engine asks for a clipboard or a message pump rather than reaching for one.
-Both belong with the deferred 2.3 flip rather than with a repository move —
+~~**Left as named work, not fixed here.**~~ **Done with 2.3, and this
+paragraph outlived it.** `StdLib` and `StrLib` wanted the treatment `PrintProc`
+and `InputProc` already had: a host callback, so the engine asks for a clipboard
+or a message pump rather than reaching for one. They were left here because
 `processmessages()` is *literally* a question about which thread owns the
-message loop, and answering it twice would be wasted work.
+message loop, so answering it before the flip would have been wasted work.
+
+The flip happened, and so did this. `engine/utils/HostServices.pas` holds four
+procedure variables — `SetClipboardText`, `GetClipboardText`, `PumpMessages`,
+`HandleOneMessage` — where unassigned means the service does not exist rather
+than that something failed. Both hosts install all four.
+`tests/suite/17_host_services.bas` pins the empty answer, which is the case that
+would otherwise be an access violation on a nil procedure.
+
+Corrected 2026-08-19, along with the identical note in the plan. See section
+32.
 
 **The lesson**, since this is the second time this pass that running something
 contradicted reading it: a check is not evidence until it has been seen to
@@ -1995,11 +2005,17 @@ dialog opened blank the first time, raised through `Synchronize`. The reasoning:
 through a callback — so there is nothing for the worker to wait for, and holding
 it inside the dialog's construction is wrong. `TThread.Queue` instead.
 
-That repair has not been seen working. The synthetic clicks driving the session
-stopped reaching the dialogs before the path could be reached again, which is a
-limit of the automation and not of the code. It is written down in
-`AppletRunner.pas` where somebody will meet it, rather than in a commit message
-where nobody will. One press of Run answers it.
+~~That repair has not been seen working.~~ **It has, and the reasoning above was
+not what fixed it.** The author ran the applet the same day and reported the
+dialog appearing, the breakpoint parking and the run finishing after the answer.
+
+But section 23 is where that happened, and what it found was a different cause
+entirely: `FreeAndNil` in the worker's own `OnTerminate`. `Queue` instead of
+`Synchronize` is still right, and it is not why the dialog was blank. The
+paragraph above is left struck through rather than deleted because a correct
+change made for a wrong reason is worth being able to find again.
+
+Corrected 2026-08-19. See section 32.
 
 **Why this is committed anyway**, having rolled back once for less: §19 rolled
 back a flip whose core was unproven and whose failure was a window that said
@@ -2667,3 +2683,69 @@ Nothing in the repository can enforce that, because nothing in the repository
 performs the upload. It is a paragraph in `PUBLISHING.md`, which is the same
 kind of protection that failed for 111 files, and it stops being needed on the
 day Pages does the upload instead.
+
+
+## 32. Three notes that outlived what they described
+
+Written 2026-08-19, after finding the third one in a day.
+
+### What rotted
+
+**The plan.** *"Also still open: `StdLib` and `StrLib` reach FireMonkey for
+`processmessages()`, `handlemessage()` and the clipboard."* They do not. They go
+through `HostServices` and have since 2.3, both hosts install all four services,
+and `tests/suite/17_host_services.bas` covers the case where none are installed.
+
+**Section 12 of this document**, saying the same thing in the same words, since
+that is where the plan took it from.
+
+**Section 22.** *"That repair has not been seen working."* It had been, the same
+day — and section 23 is where, having found that the cause was something else
+entirely. `Queue` instead of `Synchronize` is still the right change; it is not
+why the dialog was blank. That paragraph is struck through rather than deleted,
+because a correct change made for a wrong reason is worth being able to find.
+
+All three are corrected in place, struck rather than removed, so what was
+believed stays legible beside what is true.
+
+### The shape of the failure
+
+A note describes a **state**; the tree then moves and the note does not. Nothing
+notices, because nothing in this repository reads prose.
+
+It is the same failure as section 29's, one level up. There, the corrections
+landed in `Demos/` and the site kept handing out the unfixed copy — two places
+holding the same thing, and only one of them maintained. Here it is a document
+and the code it describes.
+
+The distance between them is measurable in one case. `check-fmx-boundary.py`
+knew the truth about `StdLib` the whole time. The measurement existed and the
+prose was never held against it.
+
+### A check for it was written and thrown away
+
+The obvious answer is to hold the prose against the measurement: find every line
+in `docs/` claiming a library reaches FireMonkey, and fail if the boundary check
+disagrees.
+
+Written, run, and dropped. It matches exactly one line in the tree, and that
+line is this correction — the sentence that quotes the false claim in order to
+deny it. A check whose only finding is the fix for the thing it looks for is
+worse than no check, and this project has already shipped one ratchet that could
+not fail (3.1b) and one that skipped in silence (29). A third would be a habit.
+
+The reason it cannot work is that the difference between a claim and a quotation
+of a claim is not in the text. Prose is not checkable the way a signature is,
+and pretending otherwise produces a check that has to be argued with.
+
+### What is left instead
+
+Nothing automatic, and that is the honest position. What the three have in
+common is that each was a **state written in a place that does not get run** —
+so the guard is to prefer, where there is a choice, putting the fact somewhere
+executable. `check-pages.py` was written that way earlier the same day: the two
+things standing between the tree and Pages are lists in a program that fails
+when the tree stops matching them, rather than a paragraph saying "still to do".
+
+That is not a rule that can be enforced either. It is a preference, and it is
+written here so the next person can see it was arrived at rather than assumed.
