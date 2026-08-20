@@ -3434,3 +3434,50 @@ The generator counts the assertions it emitted rather than multiplying the
 libraries by a number. Section 40 recorded getting that wrong the day before —
 95 times a nine, when the sequence had eight steps — and this one was written
 with that fresh.
+
+
+## 42. The same generator, one line wider
+
+Written 2026-08-20, finishing the coverage round of sections 38, 40 and 41.
+
+### What was left, and why it was left
+
+The largest untested family was `trigger`: 52 setters and 52 getters, a string
+pair on the effect libraries. `gen_property_suite.py` already knew how to test
+exactly that shape — it had been round-tripping string pairs on the controls
+since section 38 — and it never saw them, because `control_units()` globbed
+`Libs/GUI/*.pas` and stopped there.
+
+The only thing it lacked was knowing that an effect attaches to a **control**
+rather than to the form. One line chooses the parent:
+
+```python
+group = os.path.basename(os.path.dirname(p))
+yield p, ('host#' if group in ('Effects', 'Animations') else 'f#')
+```
+
+With that, the same generator went from 26 libraries to **96**, from 899
+properties to **1,246**, and from 1,824 assertions to **2,588**. All passing.
+Coverage 79% to **87%**, and the GUI suite from 3,654 assertions to 4,418.
+
+That is worth stating plainly because it is the argument for building the tool
+rather than the test: the reach tripled on a line that picks a parent, not on
+new work. Three days ago this would have been a fourth hand-written suite.
+
+### And the count that was right anyway
+
+The generator reported its total as `pairs * 2 + len(libs)`. The arithmetic was
+correct — checked against what the runner then reported — and it counts now
+regardless.
+
+Section 40 recorded multiplying 95 libraries by a nine that was remembered
+rather than measured, and being contradicted by the very next run. Leaving a
+formula where a count fits keeps that bet open for no gain. All three generators
+count what they emitted.
+
+### Where the GUI surface stands
+
+3,268 of 3,767 functions are exercised. What remains is mostly
+`clearcallbacks` (32), `target` and `loadtarget` on the effects (45), and the
+long tail of one-off names — the shapes no round trip fits, which are the ones
+a hand-written test has to state a claim about rather than derive one.
