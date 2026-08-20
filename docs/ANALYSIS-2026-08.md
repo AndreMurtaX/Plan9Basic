@@ -4453,3 +4453,51 @@ That is the strongest argument yet for the loopback server: it would close the
 the machine. Both are one decision.
 
 Coverage 91.9% to 92.5%.
+
+## 57. A player forgets the volume until it has something to play
+
+`MediaPlayerLib` 0/58 to 58/58, and the surface reaches 93.8%. Another library
+that looked like it was waiting on hardware and mostly was not.
+
+It is two families under one prefix. `media_*` is a player with no face: it
+holds a file, a volume and a position and has nothing to draw. `media_ctrl_*` is
+a control on a form that owns one of those and adds a rectangle, a visibility
+and the usual events. Only the sound needs a device; everything else is an
+object with settings.
+
+### The finding
+
+**Setting the volume before loading a track does nothing.** The setter clamps to
+0..1 and passes the value straight to the FireMonkey player, which has nowhere
+to put it while no media is loaded and answers its default of 1 whatever was
+asked for. Setting 0.5 reads back 1; so does setting 0. The position behaves the
+same way: a seek on an empty player leaves it at the start.
+
+So a program that sets the volume and then loads a track gets the default rather
+than what it set. The order has to be load first, then volume, and nothing in
+the library or the pages says so.
+
+**Not repaired, and the reason is the rule this project has been keeping.** The
+fix would be to remember the requested volume and apply it when a track arrives,
+and it cannot be pinned: proving it works needs a track to load, and this
+repository ships no audio. Repairing what cannot be proven is what cost this
+project a session in sections 45 and 46. Recorded here, and pinned as it stands,
+so the day an audio fixture exists the test is already the wrong way round and
+says so loudly.
+
+### Asserting a media library with no media
+
+The refusals carry most of the weight. A file that is not there and a URL that
+cannot be reached both have to fail cleanly and leave the player empty rather
+than half-loaded -- and the URL case uses a `.invalid` host, so nothing leaves
+the machine. `play`, `pause` and `stop` on a player holding nothing have to
+answer rather than reach for a device with nothing to send it. And a fabricated
+pointer has to be refused by the registry rather than followed.
+
+That is 57 of the 58 without a sound card, an audio file or a network.
+
+### Still outstanding
+
+`AILib` 0/45 and `RAGLib` 0/13 need credentials and a network. The 39 verbs and
+response accessors of `HttpLib` need a loopback server. The animation libraries
+need a message loop turning. Everything else is now covered.
