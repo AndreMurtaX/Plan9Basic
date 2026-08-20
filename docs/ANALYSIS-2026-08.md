@@ -4233,3 +4233,58 @@ configuration -- headers, auth, cookies, timeouts, content types -- is most of
 the surface and needs no network at all. `MediaPlayerLib` 0/58 needs an audio
 device and `AILib` 0/45 credentials, and those two stay unmeasured until
 somebody decides they are worth a harness.
+
+## 53. Half of HttpLib needs no network, and FormLib needed none at all
+
+Two libraries that looked like they were waiting on a harness, and were not.
+
+**`HttpLib` 0/91 to 52/91, offline.** A client is a bag of settings until a verb
+is called. Construction, base URL, timeouts, request headers, query parameters,
+cookies, the three authentication schemes, the proxy, the behaviour flags,
+`reset`, the whole form builder and the four encoding helpers are all reachable
+with no server in sight -- 52 of the 91. What is left is the verbs, the
+transfers and the response accessors, and `tests/suite/32_http_offline.bas` ends
+by naming them rather than leaving the gap to be noticed.
+
+**`FormLib` 7/103 to 100/103.** Nothing here shows a window. A form is an object
+whether or not it is on screen, so the caption, the geometry, the constraints,
+the window state, the style flags, the fill, the padding, the tag, the closing
+behaviour, the z-order verbs, the screen accessors and all eleven event names
+store and read back with no display involved. `Examples/31_FormLib_Tests.bas`
+had already worked out which ones matter -- 727 lines calling 89 functions and
+checking eighteen things.
+
+### The defect
+
+**`http_urlencode$` was form encoding, not URL encoding.** It wrote a space as
+`+`, which is correct in a form body and wrong in a URL, where `+` is an
+ordinary character. Its own reference page shows the answer it should give:
+`hello%20world%20%26%20more`. The name and the documentation agreed with each
+other and not with the code.
+
+The repair is a substitution on the encoder's output, and it is lossless for a
+reason worth stating: a literal `+` in the input is already written `%2B`, so
+every `+` left in the output is a space and nothing else. Probed before the
+change rather than assumed. Decoding is untouched and still reads `+`, `%20`
+and `%2B` alike, so anything encoded by the old behaviour still reads back.
+
+The two form and query builders inside the library keep `+`: there it is the
+right encoding for the body being produced. Only the standalone helper changed.
+
+### Where this leaves the count
+
+88.5% of the surface, from 85.3%. The engine suite is at 1,055 assertions and
+the GUI suite at 4,550.
+
+What is left needs a decision rather than more writing:
+
+- **A loopback server** would close the other 39 of `HttpLib` -- and would also
+  let the five applets in `Examples/` stop calling httpbin.org on every
+  verification run. That is currently the largest single cost in `check-all.py`
+  and it buys nothing, because those applets assert nothing about the answers.
+- **An audio device** for `MediaPlayerLib` 0/58.
+- **Credentials and a network** for `AILib` 0/45 and `RAGLib` 0/13.
+
+And a tier that still needs only writing: `StringGridLib` 60/110, `PathLib`
+78/104, `ListBoxLib`, `ComboBoxLib`, `ImageLib`, `MemoLib`, `TimerLib` 0/15 --
+all mapped already by the applets.

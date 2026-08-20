@@ -2120,7 +2120,20 @@ function s_http_urlencode(var Args: Array of TAsmData): TAsmData;
 begin
   Result.n := 0;
   Result.p := nil;
-  Result.s := TNetEncoding.URL.Encode(Args[0].s);
+  //TNetEncoding.URL.Encode is form encoding: it writes a space as '+', which
+  //is right for a form body and wrong for a URL, where '+' is an ordinary
+  //character. The reference for this function shows
+  //'hello%20world%20%26%20more' -- the name and the documentation agreed with
+  //each other and not with the code.
+  //
+  //Lossless, because a literal '+' in the input is already written as %2B, so
+  //every '+' left in the output is a space. Decoding is untouched and still
+  //reads '+', '%20' and '%2B' alike.
+  //
+  //The two form/query builders above keep '+': there it is the correct
+  //encoding for the body they are producing.
+  Result.s := StringReplace(TNetEncoding.URL.Encode(Args[0].s), '+', '%20',
+                            [rfReplaceAll]);
 end;
 
 function s_http_urldecode(var Args: Array of TAsmData): TAsmData;
