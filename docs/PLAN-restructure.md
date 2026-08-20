@@ -713,12 +713,17 @@ once. That is the irregular tail section 9 predicted, and generation would chase
 it for the last 39%. The control wrappers are 78,836 lines, 51% of the project
 on their own — the number that makes this a boundary rather than an oversight.
 
-**Found while reading the 420:** `onpaint` binds `TControl.OnPainting` in seven
-libraries and `TShape.OnPaint` in five, and all twelve are TShape descendants
-that could take either. Two semantics under one documented name, decided by
-which unit an author copied from. Unifying changes what shipped applets see, so
-it waits for the author; both lists are named in `check-event-binding.py` so the
-split cannot grow while it waits.
+**Found while reading the 420, and settled the same day.** `onpaint` bound
+`TControl.OnPainting` in seven libraries and `OnPaint` in five. Both are
+`TControl`'s and neither replaces the drawing — FMX runs `Painting`, then the
+control's own `Paint`, then `DoPaint` — so they are a backdrop and an overlay,
+and one documented call drew under an arc and over a rectangle.
+
+All twelve bind `OnPaint` now: the BASIC name says so, the reference pages call
+it custom drawing, and the only two callers in the tree were already getting it.
+One line in `ControlCommon.BindPaint` moved all seven, which is Phase 5's
+collapse paying for itself the day it landed. `OnPainting` has no BASIC name as
+a result, which is a gap named in `BindPaint` rather than left as an accident.
 
 ---
 

@@ -3239,3 +3239,68 @@ worked built the backslash with `chr(92)`.
 Recorded as a rule rather than an accident, since the failure looks exactly like
 a stale anchor and was diagnosed as one five times before it was diagnosed
 correctly.
+
+
+## 39. onpaint meant two things, and the reason was not what I said it was
+
+Written 2026-08-19, on the author's decision to settle the split section 37
+found.
+
+### I described it wrong, and the source said so
+
+Section 37 reported that seven libraries bind `TControl.OnPainting` and five
+bind `TShape.OnPaint`, and characterised the second as *"where the shape's own
+drawing happens"*. That came from the property name, not from FMX.
+
+Both are declared on **`TControl`**, three lines apart, and neither replaces
+anything. The paint pass runs
+
+```
+Painting  ->  OnPainting     before the control draws itself
+Paint                        the control draws itself
+DoPaint   ->  OnPaint        after
+```
+
+So they are a **backdrop and an overlay**, not rival designs. Twelve libraries
+could take either, and one documented call put a program's drawing *under* an
+arc and *over* a rectangle.
+
+That correction is what made the decision easy rather than hard. Section 37 said
+"neither half is the wrong one" and offered the author three options; with the
+semantics read rather than guessed there is one answer, and the argument is not
+a preference:
+
+- the BASIC name is `onpaint` and the FMX property it should mean is `OnPaint`
+- the reference pages describe it as *custom drawing*, which is the overlay
+- **the only two callers in the whole tree** — `layout_onpaint#` in a library
+  round-trip test and `form_onpaint#` in the documentation — were already
+  getting `OnPaint`
+
+Nothing that exists loses anything, and the seven that changed had no caller at
+all.
+
+### The repair was one line, because of yesterday's work
+
+The seven all reach the event through `ControlCommon.BindPaint`, which Phase 5
+introduced this same day. Changing what that one helper assigns changed all
+seven. The four hand-written ones then became `BindPaint` calls too, which took
+the setters bound through `ControlCommon` from 365 to **369** and let
+`check-event-binding.py` drop its list of exceptions entirely.
+
+That is the argument for the collapse stated as a fact rather than a hope: the
+`onpaint` split existed *because* the wiring was written out 420 times, and it
+was repaired in one place *because* it no longer is.
+
+`FormLib` stays hand-written. A form is a `TCommonCustomForm` and not a
+`TControl`, so no helper reaches it; it already bound `OnPaint` and still does.
+
+### The gap this leaves, named rather than left
+
+`OnPainting` now has **no BASIC name at all**. Nothing can draw underneath a
+control any more, where seven libraries accidentally could.
+
+That is a real loss and it is written into `BindPaint` where somebody will meet
+it. Restoring it means an `onpainting` family — a setter, a getter, a field, a
+handler and a reference page per library — which is a feature rather than this
+repair, and inventing it while settling an ambiguity would be how the ambiguity
+got here.
