@@ -4396,3 +4396,60 @@ rather than half-loaded. That is the assertable half of loading.
   anything while something is ticking.
 - **Needs only writing**: the transition effects' `loadtarget#`, and the last
   handful in `ComboBoxLib` and `ImageLib`.
+
+## 56. A picture can come from the network, and the suite was written as if it could not
+
+Told by the author, and it corrects a claim made in section 55. `image_load`
+does not read a file -- it reads a **source**. An argument beginning `http://`
+or `https://` is fetched; anything else is opened as a path. There is no second
+function and no flag.
+
+`Examples/60_ImageLib_WebGallery_Demo.bas` has been loading pictures that way
+since it was written, and 59_ImageLib_Tests.bas alongside it. The applets knew;
+the suite did not.
+
+**Twenty-six units share the helper**: `ImageLib`, `MediaPlayerLib`,
+`BitmapListAnimationLib` and the twenty-two transition effects, whose
+`loadtarget#` is the same rule under another name. That is why those
+twenty-two showed as uncovered -- they were never called at all.
+
+### Asserting it without fetching anything
+
+A suite that downloads a picture fails whenever somebody else's server is down.
+The test proves the two paths are told **apart** instead, using a host under
+`.invalid` -- reserved by RFC 2606 so that it can never resolve. No request
+leaves the machine and the answer is immediate.
+
+What separates them differs by library, and finding that out was the point:
+
+- **`ImageLib` uses different codes.** A missing file is 6, file-not-found; an
+  unreachable URL is 7, load-failed. The prefix is matched without regard to
+  case, and any other scheme -- `ftp://` -- falls back to being a file name.
+- **The twenty-two transitions use one code for both** and separate them only in
+  the message: "file not found" against "failed to load from URL". All
+  twenty-one besides `fadetrans` are swept individually, so a library that was
+  never wired to the shared helper shows up here rather than in somebody's
+  program.
+- **`BitmapListAnimationLib` is built the other way round.** It tries the web
+  first and falls through to opening the same string as a file, so an
+  unreachable URL is reported as `File not found: https://...` -- honest about
+  what was tried last, misleading about what was tried first. Recorded rather
+  than changed: trying both is the more forgiving design, and the wording is not
+  a contract.
+
+### What this turned up about the verification
+
+Four external hosts are contacted on every `check-all.py` run, across **39
+applet files**: `httpbin.org`, `picsum.photos`, `api.chucknorris.io` and
+`plan9basic.com` -- the author's own site, for an examples index and a set of
+sound files.
+
+None of those applets asserts anything about what comes back. So the run pays
+minutes of wall-clock and a dependency on four third parties, and learns
+nothing. It is also why a full verification now takes over twenty minutes.
+
+That is the strongest argument yet for the loopback server: it would close the
+39 remaining `HttpLib` functions **and** let the applets stop reaching outside
+the machine. Both are one decision.
+
+Coverage 91.9% to 92.5%.

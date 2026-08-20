@@ -9,8 +9,10 @@ rem 59_ImageLib_Tests.bas.
 rem
 rem Two things are deliberately not asserted. The clipboard verbs reach
 rem the system clipboard, so what comes back belongs to the machine.
-rem And image_load reads a file this repository does not ship, so it is
-rem exercised for its refusal rather than for a picture.
+rem And no picture is ever fetched: image_load takes a URL as readily
+rem as a path, but a suite that downloads one is a suite that fails
+rem when somebody else's server is down. What is asserted instead is
+rem that the two are told apart -- see image/urls below.
 rem ---------------------------------------------------------------
 
 f# = form#("list host", 500, 400)
@@ -233,17 +235,50 @@ assert_true(image_isempty(i#), "a new image holds no bitmap")
 assert_eq(image_bitmapwidth(i#), 0, "so its width is zero")
 assert_eq(image_bitmapheight(i#), 0, "and its height")
 
-test_case("image/loading")
+test_case("image/loading-a-file")
 rem This repository ships no picture, so what is asserted is the
 rem refusal: a file that is not there must answer failure rather than
 rem leaving the image in a half state.
 image_clearerror()
 assert_false(image_load(i#, "bin/p9b_no_such_picture.png"), "loading a file that is not there fails")
+assert_eq(image_error(), 6, "with the file-not-found code")
 assert_true(image_isempty(i#), "and the image is still empty afterwards")
 
 image_clearerror()
 image_load#(i#, "bin/p9b_no_such_picture.png")
 assert_true(image_isempty(i#), "the chaining form leaves it empty too")
+
+test_case("image/urls")
+rem An argument beginning http:// or https:// is fetched rather than
+rem opened. That is the whole of the rule -- there is no separate
+rem function and no flag -- and Examples/60_ImageLib_WebGallery_Demo.bas
+rem has been loading pictures that way since it was written.
+rem
+rem What is proved here is that the two paths are told APART, without
+rem fetching anything. The host below ends in .invalid, which RFC 2606
+rem reserves so that it can never resolve, so no request leaves this
+rem machine and the answer is immediate. A missing FILE answers code 6,
+rem file-not-found; a URL that cannot be reached answers code 7, load
+rem failed. Different codes mean the URL went down the other branch.
+image_clearerror()
+assert_false(image_load(i#, "https://plan9basic.invalid/assets/image1.png"), "an unreachable url fails")
+assert_eq(image_error(), 7, "with the load-failed code, not file-not-found")
+assert_true(image_isempty(i#), "and the image is left empty rather than half-loaded")
+
+image_clearerror()
+image_load(i#, "http://plan9basic.invalid/assets/image1.png")
+assert_eq(image_error(), 7, "http is recognised as well as https")
+
+rem The prefix is matched without regard to case, and after trimming.
+image_clearerror()
+image_load(i#, "HTTPS://plan9basic.invalid/assets/image1.png")
+assert_eq(image_error(), 7, "and the prefix is recognised whatever its case")
+
+rem Anything that is not one of the two prefixes is a path, however
+rem much it looks like an address.
+image_clearerror()
+image_load(i#, "ftp://plan9basic.invalid/assets/image1.png")
+assert_eq(image_error(), 6, "another scheme is treated as a file name")
 
 image_clearerror()
 image_clear#(i#)
