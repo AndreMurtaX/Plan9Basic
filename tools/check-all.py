@@ -25,6 +25,8 @@ made it.
                                                 engine it never reads
     the event setters        check-event-binding  does each one wire the event
                                                 its own name promises
+    the generated suites     gen_*_suite --check  is the committed .bas still
+                                                what its generator produces
 
 Everything here is read-only. The generators that write files --
 gen-doc-examples.py and check-doc-blocks.py --baseline -- are run by hand, since
@@ -86,6 +88,8 @@ def main():
         ('examples catalogue', tool('check-examples-catalog.py'), False),
         ('module state', tool('check-module-state.py'), False),
         ('event binding', tool('check-event-binding.py'), False),
+        ('generated suites', [sys.executable, os.path.join(ROOT, 'tests', 'gen_property_suite.py'), '--check'], False),
+        ('generated effects', [sys.executable, os.path.join(ROOT, 'tests', 'gen_effects_suite.py'), '--check'], False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]

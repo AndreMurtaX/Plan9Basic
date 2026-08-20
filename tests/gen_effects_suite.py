@@ -9,6 +9,7 @@ to regenerate the units from them.
 Usage:  python tests/gen_effects_suite.py
 """
 import re
+import sys
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -91,9 +92,29 @@ def main():
               f'assert_eq({pre}_enabled(e#), 0, "{pre}_enabled off")',
               ""]
         n += 2
-    OUT.write_text("\n".join(L), encoding="utf-8")
+    text = "\n".join(L)
+
+    #--check writes nothing and answers whether the committed file is still
+    #what this produces. A generator and its output are two artefacts, and two
+    #artefacts drift -- adding an effect library without regenerating leaves
+    #the suite describing the tree as it used to be, in silence.
+    if "--check" in sys.argv:
+        if not OUT.exists():
+            print(f"  {OUT.relative_to(ROOT)} is missing; run without --check")
+            return 1
+        have = OUT.read_text(encoding="utf-8").replace("\r\n", "\n")
+        if have != text:
+            print(f"  {OUT.relative_to(ROOT)} is not what its generator makes now")
+            print("  run: python tests/gen_effects_suite.py")
+            return 1
+        print(f"ok  {OUT.relative_to(ROOT)} matches its generator, "
+              f"{len(descs)} effect(s)")
+        return 0
+
+    OUT.write_text(text, encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {n} assertions over {len(descs)} effects")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
