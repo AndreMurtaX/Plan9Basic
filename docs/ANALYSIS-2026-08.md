@@ -4842,3 +4842,45 @@ The 39 applets in `Examples/` still reach `httpbin.org`, `picsum.photos`,
 assert nothing about what comes back. The server that would let them stop now
 exists. Pointing them at it is a change to the author's own programs and is not
 taken here.
+
+## 64. Two numbers that disagreed, and nothing that would have said so
+
+Asked whether the site could be published as it stands. Measuring rather than
+answering turned up two drifts, and the second is the interesting one.
+
+**The `Translations.ini` the IDE downloads was a line behind the repository.**
+`EnsureRequiredFiles` fetches it from the site on the first run, so the site's
+copy is what a fresh installation actually gets -- not the repository's. The
+picker's new catalogue row added a string, and a missing key falls back to its
+own name, so that row would have read `FilePickerExamplesRow` on every machine
+installed after the next publish. Found by comparing the two files, not by
+anyone meeting it.
+
+**The engine had been 1.8 (BETA) for some time and every page still said v1.0.**
+Four places: the boot banner on the front page, the badge beside it, the boot
+animation, and the language reference's own header. The author authorised
+showing BETA publicly, so all four now state what the IDE prints.
+
+### The guard, because this is the checkable half of section 58
+
+Section 58 closed by naming what nothing checks: a function that keeps its shape
+and surprises the caller has no guard, and a caveat in prose cannot be held to
+code. That is true of prose. A **version number** is not prose -- it is a fact
+stated in two places that must agree, and comparing them is mechanical.
+
+`check-site-deps.py` now reads `VERSION` out of `UnitMain.pas` and requires each
+page that states a version to state that one, the expected number of times. The
+count matters: a page saying it twice where three were meant has lost one, and a
+bare "is it mentioned" check would pass.
+
+Exercised in both directions rather than assumed -- one page was set back to
+v1.0 and the check failed with the drift named and a non-zero exit, then
+restored. A checker that has only ever been seen to pass is a checker nobody has
+tested.
+
+### What still stands between the tree and plan9basic.com
+
+Two ebook PDFs are linked from the front page and are not in git, so a publish
+that replaces the server wholesale would break both links. `check-pages.py`
+knows them by name and says so on every run. They are the author's files and
+presumably already on the host; nothing here can put them in the tree.
