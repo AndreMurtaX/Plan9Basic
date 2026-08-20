@@ -3622,3 +3622,105 @@ again: taking the run that is convenient for the run that counts.
 
 Coverage of the non-GUI libraries went 37% to 44%, the engine suite 446 to 486
 assertions, and the negative suite from 8 files to 10.
+
+
+## 45. Every event was dead, and I wrote the line that killed them
+
+Written 2026-08-20, after the author reported that flappy_bird still would not
+answer a key and that the fault was mine.
+
+### The bisection
+
+Reading had failed four times on this game already, so this time the code was
+cut down instead: 31 lines, a form, a counter and a `form_onkeydown`, no game
+logic at all. The author ran it with the window focused and the counter stayed
+at zero.
+
+That answered more than the question asked. **No form in the host delivered
+keys**, so all nine games had the same dead keyboard and flappy_bird was never
+the subject.
+
+### What I did in Phase 2.2
+
+Commit `1ca9324` — *"a control finds its engine through the form, not a unit
+variable"* — replaced
+
+```pascal
+Frm.BasicEngine := ModuleEngine;
+```
+
+with
+
+```pascal
+if EngineOf(Frm, Eng, Outp) then
+  Frm.BasicEngine := Eng;
+```
+
+`EngineOf` walks a control's parent chain up to the form that owns an engine.
+**A form is the root of that chain.** There is nothing above it, the call
+answered False, `BasicEngine` stayed nil, and every `InternalOnXxx` in `FormLib`
+exits on its first line when it is. `onshow`, `onclose`, `onresize`, `onkeydown`
+— all of them, from that commit until today.
+
+`tools/check-callbacks.py` never had a chance: it proves the **shapes** agree,
+and they did. **Delivery was never asked about.**
+
+There is a detail that accuses me twice. My sweep of 2026-08-19 removed the two
+assignments as unread — correctly, since 2.2 had already stopped reading them —
+and left the comment `// Store module-level references for event callbacks`
+hanging over nothing. That was the sign, and I walked past it.
+
+### The author asked the right question
+
+*"Would it not be worth sweeping every library with event handling, to confirm
+the trigger is actually wired to the interpreter?"*
+
+It was. `EngineOf` has a precondition nothing enforced: **the control must
+already be parented.** Of 74 construction sequences in `Libs/GUI`, **17 called
+it on an orphan** — created with `Create(nil)`, parented two lines later:
+`label`, `layout`, `panel`, `progressbar`, `rectangle` and `trackbar`.
+
+`RectangleLib` created, looked up, then parented. `ArcLib`, in the same phase,
+parented first. Two patterns, one commit, and no way to tell from outside.
+
+That is the rest of the symptom: `rectangle_onmousedown` is what flappy_bird
+used for touch, so the game answered neither a key nor a tap.
+
+### Confirmed by running, and a wrong turn avoided
+
+`edit_onchange` and `checkbox_onchange` fire, and both libraries were sound.
+`trackbar_onchange` does not, and it was among the seven. The baseline mattered:
+the first probe used `onresize`, which failed even on `arc` — a programmatic
+resize does not raise it — and without a control that works, that would have
+read as "arc is broken too".
+
+### What could not be proved, and was not asserted
+
+After the repair `trackbar_onchange` still does not fire. The value does move,
+0 to 42 inside a 0..100 range, and `ControlCommon.CallbackCore` exits silently
+on `not Assigned(Engine)` **and** stays silent when FMX simply never raises the
+event. From BASIC the two are indistinguishable.
+
+So the assertion was removed rather than left green. It is written into
+`tests/gui/11_form_events.bas` as an open question. A passing assertion there
+would be me manufacturing an answer I do not have.
+
+### What holds it now
+
+`tests/gui/11_form_events.bas` — `form_show` reaches its handler, hands it the
+form as `sender#`, and an empty name unwires it; plus the two control events
+that demonstrably fire.
+
+`tools/check-engine-lookup.py` — no construction may ask for its engine before
+it has a parent. Watched failing with one site inverted on purpose.
+
+`FormLib` joins `check-module-state.py`'s named readers as the fifth, for the
+reason that makes it one: the root of a chain has nobody to ask.
+
+### The shape of it
+
+This is the same failure as sections 29, 32, 34, 35 and 44, and the most
+expensive: **a silent exit is indistinguishable from nothing to do.** Every one
+of those was found by running something rather than reading it, and this one
+needed a person at a keyboard because the last mile is a key press. The suite
+now covers the mile before it.
