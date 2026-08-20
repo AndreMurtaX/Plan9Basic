@@ -3176,3 +3176,66 @@ shrinks as the irregular third is chased" and it was right to the percentage.
 That, and not the setters, is why half the project is boilerplate: the control
 wrappers are 78,836 lines, 51% of the tree. The boundary stands, and it now has
 a measurement rather than an assertion behind it.
+
+
+## 38. Twenty per cent, and what the other eighty had been hiding
+
+Written 2026-08-19, taking the author's own instruction — test exhaustively,
+having used the engine very little — as the next item.
+
+### The measurement
+
+The GUI suite held 614 assertions across eight files and exercised **745 of the
+3,767 registered GUI functions: 20%**.
+
+Everything this project has found by running rather than reading came out of the
+other 80%. `SQLiteLib` compiled perfectly and was dead. So did `RAGLib`.
+Twenty-five `*_free` functions always answered 0. An assertion about scrollbox
+parents had never once been true. `ScrollBoxLib` had been failing every call
+since the HandleRegistry conversion, and was found the day `04_alignment.bas`
+was generated over 26 controls — not before, and not by reading it.
+
+### The round trip, and what it deliberately does not assert
+
+`tests/gen_property_suite.py` emits, for every library with a constructor, an
+error accessor, and a property carrying a setter and a getter of one type:
+
+```basic
+v = lib_prop(c#)
+assert_eq(lib_error(), 0, "lib_prop reads")
+lib_prop#(c#, v)
+assert_eq(lib_error(), 0, "lib_prop writes back what it read")
+```
+
+**The value written is the value just read.** A setter may clamp, round, or
+refuse something out of range, and asserting that an invented value survives
+would report all of those as failures — noise that buries the signal. What is
+asserted is narrower and is the thing that has actually been wrong: that the
+call can be made, and that neither half records an error.
+
+26 libraries, 899 properties, **1,824 assertions, all passing**. No dead control
+library, which is the answer worth having either way. Coverage went from 20% to
+**66%**, and the GUI suite from 614 assertions to 2,438.
+
+### And the generators got the treatment the rest of the tree got
+
+`03_effects.bas` and `08_property_roundtrip.bas` are generated and committed,
+which is a generator and its output: two artefacts, and two artefacts drift.
+That is six incidents in two days, and adding a library without regenerating
+would leave the suite describing the tree as it used to be, in silence.
+
+Both generators take `--check` now: write nothing, and answer whether the
+committed file is still what they produce. Both watched failing on one
+hand-edited line. `check-all.py` runs them, and is at 13 checks.
+
+### A method note, because it cost the whole day
+
+Six edits failed today with an anchor that was character-for-character correct,
+and the reason is the same each time: **in a quoted heredoc here, `{backslash}{backslash}`
+collapses to `{backslash}`**. An anchor written with `"{backslash}n"` reaches Python as a real
+newline and never matches a file containing the two characters. Every edit that
+worked built the backslash with `chr(92)`.
+
+Recorded as a rule rather than an accident, since the failure looks exactly like
+a stale anchor and was diagnosed as one five times before it was diagnosed
+correctly.
