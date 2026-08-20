@@ -3481,3 +3481,69 @@ count what they emitted.
 `clearcallbacks` (32), `target` and `loadtarget` on the effects (45), and the
 long tail of one-off names — the shapes no round trip fits, which are the ones
 a hand-written test has to state a claim about rather than derive one.
+
+
+## 43. The half of the library surface nobody had measured
+
+Written 2026-08-20. Sections 38 to 42 took the GUI surface from 20% to 87%, and
+never asked what the rest was at.
+
+### 29%
+
+452 functions live outside `Libs/GUI`, and 132 of them were exercised. Those are
+the libraries a program without a window uses: strings, files, dates, archives,
+configuration.
+
+The gaps, by unit: `DateTimeLib` 66, `StrListLib` 46, `IOUtilsLib` 43, `SysLib`
+42, `ConfigLib` 31, `StrLib` 22.
+
+### One name was worth more than the count
+
+`RAGLib` appeared in that list with 13 untested functions, and this document
+says it was found **dead** on the same day as `SQLiteLib` — while item 1.5
+records repairing only `SQLiteLib`. It ships in all three executables and has a
+reference page, so the question was whether a dead library had been left in.
+
+It had not: `RegisterHandle(RAG)` is there, with the comment explaining why.
+Confirmed by running rather than reading — build a knowledge base, count it,
+summarise it, free it, four assertions, all green.
+
+**Found on the way:** `RegisterRAGFuncs` sits inside `RegisterGuiLibs` in the
+test runner, alongside `SQLiteLib` and `AILib`. None of the three has anything
+to do with graphics. That is why `06_sqlite.bas` lives in `tests/gui/`, which
+had looked arbitrary. The shipped IDE and applet runner register all of them
+unconditionally, so this is a limit of the harness rather than a product defect
+— but it means a headless test cannot reach three libraries, and the reason is
+now written down instead of inferred.
+
+### DateTimeLib, 66 functions and no test
+
+The largest single gap, and the kind where defects hide in plain sight. Written
+by hand: no round trip derives an answer here, so the assertion *is* the content.
+
+**Every date is a numeric literal.** A `TDateTime` is days since 1899-12-30 with
+the clock in the fraction, and parsing text would make the suite depend on the
+machine's date format — passing here, failing elsewhere, and saying nothing
+about the library either way.
+
+The assertions worth the most are the pairs whose names do not distinguish them,
+none of which was written down anywhere in the tree:
+
+- **`dayofweek` counts from Sunday and `dayoftheweek` from Monday.** For the same
+  Thursday they answer 5 and 4. Three letters apart in the name, one in the
+  result.
+- **`daysinmonth` takes a date; `daysinamonth` takes a year and a month.**
+- `incyear` from 29 February **clamps to the 28th** rather than rolling into
+  March.
+- 1900 is not a leap year and 2000 is — the two exceptions in the calendar.
+
+39 assertions, all passing. The library is correct; what was missing was anything
+that said so. Non-GUI coverage 29% to **37%**, and the engine suite from 407
+assertions to 446.
+
+### What the clock can be asked
+
+`now`, `today`, `time` and `date` cannot be asserted against a value. What can be
+asserted is the relation between them: today is now with the fraction removed,
+tomorrow is one day on, yesterday one back, and `istoday(today())` holds. A test
+that cannot know the answer can still know the shape.
