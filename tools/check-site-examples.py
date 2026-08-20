@@ -13,9 +13,23 @@ and its keyboard was dead -- from a defect the repository had already fixed.
 
 So the two copies have to agree, and a check has to say so.
 
-Only the nine games are paired. `calculator` exists in both places and is two
-different programs that share a name, which is why this pairs by an explicit
-list and not by matching filenames.
+Only the nine games are paired that way. `calculator` exists in both places and
+is two different programs that share a name, which is why the games pair by an
+explicit list and not by matching filenames.
+
+The same question is asked a second time, of two directories. `Examples/` and
+`Website/assets/examples/` hold the same 98 programs under names differing only
+by a leading number, and nothing has ever said which direction the copying runs.
+`ChuckNorrisFacts_Demo.bas` had drifted: the site's copy was the older one,
+without the dropdown's backing rectangle and still calling the two-parameter
+`onitemclick` where the other had moved to `onchange`. The site's copy is the
+one people download. It was named in section 1b of the analysis on the day it
+was found, and stayed drifted until 2026-08-19.
+
+Naming one canonical and generating the other would have worked too. Keeping
+both and checking them is what this does, because the two are read by different
+things -- one is the repository's own examples, one is the site's downloads --
+and neither is obviously the copy of the other.
 """
 import os
 import re
@@ -30,6 +44,11 @@ PAIRS = {name: os.path.join(ROOT, 'Demos', name + '.bas') for name in [
     'missile_command', 'snake', 'space_invaders', 'whack_a_mole']}
 
 ENTRY = re.compile(r"id:\s*'([^']+)'.*?code:\s*`(.*?)`\s*[,}]", re.S)
+
+#Examples/61_ChuckNorrisFacts_Demo.bas <-> Website/assets/examples/ChuckNorrisFacts_Demo.bas
+REPO_EXAMPLES = os.path.join(ROOT, 'Examples')
+SITE_EXAMPLES = os.path.join(ROOT, 'Website', 'assets', 'examples')
+LEADING_NUMBER = re.compile(r'^\d+[_-]?')
 
 
 def embedded():
@@ -48,6 +67,39 @@ def embedded():
 
 def normal(text):
     return text.replace('\r\n', '\n').strip('\n')
+
+
+def read(path):
+    #utf-8-sig, because a byte order mark is an encoding difference and not a
+    #difference in the program. Two thirds of these files carry one, on both
+    #sides, and which ones is an accident of whatever wrote them.
+    return normal(open(path, encoding='utf-8-sig', errors='replace').read())
+
+
+def mirrored():
+    """The two example directories, paired by name without the leading number."""
+    def index(folder):
+        if not os.path.isdir(folder):
+            return {}
+        return {LEADING_NUMBER.sub('', f).lower(): f
+                for f in os.listdir(folder) if f.endswith('.bas')}
+
+    repo, site = index(REPO_EXAMPLES), index(SITE_EXAMPLES)
+    out = []
+    for k in sorted(set(repo) | set(site)):
+        if k not in site:
+            out.append((repo[k], 'Website/assets/examples/ has no copy of it'))
+        elif k not in repo:
+            out.append((site[k], 'Examples/ has no copy of it'))
+        else:
+            a = read(os.path.join(REPO_EXAMPLES, repo[k]))
+            b = read(os.path.join(SITE_EXAMPLES, site[k]))
+            if a != b:
+                la, lb = a.split('\n'), b.split('\n')
+                d = sum(1 for x, y in zip(la, lb) if x != y)
+                d += abs(len(la) - len(lb))
+                out.append((repo[k], f'{d} line(s) differ from the site copy'))
+    return out, len(set(repo) & set(site))
 
 
 def main():
@@ -71,6 +123,9 @@ def main():
             d += abs(len(disk.split('\n')) - len(site.split('\n')))
             problems.append((name, f'{d} line(s) differ from Demos/{name}.bas'))
 
+    mirror, counted = mirrored()
+    problems += mirror
+
     for name, why in problems:
         print(f'  {name}: {why}')
 
@@ -78,8 +133,9 @@ def main():
         print(f'\n{len(problems)} example(s) the site and the repository disagree on.')
         print('The site is what a reader copies, so it is what they run.')
         return 1
-    print(f'ok  {len(found)} example(s) on the page, '
-          f'{len(PAIRS)} paired with the repository and identical')
+    print(f'ok  {len(found)} example(s) on the page, {len(PAIRS)} paired with '
+          f'the repository, and {counted} in both example directories, '
+          f'all identical')
     return 0
 
 

@@ -203,6 +203,7 @@ memo_readonly#(memoJoke#, 1)
 memo_wordwrap#(memoJoke#, 1)
 memo_fontsize#(memoJoke#, fntLg)
 memo_fontcolor#(memoJoke#, "#000000")
+
 memo_text#(memoJoke#, "Click 'Get Chuck Norris Fact!' to receive wisdom from the legend himself...")
 ' ============================================================================
 ' Statistics Panel
@@ -305,6 +306,15 @@ label_fontcolor#(lblDemo2#, "#505050")
 ' of every other control. Visibility is toggled by OnToggleDropdown.
 ' ============================================================================
 LET dropListH = 185
+' Background rectangle behind popup — gives the dropdown a dark fill
+' since listbox background cannot be set directly (TStyledControl limitation).
+' Created just before lstCategory# so it sits immediately behind it in z-order.
+LET lstBg# = rectangle#(sb#, rightX+15, cmbY+32, cmbW, dropListH)
+rectangle_fill#(lstBg#, "#0f3460")
+rectangle_stroke#(lstBg#, "#e94560")
+rectangle_strokethickness#(lstBg#, 1)
+rectangle_corners#(lstBg#, 4, 4)
+rectangle_visible#(lstBg#, 0)
 LET lstCategory# = listbox#(sb#, rightX+15, cmbY+32, cmbW, dropListH)
 listbox_add(lstCategory#, "random")
 listbox_add(lstCategory#, "animal")
@@ -323,8 +333,12 @@ listbox_add(lstCategory#, "religion")
 listbox_add(lstCategory#, "science")
 listbox_add(lstCategory#, "sport")
 listbox_add(lstCategory#, "travel")
+listbox_fontcolor#(lstCategory#, "#ffffff")
+listbox_fontsize#(lstCategory#, fntMd)
 listbox_visible#(lstCategory#, 0)
-listbox_onitemclick#(lstCategory#, "OnCategorySelected")
+' Use onchange (single-pointer @# callback) rather than onitemclick (@##)
+' so the handler signature matches every other event handler in this file.
+listbox_onchange#(lstCategory#, "OnCategorySelected")
 ' ============================================================================
 ' Global Variables
 ' ============================================================================
@@ -441,16 +455,19 @@ END FUNCTION
 FUNCTION OnToggleDropdown(sender#)
   IF dropdownOpen = 0 THEN
     listbox_visible#(lstCategory#, 1)
+    rectangle_visible#(lstBg#, 1)
     LET dropdownOpen = 1
   ELSE
     listbox_visible#(lstCategory#, 0)
+    rectangle_visible#(lstBg#, 0)
     LET dropdownOpen = 0
   END IF
 END FUNCTION
-FUNCTION OnCategorySelected(sender#, item#)
-  LET selectedCategory$ = listboxitem_text$(item#)
+FUNCTION OnCategorySelected(sender#)
+  LET selectedCategory$ = listbox_selected$(sender#)
   edit_text#(edtCategory#, selectedCategory$)
   listbox_visible#(lstCategory#, 0)
+  rectangle_visible#(lstBg#, 0)
   LET dropdownOpen = 0
   label_text#(lblStatus#, "Category selected: " + selectedCategory$)
 END FUNCTION
