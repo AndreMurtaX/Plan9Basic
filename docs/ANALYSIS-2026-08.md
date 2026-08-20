@@ -4340,3 +4340,59 @@ belongs to the applets, where a window is running.
 
 `TimerLib` is also the one non-drawing library that genuinely reaches FireMonkey,
 which `check-fmx-boundary.py` has reported all along: a timer is a `TTimer`.
+
+## 55. Text a memo gives back is not the text it was given
+
+`PathLib` 78/104, `ListBoxLib` 101/124, `MemoLib` 116/136 to 100% each,
+`ComboBoxLib` 98% and `ImageLib` 97%. The surface reaches 91.9%.
+
+All four had their *properties* covered by the generated suite and their actual
+work covered by nothing: the pen movements, the items, the selection, the text
+editing, the bitmap.
+
+### What a program would trip on
+
+**A memo normalises line breaks, and the text is not the same length coming out.**
+`memo_text#(m#, "one" + chr$(10) + "two")` puts seven characters in;
+`memo_textlength` answers **eight**, because the bare line feed is stored as a
+carriage return and a line feed. A program that writes a memo, reads it back and
+compares the two finds them different, and nothing in the library says why.
+
+**And the caret cannot stand between the two.** Setting the selection start to 3
+keeps 3, setting it to 4 -- between the CR and the LF -- answers 5. Both are
+measured rather than inferred, and both are pinned.
+
+**A listbox is single-select until told otherwise**, so `listbox_selectall`
+reaches exactly one row. That is not a defect, but it is the opposite of what
+the verb's name suggests, and it is now written down with the flag that changes
+it.
+
+**A path's bounds and a path's `bounds#` are different boxes.** `path_boundsx`
+and friends measure the geometry; `path_bounds#` sets the control's rectangle on
+the form. The same word for the shape and for the thing that draws it.
+
+### What could not be asserted, and why it is said out loud
+
+`memo_gotoend#` and `memo_gotobegin#` move a caret, and on a control that was
+never shown the caret has nowhere to be -- FMX places it when the control is
+realised. `selstart` does not follow. The file pins that both are reachable and
+leave the text alone, and says in a comment that asserting the caret moved would
+be asserting a window that is not there.
+
+`image_load` reads a file this repository does not ship, so it is exercised for
+its refusal: a picture that is not there must fail and leave the image empty
+rather than half-loaded. That is the assertable half of loading.
+
+### Where the count stands
+
+91.9%, and what is left divides into three:
+
+- **Needs a harness**: `MediaPlayerLib` 0/58 (an audio device), `AILib` 0/45 and
+  `RAGLib` 0/13 (credentials and a network), and the 39 verbs and response
+  accessors of `HttpLib` (a loopback server).
+- **Needs a running message loop**: the animation libraries --
+  `RectAnimationLib` 26/43, `ColorAnimationLib` 38/49,
+  `BitmapListAnimationLib` 36/45 -- whose start/stop/running trio only means
+  anything while something is ticking.
+- **Needs only writing**: the transition effects' `loadtarget#`, and the last
+  handful in `ComboBoxLib` and `ImageLib`.
