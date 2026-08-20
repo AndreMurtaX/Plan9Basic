@@ -3,27 +3,25 @@ rem The half of HttpLib that needs a server to answer it: the verbs,
 rem the transfers and every accessor that reads a reply.
 rem 32_http_offline.bas covers the other half, which needs nothing.
 rem
-rem THIS FILE IS NOT PART OF THE ORDINARY SUITE. It talks to
-rem httpbin.org, which is a third party, so tools/verify.ps1 probes it
-rem first and reports the step as skipped when it cannot be reached.
-rem A machine with no network is never a red build, and a machine with
-rem one is never a silent pass -- the same arrangement as the local
-rem model step, for the same reason.
+rem It talks to tests/LoopbackServer.exe, which tools/verify.ps1 starts
+rem before this file and stops after it. That server is built from this
+rem repository and binds to 127.0.0.1 only, so this is a REQUIRED step
+rem rather than one that can be skipped: nothing leaves the machine and
+rem nothing outside it can be down.
 rem
-rem Why a third party at all: httpbin exists to mirror requests back,
-rem and the five applets in Examples/ have used it since they were
-rem written. What they never did was ASSERT anything about the reply,
-rem which is why 39 functions here had never been proven to work. A
-rem loopback server in the harness would be better -- nothing would
-rem leave the machine and the run would be faster -- and waiting for
-rem one was letting the better answer block the available one.
+rem It answers the shapes httpbin.org answers, because that is the
+rem contract these tests and the five HTTP applets in Examples/ were
+rem already written against. Those applets have called the real
+rem httpbin since they were written, and never asserted anything about
+rem what came back -- which is why 39 functions here had never been
+rem proven to work at all.
 rem
-rem Nothing here asserts httpbin's content beyond what it guarantees:
-rem the status it was asked for, the header it was told to echo, the
-rem body it was sent. Those are the service's contract, not its mood.
+rem Nothing here asserts more than the server guarantees: the status it
+rem was asked for, the header it was told to echo, the body it was
+rem sent back.
 rem ---------------------------------------------------------------
 
-BASE$ = "https://httpbin.org"
+BASE$ = "http://127.0.0.1:8731"
 
 test_case("http/get")
 c# = http_client#(BASE$)
@@ -187,7 +185,8 @@ file_delete(sd$)
 
 test_case("http/errors-are-reported")
 rem A host that cannot resolve has to fail and say so. The name below
-rem is under .invalid, which RFC 2606 reserves so it can never resolve.
+rem is under .invalid, which RFC 2606 reserves so it can never resolve,
+rem so this costs no request either.
 bad# = http_client#("https://plan9basic.invalid")
 http_timeout#(bad#, 10000)
 http_clearerror()

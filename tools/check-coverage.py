@@ -36,7 +36,10 @@ TEST_GLOBS = ['tests/suite/*.bas', 'tests/gui/*.bas', 'tests/negative/*.bas',
               # failed. Counted here because the functions are covered wherever the
               # step does run, and a count that ignored them would understate what
               # is tested on a machine that has one.
-              'tests/local/*.bas']
+              'tests/local/*.bas',
+              # tests/http/ needs the loopback server verify.ps1 starts, which
+              # is built from this repository -- so it always runs.
+              'tests/http/*.bas']
 
 REGISTER = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)'")
 VARIADIC = re.compile(r"\b(?:Lib|Funcs)\.Add\('([^']+)' *\+")

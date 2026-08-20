@@ -4785,3 +4785,60 @@ bound on how well the surface is tested -- the tool prints that line under every
 run for a reason. And a suite green on 6,000 assertions is still a suite written
 from one reading of the documentation: section 54 recorded an applet catching an
 inverted flag that every suite here would have gone green on.
+
+## 63. One tap to the catalogue, and a server of our own
+
+Two items the author authorised together, and each turned out smaller than it
+looked because most of the machinery was already there.
+
+### The catalogue row
+
+`ExamplesBrowser.bas` is downloaded on the first run with a network and appears
+in the file picker as an ordinary file. That is the whole problem: nothing says
+this particular file is the way to the catalogue, and choosing it only loads it,
+so a person still has to find Run. On Android, where loading a `.bas` is the
+hard part to begin with, that is two obscure steps.
+
+The change is a row of its own at the top of the picker, which loads **and**
+runs it. No new protocol, no new format, no toolbar surgery -- the picker is
+built in code, so the `.fmx` was never opened.
+
+Two smaller things came with it. An empty documents folder used to close the
+picker before it opened, which on a fresh install is exactly when somebody most
+needs the catalogue; it now opens when the browser is there even if nothing else
+is. And the row is offered only when the browser is on disk, because a row that
+cannot work is worse than none.
+
+The row itself needs the picker on screen and a tap, so the self-test cannot
+reach it. What it does check is the part that decides: that the sentinel is not
+a name a real file could answer to -- which would send somebody to the catalogue
+when they asked for their own program -- and that the URL `EnsureRequiredFiles`
+fetches still ends in the file name the picker looks for.
+
+### The loopback server
+
+`tests/LoopbackServer.dpr`, 253 lines on Indy's `TIdHTTPServer`, bound to
+127.0.0.1 only. It answers the shapes httpbin.org answers, because that is the
+contract the tests and the five HTTP applets were already written against:
+`/get`, `/post`, `/put`, `/patch`, `/delete`, `/status/N`, `/redirect/N`,
+`/response-headers`, `/cookies/set`, `/bytes/N`, and `/quit` to stop.
+
+`verify.ps1` builds it, starts it, waits for the port to answer rather than
+sleeping a guess, runs the verbs and stops it. The step is now **required**
+rather than probed-and-skipped: the server comes from this repository, so there
+is nothing left that can be unavailable.
+
+**61 assertions in 186 milliseconds**, against about five seconds through the
+real httpbin. Twenty-five times faster, and nothing leaves the machine.
+
+Section 62 recorded holding out for this and letting it block the available
+answer for three turns. Building it took one, which is the honest measure of how
+much that hesitation cost.
+
+### What is still outside
+
+The 39 applets in `Examples/` still reach `httpbin.org`, `picsum.photos`,
+`api.chucknorris.io` and `plan9basic.com` on every verification run, and still
+assert nothing about what comes back. The server that would let them stop now
+exists. Pointing them at it is a change to the author's own programs and is not
+taken here.

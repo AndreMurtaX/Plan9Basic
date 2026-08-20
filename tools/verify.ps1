@@ -256,27 +256,53 @@ Step 'local model' {
 
 # The half of HttpLib that needs a server to answer it.
 #
-# httpbin.org mirrors requests back, and the five HTTP applets in Examples/
-# have used it since they were written -- without ever asserting anything about
-# the reply, which is why 39 functions had never been proven to work.
+# The server is ours: tests/LoopbackServer.dpr, built here and bound to
+# 127.0.0.1 only. It answers the shapes httpbin.org answers, because that is the
+# contract these tests and the five HTTP applets were already written against.
 #
-# A third party can be down, so this is probed and skipped like the local model
-# step rather than made a required one. A loopback server in the harness would
-# be better: nothing would leave the machine, the run would be faster, and the
-# applets could stop reaching outside too. Waiting for one was letting the
-# better answer block the available one.
+# So this is a REQUIRED step and not a skippable one. Nothing leaves the
+# machine, nothing outside it can be down, and the run takes a quarter of a
+# second where the real httpbin took five.
 Step 'http verbs' {
-    $reach = $null
+    $dcc3 = Find-Dcc64
+    $srvDir = Join-Path $tests 'bin'
+    New-Item -ItemType Directory -Force (Join-Path $srvDir 'loopback') | Out-Null
+    Push-Location $tests
     try {
-        $reach = Invoke-WebRequest -Uri 'https://httpbin.org/status/200' `
-                                   -TimeoutSec 8 -UseBasicParsing -ErrorAction Stop
-    } catch { }
-    if ($null -eq $reach) {
-        'skipped - httpbin.org not reachable'
-    } else {
-        (& (Join-Path $tests 'bin\Plan9BasicTest.exe') --gui `
-            (Join-Path $tests 'local\02_http_verbs.bas') 2>&1 | Out-String) -split "`n" |
+        & $dcc3 -B "-NU$(Join-Path $srvDir 'loopback')" "-E$srvDir" `
+                'LoopbackServer.dpr' 2>&1 | Out-Null
+    } finally {
+        Pop-Location
+    }
+
+    $exe = Join-Path $srvDir 'LoopbackServer.exe'
+    if (-not (Test-Path $exe)) { throw 'LoopbackServer did not build' }
+
+    $srv = Start-Process -FilePath $exe -ArgumentList '8731' -PassThru -WindowStyle Hidden
+    try {
+        # Wait for the port rather than sleeping a guess: a fixed pause is either
+        # too short on a loaded machine or wasted on an idle one.
+        $ready = $false
+        foreach ($i in 1..40) {
+            try {
+                Invoke-WebRequest -Uri 'http://127.0.0.1:8731/status/200' `
+                                  -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop | Out-Null
+                $ready = $true
+                break
+            } catch { Start-Sleep -Milliseconds 100 }
+        }
+        if (-not $ready) { throw 'LoopbackServer never answered on 127.0.0.1:8731' }
+
+        (& (Join-Path $srvDir 'Plan9BasicTest.exe') --gui `
+            (Join-Path $tests 'http/01_verbs.bas') 2>&1 | Out-String) -split "`n" |
             Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
+    } finally {
+        try {
+            Invoke-WebRequest -Uri 'http://127.0.0.1:8731/quit' `
+                              -TimeoutSec 3 -UseBasicParsing | Out-Null
+        } catch { }
+        Start-Sleep -Milliseconds 300
+        if (-not $srv.HasExited) { Stop-Process -Id $srv.Id -Force }
     }
 }
 
