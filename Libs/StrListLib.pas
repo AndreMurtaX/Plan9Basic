@@ -33,7 +33,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.Classes,
-  basic, exec, UnitGC;
+  basic, exec, UnitGC, HandleRegistry;
 
 type
   // Forward declaration
@@ -148,8 +148,22 @@ end;
 // Validate string list pointer
 function ValidateStringList(P: Pointer; const Operation: String): TBasStringList;
 begin
+  //Asking the registry rather than casting. This used to test Assigned and
+  //then cast, so any number a program passed became an object: strings_count
+  //on an invented pointer read from that address, which Windows reports as an
+  //access violation and Android and Linux do not survive.
+  //
+  //StrListLib was missed by the HandleRegistry conversion of item 3.4 -- 65
+  //signatures take a pointer here and every one of them was reachable this
+  //way. Found 2026-08-20 by tests/suite/21_strlist.bas, which was written for
+  //the coverage rather than for this.
   if not Assigned(P) then
     raise Exception.CreateFmt('%s: %s', [Operation, ERR_UNDEFINED_COMPONENT]);
+  //TStringList rather than TBasStringList: RegexLib hands back plain ones for
+  //its match results, and the strings_* family has always read them. The
+  //registry answers for both, since the check is on the base class.
+  if not IsHandleOf(P, TStringList) then
+    raise Exception.CreateFmt('%s: not a string list', [Operation]);
   Result := TBasStringList(P);
 end;
 
@@ -267,6 +281,9 @@ var
   SL: TBasStringList;
 begin
   SL := TBasStringList.Create();
+  //Without this every strings_* call would answer from a bare cast, which is
+  //what it did until 2026-08-20.
+  RegisterHandle(SL);
   SL.Interpreter := ModuleEngine;
   SL.ConsoleOutput := ModuleOutput;
 
@@ -287,13 +304,18 @@ begin
   Result.p := nil;
   Result.s := '';
 
-  if Assigned(Args[0].p) then
-  begin
-    UnitGC.GC.Collect(STRLIST_GC_TAG+'_'+IntToStr(NativeInt(Args[0].p)));
-    Result.n := 1;
-  end
-  else
+  //Assigned() was the whole check, so freeing an already freed list answered 1
+  //and freeing an invented pointer answered 1 as well, after handing the
+  //address to the collector. Its ninety-five siblings in Libs/GUI answer 0 to
+  //both, and the registry is what lets this one agree with them.
+  if not Assigned(Args[0].p) then
     raise Exception.Create('strings_free: ' + ERR_UNDEFINED_COMPONENT);
+  if not IsHandleOf(Args[0].p, TStringList) then
+    Exit;
+
+  UnregisterHandle(TObject(Args[0].p));
+  UnitGC.GC.Collect(STRLIST_GC_TAG+'_'+IntToStr(NativeInt(Args[0].p)));
+  Result.n := 1;
 end;
 
 //==============================================================================

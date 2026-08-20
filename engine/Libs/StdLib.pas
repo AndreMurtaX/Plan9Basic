@@ -29,7 +29,7 @@ interface
 uses
   System.SysUtils, System.Types, System.Classes, System.Variants, System.Math,
   HostServices,
-  exec;
+  exec, HandleRegistry;
 
 procedure RegisterStdFuncs(Lib: TFunctionsDictionary);
 
@@ -42,7 +42,14 @@ implementation
 function s_classname(var Args: Array of TAsmData): TAsmData;
 begin
   Result := Default(TAsmData);
-  Result.s := TObject(Args[0].p).ClassName;
+  //This was one line with no check at all, not even for nil: whatever number
+  //a program passed was cast to TObject and read from. The registry answers
+  //without dereferencing, which is the whole reason it exists (item 3.4).
+  //An unknown pointer gets an empty string rather than an access violation,
+  //because classname$ is an introspection call and refusing to answer is a
+  //better answer than crashing.
+  if IsHandle(Args[0].p) then
+    Result.s := TObject(Args[0].p).ClassName;
 end;
 
 function n_pause(var Args: Array of TAsmData): TAsmData;

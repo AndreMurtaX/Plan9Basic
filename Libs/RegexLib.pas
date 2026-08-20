@@ -32,7 +32,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.RegularExpressions,
-  exec, UnitGC;
+  exec, UnitGC, HandleRegistry;
 
 const
   REGEX_GC_TAG = 'BASIC_REGEX';
@@ -72,6 +72,11 @@ function CreateManagedStringList: TStringList;
 begin
   Result := TStringList.Create;
   GC.Add<TStringList>(Result, REGEX_GC_TAG);
+  //A regex match list is handed to BASIC as a handle and read back with the
+  //strings_* family, so it has to be in the registry for those calls to tell
+  //it from a number the program invented. StrListLib validated by casting
+  //until 2026-08-20 and nothing here needed to be registered; now it does.
+  RegisterHandle(Result);
 end;
 
 //------------------------------------------------------------------------------
