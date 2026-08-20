@@ -913,6 +913,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
+    Layout.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Layout, Eng, Outp) then
@@ -920,7 +921,6 @@ begin
       Layout.BasicEngine := Eng;
       Layout.ConsoleOutput := Outp;
     end;
-    Layout.Parent := ParentObj;
 
     // Set sensible defaults
     Layout.Width := 100;
@@ -960,6 +960,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
+    Layout.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Layout, Eng, Outp) then
@@ -967,7 +968,6 @@ begin
       Layout.BasicEngine := Eng;
       Layout.ConsoleOutput := Outp;
     end;
-    Layout.Parent := ParentObj;
 
     Layout.Width := Args[1].n;
     Layout.Height := Args[2].n;
@@ -1006,6 +1006,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Layout := TBasLayout.Create(nil);
+    Layout.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Layout, Eng, Outp) then
@@ -1013,7 +1014,6 @@ begin
       Layout.BasicEngine := Eng;
       Layout.ConsoleOutput := Outp;
     end;
-    Layout.Parent := ParentObj;
 
     Layout.Position.X := Args[1].n;
     Layout.Position.Y := Args[2].n;

@@ -39,6 +39,10 @@ READERS = {
         'the player is not necessarily parented when it is created',
     'tests/TestLib.pas':
         'the test harness reaches the parser directly, which is its job',
+    'Libs/GUI/FormLib.pas':
+        'a form is the root of the parent chain, so there is nothing above it '
+        'for EngineOf to ask. Phase 2.2 gave it the parent walk anyway and '
+        'every form event was dead until 2026-08-20',
 }
 
 

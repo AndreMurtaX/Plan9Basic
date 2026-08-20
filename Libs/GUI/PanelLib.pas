@@ -889,6 +889,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
+    Panel.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Panel, Eng, Outp) then
@@ -896,7 +897,6 @@ begin
       Panel.BasicEngine := Eng;
       Panel.ConsoleOutput := Outp;
     end;
-    Panel.Parent := ParentObj;
 
     // Set sensible defaults
     Panel.Width := 100;
@@ -936,6 +936,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
+    Panel.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Panel, Eng, Outp) then
@@ -943,7 +944,6 @@ begin
       Panel.BasicEngine := Eng;
       Panel.ConsoleOutput := Outp;
     end;
-    Panel.Parent := ParentObj;
 
     Panel.Width := Args[1].n;
     Panel.Height := Args[2].n;
@@ -982,6 +982,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Panel := TBasPanel.Create(nil);
+    Panel.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Panel, Eng, Outp) then
@@ -989,7 +990,6 @@ begin
       Panel.BasicEngine := Eng;
       Panel.ConsoleOutput := Outp;
     end;
-    Panel.Parent := ParentObj;
 
     Panel.Position.X := Args[1].n;
     Panel.Position.Y := Args[2].n;

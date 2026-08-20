@@ -597,13 +597,6 @@ begin
 
   try
     pb := TBasProgressBar.Create(nil);
-    //The engine belongs to the form this control now hangs from,
-    //rather than to a unit variable filled in at registration.
-    if EngineOf(pb, Eng, Outp) then
-    begin
-      pb.BasicEngine := Eng;
-      pb.ConsoleOutput := Outp;
-    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       pb.Parent := TCommonCustomForm(Args[0].p)
@@ -611,6 +604,13 @@ begin
     begin
       ParentObj := TFmxObject(Args[0].p);
       pb.Parent := ParentObj;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(pb, Eng, Outp) then
+    begin
+      pb.BasicEngine := Eng;
+      pb.ConsoleOutput := Outp;
+    end;
     end;
 
     Result.p := Pointer(pb);
@@ -640,13 +640,6 @@ begin
 
   try
     pb := TBasProgressBar.Create(nil);
-    //The engine belongs to the form this control now hangs from,
-    //rather than to a unit variable filled in at registration.
-    if EngineOf(pb, Eng, Outp) then
-    begin
-      pb.BasicEngine := Eng;
-      pb.ConsoleOutput := Outp;
-    end;
 
     if TObject(Args[0].p) is TCommonCustomForm then
       pb.Parent := TCommonCustomForm(Args[0].p)
@@ -654,6 +647,13 @@ begin
     begin
       ParentObj := TFmxObject(Args[0].p);
       pb.Parent := ParentObj;
+    //The engine belongs to the form this control now hangs from,
+    //rather than to a unit variable filled in at registration.
+    if EngineOf(pb, Eng, Outp) then
+    begin
+      pb.BasicEngine := Eng;
+      pb.ConsoleOutput := Outp;
+    end;
     end;
 
     pb.Position.X := Args[1].n;

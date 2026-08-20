@@ -1018,6 +1018,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
+    Rect.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Rect, Eng, Outp) then
@@ -1025,7 +1026,6 @@ begin
       Rect.BasicEngine := Eng;
       Rect.ConsoleOutput := Outp;
     end;
-    Rect.Parent := ParentObj;
 
     // Set sensible defaults
     Rect.Width := 100;
@@ -1067,6 +1067,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
+    Rect.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Rect, Eng, Outp) then
@@ -1074,7 +1075,6 @@ begin
       Rect.BasicEngine := Eng;
       Rect.ConsoleOutput := Outp;
     end;
-    Rect.Parent := ParentObj;
 
     Rect.Width := Args[1].n;
     Rect.Height := Args[2].n;
@@ -1115,6 +1115,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Rect := TBasRectangle.Create(nil);
+    Rect.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Rect, Eng, Outp) then
@@ -1122,7 +1123,6 @@ begin
       Rect.BasicEngine := Eng;
       Rect.ConsoleOutput := Outp;
     end;
-    Rect.Parent := ParentObj;
 
     Rect.Position.X := Args[1].n;
     Rect.Position.Y := Args[2].n;

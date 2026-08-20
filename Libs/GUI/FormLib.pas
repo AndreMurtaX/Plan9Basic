@@ -255,6 +255,10 @@ const
   STATE_MAXIMIZED = 2;
 
 var
+  //Assigned once at registration. A form is the root of the parent
+  //chain and has nothing to ask, unlike every control below it.
+  ModuleEngine: TBasicEngine;
+  ModuleOutput: TStrings;
   lastError: Integer;
   lastErrorMsg: String;
 
@@ -970,13 +974,14 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    //The engine belongs to the form this control now hangs from,
-    //rather than to a unit variable filled in at registration.
-    if EngineOf(Frm, Eng, Outp) then
-    begin
-      Frm.BasicEngine := Eng;
-      Frm.ConsoleOutput := Outp;
-    end;
+    //A form is the root of the parent chain, so EngineOf has nothing to walk
+    //up to and cannot answer for it. Phase 2.2 gave every library the parent
+    //walk and applied it here as well: the call returned False, BasicEngine
+    //stayed nil, and InternalOnXxx exits on its first line when it is. Every
+    //form-level event has been dead since -- keyboard included, in all nine
+    //games -- and nothing noticed, because nothing fired a form event.
+    Frm.BasicEngine := ModuleEngine;
+    Frm.ConsoleOutput := ModuleOutput;
 
     // Set sensible defaults
     Frm.Caption := 'Plan9Basic Form';
@@ -1013,13 +1018,14 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    //The engine belongs to the form this control now hangs from,
-    //rather than to a unit variable filled in at registration.
-    if EngineOf(Frm, Eng, Outp) then
-    begin
-      Frm.BasicEngine := Eng;
-      Frm.ConsoleOutput := Outp;
-    end;
+    //A form is the root of the parent chain, so EngineOf has nothing to walk
+    //up to and cannot answer for it. Phase 2.2 gave every library the parent
+    //walk and applied it here as well: the call returned False, BasicEngine
+    //stayed nil, and InternalOnXxx exits on its first line when it is. Every
+    //form-level event has been dead since -- keyboard included, in all nine
+    //games -- and nothing noticed, because nothing fired a form event.
+    Frm.BasicEngine := ModuleEngine;
+    Frm.ConsoleOutput := ModuleOutput;
 
     Frm.Caption := Args[0].s;
     Frm.Width := 640;
@@ -1055,13 +1061,14 @@ begin
 
   try
     Frm := TBasForm.Create(nil); // Cannot be Application due to the GC collector
-    //The engine belongs to the form this control now hangs from,
-    //rather than to a unit variable filled in at registration.
-    if EngineOf(Frm, Eng, Outp) then
-    begin
-      Frm.BasicEngine := Eng;
-      Frm.ConsoleOutput := Outp;
-    end;
+    //A form is the root of the parent chain, so EngineOf has nothing to walk
+    //up to and cannot answer for it. Phase 2.2 gave every library the parent
+    //walk and applied it here as well: the call returned False, BasicEngine
+    //stayed nil, and InternalOnXxx exits on its first line when it is. Every
+    //form-level event has been dead since -- keyboard included, in all nine
+    //games -- and nothing noticed, because nothing fired a form event.
+    Frm.BasicEngine := ModuleEngine;
+    Frm.ConsoleOutput := ModuleOutput;
 
     Frm.Caption := Args[0].s;
     Frm.Width := Trunc(Args[1].n);
@@ -3005,7 +3012,11 @@ procedure RegisterFormFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine; OutP: 
 var
   Fn: TLinkFunction;
 begin
-  // Store module-level references for event callbacks
+  //A form has no parent, so it is given the engine here rather than finding
+  //it. The comment below outlived the two lines it described, which is how
+  //the sweep of 2026-08-20 came to remove them as unread.
+  ModuleEngine := Eng;
+  ModuleOutput := OutP;
 
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.

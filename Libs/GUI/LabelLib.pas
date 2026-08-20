@@ -632,6 +632,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
+    Lbl.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Lbl, Eng, Outp) then
@@ -639,7 +640,6 @@ begin
       Lbl.BasicEngine := Eng;
       Lbl.ConsoleOutput := Outp;
     end;
-    Lbl.Parent := ParentObj;
 
     // Set sensible defaults
     Lbl.Text := '';
@@ -679,6 +679,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
+    Lbl.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Lbl, Eng, Outp) then
@@ -686,7 +687,6 @@ begin
       Lbl.BasicEngine := Eng;
       Lbl.ConsoleOutput := Outp;
     end;
-    Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;
     Lbl.Align := TAlignLayout.None;
@@ -725,6 +725,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
+    Lbl.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Lbl, Eng, Outp) then
@@ -732,7 +733,6 @@ begin
       Lbl.BasicEngine := Eng;
       Lbl.ConsoleOutput := Outp;
     end;
-    Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;
     Lbl.Position.X := Args[2].n;
@@ -773,6 +773,7 @@ begin
   try
     ParentObj := TFmxObject(Args[0].p);
     Lbl := TBasLabel.Create(nil);
+    Lbl.Parent := ParentObj;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(Lbl, Eng, Outp) then
@@ -780,7 +781,6 @@ begin
       Lbl.BasicEngine := Eng;
       Lbl.ConsoleOutput := Outp;
     end;
-    Lbl.Parent := ParentObj;
 
     Lbl.Text := Args[1].s;
     Lbl.Position.X := Args[2].n;
