@@ -3304,3 +3304,64 @@ it. Restoring it means an `onpainting` family — a setter, a getter, a field, a
 handler and a reference page per library — which is a feature rather than this
 repair, and inventing it while settling an ambiguity would be how the ambiguity
 got here.
+
+
+## 40. The quarter of the surface that fails without saying so
+
+Written 2026-08-20, continuing the coverage work of section 38.
+
+### Which quarter, and why it is the one that matters
+
+After the property round trip, 1,289 of the 3,767 registered GUI functions were
+still called by nothing. Sorted by family, the top five were not obscure:
+
+| family | functions |
+|---|---|
+| `free` | 99 |
+| `strerror` | 98 |
+| `error` | 98 |
+| `clearerror` | 98 |
+| `errormsg` | 97 |
+
+**490 functions, and every one of them fails invisibly.** A `free` that reports
+success without freeing, or an error slot that never clears, looks from a BASIC
+program exactly like a library that works. There is nothing to notice.
+
+The history is in the source. `n_rect_free` still carries the note from when
+**25 `*_free` functions answered 0 on every call**, for months, because the
+block that set the result had been commented out. Nothing caught it because
+nothing called `free` and looked at what came back.
+
+### One sequence, ninety-five times
+
+`tests/gen_lifecycle_suite.py` emits, per library: build, free, free again, then
+read the error out and clear it. Every step is a claim —
+
+```
+build            the constructor records no error
+free             answers 1, records no error
+free again       answers 0
+error            the refusal was recorded rather than swallowed
+errormsg$        says something about it
+strerror$(code)  names the code
+clearerror       and the slot goes back to clean
+```
+
+The second free is the point of the exercise. `HandleRegistry` exists so that a
+pointer a program kept after freeing is *detected* rather than dereferenced, and
+until now nothing asked it in anger. This asks it 95 times.
+
+**760 assertions, all passing.** No dead `free`, no error slot that will not
+clear, no handle that survives its own release. Coverage went from 66% to
+**74%**, and the GUI suite from 2,438 assertions to 3,198.
+
+### The generator claimed a number it had not counted
+
+Its first run announced 855 assertions. The sequence has eight steps and 95 × 9
+is not 760: the nine was remembered rather than measured, and the run that
+followed reported the real figure and contradicted it.
+
+It counts now. Writing an unchecked number into the output of a tool built to
+catch unchecked claims is worth recording rather than quietly fixing — it is the
+same reflex that produced sections 32, 35 and 36, appearing inside the work that
+exists to stop it.
