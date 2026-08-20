@@ -3547,3 +3547,78 @@ assertions to 446.
 asserted is the relation between them: today is now with the fraction removed,
 tomorrow is one day on, yesterday one back, and `istoday(today())` holds. A test
 that cannot know the answer can still know the shape.
+
+
+## 44. StrListLib was missed by the HandleRegistry conversion
+
+Written 2026-08-20. Started as coverage and turned into a shipped defect.
+
+### How it surfaced
+
+`StrListLib` was the largest gap left outside the GUI: 46 registered functions,
+none tested. Writing the suite meant measuring the conventions first — the list
+indexes from **zero**, `add` returns the index it used, `indexof` answers -1
+when it fails.
+
+Two of those measurements are worth their own assertions because the names do
+not distinguish them. `find` and `indexof` take the same arguments and return
+the same thing, and `find` is a binary search: on eight items in reverse order
+`indexof` finds every one and `find` reports -1 for every one, raising nothing.
+The reference page states this in a note and its own example sorts first, so
+there is no defect there — what was missing was a test, and its value is making
+a precondition executable rather than a paragraph somebody may not read.
+
+**The defect was in the last assertion.** `strings_free` on an already freed
+list answered **1**. Its ninety-five siblings in `Libs/GUI` answer 0, which
+section 40 pinned the day before.
+
+### What was underneath
+
+`ValidateStringList` tested `Assigned(P)` and cast. No registry, anywhere in the
+unit — and **65 of its signatures take a pointer**.
+
+```
+strings_count(pointer#(123456))
+  -> Access violation ... Read of address 000000000001E240
+```
+
+That is verbatim the failure `tests/negative/02_fabricated_array_handle.bas`
+describes for `ArrayLib` before item 3.4: *"recoverable on Windows, a hard crash
+on Android and Linux."* `StrListLib` was simply missed by that conversion, and
+nothing noticed for months because nothing called it with a bad handle.
+
+A sweep of the non-GUI libraries found a second: `classname$` in `StdLib` was
+one line with **no check at all**, not even for nil, casting whatever number it
+received to `TObject` and reading from it.
+
+`ZipLib` was flagged by the same sweep and is **not** a defect. It keeps an
+integer key into a dictionary, so an invented handle is a lookup that misses and
+nothing is ever dereferenced. A different design, equally safe, and worth
+recording so the next sweep does not 'fix' it.
+
+### The repair, and the part I got wrong
+
+`ValidateStringList` and `stringlist_free` ask the registry; the constructor
+registers; `classname$` answers an empty string for a pointer the registry does
+not know, since refusing to answer beats crashing for an introspection call.
+
+Then the **examples** failed — and only the full run caught it. `RegexLib`
+hands match results to BASIC as handles that the `strings_*` family reads, and
+they are plain `TStringList`, not `TBasStringList`. I had required both
+registration *and* the subclass, tightening two things when the family's design
+had always been the looser one.
+
+Both sides were wrong and neither is fixed by loosening the guard:
+`RegexLib.CreateManagedStringList` registers what it produces, and
+`ValidateStringList` asks for the **base class**, which the registry answers for
+both.
+
+**Two things I did badly here.** My detector for "what escapes to BASIC" looked
+for `Result.p := ...` and missed `RegexLib` entirely, because it escapes through
+a Pascal function whose return variable is also called `Result`. And I declared
+the repair done on the strength of two partial suites, both green, before
+running the one that exercises real programs. That is section 25's mistake
+again: taking the run that is convenient for the run that counts.
+
+Coverage of the non-GUI libraries went 37% to 44%, the engine suite 446 to 486
+assertions, and the negative suite from 8 files to 10.
