@@ -4730,3 +4730,58 @@ somebody closes the window, and nobody is watching. `form_close` is called, and
 does not hide the window -- FireMonkey raises `OnCloseQuery` and then `OnClose`,
 and what follows is the close action's business, which without a message loop
 does not complete. Both are stated in the file rather than left as gaps.
+
+## 62. The better answer was blocking the available one
+
+The author asked why the count had stopped at 99.1%, and why the HTTP verbs
+could not simply be tested against the mirroring service the applets already
+use. The question was right and my reasoning had been wrong in a specific way
+worth writing down.
+
+The 39 uncovered names map one to one onto httpbin.org's endpoints: `/get`,
+`/post`, `/put`, `/patch`, `/delete`, `/status/404`, `/redirect/1`,
+`/response-headers`, `/cookies/set`, `/bytes/N`. There was never a technical
+obstacle.
+
+The objection was about fragility, and it was real but narrow: an applet
+tolerates httpbin being down because it **asserts nothing** -- it prints the
+error and passes -- while a test with assertions turns the build red when
+somebody else's server is unavailable.
+
+**And that class of problem had already been solved, two sections earlier.** The
+local-model step probes `localhost:11434` and reports `skipped` when there is
+nothing there. The same arrangement works for a third party. I had been holding
+out for a loopback server in the harness -- which would be better, because
+nothing would leave the machine and the applets could stop reaching outside too
+-- and in doing so let the better answer block the available one for three
+turns.
+
+The two new steps both reported 104 assertions on their first run -- 43 plus 61 -- because each was running the whole folder rather than its own file. The paths had been written through a Python heredoc, where `local\\01_...` collapsed to a literal  byte: an octal escape, not a backslash. Section 44 recorded the same trap costing a dozen edits and one silently-wrong checker, and the note there says to build backslashes with `chr(92)`. Written down and then walked into again.
+
+`tests/local/02_http_verbs.bas`: 61 assertions, under five seconds, green on the
+first run. The step probes httpbin and skips when it cannot be reached.
+
+### What is asserted, and what is not
+
+Only what the service guarantees: the status it was asked for, the header it was
+told to echo, the body it was sent back. Never its mood. `/status/404` proves
+`http_isclienterror` and disproves `http_isservererror`; `/redirect/1` proves
+both sides of `http_followredirects#`; `/response-headers?X-Plan9=basic` proves
+`http_respheader$` reads a header this test chose rather than one that happened
+to be there.
+
+### Where the count lands
+
+**4,487 of 4,488 registered names -- 100.0%.**
+
+The one exception is `form_showmodal`, and it is not an oversight: it blocks
+until somebody closes the window, so no unattended run can call it. That is
+written in `13_form_properties.bas` beside the verbs that can be called, rather
+than left as a silent gap.
+
+Two things that number does not say, and both matter more than it does. It
+counts a name as covered the first time anything calls it, so it is an upper
+bound on how well the surface is tested -- the tool prints that line under every
+run for a reason. And a suite green on 6,000 assertions is still a suite written
+from one reading of the documentation: section 54 recorded an applet catching an
+inverted flag that every suite here would have gone green on.

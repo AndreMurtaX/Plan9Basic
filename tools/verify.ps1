@@ -242,7 +242,7 @@ Step 'local model' {
         'skipped - no model answering on localhost:11434'
     } else {
         $names = ($probe.Content | ConvertFrom-Json).models | ForEach-Object { $_.name }
-        $file = Join-Path $tests 'local_ai_ollama.bas'
+        $file = Join-Path $tests 'local\01_ai_ollama.bas'
         # The file names the model it wants; if that one is not pulled, say so
         # rather than fail on an error the machine cannot help.
         if ($names -notcontains 'qwen2.5:7b') {
@@ -251,6 +251,32 @@ Step 'local model' {
             (& (Join-Path $tests 'bin\Plan9BasicTest.exe') --gui $file 2>&1 | Out-String) -split "`n" |
                 Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
         }
+    }
+}
+
+# The half of HttpLib that needs a server to answer it.
+#
+# httpbin.org mirrors requests back, and the five HTTP applets in Examples/
+# have used it since they were written -- without ever asserting anything about
+# the reply, which is why 39 functions had never been proven to work.
+#
+# A third party can be down, so this is probed and skipped like the local model
+# step rather than made a required one. A loopback server in the harness would
+# be better: nothing would leave the machine, the run would be faster, and the
+# applets could stop reaching outside too. Waiting for one was letting the
+# better answer block the available one.
+Step 'http verbs' {
+    $reach = $null
+    try {
+        $reach = Invoke-WebRequest -Uri 'https://httpbin.org/status/200' `
+                                   -TimeoutSec 8 -UseBasicParsing -ErrorAction Stop
+    } catch { }
+    if ($null -eq $reach) {
+        'skipped - httpbin.org not reachable'
+    } else {
+        (& (Join-Path $tests 'bin\Plan9BasicTest.exe') --gui `
+            (Join-Path $tests 'local\02_http_verbs.bas') 2>&1 | Out-String) -split "`n" |
+            Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
     }
 }
 
