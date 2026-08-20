@@ -3995,3 +3995,93 @@ What is still unmeasured on Android is touch. The self-test runs a program and
 reads the console; it presses nothing. Given that the two defects found this
 month were both about events reaching the interpreter, that limit is worth
 stating plainly rather than leaving for somebody to discover.
+
+## 50. Counting what nothing had ever run
+
+"Test everything exhaustively" was the author's condition for making this
+public, and there was no way to tell how far along that was. The 87% and 44%
+quoted earlier in this document were arithmetic done once by hand and never
+repeated.
+
+`check-coverage.py` reads the same `Lib.Add` surface `check-docs.py` reads and
+asks a different question of it: has a test ever called this name. The answer
+was **3,491 of 4,488 -- 77.8%**, and the shape of the remainder was the useful
+part: `HttpLib` 0/91, `MediaPlayerLib` 0/58, `AILib` 0/45, `ConfigLib` 0/31,
+`SysLib` 1/43, `ZipLib` 0/15, `PlatformInfoLib` 0/9.
+
+The unit is the name, not the signature, because a BASIC argument list is
+usually an expression and typing it statically would mean evaluating it. The
+number is therefore an upper bound and says so. What it reports exactly is the
+other direction: an uncovered name is one nothing has ever run, and any defect
+in it is undiscovered by construction.
+
+### Three defects, found by running code for the first time
+
+**`b64urlencode$` emitted a line break.** `TNetEncoding.Base64` is MIME base64
+and wraps at 76 characters. The cosmetic consequence was that `b64valid`
+rejected its own library's output; the real one is that URL-safe base64 with a
+newline in it does not survive a URL, which is the only reason that function
+exists. Nothing under 57 bytes wraps, which is why it went unseen. The three
+encoders now use a `TBase64Encoding` created with no wrapping; the decoders
+stay on `TNetEncoding.Base64`, which ignores line breaks, so anything encoded
+by the old behaviour still reads back.
+
+**`zipquick` named its entry differently depending on the separator.**
+`ExtractFileName` splits on backslash only under Windows, so
+`zipquick('bin/notes.txt', ...)` stored an entry called `bin/notes.txt` and
+`zipquick('bin\\notes.txt', ...)` stored `notes.txt`. The archive's
+shape followed which key the programmer pressed.
+
+**The same root, five more times, in `SysLib`.** `extractfilename$`,
+`extractfileext$`, `extractfilepath$`, `changefileext$` and
+`forcedirectories` all go through RTL helpers that split on the platform
+separator only. `extractfilename$('bin/notes.txt')` answered the whole path
+back, and `forcedirectories('a/b/c')` failed outright because it could not see
+a parent to create. Every other file function in this engine takes either
+separator -- the OS accepts both -- so a program written with forward slashes
+worked everywhere except in these five. Fixed at the root with one helper, and
+only under Windows: a backslash is a legal character in a POSIX file name, and
+replacing it there would corrupt names rather than repair them.
+
+`HttpLib.AddFile` has the same `ExtractFileName` call and was **left alone**.
+Its result is only observable in a multipart request body: `http_formurlencoded$`
+walks text fields and skips file fields, and no function answers a file field's
+stored name. The rule for this project is that a behaviour change comes with a
+test that would fail if it reverted, and there is no way to write one without a
+server. Recorded here rather than repaired blind, which is the failure mode
+sections 45 and 46 already cost a session to.
+
+### An applet caught the over-correction
+
+Widening `b64valid` to accept whitespace was too wide. `21_Base64Lib_tests.bas`
+has asserted since before any of this that base64 containing a space is
+invalid, and it is right: line breaks are a wrapping convention, a space is not
+part of any. The applet failed, the change was narrowed to `#10` and `#13`, and
+the space case is now pinned in `tests/suite/23_archive.bas` as well.
+
+Worth recording for what it says about the arrangement rather than the bug: the
+suites passed the over-correction without complaint. The thing that caught it
+was a program written to be run, which is the same lesson as flappy_bird in
+section 47, arriving from the other direction.
+
+### A language trap, now pinned
+
+Writing the tests turned up something that is documented and still catches
+people: string literals take escape sequences, so `"C:\folder\notes.txt"`
+is not a path. `\f` is a form feed and `\n` is a newline, and nineteen
+characters of intended path arrive as seventeen characters of something else. A
+Windows separator has to be written twice. The reference documents the escape
+table; `tests/suite/19_language_contract.bas` now documents the consequence.
+
+### Where the coverage stands
+
+`ConfigLib` 0 to 31, `ZipLib` 0 to 15, `SysLib` 1 to 43, `PlatformInfoLib` 0 to
+9, plus `GzipLib`, `Base64Lib` and `StdLib` completed. Four new suite files,
+and the engine suite went from 486 assertions to 644.
+
+The largest gaps left are the three that need something the harness does not
+have: `HttpLib` needs a loopback server, `MediaPlayerLib` needs an audio
+device, `AILib` and `RAGLib` need credentials and a network. `HttpLib` alone is
+91 functions -- more than `MediaPlayerLib` and `AILib` together -- and a local
+listener in the harness is the one addition that would unlock a whole layer
+rather than a handful of calls.

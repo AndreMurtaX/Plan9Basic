@@ -66,6 +66,17 @@ implementation
 var
   lastError: Integer;  // Error code for last operation (0 = success)
 
+  //TNetEncoding.Base64 is MIME base64: it inserts a CRLF every 76 characters.
+  //That is correct for a mail body and wrong for everything this library is
+  //used for. The line break made b64valid reject the library's own output, and
+  //it put a newline inside b64urlencode$, whose entire purpose is a string that
+  //survives a URL. Nothing under 57 bytes wraps, which is why it went unseen.
+  //
+  //Decoding stays on TNetEncoding.Base64, which ignores line breaks, so data
+  //encoded by the old behaviour -- or by anything else that wraps -- still
+  //reads back.
+  Base64NoWrap: TBase64Encoding;
+
 const
   ERR_NONE = 0;
   ERR_INVALID_BASE64 = 1;
@@ -109,7 +120,7 @@ begin
   try
     // Convert string to UTF-8 bytes, then encode
     InputBytes := TEncoding.UTF8.GetBytes(Args[0].s);
-    Result.s := TNetEncoding.Base64.EncodeBytesToString(InputBytes);
+    Result.s := Base64NoWrap.EncodeBytesToString(InputBytes);
   except
     on E: Exception do
     begin
@@ -174,7 +185,7 @@ begin
   
   try
     InputBytes := TEncoding.UTF8.GetBytes(Args[0].s);
-    Encoded := TNetEncoding.Base64.EncodeBytesToString(InputBytes);
+    Encoded := Base64NoWrap.EncodeBytesToString(InputBytes);
     
     // Convert to URL-safe: + -> -, / -> _, remove padding =
     Encoded := StringReplace(Encoded, '+', '-', [rfReplaceAll]);
@@ -257,7 +268,15 @@ begin
   end;
   
   // Valid BASE64 characters: A-Z, a-z, 0-9, +, /, =
-  ValidChars := ['A'..'Z', 'a'..'z', '0'..'9', '+', '/', '='];
+  //
+  //Line breaks are accepted because MIME base64 wraps at 76 characters, and a
+  //string this library will happily decode must not be called invalid.
+  //
+  //Only line breaks. A space is not part of any base64 wrapping convention,
+  //and 21_Base64Lib_tests.bas has said so since before this was written -- it
+  //was that applet, not a suite, that caught the first attempt at this comment
+  //accepting spaces and tabs as well.
+  ValidChars := ['A'..'Z', 'a'..'z', '0'..'9', '+', '/', '=', #10, #13];
   
   // Check all characters
   for I := 1 to Length(Input) do
@@ -337,7 +356,7 @@ begin
       SetLength(FileBytes, FileStream.Size);
       if FileStream.Size > 0 then
         FileStream.ReadBuffer(FileBytes[0], FileStream.Size);
-      Result.s := TNetEncoding.Base64.EncodeBytesToString(FileBytes);
+      Result.s := Base64NoWrap.EncodeBytesToString(FileBytes);
     finally
       FileStream.Free;
     end;
@@ -431,5 +450,12 @@ begin
   FnData.Entry := @s_b64encodefile; Lib.Add('b64encodefile$@$', FnData);
   FnData.Entry := @n_b64decodefile; Lib.Add('b64decodefile@$$', FnData);
 end;
+
+initialization
+  //Zero characters per line means no wrapping at all.
+  Base64NoWrap := TBase64Encoding.Create(0);
+
+finalization
+  Base64NoWrap.Free();
 
 end.

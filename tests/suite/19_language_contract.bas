@@ -40,6 +40,22 @@ let q$ = "he said \"hi\""
 assert_eq(len(q$), 12, "the escapes produce one character each")
 assert_eq(q$[[8]], chr$(34), "and that character is a quote")
 
+test_case("contract/a-single-backslash-before-a-letter-is-an-escape")
+rem The reference documents the escape table, and the consequence is
+rem worth stating outright: a Windows path typed the obvious way is not
+rem that path. Here \f is a form feed and \n is a newline, so what looks
+rem like nineteen characters of path is seventeen characters of
+rem something else -- each escape collapses two into one. A separator
+rem has to be written twice.
+let trap$ = "C:\folder\notes.txt"
+assert_eq(len(trap$), 17, "the escapes each collapse two characters into one")
+assert_eq(trap$[[2]], chr$(12), "\f became a form feed")
+assert_eq(trap$[[8]], chr$(10), "and \n became a newline")
+
+let real$ = "C:\\folder\\notes.txt"
+assert_eq(len(real$), 19, "doubled, the separators survive")
+assert_eq(real$[[2]], chr$(92), "as backslashes")
+
 test_case("contract/on-goto-picks-the-nth-label")
 rem Documented in section 4 and exercised by nothing until now.
 let hit = 0

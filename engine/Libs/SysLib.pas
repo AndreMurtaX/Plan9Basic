@@ -40,6 +40,26 @@ procedure RegisterSysFuncs(Lib: TFunctionsDictionary);
 
 implementation
 
+//The RTL's path helpers split on the platform separator only, so on Windows a
+//forward slash is just another character: ExtractFileName('bin/notes.txt')
+//answers 'bin/notes.txt', and ForceDirectories('a/b/c') fails outright because
+//it cannot see a parent to create first.
+//
+//Every other file function in this engine takes either separator -- the OS
+//accepts both -- so a program written with forward slashes works everywhere
+//except in these five, which is the worst place for an exception to live.
+//
+//Only on Windows. A backslash is a legal character in a POSIX file name, and
+//replacing it there would corrupt names rather than fix them.
+function NativeSeparators(const APath: String): String;
+begin
+  {$IFDEF MSWINDOWS}
+  Result := StringReplace(APath, '/', '\', [rfReplaceAll]);
+  {$ELSE}
+  Result := APath;
+  {$ENDIF}
+end;
+
 function n_paramcount(var Args: array of TAsmData): TAsmData;
 begin
   Result.n := ParamCount();
@@ -80,7 +100,7 @@ end;
 
 function n_forcedirectories(var Args: array of TAsmData): TAsmData;
 begin
-  Result.n := Ord(ForceDirectories(Args[0].s));
+  Result.n := Ord(ForceDirectories(NativeSeparators(Args[0].s)));
 end;
 
 function n_rmdir(var Args: array of TAsmData): TAsmData;
@@ -236,22 +256,22 @@ end;
 
 function s_changefileext(var Args: array of TAsmData): TAsmData;
 begin
-  Result.s := ChangeFileExt(Args[0].s, Args[1].s);
+  Result.s := ChangeFileExt(NativeSeparators(Args[0].s), Args[1].s);
 end;
 
 function s_extractfileext(var Args: array of TAsmData): TAsmData;
 begin
-  Result.s := ExtractFileExt(Args[0].s);
+  Result.s := ExtractFileExt(NativeSeparators(Args[0].s));
 end;
 
 function s_extractfilename(var Args: array of TAsmData): TAsmData;
 begin
-  Result.s := ExtractFileName(Args[0].s);
+  Result.s := ExtractFileName(NativeSeparators(Args[0].s));
 end;
 
 function s_extractfilepath(var Args: array of TAsmData): TAsmData;
 begin
-  Result.s := ExtractFilePath(Args[0].s);
+  Result.s := ExtractFilePath(NativeSeparators(Args[0].s));
 end;
 
 function n_alphacolor(var Args: array of TAsmData): TAsmData;

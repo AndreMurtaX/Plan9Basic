@@ -718,7 +718,12 @@ begin
     ZipFile := TZipFile.Create;
     try
       ZipFile.Open(DestPath, zmWrite);
-      ZipFile.Add(SourcePath, ExtractFileName(SourcePath));
+      //TPath.GetFileName, not ExtractFileName: on Windows the latter splits on
+      //backslash only, so zipquick('bin/notes.txt', ...) stored an entry named
+      //'bin/notes.txt' and zipquick('bin\\notes.txt', ...) stored 'notes.txt'.
+      //The archive's shape followed which slash the programmer typed, and every
+      //other file function in this engine takes either.
+      ZipFile.Add(SourcePath, TPath.GetFileName(SourcePath));
       ZipFile.Close;
     finally
       ZipFile.Free;
