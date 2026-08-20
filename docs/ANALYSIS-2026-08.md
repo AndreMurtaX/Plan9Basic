@@ -4085,3 +4085,77 @@ device, `AILib` and `RAGLib` need credentials and a network. `HttpLib` alone is
 91 functions -- more than `MediaPlayerLib` and `AILib` together -- and a local
 listener in the harness is the one addition that would unlock a whole layer
 rather than a handful of calls.
+
+## 51. The next tier, and one crash nobody had reached
+
+`IOUtilsLib` 10/52, `SQLiteLib` 11/52, `StrListLib` 22/60 and `JsonLib` 25/50 --
+all four now at 100%, and 82.3% of the whole surface up to 83.7%. Four new
+files, 260 assertions.
+
+### The defect
+
+**`strings_encoding$` read a name off a nil pointer.** `TStrings.Encoding` is
+nil until a load or a save establishes one, and `GetEncodingName` compared it
+against six known encodings and then, having matched none, read
+`Encoding.EncodingName`. Every list a program has just made crashes -- an
+access violation at address zero, which the far-call wrapper turns into a
+runtime error rather than a value.
+
+It answers the default encoding now, which is not a guess: `SaveToFile` without
+an explicit encoding uses `DefaultEncoding`, so that genuinely is the encoding
+in force. The nil guard went into the shared helper as well, so no other caller
+can reach the same read.
+
+**`strings_onchange$` answered a signature where the pages promise a name.**
+The setter stores `name#@#` so the dispatcher can look the function up without
+rebuilding it. That is an implementation convenience, and it leaked: setting
+`"on_change"` and reading it back answered `"on_change#@#"`, so the obvious
+comparison against what was written never matched. The reference calls it "Get
+OnChange handler name", and now it is one. The stored form is unchanged, so the
+dispatcher is untouched.
+
+### Five conventions this suite got wrong before it got them right
+
+Worth listing, because every one of them is documented and every one of them is
+the opposite of the obvious guess. A reader coming to this engine will make the
+same five.
+
+| | the guess | what it is |
+|---|---|---|
+| `sql_bind*` index | 1-based, like SQLite's C API | **0-based** |
+| a fresh `sql_query#` | positioned on the first row | **not positioned until `sql_step`** |
+| `json_count` on an array | the number of items | **object keys only; use `json_len`** |
+| `path_matchespattern`'s flag | case-insensitive | **case-SENSITIVE** |
+| `strings_save*` / `load*` | 1 for success | **the line count** |
+
+Two of them fail silently rather than loudly. A query read before its first step
+answers empty strings and zeroes, which is exactly what an empty table answers.
+`json_count` on an array answers 0, which is exactly what an empty array
+answers. Neither raises, and neither is wrong -- they are answering a different
+question from the one being asked.
+
+### What was suspected and did not hold
+
+`file_writeallbytes` casts its second argument to `TMemoryStream` with no handle
+check, and `file_readallbytes#` hands out a stream registered with the collector
+rather than with the handle registry -- so there is nothing to check against.
+That reads like section 27's defect one library over.
+
+It was probed both ways: a fabricated address, and a live handle of the wrong
+class. Both answer 0 and set an error code, because the `try..except` around the
+call catches the access violation. No silent corruption could be produced, so
+nothing was changed. Recorded because the reasoning looked sound and the
+measurement disagreed, which is the only reason worth writing down.
+
+### Where the coverage stands
+
+83.7%. What is left divides cleanly:
+
+- **Needs a harness this project does not have.** `HttpLib` 0/91 (a loopback
+  server), `MediaPlayerLib` 0/58 (an audio device), `AILib` 0/45 and `RAGLib`
+  0/13 (credentials and a network). `HttpLib` alone is larger than the other
+  three together.
+- **Needs the GUI suite rather than the engine suite.** `FormLib` 7/103,
+  `TimerLib` 0/15.
+- **Needs nothing but the writing.** `DateTimeLib` 35/66, `StrLib` 41/63,
+  `NumLib` 23/32, `RegexLib` 10/16, `DictLib` 16/20.

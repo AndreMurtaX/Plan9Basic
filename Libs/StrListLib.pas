@@ -129,6 +129,12 @@ end;
 // Get encoding name from TEncoding
 function GetEncodingName(Encoding: TEncoding): String;
 begin
+  //TStrings.Encoding is nil until a load or a save establishes one, and
+  //reading EncodingName from nil is an access violation -- which is what
+  //strings_encoding$ did on every list that had not been through a file.
+  if Encoding = nil then
+    Exit('');
+
   if Encoding = TEncoding.UTF7 then
     Result := 'utf-7'
   else if Encoding = TEncoding.UTF8 then
@@ -488,7 +494,13 @@ var
   SL: TBasStringList;
 begin
   SL := ValidateStringList(Args[0].p, 'strings_encoding$');
-  Result.s := GetEncodingName(SL.Encoding);
+  //Before anything has established one, the encoding a save would use is
+  //DefaultEncoding, so that is the truthful answer rather than a guess or
+  //an empty string the documentation never mentions.
+  if SL.Encoding = nil then
+    Result.s := GetEncodingName(SL.DefaultEncoding)
+  else
+    Result.s := GetEncodingName(SL.Encoding);
 end;
 
 // strings_keynames$(sl#, index) - Get key name at index
@@ -975,12 +987,31 @@ end;
 //==============================================================================
 
 // strings_onchange$(sl#) - Get OnChange handler name
+//Answers the NAME that was set, not the signature that was stored.
+//
+//The setter keeps 'name#@#' so the dispatcher can look the function up
+//without rebuilding it, which is an implementation convenience and not
+//something a program should have to know. Before this, setting
+//"on_change" and reading it back answered "on_change#@#", so the obvious
+//comparison against what was written never matched -- and the reference
+//pages call this "Get OnChange handler name".
+function HandlerName(const AStored: String): String;
+var
+  Cut: Integer;
+begin
+  Cut := Pos('#@', AStored);
+  if Cut > 0 then
+    Result := Copy(AStored, 1, Cut - 1)
+  else
+    Result := AStored;
+end;
+
 function stringlist_getevtonchange(var Args: array of TAsmData): TAsmData;
 var
   SL: TBasStringList;
 begin
   SL := ValidateStringList(Args[0].p, 'strings_onchange$');
-  Result.s := SL.EvtOnChange;
+  Result.s := HandlerName(SL.EvtOnChange);
 end;
 
 // strings_onchange(sl#, funcname$) - Set OnChange handler
@@ -1015,7 +1046,7 @@ var
   SL: TBasStringList;
 begin
   SL := ValidateStringList(Args[0].p, 'strings_onchanging$');
-  Result.s := SL.EvtOnChanging;
+  Result.s := HandlerName(SL.EvtOnChanging);
 end;
 
 // strings_onchanging(sl#, funcname$) - Set OnChanging handler
