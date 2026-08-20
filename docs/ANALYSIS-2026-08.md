@@ -3365,3 +3365,72 @@ It counts now. Writing an unchecked number into the output of a tool built to
 catch unchecked claims is worth recording rather than quietly fixing — it is the
 same reflex that produced sections 32, 35 and 36, appearing inside the work that
 exists to stop it.
+
+
+## 41. The one family where a test can assert what the call did
+
+Written 2026-08-20, continuing sections 38 and 40.
+
+### Why geometry, and why the values are all different
+
+`move`, `size`, `bounds`, `margin` and `margins` take their values as a group
+and are read back one at a time. Every other family this week could only be
+asked whether the call could be *made*; this one can be asked what it *did*.
+
+The failure it invites is the one Phase 1 already found in `StrLib`: arguments
+in the wrong order. That compiles, runs, reports nothing, and puts the height in
+the width. So no two values in the suite are the same — `move#(c, 11, 22)` with
+the axes swapped reads back 22 and 11, and the assertion names which one moved.
+
+Measured before generating, and the semantics held: `move(x, y)`,
+`size(w, h)`, `bounds(x, y, w, h)`, `margin(n)` on all four sides, and
+`margins(l, t, r, b)` in that order.
+
+**456 assertions over 25 libraries.** Coverage 74% to **79%**, the GUI suite from
+3,198 assertions to 3,654.
+
+### The failure it reported, which was mine
+
+`scrollbox_move` did not move: x and y stayed at 0. `ScrollBoxLib` is the
+library that was found completely dead once already — every call failing
+validation because it never registered its handle — so "that one again" was the
+easy reading, and it was wrong.
+
+`scrollbox#(parent#)` ends with `SB.Align := TAlignLayout.Client`, and **an
+aligned control does not own its position**. The parent's layout writes it, so
+`Position.X := 11` is overwritten before anything can read it.
+
+Confirmed on three points before a word was written: with `align` set to 0 the
+same `move` works; the five-argument constructor positions correctly; and a
+plain `rectangle` set to Client ignores `move` exactly as the scrollbox did.
+`move` is right everywhere. What was wrong was my test's premise — that a
+freshly built control is positionable.
+
+### The trap is now an assertion rather than a note
+
+That is FMX, it is true of every control, and it is invisible from BASIC: the
+call reports **no error** while doing nothing. A program that aligns a control
+and then tries to move it has no way to find out why nothing happened.
+
+So the generator sets `align` to 0 before measuring, and the suite opens with a
+case that states the trap instead of avoiding it:
+
+```basic
+rectangle_align#(a#, 9)
+rectangle_move#(a#, 11, 22)
+assert_eq(rectangle_x(a#), 0, "Client alignment kept x at 0")
+assert_eq(rectangle_error(), 0, "and move reported no error doing it")
+rectangle_align#(a#, 0)
+rectangle_move#(a#, 11, 22)
+assert_eq(rectangle_x(a#), 11, "with alignment off the same call works")
+```
+
+A behaviour nobody had written down, held by a test rather than by whoever next
+loses an afternoon to it.
+
+### The count, again
+
+The generator counts the assertions it emitted rather than multiplying the
+libraries by a number. Section 40 recorded getting that wrong the day before —
+95 times a nine, when the sequence had eight steps — and this one was written
+with that fresh.
