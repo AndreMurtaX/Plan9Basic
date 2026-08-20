@@ -3839,3 +3839,80 @@ ask for, which is silent by design and unrelated.
 bisect this, deleted once as redundant when the headless test landed -- and it
 was not redundant, because the headless test stops exactly where this one
 starts. It counts keys and clicks, which are the two paths that were dead.
+
+
+## 48. The reference pages described handlers the engine would never call
+
+Written 2026-08-20, after the author asked the question this section is an
+answer to: *"either your verification was rubbish, or you lied."*
+
+Neither, and the true answer is worse than the first: the two defects they found
+by using the interpreter were **introduced by me** in Phase 2.2, and the checks I
+had written were blind in exactly the two places I had broken.
+
+### The two blind spots, named
+
+`check-callbacks.py` reads the programs in this tree and holds them to the
+dispatchers. All 1,263 agree. What nothing did was
+
+1. **hold the reference pages to the dispatchers**, and
+2. **prove an event is delivered at all**, rather than correctly shaped.
+
+Sections 45 and 46 closed the second. This one closes the first.
+
+### 63 pages promised a shape the engine does not send
+
+```
+rectangle_onresize#(r#, func$)   ->   function name(sender#)
+```
+
+and the dispatcher sends `@#nn` — sender, width, height. A handler written as
+the page describes it compiles, registers, and is never called: the lookup is on
+the type signature and simply misses. Nothing reports anything. Section 28's
+defect with the documentation as its source.
+
+**63 of 331 comparable events.** Corrected across 22 pages, and
+`tools/check-event-docs.py` holds them from here. Watched failing on a page
+broken on purpose.
+
+### And the checker was counting, not comparing
+
+The first measurement found 48. Comparing **types** rather than counts found 63.
+
+`onmousedown` is sent as `@#nnn$` by eighteen libraries and as `@#n$nn` by five:
+the same five parameters with the shift string third instead of last. Both are
+arity 5, so a count-based check calls them equal — and the engine does not,
+because it looks up the type string. `check-callbacks.py` compares types now.
+Re-run strictly over the tree: **zero programs affected.** The 1,263 were right
+by how they happened to be written, not by anything that checked.
+
+### Measured against Delphi, which the author asked about
+
+| event | FMX order | who matches |
+|---|---|---|
+| `onmousedown` / `onmouseup` | Sender, Button, **Shift**, X, Y | the five, not the eighteen |
+| `onmousemove` | Sender, **Shift**, X, Y | the five, not the eighteen |
+| `onkeydown` / `onkeyup` | Sender, Key, KeyChar, Shift | the nine, not the two |
+
+So it is not a slip. There are two conventions, each applied consistently: one
+faithful to FMX, one that moves the shift string last — which reads better in
+BASIC, groups the numbers, and was chosen eighteen times. Neither is wrong
+against Delphi. Having both is what costs.
+
+### Left alone, on the author's decision
+
+Aligning everything came to **57 dispatchers across 19 files**, plus the pages
+and every example — and the measurement turned up two things the majority rule
+answers badly: `onresize`'s majority would *discard* the width and height that
+nine libraries deliver, and `onpaint` is split six to six with no majority at
+all.
+
+The author first chose to align on the information-preserving shapes, then
+reconsidered and left it. That is defensible and is recorded as their call: the
+split costs nothing today now that **every page describes what its own library
+sends**, and 57 hand-edited dispatchers is precisely the kind of sweep that put
+sections 45 and 46 in this document.
+
+What remains is a trap only for somebody who learns one library and assumes
+another: `rectangle_onmousedown` and `checkbox_onmousedown` hand over the same
+five values in different orders. The pages now say so, one library at a time.

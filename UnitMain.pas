@@ -497,6 +497,26 @@ begin
        SameText(ParamStr(SelfTestArg), '/selftest') then
       FSelfTest := True;
 
+  //A phone has no command line. An activity is started by the launcher and
+  //ParamStr carries nothing, so the switch above can never arrive there --
+  //which is why the one host this project most needs to measure was the one
+  //it could not run unattended.
+  //
+  //A file does arrive: adb push writes it, the app finds it on the next start,
+  //and deletes it so a person who installs the IDE never meets a self-test.
+  if not FSelfTest then
+    if System.IOUtils.TFile.Exists(
+         System.IOUtils.TPath.Combine(GetBasePath(), 'selftest.run')) then
+    begin
+      FSelfTest := True;
+      try
+        System.IOUtils.TFile.Delete(
+          System.IOUtils.TPath.Combine(GetBasePath(), 'selftest.run'));
+      except
+        //Running once is what matters; failing to tidy up is not a verdict.
+      end;
+    end;
+
   // Initialize collections
   FProgram := TStringList.Create;
   FCommandHistory := TList<string>.Create;
@@ -2804,8 +2824,16 @@ begin
     Report.Add('  console lines: ' + IntToStr(FConsole.Lines.Count));
     Report.Add('--- console ---');
     Report.AddStrings(FConsole.Lines);
+    //Beside the executable on desktop, where the build scripts read it; in
+    //the documents folder on a device, because that is the only place adb pull
+    //can reach without root.
+    {$IF Defined(ANDROID) or Defined(IOS)}
+    Report.SaveToFile(System.IOUtils.TPath.Combine(GetBasePath(),
+                                                   'ide-selftest.out'));
+    {$ELSE}
     Report.SaveToFile(System.IOUtils.TPath.Combine(
       System.IOUtils.TPath.GetDirectoryName(ParamStr(0)), 'ide-selftest.out'));
+    {$ENDIF}
   finally
     Report.Free();
   end;
