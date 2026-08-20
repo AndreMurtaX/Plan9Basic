@@ -695,11 +695,7 @@ end;
 
 procedure TBasLayout.SetOnPaintFunc(const Value: String);
 begin
-  FOnPaintFunc := Value;
-  if Value <> '' then
-    Self.OnPaint := InternalOnPaint
-  else
-    Self.OnPaint := nil;
+  ControlCommon.BindPaint(Self, Value, FOnPaintFunc, InternalOnPaint);
 end;
 
 procedure TBasLayout.SetOnResizedFunc(const Value: String);

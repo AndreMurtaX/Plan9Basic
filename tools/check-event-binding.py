@@ -37,25 +37,13 @@ BINDABLE = {'Click', 'DblClick', 'MouseEnter', 'MouseLeave', 'Resize', 'Resized'
             'MouseWheel', 'KeyDown', 'KeyUp', 'Paint', 'DragEnter', 'DragOver',
             'DragDrop'}
 
-#onpaint is bound to two different FMX events, and this is a real difference
-#rather than a formatting one.
-#
-#  TControl.OnPainting  fires before the control paints itself, and it still does
-#  TShape.OnPaint       is where the shape's own drawing happens
-#
-#Seven libraries take the first and five take the second, and every one of the
-#twelve is a TShape descendant that could take either. Which one a unit got was
-#decided by which unit its author copied from -- the same accident that gave
-#rectangle_align# and button_align# different meanings for the number 5.
-#
-#So `rectangle_onpaint#` hands a program the drawing and `arc_onpaint#` fires
-#alongside the arc's own. Unifying them changes what existing applets see, so it
-#is the author's call and not a repair. Listed here so it cannot spread while it
-#waits: a new library binding onpaint has to join one of these two lists on
-#purpose.
-PAINTS_ITSELF = {
-    'TBasCircle', 'TBasEllipse', 'TBasLayout', 'TBasRectangle', 'TBasForm',
-}
+#onpaint binds TControl.OnPaint everywhere since 2026-08-19. It used to be
+#OnPainting in seven libraries and OnPaint in five, decided by which unit an
+#author copied from, so one documented call drew under an arc and over a
+#rectangle. FMX paints Painting -> Paint -> DoPaint, so the two are a
+#backdrop and an overlay rather than rival designs, and the BASIC name
+#matches the second. ControlCommon.BindPaint is the single place that says
+#so, which is why this file no longer carries a list of exceptions for it.
 
 #Classes that do not descend from TControl, so no helper applies.
 NOT_A_CONTROL = {
@@ -111,8 +99,6 @@ def main():
             byhand += 1
             if cls in NOT_A_CONTROL:
                 continue
-            if event == 'Paint' and cls in PAINTS_ITSELF:
-                continue          # binds TShape.OnPaint on purpose; see above
             if event not in BINDABLE:
                 continue          # the event belongs to the concrete FMX class
             problems.append(f'{rel}: {cls}.SetOn{event}Func is written out by '
@@ -127,8 +113,7 @@ def main():
         return 1
 
     print(f'ok  {bound} setter(s) bound through ControlCommon, all four names '
-          f'agreeing, and {byhand} written out for a stated reason '
-          f'({len(PAINTS_ITSELF)} of them binding OnPaint rather than OnPainting)')
+          f'agreeing, and {byhand} written out for a stated reason')
     return 0
 
 

@@ -529,14 +529,28 @@ begin
     AControl.OnKeyUp := nil;
 end;
 
+//onpaint is the layer ABOVE the control, and this used to bind the one below.
+//FMX paints in the order Painting -> Paint -> DoPaint, so OnPainting runs
+//before the control draws itself and OnPaint after. Neither replaces the
+//drawing: one is a backdrop and the other an overlay.
+//
+//Seven libraries bound OnPainting under the name onpaint and five bound
+//OnPaint, decided by which unit an author copied from -- so one documented
+//call put a program's drawing under an arc and over a rectangle. The BASIC
+//name says onpaint, the reference pages say custom drawing, and the only two
+//callers in the tree were already getting OnPaint. All twelve get it now.
+//
+//OnPainting therefore has no BASIC name at all. That is a gap, named here
+//rather than left as an accident: reaching the layer underneath would be a
+//new onpainting family, which is a feature and not this repair.
 procedure BindPaint(AControl: TControl; const AName: String;
                      var AField: String; AHandler: TOnPaintEvent);
 begin
   AField := AName;
   if AName <> '' then
-    AControl.OnPainting := AHandler
+    AControl.OnPaint := AHandler
   else
-    AControl.OnPainting := nil;
+    AControl.OnPaint := nil;
 end;
 
 procedure BindDragEnter(AControl: TControl; const AName: String;

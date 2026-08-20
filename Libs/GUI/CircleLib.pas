@@ -879,11 +879,7 @@ end;
 
 procedure TBasCircle.SetOnPaintFunc(const Value: String);
 begin
-  FOnPaintFunc := Value;
-  if Value <> '' then
-    Self.OnPaint := InternalOnPaint
-  else
-    Self.OnPaint := nil;
+  ControlCommon.BindPaint(Self, Value, FOnPaintFunc, InternalOnPaint);
 end;
 
 procedure TBasCircle.SetOnResizedFunc(const Value: String);
