@@ -702,6 +702,11 @@ Notable absences:
 - Error handling in the language (`TRY` / `ON ERROR`)
 - Block scope
 
+**Run rather than read, 2026-08-19.** Every sentence below was checked against
+the engine and all of them hold — the first section of this document measured
+that day and found accurate. `tests/suite/19_language_contract.bas` and four
+files in `tests/negative/` keep it that way. See section 36.
+
 Constraints worth knowing before writing `.bas`:
 
 - A boolean expression is only valid inside an `IF`/`WHILE`/`UNTIL` condition.
@@ -3016,3 +3021,69 @@ This one is the same and the most expensive, because the thing left behind was
 not a sentence. Every previous instance cost a reader a wrong belief; this one
 cost 136 lines of code that ran on every start and meant nothing, and it sat
 under a heading that explained why it had to be there.
+
+
+## 36. The language contract, run rather than read
+
+Written 2026-08-19. Section 4 tells somebody what they may write in a `.bas`
+file: which constructs exist, how a string is indexed, where an array starts.
+Nothing executed a word of it.
+
+### Measured first, and it was right
+
+Given how sections 3.5, 3.6 and 3.8 turned out the same day, the expectation was
+more of the same. It was not. **Every sentence in section 4 holds.**
+
+- `s$[0]` is `"alpha"` and `s$[1]` is `"beta"` — the n-th line, from zero
+- `t$[[0]]` is `"a"` — the n-th character, from zero
+- `a#[1]` is the first element — arrays from one, next to two notations that
+  start at zero
+- `"he said {backslash}"hi{backslash}""` is twelve characters, and the ninth is a quote
+- `x = 2 > 1` is a syntax error
+- `if dict_haskey(d#, "k") then` is "Logic operator expected"
+- `x = true` is "Value expected", and so is `if true then`
+
+`ON k GOTO` and `ON j GOSUB` were the interesting case: documented in section 4,
+exercised by no test in the suite, and — checked — both correct. A documented
+feature with no coverage is a coin toss, and this one came up heads.
+
+### Pinned
+
+The positive half is `tests/suite/19_language_contract.bas`, eleven assertions
+over the indexing rules, the array base, the escape, and the two `ON` forms.
+
+The half that says what does **not** compile cannot be asserted from inside the
+language, so it went to `tests/negative/`, where the runner inverts the verdict
+and every file must be rejected. Four files, one rejection each, because a file
+stops at its first error and one per file is the only way to know which
+rejection happened:
+
+```
+COMPILE  05_boolean_outside_a_condition.bas   line 12: Syntax error
+COMPILE  06_number_as_a_condition.bas         line 10: Logic operator expected
+COMPILE  07_true_is_not_a_value.bas           line  8: Value expected
+COMPILE  08_true_is_not_a_condition.bas       line  9: Value expected
+```
+
+The harness itself was watched inverting: a valid program dropped into
+`negative/` reports *"expected this file to be rejected, but it ran clean"*.
+
+### Why these four and not the others
+
+They are the constraints a person meets by accident rather than by reading.
+
+`assert_true(2 > 1)` is the obvious way to write an assertion and `x = a > b` the
+obvious way to keep a flag; both are a bare "Syntax error", which says nothing
+about the rule. That cost an hour while section 31's test was being written —
+by me, with the rule written down in this very document, four sections above the
+work.
+
+Which is the argument for this section in one line: the contract was correct,
+legible, and in a file nobody runs.
+
+### A comment that claimed more than its file tested
+
+`07` was first written asserting in its header that `IF true THEN` is refused at
+the same place, while testing only `x = true`. That is the failure this month has
+spent itself on, committed inside a file whose whole purpose is to hold a claim
+to a test. It is `08` now, and `07`'s header says only what `07` does.
