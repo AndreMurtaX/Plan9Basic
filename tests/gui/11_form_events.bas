@@ -55,12 +55,22 @@ edit_text#(e#, "abc")
 checkbox_ischecked#(c#, 1)
 assert_eq(hitEdit, 1, "edit_onchange fired")
 assert_eq(hitCheck, 1, "checkbox_onchange fired")
-rem trackbar_onchange is deliberately NOT asserted. Its value does move --
-rem 0 to 42, inside a 0..100 range -- and the handler still does not run,
-rem and from BASIC there is no way to tell a nil engine from an event FMX
-rem never raises: CallbackCore exits on either without a word. Asserting
-rem it would be claiming an answer this cannot obtain. Left as an open
-rem question in ANALYSIS 45 rather than as a green assertion.
+
+rem The trackbar was the one that stayed silent after the first repair, and
+rem the reason was the repair itself: an automated move put its engine
+rem lookup inside the else branch, so it ran only when the parent was not a
+rem form. Both of its events answer now, and asserting both is the point --
+rem ontracking is what a programmatic write raises first, and onchange
+rem follows through the after-change path.
+let hitTrack = 0
+let hitTrackChange = 0
+let t# = trackbar#(f#, 0, 80, 100, 24)
+trackbar_ontracking#(t#, "OnTrack")
+trackbar_onchange#(t#, "OnTrackChange")
+trackbar_value#(t#, 42)
+assert_eq(trackbar_value(t#), 42, "the value moved")
+assert_eq(hitTrack, 1, "trackbar_ontracking fired")
+assert_eq(hitTrackChange, 1, "and trackbar_onchange followed")
 
 function OnShown(sender#)
   let shown = shown + 1
@@ -73,4 +83,12 @@ end function
 
 function OnCheck(sender#)
   let hitCheck = 1
+end function
+
+function OnTrack(sender#)
+  let hitTrack = 1
+end function
+
+function OnTrackChange(sender#)
+  let hitTrackChange = 1
 end function

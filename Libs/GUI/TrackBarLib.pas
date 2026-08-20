@@ -778,13 +778,13 @@ begin
     begin
       ParentObj := TFmxObject(Args[0].p);
       tb.Parent := ParentObj;
+    end;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(tb, Eng, Outp) then
     begin
       tb.BasicEngine := Eng;
       tb.ConsoleOutput := Outp;
-    end;
     end;
 
     Result.p := Pointer(tb);
@@ -821,13 +821,13 @@ begin
     begin
       ParentObj := TFmxObject(Args[0].p);
       tb.Parent := ParentObj;
+    end;
     //The engine belongs to the form this control now hangs from,
     //rather than to a unit variable filled in at registration.
     if EngineOf(tb, Eng, Outp) then
     begin
       tb.BasicEngine := Eng;
       tb.ConsoleOutput := Outp;
-    end;
     end;
 
     tb.Position.X := Args[1].n;

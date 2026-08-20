@@ -58,7 +58,17 @@ def main():
                 continue
             var = m.group(1)
             parented = False
+            #Nesting relative to the constructor. A lookup one level in is
+            #inside a branch, so it runs for one kind of parent and not the
+            #other -- which is what an automated move of these blocks did to
+            #ProgressBarLib and TrackBarLib on 2026-08-20, putting the lookup
+            #inside the else and skipping it whenever the parent was a form.
+            #The first version of this check passed on that.
+            depth = 0
             for j in range(i + 1, min(i + WINDOW, len(lines))):
+                body = lines[j].split('//')[0]
+                depth += len(re.findall(r'\bbegin\b', body, re.I))
+                depth -= len(re.findall(r'\bend\b', body, re.I))
                 pm = PARENT.match(lines[j])
                 if pm and pm.group(1) == var:
                     parented = True
@@ -70,6 +80,11 @@ def main():
                             f'{rel}:{j + 1}: EngineOf({var}) runs before '
                             f'{var}.Parent is set, so the walk starts from an '
                             f'orphan and every event on it will be dead')
+                    elif depth > 0:
+                        problems.append(
+                            f'{rel}:{j + 1}: EngineOf({var}) is {depth} level(s) '
+                            f'inside a branch, so it runs for one kind of parent '
+                            f'and is skipped for the other')
                     break
 
     for p in problems:
