@@ -552,7 +552,7 @@ All functions handle errors gracefully:
 ## Notes
 
 1. **0-based indexing:** TStringList results use 0-based indexing
-2. **Position is 1-based:** `regex_findpos()` returns 1-based positions (like other BASIC string functions)
+2. **Position is 1-based, and unlike `instr`:** `regex_findpos()` counts from 1 and answers 0 when the pattern does not match. `instr()` counts from 0 and answers -1, so the two disagree by one on the same match and disagree entirely on failure. This note used to say "like other BASIC string functions", which stopped being true when `instr` was corrected to return a position rather than a flag.
 3. **Backreferences:** Use `$1`, `$2`, etc. in replacement strings to reference capture groups
 4. **Memory:** TStringList results are managed by the garbage collector
 5. **Performance:** Compile complex patterns once and reuse when possible

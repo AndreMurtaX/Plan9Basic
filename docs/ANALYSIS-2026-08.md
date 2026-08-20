@@ -4159,3 +4159,77 @@ measurement disagreed, which is the only reason worth writing down.
   `TimerLib` 0/15.
 - **Needs nothing but the writing.** `DateTimeLib` 35/66, `StrLib` 41/63,
   `NumLib` 23/32, `RegexLib` 10/16, `DictLib` 16/20.
+
+## 52. What the old applets are worth, measured
+
+The author asked whether the applets in `Examples/` and `Demos/`, written years
+ago as each library was finished, were still valid and whether they could seed a
+proper test suite. Both halves have an answer, and neither is the obvious one.
+
+**Syntactically they are all still valid, and this is proven daily.**
+`check-all.py` compiles and runs all 128 on every run, and the compiler resolves
+every call against the registered signature. A function that had changed shape
+would fail to compile, not fail quietly. That risk is closed.
+
+**Semantically there is almost nothing to be stale, because they claim almost
+nothing.** 94 of the 128 cannot report a failure at all. In `--smoke` mode the
+criterion is: compiles, runs without a runtime error, prints no `[FAIL]`. An
+applet that computes the wrong answer and prints it cheerfully passes.
+`Demos/` is 0 of 10. `58_PathLib_Tests.bas` is 1,002 lines exercising 101
+distinct functions with **one** check in it.
+
+**And that is exactly why they are worth keeping.** They reach **358 registered
+names no suite reaches** -- someone who knew each library had already worked out
+which functions matter, in what order, with what arguments. What is missing is
+the assertion, not the knowledge. `FormLib` 77 names, `HttpLib` 48, `PathLib`
+26, `StringGridLib` 25, `ListBoxLib` 20.
+
+### Two things found while reading them
+
+**The verification makes live calls to httpbin.org.** Five applets in
+`Examples/` build an HTTP client against `https://httpbin.org` and issue real
+requests on every `check-all.py` run. They assert nothing -- `http_ok` may
+answer NO and the applet still passes -- so the cost is paid for no information:
+a third-party dependency in a check that is supposed to be hermetic, minutes of
+wall-clock, and a red build whenever that service is down.
+
+**`regex_findpos` and `instr` disagree about where things are.** For the same
+match in the same string, `instr` answers 6 and `regex_findpos` answers 7; for
+absence, `instr` answers -1 and `regex_findpos` answers 0. Both are documented.
+What was wrong is the reason the reference gave: "returns 1-based positions
+(like other BASIC string functions)", which stopped being true when Phase 1.1
+corrected `instr` to answer a position rather than a flag. The note now says
+they differ, and says how. Unifying them is a language decision and is not
+taken here.
+
+### The tier that needed nothing but writing
+
+`DateTimeLib` 36/66, `StrLib` 41/63, `NumLib` 23/32, `RegexLib` 10/16 and
+`DictLib` 16/20 -- all five now 100%, and the surface 83.7% to 85.3%. Three
+files, 154 assertions, and the map for every one of them came from `Examples/`.
+
+Four conventions worth having in writing, all found by asserting something else
+and being wrong:
+
+- **`alcase$`/`aucase$` are Ansi, not "all".** They go through
+  `AnsiLowerCase`/`AnsiUpperCase` and follow the locale; `lcase$`/`ucase$` go
+  through `LowerCase`/`UpperCase` and only know a-z. On plain ASCII the pairs
+  agree. They part on every accented letter -- which is most of the alphabet in
+  the language this engine was written in, and is now pinned with one.
+- **`lfill$`/`rfill$` take a character CODE**, not a string: `lfill$("42", 5,
+  asc("0"))`.
+- **Group zero is the whole match**, so three brackets make `regex_groupcount`
+  answer four and `regex_groups#` starts with the match itself.
+- **`int` floors and `fix` truncates.** They agree on positives and part the
+  first time a number goes below zero: `int(-3.7)` is -4, `fix(-3.7)` is -3.
+  That is correct classic BASIC and it caught this suite out.
+
+### What is left, and what each part needs
+
+`FormLib` 7/103, `StringGridLib` 60/110, `PathLib` 78/104 and the other GUI
+libraries want the GUI suite, and the applets have already mapped them.
+`HttpLib` 0/91 divides: the verbs need a loopback server, but the client
+configuration -- headers, auth, cookies, timeouts, content types -- is most of
+the surface and needs no network at all. `MediaPlayerLib` 0/58 needs an audio
+device and `AILib` 0/45 credentials, and those two stay unmeasured until
+somebody decides they are worth a harness.
