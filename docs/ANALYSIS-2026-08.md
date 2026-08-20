@@ -1172,8 +1172,11 @@ routes are generating the units from descriptors or binding the property through
 RTTI at runtime. The helpers collapsed because they were functions over values;
 this does not, because it is names.
 
-That is the honest boundary of "collapse the boilerplate", and it is worth
-recording as a boundary rather than as a to-do.
+~~That is the honest boundary of "collapse the boilerplate".~~ **It was
+not, and the premise was right while the conclusion did not follow.
+2026-08-19, see section 37.** Delphi cannot abstract over a property name
+at compile time -- and it does not have to. The name is fixed *inside* a
+helper, and there are 19 names against 369 sites.
 
 ### Done anyway: the callback plumbing
 
@@ -3087,3 +3090,89 @@ legible, and in a file nobody runs.
 the same place, while testing only `x = true`. That is the failure this month has
 spent itself on, committed inside a file whose whole purpose is to hold a claim
 to a test. It is `08` now, and `07`'s header says only what `07` does.
+
+
+## 37. The boundary that was not one, and the paint event underneath it
+
+Written 2026-08-19, on the author's authorisation of Phase 5.
+
+### The premise was right and the conclusion did not follow
+
+Section 9 measured the 407 event setters, found them "effectively one shape",
+and concluded they could not be shared:
+
+> Every token that varies is an *identifier* — a field, an FMX property, a
+> method. Delphi has no way to abstract over a property name at compile time.
+
+Every word of that is true. What does not follow is that nothing can be shared,
+because **abstracting over the name was never necessary**. Fix the name inside a
+helper and pass what varies:
+
+```pascal
+procedure BindClick(AControl: TControl; const AName: String;
+                    var AField: String; AHandler: TNotifyEvent);
+begin
+  AField := AName;
+  if AName <> '' then AControl.OnClick := AHandler else AControl.OnClick := nil;
+end;
+```
+
+The field goes by reference because it is a field and may; the property is
+assigned inside, because a property may not. There are **19 event names against
+369 sites**, and `TControl` publishes all 19, so one helper each covers every
+control that inherits from it.
+
+**365 setters became one line.** The IDE went from 143,974 to 142,791 —
+1,183 lines, net of the helpers. No RTTI, no generator, no descriptor table:
+nothing that could drift from the thing it describes, which after six such
+incidents in two days was the property worth buying.
+
+What stayed: 47 events belonging to the concrete FMX class rather than
+`TControl` — `CellClick` is a `TStringGrid`'s, `Switch` a `TSwitch`'s — and 8
+setters on classes that are not `TControl` at all.
+
+### What reading 420 setters turned up
+
+`onpaint` is not one event. Seven libraries bind `TControl.OnPainting`; five
+bind `TShape.OnPaint`:
+
+| | libraries | fires |
+|---|---|---|
+| `OnPainting` | Arc, CalloutRectangle, Image, Line, Path, Pie, RoundRect | before the control paints, and it still paints |
+| `OnPaint` | Circle, Ellipse, Layout, Rectangle, Form | where the shape's own drawing happens |
+
+`TArc`, `TCircle`, `TPie` and `TEllipse` are all `TShape` descendants, as are
+`TRectangle`, `TRoundRect`, `TCalloutRectangle` and `TLine`. **Every one of the
+twelve could take either.** Which it took was decided by the unit its author
+copied from.
+
+So `rectangle_onpaint#` hands a program the drawing, and `arc_onpaint#` runs
+alongside a drawing that happens regardless — one documented name, two
+behaviours. It is the alignment tiers again, where the same number meant
+`MostTop` in one library and `None` in another.
+
+Unifying is not a repair, because it changes what shipped applets see and
+neither half is the wrong one. Left for the author, and both lists are named in
+`check-event-binding.py` so a new library has to join one of them on purpose.
+
+### The price of collapsing, and what pays it
+
+365 identical five-line bodies could be wrong only by being edited. One line
+each can be wrong by being *written*: `BindClick` with `FOnDblClickFunc`
+compiles perfectly, stores the name where nothing reads it, and the click never
+fires. That is section 28 one layer down.
+
+`check-event-binding.py` reads all four names in every call and requires them to
+agree. Watched failing on a swapped field, on a setter written out by hand where
+a helper exists, and — after the first version reported the wrong identifier
+when only some of the four diverged — on its own message.
+
+### What Phase 5 does not do, with a number
+
+The property accessors are 2,108 functions in **296 shapes**. The 20 largest
+cover 61%; 137 shapes occur exactly once. Section 9 predicted that "the gain
+shrinks as the irregular third is chased" and it was right to the percentage.
+
+That, and not the setters, is why half the project is boilerplate: the control
+wrappers are 78,836 lines, 51% of the tree. The boundary stands, and it now has
+a measurement rather than an assertion behind it.

@@ -691,16 +691,34 @@ write. That is rather the point."*
 
 ---
 
-## Phase 5 — Deferred, and named rather than hidden
+## Phase 5 — the event setters collapsed; the property code stays a boundary
 
-Section 3.8: 407 event setters and the property code across the GUI libraries,
-roughly 27,000 lines whose repetition is in identifiers rather than values.
-Delphi cannot abstract over a property name at compile time, so the only routes
-are generating the units from descriptors or binding through RTTI at run time.
+**Authorised by the author and done 2026-08-19, for the half that turned out to
+be reachable.**
 
-The analysis weighed both and recorded the boundary. It stays a boundary unless
-someone decides otherwise; it is listed here so that "why is half the project
-still boilerplate" has a written answer.
+The event setters were never the boundary they were recorded as. Delphi cannot
+abstract over a property name at compile time, which is true and is not the
+obstacle: the name is fixed *inside* a helper, and there are 19 event names
+against 369 sites. `ControlCommon` gained 19 `BindXxx` procedures and **365
+setters became one line each** — 1,183 lines off the IDE, with compile-time
+typing intact, no RTTI, no generator, and no second artefact to drift apart.
+
+`tools/check-event-binding.py` holds the four names in every call to agreement,
+because `BindClick` given `FOnDblClickFunc` compiles and the event simply never
+fires — section 28's defect one layer down.
+
+**The property code stays a boundary, now with a measurement behind it.** 2,108
+accessors in 296 shapes: the 20 largest cover 61% and 137 shapes occur exactly
+once. That is the irregular tail section 9 predicted, and generation would chase
+it for the last 39%. The control wrappers are 78,836 lines, 51% of the project
+on their own — the number that makes this a boundary rather than an oversight.
+
+**Found while reading the 420:** `onpaint` binds `TControl.OnPainting` in seven
+libraries and `TShape.OnPaint` in five, and all twelve are TShape descendants
+that could take either. Two semantics under one documented name, decided by
+which unit an author copied from. Unifying changes what shipped applets see, so
+it waits for the author; both lists are named in `check-event-binding.py` so the
+split cannot grow while it waits.
 
 ---
 
