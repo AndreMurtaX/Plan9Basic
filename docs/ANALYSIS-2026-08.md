@@ -81,7 +81,16 @@ here. **The public documentation describes a library nobody can obtain.**
 pages go with the code. Either closes the check; leaving it open keeps a red
 mark that is correct.
 
-### Which copy of the examples is canonical
+### Which copy of the examples is canonical — settled 2026-08-19
+
+**Kept both, and checked them.** `tools/check-site-examples.py` pairs the two
+directories by name without the leading number and compares content with the
+byte order mark stripped, because a BOM is an encoding difference and not a
+difference in the program. 98 pairs, and `ChuckNorrisFacts_Demo.bas` was
+brought forward from `Examples/`, which held the newer copy. See section 34.
+
+*(original entry below)*
+
 
 `Examples/NN_name.bas` and `Website/assets/examples/name.bas` hold the same 98
 programs. 96 are identical. The copy step is real and mostly faithful, and
@@ -2818,3 +2827,69 @@ reports itself untouched
 ```
 
 which is the defect itself, stated in the terms a user would have met it in.
+
+
+## 34. The last of the three decisions, six sections after the other two
+
+Written 2026-08-19. Section 1b gathered three findings whose evidence was
+settled and whose choice was not a checker's to make. Two were answered the same
+week — `instr` on the 18th, the AI archive on the 19th. The third sat there.
+
+### What it was
+
+`Examples/NN_name.bas` and `Website/assets/examples/name.bas` hold the same 98
+programs. Something copies one to the other and nothing says which direction, so
+nothing could say which one was right when they disagreed.
+
+They disagreed in exactly one file, and section 1b already named it:
+`ChuckNorrisFacts_Demo.bas`. Measured again on the 19th, still one, still that
+one — 23 lines apart.
+
+The site's copy was the older. It lacked the rectangle drawn behind the category
+dropdown, and it still bound `listbox_onitemclick#` with its two-parameter
+handler where the other had moved to `listbox_onchange#` with one, under a
+comment explaining that the single-pointer form matches every other handler in
+the file. Somebody made that change and it reached one of the two copies.
+
+**And the site's copy is the one people download.** `Examples/` is the
+repository's own; `assets/examples/` is what `download_path` points at in the
+catalogue and what the Examples Browser fetches. The stale half was the half
+that ships.
+
+### The choice, and why this one
+
+Section 1b offered two: name one canonical and generate the other, or keep both
+and check them. Either would have caught this.
+
+Kept both. The two directories are read by different things and neither is
+obviously the copy — generating `Examples/` from the site's downloads is as
+strange as the reverse — and a generator that nobody remembers to run is a
+third way to drift rather than a cure for the first two.
+
+### Where it went
+
+Into `check-site-examples.py`, which already asked this question about the nine
+games and their copies embedded in `examples.html`. It now asks it twice, of two
+kinds of pairing:
+
+```
+ok  59 example(s) on the page, 9 paired with the repository, and 98 in both
+    example directories, all identical
+```
+
+Watched failing both new ways: one line changed on one side, and one side
+missing the file altogether.
+
+### The pattern, for the fourth time in two days
+
+Section 29 was the games in two places with one maintained. Section 31 traded a
+database for a file and had to check the file against the directory beside it.
+Section 32 was three notes describing a tree that had moved. Section 33 was one
+banner written twice, where the copy nobody looked at printed the desktop tip on
+a phone.
+
+This is the same, and it is the oldest of them: named on the first day, and it
+outlived both of the decisions it was gathered alongside. Which is the argument
+for the preference section 32 arrived at — a fact belongs somewhere that runs.
+Section 1b is prose, and prose kept the finding perfectly and did nothing with
+it for a week.
