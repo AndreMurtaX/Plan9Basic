@@ -130,8 +130,6 @@ const
 var
   lastError: Integer;
   lastErrorMsg: String;
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
 
 //==============================================================================
 // Helper Functions
@@ -1626,8 +1624,6 @@ procedure RegisterEllipseFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine; Out
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
 
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.

@@ -159,7 +159,23 @@ recording it in the module's `lastError`. See section 7.
 `TObject(P) is TBasButton` inside `try/except` dereferences whatever address the
 BASIC program supplied. See section 7.
 
-### 3.5 Per-module global state
+### 3.5 Per-module global state — resolved 2026-08-19, and the count was wrong twice
+
+**Four units keep it, each because it has no parent to walk up to.** Measured
+2026-08-19: of the 38 that declared `ModuleEngine`, **34 declared it, assigned
+it on every registration, and read it nowhere.** Phase 2.2 gave visual controls
+`EngineOf`, which walks up the parent chain to the form that owns an engine, and
+left the variables behind. Dead state that reads as live, in the place this
+entry said the state was the problem.
+
+Removed: 136 lines across 34 units. What is left is `TimerLib`, `StrListLib`,
+`MediaPlayerLib` and `tests/TestLib.pas` — a timer, a string list and a media
+player are not in the visual tree, so there is no chain to walk, and the harness
+reaches the parser deliberately. `tools/check-module-state.py` names all four
+with the reason and fails if a fifth appears or one of these stops reading. See
+section 35.
+
+*(original entry below)*
 
 38 libraries keep `ModuleEngine`, `ModuleOutput` and `lastError` as unit
 variables. No `TCriticalSection` anywhere in the libraries. Consequences: two
@@ -168,12 +184,13 @@ and running off the UI thread is closed off.
 
 ### 3.6 VM on the UI thread
 
-> **Measured again 2026-08-19 and partly stale.** The "125 remaining" figure
-> below is no longer true: there is one `Application.ProcessMessages` in the
-> libraries, and it is the BASIC function `processmessages()` that a script
-> calls on purpose. Two more live in the host, both legitimate. What remains of
-> this item is the VM itself, which does still run on the UI thread in both
-> hosts. See [PLAN-restructure.md](PLAN-restructure.md) §2.1.
+> **Measured a third time on 2026-08-19, and the correction had gone stale
+> too.** There is no `Application.ProcessMessages` left in `engine/`, `Libs/` or
+> `utils/` at all — not 125, and not the one this note claimed. The BASIC
+> `processmessages()` goes through `HostServices` now, and the hosts keep their
+> own. The VM runs on a worker in the applet runner and on the interface thread
+> in the IDE, which is the difference the two-IDE proposal is about. See
+> [PLAN-restructure.md](PLAN-restructure.md) §2.1 and section 35.
 
 `CmdRun` calls `ExecuteProgram` straight from the button handler, and there are
 127 occurrences of `Application.ProcessMessages` across engine and libraries.
@@ -2893,3 +2910,71 @@ outlived both of the decisions it was gathered alongside. Which is the argument
 for the preference section 32 arrived at — a fact belongs somewhere that runs.
 Section 1b is prose, and prose kept the finding perfectly and did nothing with
 it for a week.
+
+
+## 35. State the documentation called necessary, that nothing had read for weeks
+
+Written 2026-08-19, after measuring two entries in section 3 rather than
+believing them.
+
+### Both were wrong, in opposite directions
+
+**3.6** said 125 `Application.ProcessMessages` remained in the GUI libraries. It
+carried a correction from earlier the same day saying the figure was stale and
+one remained. Counted again: **none**. Not in `engine/`, not in `Libs/`, not in
+`utils/`. The BASIC `processmessages()` reaches the host through `HostServices`,
+and the two in the hosts are the hosts' own. A note corrected once had gone
+stale a second time, which is a good argument that correcting notes is not the
+repair.
+
+**3.5** said 38 libraries keep `ModuleEngine` and `ModuleOutput` as unit
+variables, and that this closes off running the VM off the interface thread.
+Both halves of that were out of date, and the interesting half is not the count.
+
+### What the measurement found
+
+Of the 38 units declaring `ModuleEngine`, **34 assigned it on every registration
+and read it nowhere.**
+
+Phase 2.2 replaced the lookup with `EngineOf`, which walks a control's parent
+chain up to the form that owns an engine. It did not remove what it replaced. So
+for weeks the libraries carried a variable that was written on every startup,
+read by nobody, and described in the analysis as the reason two engines could
+not coexist.
+
+That is worse than a stale sentence. A reader of `FloatAnimationLib` saw
+per-module engine state and would reasonably conclude the module is
+single-engine — the opposite of what 2.2 established — and the code agreed with
+them.
+
+Removed: **136 lines across 34 units**, and the IDE went from 144,110 lines to
+143,974 without any behaviour moving.
+
+### The four that stay, and why they are not an exception
+
+`TimerLib`, `StrListLib` and `MediaPlayerLib` still read it, and `tests/TestLib.pas`
+does. Not oversights: a timer is not a visual control, a string list is not in
+the visual tree at all, and a media player is not necessarily parented when it
+is created. There is no parent chain to walk, so the module variable is the only
+route they have. The harness reaches the parser on purpose, which is its job.
+
+`EngineOf` is a repair for controls, not for everything, and 3.5 read as though
+the state itself were the defect.
+
+### Where it went
+
+`tools/check-module-state.py`, failing in both directions: a unit that declares
+one of these and never reads it, and a name in its list that has stopped
+reading. Watched failing both ways, plus a unit reading it without being listed.
+
+### The sixth of these in two days
+
+29 was the games in two places. 31 traded a database for a file and had to check
+the file against the directory beside it. 32 was three notes describing a tree
+that had moved. 33 was one banner written twice. 34 was two example directories
+with one drifted file, named on the first day and left for a week.
+
+This one is the same and the most expensive, because the thing left behind was
+not a sentence. Every previous instance cost a reader a wrong belief; this one
+cost 136 lines of code that ran on every start and meant nothing, and it sat
+under a heading that explained why it had to be there.

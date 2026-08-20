@@ -119,8 +119,6 @@ procedure RegisterPathAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngin
 implementation
 
 var
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
   LastError: Integer = 0;
   LastErrorMsg: String = '';
 
@@ -1186,8 +1184,6 @@ procedure RegisterPathAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngin
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.
   Fn.NeedsUIThread := True;

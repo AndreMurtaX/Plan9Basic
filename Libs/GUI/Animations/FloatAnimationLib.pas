@@ -125,8 +125,6 @@ procedure RegisterFloatAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngi
 implementation
 
 var
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
   LastError: Integer = 0;
   LastErrorMsg: String = '';
 
@@ -1157,8 +1155,6 @@ procedure RegisterFloatAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngi
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.
   Fn.NeedsUIThread := True;

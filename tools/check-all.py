@@ -21,6 +21,8 @@ made it.
                                                 not survive the switch
     the examples catalogue   check-examples-catalog  does the list the browser
                                                 reads match the files beside it
+    per-module state         check-module-state  does a library still keep an
+                                                engine it never reads
 
 Everything here is read-only. The generators that write files --
 gen-doc-examples.py and check-doc-blocks.py --baseline -- are run by hand, since
@@ -80,6 +82,7 @@ def main():
         ('site examples', tool('check-site-examples.py'), False),
         ('pages layout', tool('check-pages.py'), False),
         ('examples catalogue', tool('check-examples-catalog.py'), False),
+        ('module state', tool('check-module-state.py'), False),
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]

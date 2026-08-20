@@ -174,8 +174,6 @@ const
 var
   lastError: Integer;
   lastErrorMsg: String;
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
 
 // -----------------------------------------------------------------------------
 // Error Handling
@@ -2127,8 +2125,6 @@ procedure RegisterProgressBarFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine;
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.
   Fn.NeedsUIThread := True;

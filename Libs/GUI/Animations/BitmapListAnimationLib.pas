@@ -121,8 +121,6 @@ procedure RegisterBitmapListAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasi
 implementation
 
 var
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
   LastError: Integer = 0;
   LastErrorMsg: String = '';
 
@@ -1316,8 +1314,6 @@ procedure RegisterBitmapListAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasi
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.
   Fn.NeedsUIThread := True;

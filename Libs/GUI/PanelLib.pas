@@ -246,8 +246,6 @@ var
   lastErrorMsg: String;
 
   // Module-level references for event callback support
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
 
 //==============================================================================
 // Helper Functions
@@ -2642,8 +2640,6 @@ var
   Fn: TLinkFunction;
 begin
   // Store module-level references for event callbacks
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
 
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.

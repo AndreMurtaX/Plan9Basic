@@ -278,8 +278,6 @@ var
   lastErrorMsg: String;
 
   // Module-level references for event callback support
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
 
 //==============================================================================
 // Helper Functions
@@ -2676,8 +2674,6 @@ procedure RegisterRectangleFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine; O
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
 
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.

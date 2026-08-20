@@ -84,8 +84,6 @@ var
   lastErrorMsg: String;
 
   // Module-level references for callback support (if needed)
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
 
   // FireDAC driver link - required for SQLite
   FDPhysSQLiteDriverLink: TFDPhysSQLiteDriverLink;
@@ -2280,8 +2278,6 @@ var
   Fn: TLinkFunction;
 begin
   // Store module-level references
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
 
   Fn.FarCall := True;
   //No FireMonkey here, so these run wherever the VM stands.

@@ -119,8 +119,6 @@ procedure RegisterIntAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine
 implementation
 
 var
-  ModuleEngine: TBasicEngine;
-  ModuleOutput: TStrings;
   LastError: Integer = 0;
   LastErrorMsg: String = '';
 
@@ -1151,8 +1149,6 @@ procedure RegisterIntAnimationFuncs(Lib: TFunctionsDictionary; Eng: TBasicEngine
 var
   Fn: TLinkFunction;
 begin
-  ModuleEngine := Eng;
-  ModuleOutput := OutP;
   Fn.FarCall := True;
   //FireMonkey, so these run on the UI thread when the VM does not.
   Fn.NeedsUIThread := True;
