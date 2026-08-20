@@ -723,9 +723,9 @@ body::after {
 <div class="info-box"><strong>&#9432; Note:</strong> <strong>OnMouseWheel</strong> provides a <code>delta</code> value: positive for scroll up, negative for scroll down.</div>
 <h3>Other Events</h3>
 <div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th><th>When It Fires</th></tr></thead><tbody>
-<tr><td><code>layout_onpaint#(lay#, func$)</code></td><td><code>layout_onpaint$(lay#)</code></td><td><code>function name(sender#)</code></td><td>When the layout needs to repaint (custom drawing)</td></tr>
-<tr><td><code>layout_onresize#(lay#, func$)</code></td><td><code>layout_onresize$(lay#)</code></td><td><code>function name(sender#)</code></td><td>Layout is being resized (fires continuously)</td></tr>
-<tr><td><code>layout_onresized#(lay#, func$)</code></td><td><code>layout_onresized$(lay#)</code></td><td><code>function name(sender#)</code></td><td>Layout resize is complete (fires once)</td></tr>
+<tr><td><code>layout_onpaint#(lay#, func$)</code></td><td><code>layout_onpaint$(lay#)</code></td><td><code>function name(sender#, left, top, right, bottom)</code></td><td>When the layout needs to repaint (custom drawing)</td></tr>
+<tr><td><code>layout_onresize#(lay#, func$)</code></td><td><code>layout_onresize$(lay#)</code></td><td><code>function name(sender#, width, height)</code></td><td>Layout is being resized (fires continuously)</td></tr>
+<tr><td><code>layout_onresized#(lay#, func$)</code></td><td><code>layout_onresized$(lay#)</code></td><td><code>function name(sender#, width, height)</code></td><td>Layout resize is complete (fires once)</td></tr>
 <tr><td><code>layout_clearcallbacks#(lay#)</code></td><td>&mdash;</td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
 </tbody></table></div>
 <div class="info-box"><strong>&#9432; Note:</strong> <strong>OnPaint</strong> is unique to LayoutLib &mdash; it fires when the layout needs repainting, allowing custom owner-drawn content. Call <code>layout_invalidate#</code> to trigger a repaint. Not available in PanelLib.</div>

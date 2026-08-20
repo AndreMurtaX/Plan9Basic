@@ -89,6 +89,7 @@ def main():
         ('module state', tool('check-module-state.py'), False),
         ('event binding', tool('check-event-binding.py'), False),
         ('engine lookup', tool('check-engine-lookup.py'), False),
+        ('event docs', tool('check-event-docs.py'), False),
         ('generated suites', [sys.executable, os.path.join(ROOT, 'tests', 'gen_property_suite.py'), '--check'], False),
         ('generated effects', [sys.executable, os.path.join(ROOT, 'tests', 'gen_effects_suite.py'), '--check'], False),
         ('generated lifecycle', [sys.executable, os.path.join(ROOT, 'tests', 'gen_lifecycle_suite.py'), '--check'], False),

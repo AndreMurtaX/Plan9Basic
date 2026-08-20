@@ -907,9 +907,9 @@ body::after {
 <h3>Other Events</h3>
 <div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th></tr></thead><tbody>
 <tr><td><code>edit_onresize#(edt#, func$)</code></td><td><code>edit_onresize$(edt#)</code></td><td><code>function name(sender#)</code></td></tr>
-<tr><td><code>edit_ondragenter#(edt#, func$)</code></td><td><code>edit_ondragenter$(edt#)</code></td><td><code>function name(sender#)</code></td></tr>
-<tr><td><code>edit_ondragover#(edt#, func$)</code></td><td><code>edit_ondragover$(edt#)</code></td><td><code>function name(sender#)</code></td></tr>
-<tr><td><code>edit_ondragdrop#(edt#, func$)</code></td><td><code>edit_ondragdrop$(edt#)</code></td><td><code>function name(sender#)</code></td></tr>
+<tr><td><code>edit_ondragenter#(edt#, func$)</code></td><td><code>edit_ondragenter$(edt#)</code></td><td><code>function name(sender#, x, y)</code></td></tr>
+<tr><td><code>edit_ondragover#(edt#, func$)</code></td><td><code>edit_ondragover$(edt#)</code></td><td><code>function name(sender#, x, y)</code></td></tr>
+<tr><td><code>edit_ondragdrop#(edt#, func$)</code></td><td><code>edit_ondragdrop$(edt#)</code></td><td><code>function name(sender#, x, y)</code></td></tr>
 <tr><td><code>edit_ondragleave#(edt#, func$)</code></td><td><code>edit_ondragleave$(edt#)</code></td><td><code>function name(sender#)</code></td></tr>
 <tr><td><code>edit_clearcallbacks#(edt#)</code></td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
 </tbody></table></div>

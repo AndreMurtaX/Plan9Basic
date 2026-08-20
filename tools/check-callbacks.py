@@ -60,6 +60,19 @@ COMMENT_SIG = re.compile(r'//.*?@([#n$]+)')
 DECLARE = re.compile(r'^\s*function\s+([A-Za-z0-9_]+)\s*\(([^)]*)\)', re.I | re.M)
 
 
+def declared_types(params):
+    """A BASIC parameter list as the engine encodes it: # pointer, $ string,
+    anything else a number. This is what the signature lookup compares, so it
+    is what a check has to compare."""
+    out = ''
+    for p in params.split(','):
+        p = p.strip()
+        if not p:
+            continue
+        out += '#' if p.endswith('#') else ('$' if p.endswith('$') else 'n')
+    return out
+
+
 def pascal_sources():
     for base, dirs, files in os.walk(ROOT):
         dirs[:] = [d for d in dirs if d not in SKIP]
@@ -101,8 +114,17 @@ def programs():
 
 
 def arity(sig):
-    """How many parameters a signature after the @ describes."""
-    return len(sig) - 1
+    """The parameter TYPES a signature describes, as written after the @.
+
+    Counting them was not enough. onmousedown is sent as @#nnn$ by eighteen
+    libraries and as @#n$nn by five: the same five parameters with the shift
+    string third instead of last. Both are arity 5, so a count-based check
+    calls them equal -- and the engine does not, because the signature it
+    looks up is the type string. A handler written for one and used on the
+    other is dropped in silence, which is the failure this file exists to
+    catch, and it would have walked past it.
+    """
+    return sig[1:]
 
 
 def stale_comments():
@@ -159,8 +181,7 @@ def main():
         regs = REGISTER.findall(text)
         if not regs:
             continue
-        declared = {m.group(1).lower():
-                    len([a for a in m.group(2).split(',') if a.strip()])
+        declared = {m.group(1).lower(): declared_types(m.group(2))
                     for m in DECLARE.finditer(text)}
         for full, event, fname in regs:
             #form_onkeydown# -> ('form', 'keydown')
@@ -186,8 +207,8 @@ def main():
 
     for rel, event, fname, got, want in problems:
         print(f'  {rel}')
-        print(f'      {event} calls {fname} with {want[0]} parameter(s), '
-              f'and it declares {got}')
+        print(f'      {event} calls {fname} as @{want[0]}, '
+              f'and it declares @{got}')
 
     if unknown:
         #Named rather than skipped. A name here means a library registers an

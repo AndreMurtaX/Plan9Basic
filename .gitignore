@@ -101,3 +101,6 @@ dist/
 
 # Written by the IDE running with --selftest.
 bin/
+
+# RAD Studio writes this during the Deploy target
+deployedassets.txt

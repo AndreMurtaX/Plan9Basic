@@ -724,11 +724,11 @@ body::after {
 <div class="info-box"><strong>&#9432; Note:</strong> <strong>OnMouseWheel</strong> provides a <code>delta</code> value: positive for scroll up, negative for scroll down.</div>
 <h3>Other Events</h3>
 <div class="table-wrap"><table><thead><tr><th>Event Setter</th><th>Getter</th><th>Callback Signature</th><th>When It Fires</th></tr></thead><tbody>
-<tr><td><code>panel_onresize#(pnl#, func$)</code></td><td><code>panel_onresize$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Panel is being resized</td></tr>
-<tr><td><code>panel_onresized#(pnl#, func$)</code></td><td><code>panel_onresized$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Panel resize is complete</td></tr>
-<tr><td><code>panel_ondragenter#(pnl#, func$)</code></td><td><code>panel_ondragenter$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Drag enters panel area</td></tr>
-<tr><td><code>panel_ondragover#(pnl#, func$)</code></td><td><code>panel_ondragover$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Drag moves over panel</td></tr>
-<tr><td><code>panel_ondragdrop#(pnl#, func$)</code></td><td><code>panel_ondragdrop$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Item is dropped on panel</td></tr>
+<tr><td><code>panel_onresize#(pnl#, func$)</code></td><td><code>panel_onresize$(pnl#)</code></td><td><code>function name(sender#, width, height)</code></td><td>Panel is being resized</td></tr>
+<tr><td><code>panel_onresized#(pnl#, func$)</code></td><td><code>panel_onresized$(pnl#)</code></td><td><code>function name(sender#, width, height)</code></td><td>Panel resize is complete</td></tr>
+<tr><td><code>panel_ondragenter#(pnl#, func$)</code></td><td><code>panel_ondragenter$(pnl#)</code></td><td><code>function name(sender#, x, y)</code></td><td>Drag enters panel area</td></tr>
+<tr><td><code>panel_ondragover#(pnl#, func$)</code></td><td><code>panel_ondragover$(pnl#)</code></td><td><code>function name(sender#, x, y)</code></td><td>Drag moves over panel</td></tr>
+<tr><td><code>panel_ondragdrop#(pnl#, func$)</code></td><td><code>panel_ondragdrop$(pnl#)</code></td><td><code>function name(sender#, x, y)</code></td><td>Item is dropped on panel</td></tr>
 <tr><td><code>panel_ondragleave#(pnl#, func$)</code></td><td><code>panel_ondragleave$(pnl#)</code></td><td><code>function name(sender#)</code></td><td>Drag leaves panel area</td></tr>
 <tr><td><code>panel_clearcallbacks#(pnl#)</code></td><td>&mdash;</td><td>&mdash;</td><td>Disconnect all event callbacks</td></tr>
 </tbody></table></div>
