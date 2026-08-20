@@ -2583,3 +2583,87 @@ Which had already happened. The plan carried an item reading *"Also still open:
 `check-fmx-boundary.py` reports one unit reaching FMX and it is `TimerLib` by
 design, and `tests/suite/17_host_services.bas` covers it. The work was done and
 the note was not. Corrected.
+
+
+## 31. The catalogue became a file, and the site became only files
+
+Written 2026-08-19, on the author's decision about the blocker section 30 found.
+
+### What moved
+
+`api/examples.php` answered a POST with a database query: 97 records, each with
+a name, a description, a category, a filename and a download path, and not one
+of them in this repository. It is now `Website/api/examples.json`, and
+`ExamplesBrowser.bas` asks for it with `http_get$`.
+
+The envelope and every field name were kept exactly as the endpoint sent them.
+That was deliberate and it is the reason the change is small: nothing below the
+fetch in the applet had to move, so the risk is confined to one line rather than
+spread across the parsing, the grid and the download.
+
+### What that cost, and what it bought
+
+It bought two things. The catalogue is now reviewable — 97 descriptions that
+lived in a database nobody here could read are text in a repository — and the
+site stopped having a part that is not files. `check-site-deps.py` reports **7
+fetched paths present, 0 served by the host**, where it used to carry a standing
+exception; `check-pages.py` reports **0 endpoints** standing between the tree
+and Pages. `PUBLISHING.md` said for a month that an upload must merge rather
+than replace, because of this one endpoint. It can replace now.
+
+What it cost is a new way to drift. A database could not list a file the web
+server did not have; two directories in one repository can fall out of step
+quietly, which is precisely what section 29 spent a day on.
+
+So the pairing is checked from both sides.
+`tools/check-examples-catalog.py` reads the catalogue against
+`Website/assets/examples/`: a record whose file is gone, a file with no record,
+a `download_path` that ends somewhere other than the file its record names, a
+description left blank. `--fix` settles the two it can and deliberately cannot
+write a description, so a new example keeps the check red until a person says
+what it is.
+
+### Pinned by walking the applet's own path
+
+`tests/suite/18_examples_catalog.bas` reads the real file with
+`file_readalltext$`, parses it with `json_parse#`, and walks it exactly as
+`LoadExamples` and `OnCellClick` do — `status`, `data`, then `name`,
+`description`, `category`, `filename` and `download_path` on all 97 records.
+Nine assertions.
+
+Watched failing first, four ways: a blank description, a `download_path`
+pointing at another file, an example on disk with no record, and the file
+absent. The first two fail the suite; the third fails the checker; and the
+distinction matters, because the suite proves the applet can read what is there
+and the checker proves what is there is the whole of it.
+
+The first draft of that test was wrong twice, and both are worth keeping.
+
+`assert_true(len(raw$) > 1000, ...)` does not compile. Comparisons are only
+expressions inside `IF`, `WHILE` and `UNTIL` -- the same constraint the review
+in section 29 checked the nine games against -- so the flag is computed in an
+`IF` and then asserted. Writing a test in the language is a way of being told
+what the language is.
+
+The second was mine rather than the language's. It read the catalogue at
+`Website/api/examples.json`, which is right from the repository root, and
+`tests/build.ps1` pushes into `tests/` before running the suite. Run on its own
+it passed, and it was reported as passing here on that basis; run as part of the
+suite, seven of its nine assertions failed. Which is section 25's mistake again
+-- taking the run that was convenient for the run that counts.
+
+It finds the root now instead of assuming one, and prints `dir_getcurrent$()`
+when it cannot, because a path that resolves to nothing is otherwise seven
+failures with no hint as to why. Watched passing from both directories.
+
+### One thing a check cannot hold
+
+The catalogue and the applet changed together, and they have to be uploaded
+together — the applet before the catalogue gives every fresh installation a 404
+where its example list should be, because the IDE fetches
+`assets/examples/ExamplesBrowser.bas` from the site on first run.
+
+Nothing in the repository can enforce that, because nothing in the repository
+performs the upload. It is a paragraph in `PUBLISHING.md`, which is the same
+kind of protection that failed for 111 files, and it stops being needed on the
+day Pages does the upload instead.
