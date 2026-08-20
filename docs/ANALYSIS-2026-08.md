@@ -2253,11 +2253,11 @@ launch of a fresh installation and your output disappears when the download
 lands. It is not deliberate — nobody chose to discard what the user had — it is
 a side effect of reprinting a header.
 
-Left as a finding rather than fixed, because the repair has a judgement in it:
-reprint only when the console still holds nothing but the welcome, or translate
-the header in place, or drop the reprint. That is the author's call.
+~~Left as a finding rather than fixed, because the repair has a judgement in
+it.~~ **Fixed 2026-08-19; see section 33** for why the judgement turned out to
+be smaller than this paragraph claimed.
 
-The test was made immune instead: it accumulates the console as it appears
+The test was made immune at the time: it accumulates the console as it appears
 rather than reading it at the end, so a clear cannot erase the evidence.
 
 ### And a filter that read a hint as an error
@@ -2749,3 +2749,72 @@ when the tree stops matching them, rather than a paragraph saying "still to do".
 
 That is not a rule that can be enforced either. It is a preference, and it is
 written here so the next person can see it was arrived at rather than assumed.
+
+
+## 33. The reprint that asks first, and a judgement that was smaller than it looked
+
+Written 2026-08-19, taking section 26's unrepaired finding.
+
+### What it was
+
+On the first launch of a fresh installation the IDE downloads
+`Translations.ini`, and when it lands the handler clears the console so it can
+reprint its banner in the language that just arrived. Anything the user printed
+in the meantime goes with it. Nobody chose that; it is a side effect of
+reprinting a header, and the first launch is exactly when somebody is most
+likely to be typing at the thing.
+
+### Why this was not asked about
+
+Section 26 recorded three possible repairs — reprint only when nothing has been
+added, translate the header in place, or drop the reprint — and said the choice
+was the author's. I did not ask, and the reason is worth stating because the
+instruction for this pass names two product judgements to bring back and this
+was not one of them.
+
+**Not destroying the user's output is not a judgement.** It is the defect. The
+judgement is only about what to do instead, and one of the three answers changes
+behaviour in no case except the destructive one: ask before clearing. Somebody
+who wanted a different answer wants a different second-best, not a different
+first. The other two remain a single condition away.
+
+### The repair
+
+`PrintWelcomeBlock` now exists once and is called twice — at startup and on
+reprint — and records how many lines it left behind. The handler asks
+`ConsoleHoldsOnlyWelcome` before clearing: untouched, it clears and reprints
+translated; touched, it leaves everything alone. `TranslationsLoaded` is printed
+either way, because it is news either way.
+
+### And extracting it found a second defect
+
+The startup banner is written with a platform conditional — `WelcomeMobileTip`
+on Android and iOS, `WelcomeDesktopTip` elsewhere. The reprint was written
+without it, and printed `WelcomeDesktopTip` unconditionally.
+
+So on a phone, the arrival of translations replaced the mobile tip with the
+desktop one: a first launch that ends up telling an Android user about a
+keyboard shortcut. Nothing detected it because both branches compile and both
+print something.
+
+It is fixed by not existing. There was one banner written in two places, which
+is the same shape as section 29's two copies of the games and section 32's three
+notes — and the repair is the same one, which is to have one of the thing.
+
+### Pinned
+
+The IDE's own self-test now asks the question in both directions: with this
+test's program output in the console the answer has to be no, with the count
+aligned to the banner it has to be yes, and one line later it has to be no
+again. It does not clear the console to do it, so a failure report still shows
+what happened.
+
+Watched failing: with `ConsoleHoldsOnlyWelcome` forced to `True`, the self-test
+reports
+
+```
+FAIL - IDE feature: the console holds 24 line(s) of program output and still
+reports itself untouched
+```
+
+which is the defect itself, stated in the terms a user would have met it in.
