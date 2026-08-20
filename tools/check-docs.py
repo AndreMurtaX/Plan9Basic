@@ -54,6 +54,18 @@ PLACEHOLDERS = {
 
 CODE_GLOBS = ['Libs/**/*.pas', 'engine/Libs/**/*.pas']
 
+# Libs/AI/archive/ was retired by the plan's item 1.6: it is in no .dpr and
+# .gitignore excludes it, so a clone does not have it. Reading it here would
+# make these counts differ between this machine and everybody else's -- and
+# would let a page documenting a p9_* or skill_* function be reported as
+# matching the code, for code nobody can obtain. That is the exact failure 1.6
+# was closed to stop.
+EXCLUDED = (os.sep + 'archive' + os.sep, '__history')
+
+
+def shipped(path):
+    return not any(part in path for part in EXCLUDED)
+
 # Three generations of documentation describe the same surface. The first two
 # are checked; Changelogs/ is history, and a page describing what a release did
 # is not promising the function still exists.
@@ -190,6 +202,8 @@ def read_code():
     sigs, variadic = set(), set()
     for pattern in CODE_GLOBS:
         for path in glob.glob(os.path.join(ROOT, pattern), recursive=True):
+            if not shipped(path):
+                continue
             with open(path, encoding='utf-8-sig', errors='replace') as f:
                 src = strip_comments(f.read())
             sigs.update(m.group(1) for m in REGISTER.finditer(src))

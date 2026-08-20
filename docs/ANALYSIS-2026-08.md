@@ -4558,3 +4558,47 @@ Nothing checks this. `check-docs.py` holds the *signatures* to the code and
 cannot drift unnoticed. A function that keeps its shape and surprises the caller
 has no such guard, which is exactly how `regexlib.html` came to be carrying a
 claim the engine had contradicted for weeks.
+
+## 59. The retired archive was still being counted
+
+`check-docs.py` reported 38 registered names with no reference page. All 38 were
+`p9_*` and `skill_*`, and the interesting part is where they come from:
+`Libs/AI/archive/P9EngineLib.pas` and `SkillLib.pas` -- the archive item 1.6
+retired.
+
+It is in no `.dpr` and `.gitignore` excludes it, so **a clone does not have it**.
+`check-coverage.py` skips it; `check-docs.py` did not. Two consequences, and the
+second is the one that matters:
+
+**The numbers differed per machine.** 4,690 signatures here against 4,651
+anywhere else, and 38 undocumented against 0. A tool whose output depends on
+which computer runs it cannot be quoted.
+
+**And it would have approved a page for code nobody can obtain.** Had anybody
+documented `p9_ask$`, `check-docs.py` would have found it registered -- in the
+archive -- and reported that the documentation matched the code. That is
+precisely the failure 1.6 was closed to stop: "The public documentation
+describes a library nobody can obtain." Retiring the archive did not retire it
+from the checker.
+
+The exclusion is now stated in one place with the reason beside it, and a
+documented `p9_*` would be MISSING, which fails the run.
+
+### What the corrected count says
+
+**4,488 registered names, and every one of them has a reference page.**
+`check-docs.py` and `check-coverage.py` now agree on the size of the surface --
+they did not before, and neither was obviously wrong from its own output.
+
+That number is worth holding beside the other one: 93.8% of those names are
+called by a test. The surface is fully documented and not yet fully executed,
+and those are different claims about different things.
+
+### The six that were never at risk
+
+`check-callbacks.py`, `check-event-docs.py`, `check-engine-lookup.py`,
+`check-event-binding.py`, `check-module-state.py` and `check-fmx-boundary.py`
+have no exclusion either. Checked rather than assumed: only
+`IntelligenceEngine.pas` in the archive contains anything they look for, and
+none of the six walks a path that reaches it. Left alone -- adding a guard
+against a case that cannot arise is a comment pretending to be code.
