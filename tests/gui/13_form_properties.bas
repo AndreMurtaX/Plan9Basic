@@ -233,4 +233,28 @@ assert_eq(form_error(), 0, "form_clearcallbacks# is reachable")
 form_hide(f#)
 assert_false(form_visible(f#), "form_hide hides it")
 
+test_case("form/showex-and-close")
+rem showex shows a form under a named mode. It is exercised on a form
+rem of its own so that whatever it does to visibility does not reach
+rem the rest of this file, and closed straight afterwards.
+rem
+rem form_showmodal is NOT called here and never will be from a suite:
+rem it blocks until somebody closes the window, and nobody is watching.
+rem That one belongs to a person with a mouse.
+g# = form#("second", 200, 150)
+form_clearerror()
+form_showex#(g#, "normal")
+assert_eq(form_error(), 0, "form_showex# takes a mode")
+rem form_close does NOT necessarily hide the window. FireMonkey's Close
+rem raises OnCloseQuery and then OnClose, and what happens next is the
+rem close action's business -- which without a message loop turning does
+rem not complete. So what is pinned is that the verb is reachable and
+rem leaves no error, and that the form is still a valid handle
+rem afterwards rather than a freed one.
+form_clearerror()
+form_close(g#)
+assert_eq(form_error(), 0, "form_close is reachable")
+assert_eq(form_caption$(g#), "second", "and the form is still there to be asked")
+form_free(g#)
+
 assert_eq(form_free(f#), 1, "form_free reports success")

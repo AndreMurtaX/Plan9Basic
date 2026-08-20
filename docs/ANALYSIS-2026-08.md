@@ -4663,3 +4663,70 @@ question. That one is about `AILib` and not about `qwen`.
 
 Coverage 93.8% to 95.1%. What is left needs a loopback server (`HttpLib`'s 39
 verbs) or a message loop turning (the animation libraries).
+
+## 61. Ninety-nine per cent, and what the last four files found
+
+The 131 names described as "needing nothing but writing" are written, and so are
+the 51 animation ones. **4,448 of 4,488 -- 99.1%.** What is left is the 39 HTTP
+verbs, which need a server to answer them, and nothing else.
+
+Four files: the shapes and containers, the focus family and `EditLib`, the
+effect targets, and the animations.
+
+### Stop is not cancel
+
+`rectani_stop` and `pathani_stop` jump the animation to its **end** -- normalized
+time 1 -- even though nothing ever moved, while the float, integer, colour and
+sprite-sheet ones stay at 0. Measured across all six rather than assumed from
+one.
+
+That is FireMonkey's semantic showing through: `TAnimation.Stop` completes the
+animation and applies the final value, and `StopAtCurrent` is the verb that
+actually cancels. A program calling `stop` to abandon a movement gets the
+destination applied instead. Two of the six do it and four do not, which makes
+it worse than if they all did.
+
+### Three names that invite the wrong reading
+
+**`edit_clear#` does not empty the edit.** It deletes the SELECTION -- the
+reference says "Delete the selected text" and that is exactly what it does --
+while `edit_clearselection#` is the one that only deselects and removes nothing.
+Both pages are correct; the trap is entirely in how the names read.
+
+**`colortoalphacolor` takes a name and answers a number.** The pair
+`colortoalphacolor` / `alphacolortostring$` reads as though the first went from
+one colour representation to another, and it goes from text to number.
+
+**`blend_target#` wants an image control**, not a shape and not a bitmap handle.
+Anything else answers "target must be a TImage", which is the library checking
+its argument rather than dereferencing it -- the pattern section 27 established,
+working.
+
+### An empty image saves, and says it worked
+
+`image_save` has no check for an empty bitmap. A 0x0 image writes a twelve-byte
+file and reports success, so a program that trusts the return value believes it
+saved a picture. The behaviour is defensible -- the bitmap saved what it had --
+and it is the return value that misleads. Pinned as it stands rather than
+changed.
+
+### The web-to-effect chain, proven without fetching
+
+The author pointed out that pictures for the more elaborate animations come from
+the network, and that `Examples/` already does it. The chain those applets use
+is: load a URL into an image, hand the image to an effect. It is now pinned end
+to end with a `.invalid` host, so each step reports for itself -- the image says
+the fetch failed, and the effect accepts the image it was given regardless,
+which is the right division of responsibility between them.
+
+Only four of the twenty-two transitions carry the image-control form at all;
+the rest take a file or a URL and nothing else. That difference is worth knowing
+before writing a program around one of them, and it is now written down.
+
+### What could not be asked, and is said rather than skipped
+
+`form_showmodal` is never called from a suite and never will be: it blocks until
+somebody closes the window, and nobody is watching. `form_close` is called, and
+does not hide the window -- FireMonkey raises `OnCloseQuery` and then `OnClose`,
+and what follows is the close action's business, which without a message loop
+does not complete. Both are stated in the file rather than left as gaps.
