@@ -1127,6 +1127,17 @@ begin
         Content := LoadDocumentContent(Doc);
         DocTokens := EstimateTokens(Content);
 
+        // Cached here, from the FULL text, before the truncation below can
+        // touch it. Writing the truncated text back instead shrinks the
+        // document permanently: the next retrieve finds it already loaded and
+        // answers out of the cut-down copy whatever budget it was given.
+        // Measured on a 6527-character document -- asking for 10 tokens and
+        // then 100000 answered 111 characters twice, while asking in the other
+        // order answered 6394 and then 111.
+        Doc.Content := Content;
+        Doc.ContentLoaded := True;
+        FDocuments[DocIdx] := Doc;
+
         // Check if truncation is needed
         var RemainingBudget := Budget;
         for var Existing in Results do
@@ -1144,11 +1155,6 @@ begin
         R.ContentForPrompt := Content;
         R.TokensUsed := DocTokens;
         R.MatchReasons := BuildMatchReasons(DocIdx, Analysis);
-
-        // Update document in main list with loaded content
-        Doc.Content := Content;
-        Doc.ContentLoaded := True;
-        FDocuments[DocIdx] := Doc;
 
         Results.Add(R);
       end;

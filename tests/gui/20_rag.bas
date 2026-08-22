@@ -70,20 +70,14 @@ assert_true(len(j$), "rag_retrieve_json$ answers something")
 jr# = json_parse#(j$)
 assert_true(pnttonum(jr#), "which parses as JSON")
 
-rem THE BUDGET IS IGNORED. Measured on 2026-08-21 with a 3.4 KB document
-rem and budgets from 10 to 100000 tokens: every one answered the same 98
-rem characters. The engine does pass the number through -- Retrieve takes
-rem it and assigns it to Budget -- so the loss is further in, and the root
-rem cause is not established.
-rem
-rem This assertion states what it DOES rather than what it should, so the
-rem defect stays visible instead of hiding behind a green run. The first
-rem version of this test compared the two with <=, which passes when both
-rem are equal, and that is exactly how it went unnoticed.
+rem Both documents here are two lines long, so every budget fits them whole
+rem and the two answers agree. That is the honest thing to assert at this
+rem size -- the budget only has something to cut when a document is bigger
+rem than it, which is what rag/budget-is-honoured below sets up.
 small$ = rag_retrieve_budget$(r#, "button click", 50)
 big$ = rag_retrieve_budget$(r#, "button click", 5000)
 assert_true(len(small$), "rag_retrieve_budget$ answers under a small budget")
-assert_eq(len(small$), len(big$), "and answers exactly the same under a large one, which is the defect")
+assert_eq(len(small$), len(big$), "and the same under a large one, because this document fits in both")
 
 test_case("rag/lookup-by-name")
 rem A document can be fetched by its id, and a function looked up to
@@ -117,6 +111,56 @@ assert_true(len(an$), "rag_analyze$ explains what it made of a question")
 sm$ = rag_summary$(r#)
 assert_true(len(sm$), "rag_summary$ describes the base")
 assert_true(instr(sm$, "2") + 1, "naming how many documents are in it")
+
+test_case("rag/budget-is-honoured")
+rem A document far larger than the small budget, in a base of its own so the
+rem counts asserted above are left alone.
+rem
+rem This pins a defect fixed on 2026-08-22 and the wrong diagnosis that went
+rem with it. The budget looked ignored -- 10 tokens and 100000 tokens both
+rem answered 111 characters -- and a comment here said so. It was not ignored.
+rem Retrieve honoured it on the FIRST call and then wrote the truncated text
+rem back into the document cache with ContentLoaded set, so every later
+rem retrieve, whatever its budget, answered out of the shrunken copy. Asking
+rem in the other order proved it: 6394 characters, then 111.
+rem
+rem Hence the two assertions. The first says the budget cuts. The second says
+rem asking small first does not cost the caller the large answer afterwards --
+rem which is the half that was broken, and the half a single-call test misses.
+bigkb$ = "bin/p9b_kb_big"
+if dir_exists(bigkb$) <> 0 then dir_delete(bigkb$, 1)
+dir_create(bigkb$)
+
+bd$ = "---" + chr$(10)
+bd$ = bd$ + "id: bigdoc" + chr$(10)
+bd$ = bd$ + "title: Buttons" + chr$(10)
+bd$ = bd$ + "category: library" + chr$(10)
+bd$ = bd$ + "tags: button, click, gui" + chr$(10)
+bd$ = bd$ + "functions: button#, button_text#" + chr$(10)
+bd$ = bd$ + "complexity: beginner" + chr$(10)
+bd$ = bd$ + "platform: all" + chr$(10)
+bd$ = bd$ + "---" + chr$(10)
+bd$ = bd$ + "# Buttons" + chr$(10)
+for bi = 1 to 120
+  bd$ = bd$ + "A button is a control that answers a click, line " + str$(bi) + "." + chr$(10)
+next bi
+file_writealltext(bigkb$ + "/bigdoc.md", bd$)
+
+big# = rag#(bigkb$)
+rag_rebuild#(big#)
+
+rem Small budget first, deliberately -- that is the order that used to poison
+rem the cache.
+tight$ = rag_retrieve_budget$(big#, "button click", 10)
+loose$ = rag_retrieve_budget$(big#, "button click", 100000)
+
+if len(tight$) < len(loose$) then cut_ok = 1
+assert_true(cut_ok, "a small budget answers less than a large one")
+if len(loose$) > 5000 then full_ok = 1
+assert_true(full_ok, "and the large one still answers the whole document after the small one")
+
+rag_free(big#)
+dir_delete(bigkb$, 1)
 
 test_case("rag/handles")
 junk# = pointer#(305419896)

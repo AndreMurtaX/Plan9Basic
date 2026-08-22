@@ -5053,3 +5053,55 @@ was a data file the tests do not read, and the second was a layout rule with no
 observable behaviour outside a window. What it bought is a measurement in place
 of a belief. I had asserted this rule twice, confidently, in a comment, and been
 wrong both times -- the third statement is the first one with a number behind it.
+
+## 68. The catalogue works, and the budget defect was diagnosed backwards
+
+Two things closed today, and only one of them was where I said it was.
+
+**The catalogue, confirmed by the only test that could confirm it.** The author
+rebuilt, opened the picker, and the row read "Browse examples online..." at the
+top of the list. Then the part no suite reaches: examples downloaded from the
+site -- `BlindTransitionTest.bas` and `InnerGlowEffectLib_Test.bas`, neither of
+which was in the folder before -- ran in the IDE, several in succession without
+restarting it, with no access violation and nothing reported. That is the button,
+the download, the parse and the run proven as one chain, by a person doing it.
+
+**The RAG budget was not ignored, and §-earlier saying so was wrong.** The
+measurement that produced that claim was real -- budgets from 10 to 100000 all
+answered the same string -- but the conclusion drawn from it was not. A sharper
+probe made the difference: a 6527-character document, and `rag_retrieve$` with
+**no budget at all** included in the comparison. It answered 111 characters too.
+A budget cannot be blamed for an answer produced without one.
+
+What settles it is asking the same two questions in the opposite order:
+
+    small (10) then large (100000):    111    111
+    large (100000) then small (10):   6394    111
+
+The budget was honoured perfectly on the first call every time. Phase 4 of
+`Retrieve` then wrote the truncated text back into the document with
+`ContentLoaded := True`, and `LoadDocumentContent` returns a loaded document
+without reading the file -- so the document was permanently shrunk, and every
+later retrieve answered out of the cut-down copy no matter what budget it was
+given. One call cannot see this. Two calls in the wrong order see it every time.
+
+The fix caches from the full text, before truncation, and leaves the cut-down
+version in `ContentForPrompt` where it belongs. Both orders now answer 111 and
+6394 according to the budget asked, not the order asked.
+
+`20_rag.bas` gained `rag/budget-is-honoured`, with a document larger than the
+budget and the calls deliberately in the poisoning order. Reverting the fix
+fails both of its assertions and passes the other eighteen, so the guard was
+exercised rather than assumed.
+
+**What the old test taught.** It asserted `assert_eq(len(small$), len(big$))` --
+the behaviour as measured, with a comment calling it a defect. That was the
+right instinct and the wrong target: it pinned a symptom to a cause I had
+guessed at, and a green run then said the guess was still true. Two things would
+have caught it earlier. Including the no-budget call, which costs one line and
+removes the budget from suspicion. And varying the order, because a cache only
+shows itself on the second call. Both are now in the file, and the comment says
+which half was broken so the next reader does not re-derive it.
+
+That is the second time in two days that the failure was in my explanation
+rather than in my measurement. The numbers were right both times.
