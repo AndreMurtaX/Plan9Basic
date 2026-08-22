@@ -318,10 +318,10 @@ begin
     MaskToAlphaEffectLib.RegisterMaskToAlphaEffectFuncs(Engine.Functions);
     FillRGBEffectLib.RegisterFillRGBEffectFuncs(Engine.Functions);
     FillEffectLib.RegisterFillEffectFuncs(Engine.Functions);
+    //MediaPlayerLib is the only one of these that belongs here: it reaches
+    //FMX.Media. SQLiteLib, AILib and RAGLib do not touch FireMonkey at all and
+    //are registered with the rest of the core, below.
     MediaPlayerLib.RegisterMediaPlayerFuncs(Engine.Functions, Engine, Output);
-    SQLiteLib.RegisterSqliteFuncs(Engine.Functions, Engine, Output);
-    AILib.RegisterAIFuncs(Engine.Functions, Engine, Output);
-    RAGLib.RegisterRAGFuncs(Engine.Functions);
 end;
 //----------------------------------------------------------------------------
 // Execution of a single file
@@ -364,6 +364,15 @@ begin
     ZipLib.RegisterZipFuncs(Engine.Functions);
     IOUtilsLib.RegisterIOUtilsFuncs(Engine.Functions);
     HttpLib.RegisterHttpFuncs(Engine.Functions, Engine, Output);
+    //Three that read like GUI libraries and are not. SQLiteLib is a database,
+    //AILib is an HTTP client and RAGLib is a file index -- none of the three
+    //uses FireMonkey. They sat at the end of RegisterGuiLibs, so a headless
+    //program asking for rag# was told "There is no function with such
+    //arguments", which is the signature lookup answering honestly about a
+    //function that was simply never registered.
+    SQLiteLib.RegisterSqliteFuncs(Engine.Functions, Engine, Output);
+    AILib.RegisterAIFuncs(Engine.Functions, Engine, Output);
+    RAGLib.RegisterRAGFuncs(Engine.Functions);
     if OptGui then
       RegisterGuiLibs(Engine, Output);
     TestLib.RegisterTestFuncs(Engine.Functions, Engine);

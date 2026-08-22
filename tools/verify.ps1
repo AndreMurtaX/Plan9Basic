@@ -248,7 +248,9 @@ Step 'local model' {
         if ($names -notcontains 'qwen2.5:7b') {
             "skipped - qwen2.5:7b not pulled (have: $($names -join ', '))"
         } else {
-            (& (Join-Path $tests 'bin\Plan9BasicTest.exe') --gui $file 2>&1 | Out-String) -split "`n" |
+            # No --gui: AILib is not a GUI library and is no longer registered as one.
+            # The missing flag is the assertion -- put it back and this proves nothing.
+            (& (Join-Path $tests 'bin\Plan9BasicTest.exe') $file 2>&1 | Out-String) -split "`n" |
                 Select-String 'file\(s\):' | ForEach-Object { $_.Line.Trim() }
         }
     }

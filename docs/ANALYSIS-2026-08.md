@@ -5157,3 +5157,57 @@ Running the example through the console runner answers "There is no function
 with such arguments: rag#", which is the engine's exact-signature lookup telling
 the truth in a way that reads like a missing feature. Worth knowing before
 somebody tries to build a headless RAG tool on this.
+
+## 70. Three libraries filed as GUI that were never GUI
+
+§69 recorded, as a curiosity, that AILib and RAGLib are registered only in the
+GUI build. The author read that and said it makes no sense. It does not, and the
+curiosity was a defect.
+
+Neither library reaches FireMonkey. AILib imports `System.Net.HttpClient` and
+`System.JSON`; RAGLib imports `System.JSON`, `RAGEngine` and `HandleRegistry`.
+They sat at the end of `RegisterGuiLibs` in `tests/Plan9BasicTest.dpr` next to
+ninety-nine libraries that genuinely do, and so did `SQLiteLib`, which is a
+database. Three of the hundred were in the wrong list.
+
+**What made it survive is the error message.** A headless program asking for
+`rag#` is told `There is no function with such arguments: rag#`. That is true.
+It is also what the engine says when a function was never registered at all,
+because the signature lookup cannot tell the two apart -- and the phrasing
+points at the call rather than at the registration. I read it, believed it
+described a language boundary, and wrote it into §69 as one.
+
+The three moved to the core registration path. Two tests moved with them, and
+the move is the proof rather than a claim about it:
+
+    tests/gui/20_rag.bas       -> tests/suite/33_rag.bas          20 assertions
+    tests/gui/12_sqlite_full.bas -> tests/suite/34_sqlite_full.bas 64 assertions
+
+and `verify.ps1` lost the `--gui` it was passing to the Ollama step. The missing
+flag is the assertion there: put it back and the step proves nothing.
+
+The counts conserve, which is the check worth doing on a move like this: the
+console suite went 33 files and 1055 assertions to 35 and 1139, the GUI suite
+went 25 and 5034 to 23 and 4950. Both totals are 6089. Nothing was lost in the
+move, and nothing was quietly skipped.
+
+**The guard.** `check-fmx-boundary.py` now also requires every library
+registered inside `RegisterGuiLibs` to actually import FMX, with `GUI_BLOCK_OK`
+as the escape hatch for a deliberate exception. Exercised in both directions:
+putting AILib back fails the check by name.
+
+**Two mistakes in building that guard, both instructive.** The first version
+compared the registered names against the units that reach FMX *under
+`engine/`* -- but the boundary in this tree is directory-based, `engine/` being
+the portable core and the root `Libs/` the FireMonkey side. So it flagged 98 of
+the 99 as misplaced. I ran it with `tail -4`, saw `WrapEffectLib` alone, and was
+one sentence away from reporting "the check found one more". Tail is not a
+summary; the count was `grep -c FAIL`, and it said 98.
+
+The second: to undo the deliberate regression I had injected, I ran `git
+checkout tests/Plan9BasicTest.dpr` on a file whose fix was not yet committed.
+That restored HEAD and threw the fix away with the test. It was recoverable only
+because a copy had been made a few commands earlier. `git checkout <file>` is
+not an undo for uncommitted work -- it is a discard.
+
+`MediaPlayerLib` stays in the GUI block, correctly: it imports `FMX.Media`.
