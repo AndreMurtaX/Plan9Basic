@@ -3673,6 +3673,14 @@ begin
 
   FullText := Editor.Text;
   UpperSearch := SearchText.ToUpper();
+  //Uppercased once, not once per match. The loop below used to call
+  //FullText.ToUpper() inside itself, so a file with a hundred matches
+  //uppercased the whole file a hundred times -- work proportional to the
+  //length times the number of hits, for an answer that never changes.
+  //
+  //The variable was already declared and never used, which is what the
+  //compiler had been saying with H2164 all along.
+  UpperFull := FullText.ToUpper();
 
   // Perform case-insensitive replace all
   NewText := '';
@@ -3682,7 +3690,7 @@ begin
   while StartFrom <= Length(FullText) do
   begin
     Pos := System.SysUtils.AnsiPos(UpperSearch,
-      Copy(FullText.ToUpper(), StartFrom, Length(FullText)));
+      Copy(UpperFull, StartFrom, Length(FullText)));
 
     if Pos > 0 then
     begin

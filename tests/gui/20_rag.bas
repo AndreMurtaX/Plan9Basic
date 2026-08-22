@@ -70,11 +70,20 @@ assert_true(len(j$), "rag_retrieve_json$ answers something")
 jr# = json_parse#(j$)
 assert_true(pnttonum(jr#), "which parses as JSON")
 
+rem THE BUDGET IS IGNORED. Measured on 2026-08-21 with a 3.4 KB document
+rem and budgets from 10 to 100000 tokens: every one answered the same 98
+rem characters. The engine does pass the number through -- Retrieve takes
+rem it and assigns it to Budget -- so the loss is further in, and the root
+rem cause is not established.
+rem
+rem This assertion states what it DOES rather than what it should, so the
+rem defect stays visible instead of hiding behind a green run. The first
+rem version of this test compared the two with <=, which passes when both
+rem are equal, and that is exactly how it went unnoticed.
 small$ = rag_retrieve_budget$(r#, "button click", 50)
 big$ = rag_retrieve_budget$(r#, "button click", 5000)
 assert_true(len(small$), "rag_retrieve_budget$ answers under a small budget")
-if len(small$) <= len(big$) then budget_ok = 1
-assert_true(budget_ok, "and a smaller budget never returns more than a larger one")
+assert_eq(len(small$), len(big$), "and answers exactly the same under a large one, which is the defect")
 
 test_case("rag/lookup-by-name")
 rem A document can be fetched by its id, and a function looked up to

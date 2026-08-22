@@ -4884,3 +4884,65 @@ Two ebook PDFs are linked from the front page and are not in git, so a publish
 that replaces the server wholesale would break both links. `check-pages.py`
 knows them by name and says so on every run. They are the author's files and
 presumably already on the host; nothing here can put them in the tree.
+
+## 65. Twenty-five compiler hints, and one of them was a defect
+
+The author pasted a clean Release build of the IDE -- no errors, no warnings,
+twenty-five hints -- and asked whether any of it was worth correcting. Most of it
+is not. Three were worth reading, and one of those turned out to be a defect the
+suite was hiding.
+
+### The budget that does nothing
+
+`RAGEngine.pas(1585): Value assigned to 'MaxChars' never used` sits inside
+`ExtractEssentialSections`, the function called to trim a document that does not
+fit the caller's token budget. A trimming function computing a limit and
+discarding it is worth a look.
+
+Measured rather than reasoned about: a 3.4 KB document, one query, budgets of 10,
+50, 100, 500, 2000 and 100000 tokens. **Every one answered 98 characters.**
+`rag_retrieve_budget$` returns the same thing whatever it is asked for.
+
+The root cause is not `MaxChars`. `MaxTokens` is used in that function, the
+binding passes the number through, and `Retrieve` assigns it to `Budget` and
+reads it. The loss is further in, and finding it is a session of its own rather
+than something to guess at here.
+
+**What the suite did instead of catching it.** `20_rag.bas` asserted
+`len(small) <= len(big)` -- which is true when the two are identical, so a
+budget that does nothing passes. That assertion now states what the engine
+actually does, `assert_eq(len(small), len(big))`, with a comment naming it as
+the defect. The run stays green and the defect stays visible, which is the same
+choice made for `image_save` in section 61.
+
+The lesson is about the assertion, not the bug: **a comparison that admits
+equality cannot detect a parameter being ignored.** Anywhere a test says "no
+more than", it is worth asking whether "exactly the same" would also pass.
+
+### The one worth fixing
+
+`UnitMain.pas(3665): Variable 'UpperFull' declared but never used in
+'DoReplaceAll'`. The variable was declared for an uppercased copy of the text,
+and the loop called `FullText.ToUpper()` **inside itself** instead -- so a file
+with a hundred matches uppercased the whole file a hundred times, for an answer
+that never changes. Now computed once, into the variable that was always there
+for it. Covered by the IDE self-test's replace-all check, so the change is
+pinned.
+
+### The rest, and why they stay
+
+- **Six `Eng`/`Outp` in `FormLib` and `MediaPlayerLib` constructors** are
+  leftovers from the section 45 repair: the fix replaced `EngineOf` with the
+  module-level engine, and the variables it had filled were left behind. Dead,
+  harmless, and a reminder of where that repair went.
+- **`parser.pas(1609)`** assigns `Result := True` and then guards with
+  `Exit(False)`. Defensive, not wrong.
+- **`AILib`'s `ProcessSSEChunk` and `OnReceiveData`** are private and unused,
+  while `ai_chatstream` works -- an earlier streaming implementation left in
+  place. Worth removing one day by somebody who knows which one is live.
+- **`H2443` on `TCaretPosition.Create`** is an inlining hint: adding `FMX.Text`
+  to the uses would let it expand. A caret is created on a keystroke; the cost
+  is not measurable by anything here.
+
+None of those changes behaviour, and this project does not touch what it cannot
+pin.
