@@ -5105,3 +5105,55 @@ which half was broken so the next reader does not re-derive it.
 
 That is the second time in two days that the failure was in my explanation
 rather than in my measurement. The numbers were right both times.
+
+## 69. An example for the two libraries nothing in the catalogue used
+
+The catalogue has 97 applets across eighteen categories and not one of them
+touches AILib or RAGLib. There is no AI category. The only AI example in the
+tree was `runner/assets/examples/hello_ai.bas` -- one question, one answer, no
+retrieval -- which is why `check-coverage.py` once reported both libraries at
+zero and the reason given was "needs credentials and a network". Half of that
+was wrong then and all of it is wrong now: a local model needs neither.
+
+`runner/assets/examples/rag_ai_local.bas` shows the pair working as a pair,
+which is the part neither library explains alone. It writes three small
+documents to disk, indexes them, retrieves what one question needs inside a
+400-token budget, and then asks the model the SAME question twice -- once bare,
+once with the retrieved text as its system prompt.
+
+**The two answers are the lesson, and they were measured before the file was
+committed.** A probe asked whether each answer names `button_onclick#`, the
+function the knowledge base defines:
+
+    retrieved context   92 characters, names it at index 24
+    bare answer         does not name it
+    grounded answer     names it at index 32
+
+So the example demonstrates something true rather than something asserted in a
+comment: without the base a 4B model does not know this language's function, and
+with it, it does. Had the bare answer happened to name it too, the example would
+have been teaching nothing and I would have had to pick a different question.
+
+**Placed in `runner/assets/examples/` rather than the catalogue**, next to
+`hello_ai.bas`. Three reasons, in order of weight. That folder is already where
+an example that needs a model lives, and `check-all` already runs it knowing so.
+`Examples/` and `Website/assets/examples/` must stay byte-identical -- a checked
+invariant -- so anything added there is added twice and run twice. And the
+catalogue is what the IDE's new row downloads, so putting a model-dependent
+applet in it means a beginner's first download is one that cannot run without
+Ollama installed. Publishing it there is a product decision and it is the
+author's, not mine.
+
+**It degrades rather than fails.** `/api/tags` is asked first, with a four
+second timeout: no Ollama and the program explains what to install and stops
+quietly, because `check-all` runs this folder on machines that will never have a
+model. The same call also names what IS installed, so a machine that pulled
+something other than `gemma3:4b` runs the example unedited -- which matters more
+than it sounds, since the model named in an example is the one thing every
+reader has to change and the one thing they cannot know to change.
+
+One thing it revealed: RAGLib and AILib are registered only in the GUI build.
+Running the example through the console runner answers "There is no function
+with such arguments: rag#", which is the engine's exact-signature lookup telling
+the truth in a way that reads like a missing feature. Worth knowing before
+somebody tries to build a headless RAG tool on this.
