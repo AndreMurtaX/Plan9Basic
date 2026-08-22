@@ -4995,3 +4995,61 @@ puts it there: the `.dproj` has no post-build event, and the IDE only downloads
 the file when it is **absent**, so a stale one is never refreshed. Worth a
 post-build copy one day; recorded rather than added, because a `.dproj` edit is
 not something to do blind.
+
+## 67. The second guess was right, and I still could not have known it
+
+Yesterday's screenshot showed the catalogue row at the bottom of the picker.
+§66 fixed it with `Index := 0` and a comment saying that top-aligned children
+stack in list order. Today's screenshot showed the text corrected -- and the row
+still at the bottom.
+
+Two candidate explanations, and no way to tell them apart by reading: either the
+new claim about FireMonkey was wrong too, or the binary predated the fix. The
+timestamps favoured the second. `Win64/Release/Plan9Basic.exe` was built at
+09:10:05, the source edit landed at 09:13:39, and `Translations.ini` was copied
+at 09:13:39 as well -- which is exactly the combination that updates the text
+and not the layout, because the translation is data read at run time and the
+ordering is code. But `bin/Plan9Basic.exe` was built at 09:15:23, *after* the
+edit, and nothing in a screenshot says which of the two was run.
+
+Having been wrong about this rule once, guessing a third time was not
+defensible. `AlignOrderProbe.dpr` was written instead -- the same shape as
+`VMThreadProbe.dpr`: one file, compiled with `dcc64`, measuring what no suite
+can reach. It builds three scroll boxes and reports their rows sorted by
+`Position.Y`, so the output reads top-to-bottom the way an eye does:
+
+    1 extra added last, untouched : fileA fileB fileC EXTRA
+    2 extra added last, Index := 0: EXTRA fileA fileB fileC
+    3 extra created first        : EXTRA fileA fileB fileC
+
+Line 1 reproduces the screenshot; line 2 is the shipped fix, and it works. So
+the code was right and the binary was old.
+
+**The rule underneath is neither of the two I had claimed.** FireMonkey stacks
+top-aligned siblings by their current `Position.Y`, and consults the parent's
+child list only to break ties. An earlier version of this probe pumped the
+message queue between additions, which gave each row a real Y; the row added
+last then had Y still 0, tied with the *first* row, lost the tie-break and
+landed second -- and `Index := 0` moved it in the list while moving nothing on
+screen. That output is what made me doubt a fix that was already correct.
+
+Which means the shipped fix works for a reason worth writing down: the picker's
+loop never turns the message queue, so every row still has Y = 0 when the last
+one is created, the tie-break decides all of them, and `Index := 0` therefore
+lifts this row to the top. Add a `ProcessMessages` inside that loop one day and
+the fix silently stops working. The comment now says so, and names the
+alternative that holds under either rule -- create the row before the files,
+which line 3 measures.
+
+The probe stays out of `verify.ps1`. It needs a form actually shown to make
+FireMonkey run a layout pass at all -- with no window handle every row reports
+`y=0` and the measurement says nothing -- and a verification run that flashes
+windows is a verification run people stop trusting. It did its job by answering
+one question once; the answer lives in the comment and here.
+
+**What this cost, and what it bought.** Two screenshots and a rebuild to fix a
+row's position, and at no point could the suites have helped: the first defect
+was a data file the tests do not read, and the second was a layout rule with no
+observable behaviour outside a window. What it bought is a measurement in place
+of a belief. I had asserted this rule twice, confidently, in a comment, and been
+wrong both times -- the third statement is the first one with a number behind it.

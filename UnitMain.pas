@@ -1447,10 +1447,17 @@ begin
   Btn.Text := '  ' + _('FilePickerExamplesRow');
   Btn.TagString := PICK_EXAMPLES;
   Btn.OnClick := FilePickerItemClick;
-  //Top-aligned children stack in the order they sit in the parent's list, so
-  //the last one created lands at the BOTTOM. A comment here used to claim the
-  //reverse, and the row duly appeared under the files instead of above them --
-  //which a screenshot showed and the compiler never could.
+  //Top-aligned siblings are stacked by their current Position.Y, and only where
+  //two share a Y does the parent's list order break the tie. Every row here is
+  //created with Y still 0 -- this loop never turns the message queue -- so the
+  //tie-break decides all of them, and Index := 0 lifts this one to the top.
+  //
+  //Measured, not assumed: an earlier comment claimed the reverse of the list
+  //rule and the row duly appeared under the files, which a screenshot caught and
+  //the compiler never could. If a layout pass is ever provoked partway through
+  //this loop, the rows acquire real Y values, the tie-break stops applying and
+  //Index := 0 stops moving anything -- so keep the loop free of ProcessMessages,
+  //or create this row before the files instead, which works under either rule.
   Btn.Index := 0;
 end;
 
