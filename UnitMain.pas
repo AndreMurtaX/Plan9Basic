@@ -1402,8 +1402,8 @@ begin
     Btn.OnClick := FilePickerItemClick;
   end;
 
-  //Added last so that Align := Top puts it first: FireMonkey stacks
-  //top-aligned children in reverse order of creation.
+  //Created last and then moved to the front, which is what Index := 0 inside
+  //it is for.
   AddExamplesRow(FontFamily, FontSize, ItemH);
 
   // Show the overlay
@@ -1447,6 +1447,11 @@ begin
   Btn.Text := '  ' + _('FilePickerExamplesRow');
   Btn.TagString := PICK_EXAMPLES;
   Btn.OnClick := FilePickerItemClick;
+  //Top-aligned children stack in the order they sit in the parent's list, so
+  //the last one created lands at the BOTTOM. A comment here used to claim the
+  //reverse, and the row duly appeared under the files instead of above them --
+  //which a screenshot showed and the compiler never could.
+  Btn.Index := 0;
 end;
 
 procedure TfrmMain.HideFilePicker();

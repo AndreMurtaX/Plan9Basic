@@ -41,6 +41,51 @@ VERSION_PAGES = [
 ]
 
 
+# utils/Translations.ini is the source; the IDE downloads
+# Website/assets/devenv/Translations.ini on a fresh install. Two copies of one
+# file, and nothing kept them equal: on 2026-08-21 the picker's catalogue row
+# read "FilePickerExamplesRow" on screen, because a missing key falls back to
+# its own name and the copy beside the executable was a line behind.
+#
+# The build output copies -- bin/ and Win64/Release/ -- are not checked here:
+# git ignores them, so a clone does not have them and this would fail for
+# everybody but the person who last built.
+TRANSLATION_COPIES = [
+    os.path.join('utils', 'Translations.ini'),
+    os.path.join('Website', 'assets', 'devenv', 'Translations.ini'),
+]
+
+
+def translations_agree():
+    """Every tracked copy of Translations.ini is the same file."""
+    texts = {}
+    for rel in TRANSLATION_COPIES:
+        path = os.path.join(ROOT, rel)
+        if not os.path.exists(path):
+            print(f'FAIL  {rel} is missing')
+            return 1
+        with open(path, encoding='utf-8-sig', errors='replace') as f:
+            texts[rel] = f.read().replace(chr(13), '')
+
+    first = TRANSLATION_COPIES[0]
+    bad = 0
+    for rel in TRANSLATION_COPIES[1:]:
+        if texts[rel] != texts[first]:
+            a = set(texts[first].split(chr(10)))
+            b = set(texts[rel].split(chr(10)))
+            print(f'FAIL  {rel} differs from {first}')
+            for line in sorted(a - b)[:5]:
+                print(f'      only in {first}: {line.strip()}')
+            for line in sorted(b - a)[:5]:
+                print(f'      only in {rel}: {line.strip()}')
+            print('      The IDE downloads the site copy on a fresh install, so a '
+                  'key missing there shows on screen as its own name.')
+            bad += 1
+    if bad == 0:
+        print(f'  strings  {len(TRANSLATION_COPIES)} copies of Translations.ini agree')
+    return bad
+
+
 def version_agrees():
     """The pages that state a version state the one the IDE prints."""
     src_path = os.path.join(ROOT, 'UnitMain.pas')
@@ -137,8 +182,9 @@ def main():
         print('      Drop it from SERVER_ONLY so the list keeps describing the tree.')
 
     bad_version = version_agrees()
+    bad_strings = translations_agree()
 
-    if missing or stale or bad_version:
+    if missing or stale or bad_version or bad_strings:
         return 1
     print(f'\nok  {ok} fetched path(s) present, {len(served)} served by the host')
     return 0

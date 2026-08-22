@@ -4946,3 +4946,52 @@ pinned.
 
 None of those changes behaviour, and this project does not touch what it cannot
 pin.
+
+## 66. A screenshot found both defects the compiler could not
+
+The author built the IDE, opened the file picker and sent a picture of it. Two
+things were wrong with the row added in section 63, and neither could have been
+caught by anything in this repository.
+
+**It read `FilePickerExamplesRow`.** A missing translation key falls back to its
+own name, and the IDE loads `Translations.ini` from beside the executable --
+`GetAppPath`, not the repository. There were **four copies** of that file: the
+source in `utils/`, the one the IDE downloads from `Website/assets/devenv/`, and
+two build outputs in `bin/` and `Win64/Release/`. Section 64 synchronised the
+site copy and stopped there, because that was the one publishing would ship. The
+one the developer's own build reads was still a line behind.
+
+**And it was at the bottom of the list.** The comment beside the call said
+"Added last so that Align := Top puts it first: FireMonkey stacks top-aligned
+children in reverse order of creation." That is simply not true -- top-aligned
+children stack in the order they sit in the parent's list, so the last created
+lands last. The row is created last and moved with `Index := 0` now.
+
+### What this says about the verification
+
+Eleven green steps, 6,191 assertions, and both defects were sitting in a
+screenshot. Neither is testable by anything here: one is a file outside the
+repository that only a built IDE reads, and the other is where a control appears
+on a screen nobody was looking at.
+
+That is the same lesson as sections 47 and 54, arriving a third time and by a
+third route. The suites prove the engine answers correctly. They cannot prove
+the application looks right, and this one wrote a confident comment about
+FireMonkey's layout order and was wrong about it.
+
+### The guard that was possible
+
+Copies of one file being equal is mechanical, so `check-site-deps.py` now
+compares the two **tracked** copies of `Translations.ini` and prints the lines
+that differ. The build outputs are deliberately excluded: git ignores them, so a
+clone does not have them and checking them would fail for everybody except
+whoever last built.
+
+Exercised in both directions -- the key was removed from the site copy, the
+check named the missing line and exited non-zero, then it was restored.
+
+What remains unguarded is the copy beside the executable. Nothing in the build
+puts it there: the `.dproj` has no post-build event, and the IDE only downloads
+the file when it is **absent**, so a stale one is never refreshed. Worth a
+post-build copy one day; recorded rather than added, because a `.dproj` edit is
+not something to do blind.
