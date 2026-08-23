@@ -1,4 +1,25 @@
-# Plan9Basic - Quick Start Guide
+# Plan9Basic
+
+A BASIC interpreter and IDE, written in Delphi/FireMonkey, for Windows, Linux
+and Android. One tree holds the interpreter, the IDE and a minimal applet
+runner; a program written on one of them runs on the others.
+
+- **Website and documentation:** <https://plan9basic.com>
+- **Licence:** MIT (see [LICENSE](LICENSE))
+- **Status:** v1.8, BETA. The language and libraries are stable enough to build
+  with; the surface is still moving in places, and the website says where.
+
+The interpreter is a tokenizer, a code generator and a stack-based VM. Around it
+sit roughly a hundred libraries -- controls, drawing, animations, effects, HTTP,
+JSON, SQLite, and an AI pair that talks to a local model through Ollama with no
+key and nothing leaving the machine.
+
+Everything registered is exercised: 6,193 assertions run against the engine, the
+GUI libraries, a local model and the HTTP verbs, and `tools/check-all.py`
+verifies the documentation against the code that implements it. `tools/verify.ps1`
+runs the lot in one command.
+
+---
 
 ## 📁 Project Overview
 
