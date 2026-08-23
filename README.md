@@ -103,7 +103,7 @@ dcc64 Plan9Basic.dpr
 One command, one verdict:
 
 ```powershell
-.	oolserify.ps1
+.\tools\verify.ps1
 ```
 
 It builds both applications, runs both suites and the negative one, builds and

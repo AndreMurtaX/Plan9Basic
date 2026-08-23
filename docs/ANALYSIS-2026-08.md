@@ -562,7 +562,7 @@ Rebuilt from scratch the following round as `tools/check-anchors.py`, a faithful
 port of the script that had worked, it reports **1,744 fragments and none
 dangling** — the answer already known. So the defect was never in the logic. It
 was in how the edit was applied: the change went in through a nested here-doc
-whose escaping ate a ``, and probably more. The fifth time in this project
+whose escaping ate a `\b`, and probably more. The fifth time in this project
 that nested escaping has corrupted something, and the first time it produced a
 plausible wrong answer rather than a syntax error, which is why it cost a round.
 
@@ -3770,9 +3770,9 @@ correct, which is why the form-level test passed and hid it.
 
 `tools/check-engine-lookup.py` reported *ok, 74 constructions* over the broken
 tree. It counted `begin`/`end` to know whether the lookup sat inside a branch,
-and the pattern it counted with was `begin`.
+and the pattern it counted with was `\bbegin\b`.
 
-The generator wrote `''` inside an ordinary Python string, where `` is the
+The generator wrote `'\b'` inside an ordinary Python string, where `\b` is the
 **backspace escape**, not a regular-expression word boundary. The check was
 looking for a control character. It matched nothing, depth stayed 0, and every
 site read as sound.
@@ -4756,7 +4756,7 @@ nothing would leave the machine and the applets could stop reaching outside too
 -- and in doing so let the better answer block the available one for three
 turns.
 
-The two new steps both reported 104 assertions on their first run -- 43 plus 61 -- because each was running the whole folder rather than its own file. The paths had been written through a Python heredoc, where `local\\01_...` collapsed to a literal  byte: an octal escape, not a backslash. Section 44 recorded the same trap costing a dozen edits and one silently-wrong checker, and the note there says to build backslashes with `chr(92)`. Written down and then walked into again.
+The two new steps both reported 104 assertions on their first run -- 43 plus 61 -- because each was running the whole folder rather than its own file. The paths had been written through a Python heredoc, where `local\\01_...` collapsed to a literal `\01` byte: an octal escape, not a backslash. Section 44 recorded the same trap costing a dozen edits and one silently-wrong checker, and the note there says to build backslashes with `chr(92)`. Written down and then walked into again.
 
 `tests/local/02_http_verbs.bas`: 61 assertions, under five seconds, green on the
 first run. The step probes httpbin and skips when it cannot be reached.
@@ -5257,3 +5257,46 @@ whether the next release can be trusted.
 And the March entry's link pointed at `Plan9BasicAppletRunner`, the repository
 the unification replaced. It now points at `Plan9Basic`. That link would have
 been the first thing a visitor clicked on launch day.
+
+## 72. The front page went public reading `.<TAB>ools<VT>erify.ps1`
+
+The repository went public and the author looked at the rendered README before I
+did. The build command in it was corrupt: the line meant `.\tools\verify.ps1`
+and had been written through a layer that read the backslashes as escapes, so
+`\t` became a tab and `\v` a vertical tab.
+
+Scanning by ordinal rather than by eye found five more, all in this file, all in
+the paragraphs describing that exact trap. The passages about the `\b` regex
+word boundary contained real backspace characters; the passage about `local\01_`
+collapsing to an octal escape contained a real 0x01. The analysis of the bug had
+the bug in it, six times over, and had been read and edited repeatedly without
+anyone noticing.
+
+**Which is the point worth keeping.** Nothing catches this by reading. A tab
+looks like spacing. A vertical tab and a backspace look like nothing at all --
+the line simply reads a little oddly, or renders a replacement glyph on somebody
+else's machine, which is exactly how it reached a public front page. Five
+previous occurrences in this project were each fixed by hand and none of them
+produced a check, because each one looked like a slip rather than a pattern.
+Five is not a slip.
+
+`tools/check-control-chars.py` now walks every tracked text file and rejects any
+byte below 0x20 that is not tab, newline or carriage return, plus 0x7F. It is in
+`check-all.py`, and it was exercised in both directions: the fault reinjected
+into the README produced `README.md:106 carries 0x0B`, and removing it cleared
+the run.
+
+**The website folder stays.** The author asked whether to drop `Website/` and
+keep the repository to source alone -- 291 of 966 files, 31 MB. Measured before
+answering: eleven of the twenty-two checks read that folder. It is not marketing
+material, it is the reference documentation, and the machinery built over this
+month is what verifies it against the code -- compiling the pages' own code
+blocks, comparing every documented signature to what the interpreter registers,
+resolving 987 links and 1,749 anchors, and holding the 98 applets the site hands
+out byte-identical to the ones in `Examples/`.
+
+Removing it would not have removed weight so much as the ability to know the
+documentation still describes the code. That is the state the project started
+from, and it is where `dict_new#`, an asynchronous HTTP API that was never
+implemented, and six applets the site distributed without compiling all came
+from.
