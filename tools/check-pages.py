@@ -51,6 +51,16 @@ UNTRACKED = {
 
 SELF = re.compile(r'https?://(?:www\.)?plan9basic\.com/([A-Za-z0-9_./%-]*)')
 LOCAL = re.compile(r'(?:href|src)\s*=\s*["\']([^"\'#?]+)["\']', re.I)
+
+# Asset paths that live in a JavaScript string rather than an attribute. The
+# examples page builds its game cards in script, so `shot: '../assets/...'`
+# never appears as a src= and was invisible to the pattern above: seven
+# screenshots were linked and untracked and this check still passed. A 404 does
+# not care which quotes the path came from.
+ASSET_IN_JS = re.compile(
+    r'''["'）]?((?:\.\./)?assets/[A-Za-z0-9_./%-]+'''
+    r'''\.(?:png|jpe?g|gif|svg|webp|ini|json|bas|pdf|mp3|ogg|wav))["']''',
+    re.I)
 EXECUTED = ('.php', '.cgi', '.asp', '.aspx', '.jsp')
 
 
@@ -97,7 +107,7 @@ def found_untracked(tracked):
     for page in pages():
         base = os.path.dirname(page)
         text = open(page, encoding='utf-8', errors='replace').read()
-        for ref in LOCAL.findall(text):
+        for ref in LOCAL.findall(text) + ASSET_IN_JS.findall(text):
             if '://' in ref or ref.startswith(('mailto:', 'data:', '//')):
                 continue
             target = os.path.normpath(os.path.join(base, unquote(ref)))

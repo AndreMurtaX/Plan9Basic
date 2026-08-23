@@ -538,6 +538,16 @@ a:hover { text-shadow: 0 0 10px var(--glow-color); }
   line-height: 1.4;
 }
 
+.game-card-shot {
+display: block;
+width: 100%;
+height: auto;
+border-top: 1px solid var(--border);
+border-bottom: 1px solid var(--border);
+margin-bottom: 0.6rem;
+background: #000;
+}
+
 .game-card-controls {
   padding: 0 1.2rem;
   font-size: 0.65rem;
@@ -1047,6 +1057,8 @@ a:hover { text-shadow: 0 0 10px var(--glow-color); }
 const games = [
   {
     id: 'space_mines',
+    shot: '../assets/img_examples/space-mines-year-one.png',
+    shotAlt: 'Space Mines at year one, the plan costed out as it is typed',
     icon: '&#9935;',
     title: 'Space Mines',
     difficulty: 'intermediate',
@@ -1747,6 +1759,8 @@ NewGame()
   },
   {
     id: '2048',
+    shot: '../assets/img_examples/2048-play.png',
+    shotAlt: 'A 2048 board mid-game',
     icon: '&#129002;',
     title: '2048',
     difficulty: 'advanced',
@@ -2570,6 +2584,8 @@ end function
   },
   {
     id: 'asteroids',
+    shot: '../assets/img_examples/asteroids-fire.png',
+    shotAlt: 'Asteroids, firing at a drifting rock',
     icon: '&#9653;',
     title: 'Asteroids',
     difficulty: 'advanced',
@@ -4025,6 +4041,8 @@ end function
   },
   {
     id: 'flappy_bird',
+    shot: '../assets/img_examples/flappy-bird-play.png',
+    shotAlt: 'Flappy Bird between two pipes',
     icon: '&#128038;',
     title: 'Flappy Bird',
     difficulty: 'advanced',
@@ -4582,6 +4600,8 @@ end function
   },
   {
     id: 'lunar_lander',
+    shot: '../assets/img_examples/lunar-lander-success.png',
+    shotAlt: 'Lunar Lander: PERFECT LANDING, +2138',
     icon: '&#128640;',
     title: 'Lunar Lander',
     difficulty: 'advanced',
@@ -5638,6 +5658,8 @@ END FUNCTION
   },
   {
     id: 'missile_command',
+    shot: '../assets/img_examples/missile-command-explosion.png',
+    shotAlt: 'Missile Command, an interceptor detonating over the cities',
     icon: '&#128165;',
     title: 'Missile Command',
     difficulty: 'advanced',
@@ -7259,6 +7281,8 @@ end function
   },
   {
     id: 'space_invaders',
+    shot: '../assets/img_examples/space-invaders-hit.png',
+    shotAlt: 'Space Invaders, a shot landing in the fourth row',
     icon: '&#128126;',
     title: 'Space Invaders',
     difficulty: 'advanced',
@@ -9999,7 +10023,8 @@ function renderCards() {
         <span class="game-card-title">${game.icon}&nbsp; ${game.title}</span>
         <span class="game-badge-advanced">advanced</span>
       </div>
-      <div class="game-card-controls">${game.controls}</div>
+      ${game.shot ? `<img class="game-card-shot" src="${game.shot}" alt="${game.shotAlt}" loading="lazy">` : ''}
+<div class="game-card-controls">${game.controls}</div>
       <div class="game-card-description">${game.description}</div>
       <div class="game-card-footer">
         <span class="tag tag-games">arcade &middot; game</span>
