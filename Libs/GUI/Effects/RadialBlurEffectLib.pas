@@ -31,7 +31,7 @@
   - (0.5, 0.5): Center of control
   - (1.0, 1.0): Bottom-right corner
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

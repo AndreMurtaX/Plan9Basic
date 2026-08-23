@@ -23,7 +23,7 @@
   - Enabled: Turn effect on/off
   - Trigger: Conditional activation string
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

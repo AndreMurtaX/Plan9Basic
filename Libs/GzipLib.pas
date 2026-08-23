@@ -29,7 +29,7 @@
     4 = File error (read/write failure)
     5 = Invalid compression level
 
-  Copyright (c) 2024-2026 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

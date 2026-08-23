@@ -67,7 +67,7 @@
       println "Selected item: " + combobox_item$(sender#, idx)
     endfunction
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

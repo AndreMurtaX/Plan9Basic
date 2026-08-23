@@ -31,7 +31,7 @@
   Gloom effect intensifies dark areas of an image, creating a darker,
   moodier look. Higher GloomIntensity = stronger darkening effect.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

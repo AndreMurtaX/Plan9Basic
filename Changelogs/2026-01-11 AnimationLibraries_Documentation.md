@@ -572,4 +572,4 @@ endif
 
 ---
 
-*Plan9Basic Animation Libraries Documentation - Copyright (c) 2024-2025 Plan9Basic Project*
+*Plan9Basic Animation Libraries Documentation - Copyright (c) 2024-2026 André Murta*

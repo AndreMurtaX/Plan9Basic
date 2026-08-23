@@ -84,7 +84,7 @@
   - Audio supports both local files and URLs (http/https)
   - Video requires local files (URL streaming not supported)
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

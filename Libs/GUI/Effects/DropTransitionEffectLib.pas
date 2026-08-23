@@ -5,7 +5,7 @@
   Version: 1.0.0 - Dropping columns transition effect
 
   Function Count: 18 functions
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

@@ -43,7 +43,7 @@
   Using GC caused Access Violations due to double-free when parent
   controls were destroyed.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

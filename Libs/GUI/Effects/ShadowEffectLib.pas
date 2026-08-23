@@ -49,7 +49,7 @@
     floatani_stopvalue#(ani#, 10)
     floatani_duration#(ani#, 0.2)
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

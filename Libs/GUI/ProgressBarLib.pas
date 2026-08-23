@@ -71,7 +71,7 @@
   0 = Horizontal (default)
   1 = Vertical
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

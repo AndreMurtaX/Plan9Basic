@@ -2,7 +2,7 @@
   Plan9Basic Interpreter Engine
 
   MIT License
-  Copyright (c) 2026 André Murta
+  Copyright (c) 2024-2026 André Murta
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@ unit Base64Lib;
     2 = Invalid argument (empty input where not allowed)
     3 = File error (read/write failure)
 
-  Copyright (c) 2024-2026 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

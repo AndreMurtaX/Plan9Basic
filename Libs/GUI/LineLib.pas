@@ -39,7 +39,7 @@
   1 = Top: Horizontal line at the top edge
   2 = Left: Vertical line at the left edge
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

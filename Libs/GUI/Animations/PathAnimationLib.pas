@@ -76,7 +76,7 @@
   When pathani_rotate#(ani#, 1) is set, the control rotates to follow
   the path tangent, useful for vehicles, arrows, or directional objects.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

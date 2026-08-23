@@ -5,7 +5,7 @@
   Version: 1.0.0 - Magnify zoom transition effect
 
   Function Count: 20 functions
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

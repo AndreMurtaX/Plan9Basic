@@ -4,7 +4,7 @@
   EditLib - Text Edit Control Library for Plan9Basic
   Version: 1.0.0
   Function Count: 115 functions
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
   ****************************************************************************** }
 
 interface

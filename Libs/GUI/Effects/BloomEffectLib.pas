@@ -31,7 +31,7 @@
   Bloom effect makes bright areas of an image appear to glow, creating
   a dreamy or ethereal look. Higher BloomIntensity = stronger glow.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

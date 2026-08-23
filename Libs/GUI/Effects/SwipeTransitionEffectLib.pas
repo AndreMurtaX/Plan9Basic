@@ -42,7 +42,7 @@
   Animate MousePoint along a diagonal path from corner to opposite corner
   to create a page-turn animation effect.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

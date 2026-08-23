@@ -14,7 +14,7 @@
   NOTE: NO rectani_propertyname# function needed - this library always
   animates position and size together.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

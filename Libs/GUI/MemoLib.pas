@@ -4,7 +4,7 @@
   MemoLib - Multi-line Text Memo Control Library for Plan9Basic
   Version: 1.0.0
   Function Count: 130+ functions
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 
   TMemo wrapper providing multi-line text editing capabilities with:
   - Line-based text manipulation

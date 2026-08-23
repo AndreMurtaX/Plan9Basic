@@ -32,7 +32,7 @@
   Great for creating 3D effects, card flips, and perspective distortions.
   Coordinates are in PIXELS. Set corners to match your image dimensions.
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

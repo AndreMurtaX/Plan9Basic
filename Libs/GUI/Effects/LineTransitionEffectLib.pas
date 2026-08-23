@@ -5,7 +5,7 @@
   Version: 1.0.0 - Line wipe transition effect
 
   Function Count: 22 functions (includes FuzzyAmount, LineOrigin)
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
   ****************************************************************************** }
 
 interface

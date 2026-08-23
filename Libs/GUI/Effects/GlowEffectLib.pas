@@ -49,7 +49,7 @@
     floatani_loop#(ani#, 1)
     floatani_start(ani#)
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface

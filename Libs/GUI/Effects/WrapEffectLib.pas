@@ -32,7 +32,7 @@
 
   Note: This effect wraps/warps the image using bezier curves on left/right edges
 
-  Copyright (c) 2024-2025 Plan9Basic Project
+  Copyright (c) 2024-2026 André Murta
 ******************************************************************************}
 
 interface
