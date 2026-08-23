@@ -5300,3 +5300,46 @@ documentation still describes the code. That is the state the project started
 from, and it is where `dict_new#`, an asynchronous HTTP API that was never
 implemented, and six applets the site distributed without compiling all came
 from.
+
+## 73. A false alarm that found a real one
+
+The author reported `Copyright (c) 2026 [Your Name]` in `UnitUtils.pas` and
+asked for the placeholder to be replaced everywhere. Searching found it nowhere:
+not in the tree, not in the two sibling checkouts on the same machine, not in
+the RAD Studio `__history` folders, not anywhere under `C:\Dev`. The file being
+read was a copy open from OneDrive. The author worked that out and said so.
+
+Reporting "not found" would have been accurate and useless. The search had
+already turned up what the tree actually said:
+
+    103  Copyright (c) 2024-2025 Plan9Basic Project
+     28  Copyright (c) 2026 André Murta
+      5  Copyright (c) 2024-2026 Plan9Basic Project
+      3  Copyright © 2024-2025 Plan9Basic Project
+      1  Copyright (c) 2026 Andre Murta      (no accent)
+
+**111 files attributed copyright to a project name.** A project is not a person
+and cannot hold a copyright, and the MIT text those same files carry requires
+the notice to travel with every copy -- so the notice travelling with most of
+this tree named nobody who could hold what it claimed. Private, that is
+untidiness. Public, it is the notice people read.
+
+Normalised to `Copyright (c) 2024-2026 André Murta`, 140 lines across 137 files.
+The 2024 is the union of what the files already claimed, not a year invented
+here.
+
+**LICENSE was in that diff, and saying so mattered more than the change.** The
+pattern matched `2026 André Murta`, which is exactly its line, so it became
+`2024-2026`. Defensible -- it now agrees with the headers instead of
+contradicting them, and the MIT terms are byte-identical -- but it was a
+decision made by a regular expression rather than by anyone, on the one file in
+the repository that is a legal statement. Flagged in the commit message and in
+the reply, offered as a one-line revert, and the author confirmed keeping it.
+A licence edit hidden inside a 137-file diff is the kind of thing that is only
+ever found later.
+
+**Two details worth keeping.** 130 of these files carry a UTF-8 BOM and 11 do
+not, so each was read as bytes, decoded, and written back with its own BOM state
+-- then checked for `AndrÃ©`, the mojibake form, which appears nowhere. And both
+suites stayed at exactly 6,089 assertions, which is what a comment-only change
+should do and the fastest way to prove it was one.
