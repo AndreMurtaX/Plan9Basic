@@ -5221,7 +5221,7 @@ published the state from before all of it.
 
 **The last two uncommitted files were carrying a device serial.** RAD Studio
 writes the serial of whatever phone was last deployed to into `<DeviceId>`, and
-`Plan9Basic.deployproj` had just acquired `RQCX2091TNH`. Looking for its
+`Plan9Basic.deployproj` had just acquired the serial of the phone last deployed to. Looking for its
 siblings found it already committed in both deploy files under the `Android64`
 condition, since the initial commit, and already on the private remote.
 

@@ -41,7 +41,8 @@ PAGE = os.path.join(ROOT, 'Website', 'docs', 'examples.html')
 #id in the page  ->  file in the repository
 PAIRS = {name: os.path.join(ROOT, 'Demos', name + '.bas') for name in [
     '2048', 'asteroids', 'breakout', 'flappy_bird', 'lunar_lander',
-    'missile_command', 'snake', 'space_invaders', 'whack_a_mole']}
+    'missile_command', 'snake', 'space_invaders', 'space_mines',
+    'whack_a_mole']}
 
 ENTRY = re.compile(r"id:\s*'([^']+)'.*?code:\s*`(.*?)`\s*[,}]", re.S)
 
