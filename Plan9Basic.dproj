@@ -360,6 +360,7 @@
         <DCCReference Include="engine\Libs\ZipLib.pas"/>
         <DCCReference Include="engine\Libs\HttpLib.pas"/>
         <DCCReference Include="Libs\GUI\GuiUtils.pas"/>
+        <DCCReference Include="Libs\GUI\ControlCommon.pas"/>
         <DCCReference Include="Libs\GUI\FormLib.pas"/>
         <DCCReference Include="Libs\GUI\LayoutLib.pas"/>
         <DCCReference Include="Libs\GUI\RectangleLib.pas"/>
