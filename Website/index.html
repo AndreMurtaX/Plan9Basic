@@ -1396,8 +1396,32 @@ Ready.
   </div>
   <div class="updates-list">
     <div class="update-item reveal">
+      <div class="update-date">2026.08.22</div>
+      <div class="update-content"><h4>&#129302; AI and RAG, on your own machine</h4><p>AILib and RAGLib now run against a local model through Ollama &mdash; no API key, and nothing leaving the machine. A new example builds a small knowledge base, retrieves only what one question needs within a token budget, and then asks the model that question twice: once bare, once with the retrieved text in front of it. The difference between the two answers is the point. Both libraries also work in a host with no window at all.</p><span class="update-tag">AI</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.08.20</div>
+      <div class="update-content"><h4>&#128193; The example catalogue, one tap away</h4><p>The IDE's file picker now opens the online catalogue directly. All 97 examples are browsable and downloadable without leaving the editor &mdash; the first row of the picker, above your own files.</p><span class="update-tag">IDE</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.08.20</div>
+      <div class="update-content"><h4>&#9989; Every registered name is now exercised</h4><p>6,193 assertions across the interpreter, the GUI libraries, a local model and the HTTP verbs. Coverage of the registered surface went from 77.8% to 100%. The tests were not a formality: they found that every GUI event was dead, that 63 documented handlers could never have been called, that <code>http_urlencode$</code> was doing form encoding, and that StrListLib had been missed when handles started being validated. All fixed, each pinned by a test.</p><span class="update-tag">TESTS</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.08.19</div>
+      <div class="update-content"><h4>&#128230; One repository</h4><p>The interpreter, the IDE and the applet runner now build from a single tree. A change stops travelling between repositories, and one command builds every target and runs every check.</p><span class="update-tag">STRUCTURE</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.08.19</div>
+      <div class="update-content"><h4>&#129513; The interpreter no longer needs FireMonkey</h4><p>Dialogs are supplied by the host application rather than reached for by the engine, and a console build proves the interpreter links without a windowing system. The groundwork for a Plan9Basic that runs anywhere, including with no screen.</p><span class="update-tag">ENGINE</span></div>
+    </div>
+    <div class="update-item reveal">
+      <div class="update-date">2026.08.18</div>
+      <div class="update-content"><h4>&#128218; The documentation is checked against the code</h4><p>The reference is now verified rather than asserted: every stated signature is compared against what the interpreter actually registers, and the documentation's own code blocks are compiled. 987 internal links and 1,749 anchors resolve. Six of the applets this site hands out did not compile &mdash; they do now.</p><span class="update-tag">DOCS</span></div>
+    </div>
+    <div class="update-item reveal">
       <div class="update-date">2026.03.22</div>
-      <div class="update-content"><h4>&#128279; Source Code Now on GitHub</h4><p>The Plan9Basic language engine and a standalone Applet Runner are now open source under the MIT License. The repository contains the full interpreter source &mdash; tokenizer, code generator, and stack-based VM &mdash; along with a cross-platform Delphi/FMX host application for running and testing Plan9Basic scripts locally. <a href="https://github.com/AndreMurtaX/Plan9BasicAppletRunner/tree/main" target="_blank" rel="noopener noreferrer">View on GitHub &rarr;</a></p><span class="update-tag">OPEN SOURCE</span></div>
+      <div class="update-content"><h4>&#128279; Source Code Now on GitHub</h4><p>The Plan9Basic language engine and a standalone Applet Runner are now open source under the MIT License. The repository contains the full interpreter source &mdash; tokenizer, code generator, and stack-based VM &mdash; along with a cross-platform Delphi/FMX host application for running and testing Plan9Basic scripts locally. <a href="https://github.com/AndreMurtaX/Plan9Basic" target="_blank" rel="noopener noreferrer">View on GitHub &rarr;</a></p><span class="update-tag">OPEN SOURCE</span></div>
     </div>
     <div class="update-item reveal">
       <div class="update-date">2026.03.16</div>

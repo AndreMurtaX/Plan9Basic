@@ -5211,3 +5211,49 @@ because a copy had been made a few commands earlier. `git checkout <file>` is
 not an undo for uncommitted work -- it is a discard.
 
 `MediaPlayerLib` stays in the GUI block, correctly: it imports `FMX.Media`.
+
+## 71. Sixty-five commits pushed, and what the last diff was carrying
+
+The restructuring had never left this machine. Sixty-four commits sat unpushed
+while the question "can we make the repository public now" was being asked --
+and the honest answer was that making it public at that moment would have
+published the state from before all of it.
+
+**The last two uncommitted files were carrying a device serial.** RAD Studio
+writes the serial of whatever phone was last deployed to into `<DeviceId>`, and
+`Plan9Basic.deployproj` had just acquired `RQCX2091TNH`. Looking for its
+siblings found it already committed in both deploy files under the `Android64`
+condition, since the initial commit, and already on the private remote.
+
+Yesterday's secret scan did not catch it, and was not wrong not to: it searched
+committed content for credential shapes, and this is neither. It is a hardware
+identifier that matches no pattern, in a file nobody thinks of as sensitive. The
+lesson is narrower than "scan harder" -- it is that a scan answers the question
+it was given, and "is there a credential" is not the same question as "is there
+anything here I would not want strangers to have".
+
+Cleared from the tree. It will return on the next deploy, so the two files are
+worth a glance in `git diff` before committing. It stays in two historical
+commits; removing it there means a rewrite, which is cheap while the repository
+is private and not cheap afterwards. That is the author's call and was left to
+them.
+
+**Two predecessor repositories are already public.** `Plan9BasicAppletRunner`
+and `Plan9BasicEngine` have been public for months, which is why the March
+website entry announces the project as open source. This reframes the decision
+that has been held all along: publishing `Plan9Basic` is not a first exposure,
+it is a consolidation of one that already happened. It also creates a loose end
+-- once the unified repository is public, those two are stale code circulating
+under the author's name, and want archiving or a pointer.
+
+**The website's Journey section had stopped in March.** Six entries added, all
+of them numbers rather than adjectives: 6,193 assertions, 77.8% to 100% of the
+registered surface, 97 examples in the catalogue, 987 links and 1,749 anchors
+resolving. The entries say what the tests *found* -- every GUI event dead, 63
+handlers that could never have been called, `http_urlencode$` doing form
+encoding -- because a changelog that lists only successes teaches nothing about
+whether the next release can be trusted.
+
+And the March entry's link pointed at `Plan9BasicAppletRunner`, the repository
+the unification replaced. It now points at `Plan9Basic`. That link would have
+been the first thing a visitor clicked on launch day.
