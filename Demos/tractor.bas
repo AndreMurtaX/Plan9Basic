@@ -78,9 +78,16 @@ if IS_MOBILE = 1 then
   let CTRL_H = 120
 end if
 
+' A desktop window does not draw on all of the height it was given: the title
+' bar and borders take some. Measured on 2026-08-27, a form asked for 780 had
+' 741 to paint on, so 40 is the allowance. On a phone the screen size already IS
+' the drawable area and nothing is taken.
+let CHROME_H = 40
+if IS_MOBILE = 1 then let CHROME_H = 0
+
 ' Everything that flies lives above the control strip, so the play area is what
 ' the game measures against -- not the window.
-let PLAY_H = GAME_H - CTRL_H
+let PLAY_H = GAME_H - CTRL_H - CHROME_H
 let HUD_H = 44
 
 let PI = 3.14159265358979
@@ -218,21 +225,15 @@ let NUM_STARS = 60
 frm# = form#("Tractor", GAME_W, GAME_H)
 form_fill#(frm#, BG$)
 
-' A window is wider than what it can draw in: the frame takes a little. Asking
-' for 560 gave 546 to paint on, and the right-aligned HUD label duly ran its
-' last word off the edge. Everything below measures against the CLIENT area.
-if IS_MOBILE = 0 then
-  let GAME_W = form_clientwidth(frm#)
-  let GAME_H = form_clientheight(frm#)
-end if
-
-' Everything derived from the window size has to be derived again, now that the
-' size is the real one. Leaving SHIP_Y and FORM_LEFT on their first values would
-' put the fighter and the formation where a 560-wide window would have wanted
-' them, on a canvas that is not 560 wide.
-let PLAY_H = GAME_H - CTRL_H
-let SHIP_Y = PLAY_H - 60
-let FORM_LEFT = cint((GAME_W - COLS * CELL_W) / 2)
+' DO NOT ASK THE FORM FOR ITS CLIENT SIZE HERE. A form that has not been shown
+' has not been laid out either, and answers a size belonging to no window:
+' measured on 2026-08-27, a form created at 560x780 reported a client area of
+' 624x441 before form_show and 544x741 after. Laying out against the first pair
+' put the fighter in the middle of the screen and ran the HUD off the right
+' edge, which is what a screenshot showed and no check here could.
+'
+' So the layout stays with the size that was ASKED FOR, and the HUD is inset far
+' enough from the edge that the frame it loses cannot clip it.
 
 ' --- Starfield, drawn first so everything else sits over it ---
 let starX# = dim#(NUM_STARS)
@@ -250,7 +251,7 @@ for i = 1 to NUM_STARS
 next i
 
 ' --- HUD ------------------------------------------------------
-lblScore# = label#(frm#, "", 14, 10, 220, 26)
+lblScore# = label#(frm#, "", 16, 10, 240, 26)
 label_fontsize#(lblScore#, 16)
 label_bold#(lblScore#, 1)
 label_fontcolor#(lblScore#, INK$)
@@ -261,7 +262,7 @@ label_bold#(lblWave#, 1)
 label_textalign#(lblWave#, 0)
 label_fontcolor#(lblWave#, LEAD_C$)
 
-lblLives# = label#(frm#, "", GAME_W - 234, 10, 220, 26)
+lblLives# = label#(frm#, "", GAME_W - 250, 10, 220, 26)
 label_fontsize#(lblLives#, 16)
 label_bold#(lblLives#, 1)
 label_textalign#(lblLives#, 2)
