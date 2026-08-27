@@ -211,6 +211,47 @@ td code { background: var(--bg-terminal); border: 1px solid var(--border); paddi
 }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
 .sidebar-overlay.show { display: block; }
+
+/* ---------------------------------------------------------------
+   NARROW SCREENS
+
+   A page wider than the screen scrolls sideways, and then every line of
+   text sits half off the edge. Measured at a 375px viewport before this
+   rule: the library pages were 1643px wide, the front page 475px, this
+   set of examples 424px.
+
+   THE CAUSE IS ONE DECLARATION, not the tables. A flex or grid child
+   defaults to min-width:auto, which means it refuses to shrink below its
+   content. Giving `.content` min-width:0 took a library page from 901px
+   to 375px on its own, and the sideways scroll went with it.
+
+   The sideways scroll was never giving access to the text -- it was the
+   symptom of the text being laid out too wide to fit. Once the box can
+   shrink, paragraphs wrap and are read in full.
+
+   What genuinely cannot reflow scrolls inside its own box instead of
+   dragging the page: a reference table, whose signature column is
+   unreadable wrapped, and a long line of code.
+   --------------------------------------------------------------- */
+@media (max-width: 760px) {
+  /* Anything laid out by flex or grid refuses to shrink below its content
+     unless told otherwise. This is the whole fix; the rules under it only
+     tidy what cannot reflow. */
+  .content, .layout > *, .showcase > *, .provider-strip > *,
+  .nav-inner > *, .construction-inner > *, [class*="grid"] > * { min-width: 0; }
+
+  /* The bar across the top has 2rem of padding a side, which is a third of a
+     narrow screen before a single word is drawn. */
+  .nav-inner, .construction-inner, .topbar { padding-left: 1rem; padding-right: 1rem; }
+
+  table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+  pre { max-width: 100%; overflow-x: auto; }
+  img, svg, video { max-width: 100%; height: auto; }
+
+  .ai-grid, .pitch-grid, .features-grid, .download-grid, .showcase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 </style>
 </head>
 <body>
