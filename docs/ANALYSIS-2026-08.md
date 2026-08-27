@@ -5446,3 +5446,74 @@ the screen's density.
 The real fix is window insets and it belongs in the host application, which
 would mean rebuilding the IDE. Recorded here rather than done, because the
 choice is the author's and the workaround costs a band of unused stars.
+
+## 77. The site scrolled sideways on a phone, and the scan could not see why
+
+The author reported it first on the examples page and then, correctly, as
+site-wide. Measured at a 375px viewport:
+
+    library pages          1643px    1268px past the edge
+    front page              475px      100px
+    examples                424px       49px
+    downloads               375px         0
+    library guide           375px         0   -- the one the author called sound
+
+**The first cause was one declaration.** `.content` is a flex item, and a flex
+item defaults to `min-width: auto`: it refuses to shrink below its content.
+Setting `min-width: 0` took a library page from 901px to 375px on its own. The
+same refusal in grid form was widening the front page.
+
+That changes what the scroll meant. The author read it as necessary -- reference
+pages have long text and wide tables, so scrolling sideways looks like how you
+reach the rest. It was the reverse: the page was laid out wider than the screen,
+so ordinary paragraphs were being clipped mid-word. Once the box can shrink they
+wrap and are read in full. What genuinely cannot reflow -- a signature column, a
+long code line -- now scrolls inside its own box.
+
+All 124 pages carry their own `<style>`; there is no shared sheet. The rule was
+appended to each, behind `max-width: 760px`.
+
+**Then two more causes, and neither was an element.**
+
+`.features-section::before` is a decorative glow at `right: -100px`. A
+pseudo-element does not exist in the DOM, so every scan run at this -- widest
+leaf, element wider than its parent, anything past the viewport -- walked
+`querySelectorAll` and came back empty while the page was demonstrably 475px
+wide. `.ai-section::before` does the same at `left: -80px` and was already
+guarded with `overflow-x: hidden`; this one was not.
+
+`.provider-strip` reports a scroll width of 505 inside a 375 box while every one
+of its descendants fits. The overflow is the box's own rather than a child's:
+`max-width` and `min-width` change nothing and only `overflow-x: hidden` helps.
+
+**The method is the lesson.** When a scan of elements comes back empty and the
+page is measurably wide, the culprit is not an element. Hiding each section in
+turn and watching the page width found both in about a minute each, after
+element scans had found neither in twenty. Worse than slow: the fixed navigation
+bar and the construction banner both measured 475 and looked like suspects. They
+were sizing themselves to the scroll width -- symptoms wearing the shape of a
+cause -- and two rounds went into them.
+
+## 78. A stale cache is indistinguishable from a fix that failed
+
+Minutes after confirming that all 124 live pages contained the new rule --
+fetched from the server, checked for the marker -- `buttonlib.html` measured
+1643px in the browser. Unfixed. The same width as before any of this.
+
+It was the browser's cache. Loading it again with a query string gave 375px,
+paragraph fully visible, table scrolling inside itself.
+
+The reading matters more than the incident. Had that measurement been believed,
+the next move would have been to undo a correct fix and look for a different
+cause -- and the site would have kept the defect while the change that solved it
+was reverted for failing. A cache serves the old file with the same URL, the
+same status code and no signal that anything is stale.
+
+So: when a measurement contradicts a file that has just been confirmed on the
+server, doubt the cache before doubting the fix. The check costs one query
+string. It is also worth telling whoever is testing on a phone, where the same
+trap catches them and looks like the developer's fault.
+
+Verified afterwards, on the published site: 124 of 124 pages carrying the rule,
+124 of 124 byte-identical to the repository, and both pages that had been broken
+measuring 375px at a 375px viewport with no sideways scroll.
