@@ -1000,6 +1000,46 @@ background: #000;
     <div class="cards-grid" id="gamesGrid">
       <!-- Game cards injected by JS -->
     </div>
+    <!-- Tractor: the two frames that carry the mechanic. The card above uses
+         the beam, so this pair shows the formation and the rescue instead --
+         three distinct moments across the page rather than one repeated. -->
+    <div class="reveal" style="margin-top:2.5rem;">
+      <div style="text-align:center;margin-bottom:1.25rem;">
+        <div class="section-label">Not a mockup</div>
+        <h3 style="font-size:1.4rem;margin:0.35rem 0 0.6rem;">Tractor, running</h3>
+        <p style="font-size:0.85rem;color:var(--text-dim);max-width:62ch;margin:0 auto;line-height:1.7;">
+          A fixed shooter written from nothing for this project. Every ship is drawn
+          by the program from rectangles and ellipses &mdash; there is no image file
+          in it anywhere.
+          <a href="#sec-games">Find it in the cards above &uarr;</a>
+        </p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">
+        <figure style="margin:0;">
+          <img src="../assets/img_examples/tractor-start.png"
+               alt="Tractor: the formation settled, three kinds of enemy in place"
+               loading="lazy"
+               style="width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:8px;background:#000;">
+          <figcaption style="font-size:0.78rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.6;">
+            <strong>The formation.</strong> Enemies fly in along curved paths and settle
+            into a grid that breathes. Blue darts at the back, orange escorts, and the
+            green leaders at the corners &mdash; the only ones that can take your fighter.
+          </figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <img src="../assets/img_examples/tractor-dual-ships.png"
+               alt="Tractor: RESCUED, and two fighters flying side by side"
+               loading="lazy"
+               style="width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:8px;background:#000;">
+          <figcaption style="font-size:0.78rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.6;">
+            <strong>The rescue.</strong> A leader took that fighter and paid for it on its
+            next dive. Two hulls now, two shots a volley &mdash; and twice the width to be
+            hit in, which is the bargain.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+
     <!-- Real screenshots, as opposed to the CSS approximation above. Space Mines
          is a conversion of the type-in listing on page 24 of "Computer Spacegames"
          (Usborne, 1982) -- a management game rather than an arcade one. -->
@@ -1106,6 +1146,8 @@ background: #000;
 const games = [
   {
     id: 'tractor',
+    shot: '../assets/img_examples/tractor-beam.png',
+    shotAlt: 'Tractor: a leader holding its capture beam over the fighter',
     icon: '&#128126;',
     title: 'Tractor',
     difficulty: 'advanced',
@@ -1331,6 +1373,22 @@ let NUM_STARS = 60
 frm# = form#("Tractor", GAME_W, GAME_H)
 form_fill#(frm#, BG$)
 
+' A window is wider than what it can draw in: the frame takes a little. Asking
+' for 560 gave 546 to paint on, and the right-aligned HUD label duly ran its
+' last word off the edge. Everything below measures against the CLIENT area.
+if IS_MOBILE = 0 then
+  let GAME_W = form_clientwidth(frm#)
+  let GAME_H = form_clientheight(frm#)
+end if
+
+' Everything derived from the window size has to be derived again, now that the
+' size is the real one. Leaving SHIP_Y and FORM_LEFT on their first values would
+' put the fighter and the formation where a 560-wide window would have wanted
+' them, on a canvas that is not 560 wide.
+let PLAY_H = GAME_H - CTRL_H
+let SHIP_Y = PLAY_H - 60
+let FORM_LEFT = cint((GAME_W - COLS * CELL_W) / 2)
+
 ' --- Starfield, drawn first so everything else sits over it ---
 let starX# = dim#(NUM_STARS)
 let starY# = dim#(NUM_STARS)
@@ -1355,7 +1413,7 @@ label_fontcolor#(lblScore#, INK$)
 lblWave# = label#(frm#, "", GAME_W / 2 - 90, 10, 180, 26)
 label_fontsize#(lblWave#, 16)
 label_bold#(lblWave#, 1)
-label_textalign#(lblWave#, 1)
+label_textalign#(lblWave#, 0)
 label_fontcolor#(lblWave#, LEAD_C$)
 
 lblLives# = label#(frm#, "", GAME_W - 234, 10, 220, 26)
@@ -1387,8 +1445,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capL#, 30)
   label_bold#(capL#, 1)
   label_fontcolor#(capL#, "#8fa4e0")
-  label_textalign#(capL#, 1)
-  label_vertalign#(capL#, 1)
+  label_textalign#(capL#, 0)
+  label_vertalign#(capL#, 0)
   label_hittest#(capL#, 0)
 
   let padF# = rectangle#(frm#, cint(GAME_W / 3) + 2, btnY, btnW + 4, btnH)
@@ -1405,8 +1463,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capF#, 20)
   label_bold#(capF#, 1)
   label_fontcolor#(capF#, "#ff8a65")
-  label_textalign#(capF#, 1)
-  label_vertalign#(capF#, 1)
+  label_textalign#(capF#, 0)
+  label_vertalign#(capF#, 0)
   label_hittest#(capF#, 0)
 
   let padR# = rectangle#(frm#, GAME_W - btnW - 8, btnY, btnW, btnH)
@@ -1423,8 +1481,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capR#, 30)
   label_bold#(capR#, 1)
   label_fontcolor#(capR#, "#8fa4e0")
-  label_textalign#(capR#, 1)
-  label_vertalign#(capR#, 1)
+  label_textalign#(capR#, 0)
+  label_vertalign#(capR#, 0)
   label_hittest#(capR#, 0)
 
   ' A tap anywhere on the play area restarts once it is over, because there is
@@ -1528,12 +1586,12 @@ next i
 lblBig# = label#(frm#, "", 0, PLAY_H / 2 - 60, GAME_W, 44)
 label_fontsize#(lblBig#, 30)
 label_bold#(lblBig#, 1)
-label_textalign#(lblBig#, 1)
+label_textalign#(lblBig#, 0)
 label_fontcolor#(lblBig#, INK$)
 
 lblSmall# = label#(frm#, "", 0, PLAY_H / 2 - 12, GAME_W, 30)
 label_fontsize#(lblSmall#, 15)
-label_textalign#(lblSmall#, 1)
+label_textalign#(lblSmall#, 0)
 label_fontcolor#(lblSmall#, DIM$)
 
 ' ============================================================

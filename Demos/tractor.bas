@@ -218,6 +218,22 @@ let NUM_STARS = 60
 frm# = form#("Tractor", GAME_W, GAME_H)
 form_fill#(frm#, BG$)
 
+' A window is wider than what it can draw in: the frame takes a little. Asking
+' for 560 gave 546 to paint on, and the right-aligned HUD label duly ran its
+' last word off the edge. Everything below measures against the CLIENT area.
+if IS_MOBILE = 0 then
+  let GAME_W = form_clientwidth(frm#)
+  let GAME_H = form_clientheight(frm#)
+end if
+
+' Everything derived from the window size has to be derived again, now that the
+' size is the real one. Leaving SHIP_Y and FORM_LEFT on their first values would
+' put the fighter and the formation where a 560-wide window would have wanted
+' them, on a canvas that is not 560 wide.
+let PLAY_H = GAME_H - CTRL_H
+let SHIP_Y = PLAY_H - 60
+let FORM_LEFT = cint((GAME_W - COLS * CELL_W) / 2)
+
 ' --- Starfield, drawn first so everything else sits over it ---
 let starX# = dim#(NUM_STARS)
 let starY# = dim#(NUM_STARS)
@@ -242,7 +258,7 @@ label_fontcolor#(lblScore#, INK$)
 lblWave# = label#(frm#, "", GAME_W / 2 - 90, 10, 180, 26)
 label_fontsize#(lblWave#, 16)
 label_bold#(lblWave#, 1)
-label_textalign#(lblWave#, 1)
+label_textalign#(lblWave#, 0)
 label_fontcolor#(lblWave#, LEAD_C$)
 
 lblLives# = label#(frm#, "", GAME_W - 234, 10, 220, 26)
@@ -274,8 +290,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capL#, 30)
   label_bold#(capL#, 1)
   label_fontcolor#(capL#, "#8fa4e0")
-  label_textalign#(capL#, 1)
-  label_vertalign#(capL#, 1)
+  label_textalign#(capL#, 0)
+  label_vertalign#(capL#, 0)
   label_hittest#(capL#, 0)
 
   let padF# = rectangle#(frm#, cint(GAME_W / 3) + 2, btnY, btnW + 4, btnH)
@@ -292,8 +308,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capF#, 20)
   label_bold#(capF#, 1)
   label_fontcolor#(capF#, "#ff8a65")
-  label_textalign#(capF#, 1)
-  label_vertalign#(capF#, 1)
+  label_textalign#(capF#, 0)
+  label_vertalign#(capF#, 0)
   label_hittest#(capF#, 0)
 
   let padR# = rectangle#(frm#, GAME_W - btnW - 8, btnY, btnW, btnH)
@@ -310,8 +326,8 @@ if IS_MOBILE = 1 then
   label_fontsize#(capR#, 30)
   label_bold#(capR#, 1)
   label_fontcolor#(capR#, "#8fa4e0")
-  label_textalign#(capR#, 1)
-  label_vertalign#(capR#, 1)
+  label_textalign#(capR#, 0)
+  label_vertalign#(capR#, 0)
   label_hittest#(capR#, 0)
 
   ' A tap anywhere on the play area restarts once it is over, because there is
@@ -415,12 +431,12 @@ next i
 lblBig# = label#(frm#, "", 0, PLAY_H / 2 - 60, GAME_W, 44)
 label_fontsize#(lblBig#, 30)
 label_bold#(lblBig#, 1)
-label_textalign#(lblBig#, 1)
+label_textalign#(lblBig#, 0)
 label_fontcolor#(lblBig#, INK$)
 
 lblSmall# = label#(frm#, "", 0, PLAY_H / 2 - 12, GAME_W, 30)
 label_fontsize#(lblSmall#, 15)
-label_textalign#(lblSmall#, 1)
+label_textalign#(lblSmall#, 0)
 label_fontcolor#(lblSmall#, DIM$)
 
 ' ============================================================
