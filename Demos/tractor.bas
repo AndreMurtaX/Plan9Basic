@@ -85,10 +85,27 @@ end if
 let CHROME_H = 40
 if IS_MOBILE = 1 then let CHROME_H = 0
 
+' SYSTEM BARS. An app targeting Android 16 draws under the status bar and the
+' navigation bar, and there is no opting out at that target -- it is the
+' platform, not the phone. Nothing in this engine can ask where those bars are,
+' so the only honest thing an applet can do is keep clear of them.
+'
+' These are proportions rather than pixels because a bar's size in pixels
+' depends on the screen's density, and a fraction of the height travels between
+' devices where a constant does not. They are a guess, and a generous one: it
+' is better to leave a band of stars unused than to put the fire button under
+' the navigation bar, which is what happened without them.
+let SAFE_TOP = 0
+let SAFE_BOTTOM = 0
+if IS_MOBILE = 1 then
+  let SAFE_TOP = cint(GAME_H * 0.055)
+  let SAFE_BOTTOM = cint(GAME_H * 0.055)
+end if
+
 ' Everything that flies lives above the control strip, so the play area is what
 ' the game measures against -- not the window.
-let PLAY_H = GAME_H - CTRL_H - CHROME_H
-let HUD_H = 44
+let PLAY_H = GAME_H - CTRL_H - CHROME_H - SAFE_BOTTOM
+let HUD_H = 44 + SAFE_TOP
 
 let PI = 3.14159265358979
 
@@ -100,11 +117,11 @@ let SHIP_SPEED = 5
 let SHIP_GAP = 4          ' between the two hulls of a doubled fighter
 
 ' --- Shots ----------------------------------------------------
-let MAX_SHOT = 8
+let MAX_SHOT = 6
 let SHOT_W = 3
 let SHOT_H = 12
 let SHOT_SPEED = 11
-let MAX_EBOMB = 24
+let MAX_EBOMB = 14
 let EBOMB_W = 4
 let EBOMB_H = 10
 let EBOMB_SPEED = 4
@@ -200,6 +217,7 @@ let eSpeed# = pointer#(0)
 let eDelay# = pointer#(0)    ' ticks to wait before entering
 let eSide# = pointer#(0)     ' which side the entry arc comes from
 let eDiveX# = pointer#(0)    ' where the dive was aimed
+let eShown# = pointer#(0)
 let eRect# = pointer#(0)
 
 let sX# = pointer#(0)
@@ -216,7 +234,9 @@ let starX# = pointer#(0)
 let starY# = pointer#(0)
 let starV# = pointer#(0)
 let starR# = pointer#(0)
-let NUM_STARS = 60
+' Sixty stars cost sixty control moves a frame for decoration. Twenty-four
+' moved on alternate frames reads the same and costs a fifth as much.
+let NUM_STARS = 24
 
 ' ============================================================
 '  THE WINDOW
@@ -275,7 +295,7 @@ label_fontcolor#(lblLives#, SHIP_C$)
 if IS_MOBILE = 1 then
   let btnW = cint(GAME_W / 3) - 10
   let btnH = CTRL_H - 24
-  let btnY = PLAY_H + 12
+  let btnY = PLAY_H + 10
 
   let padL# = rectangle#(frm#, 8, btnY, btnW, btnH)
   rectangle_fill#(padL#, "#111a33")
@@ -403,6 +423,7 @@ let eSpeed# = dim#(MAX_ENEMY)
 let eDelay# = dim#(MAX_ENEMY)
 let eSide# = dim#(MAX_ENEMY)
 let eDiveX# = dim#(MAX_ENEMY)
+let eShown# = dim#(MAX_ENEMY)
 let eRect# = pdim#(MAX_ENEMY)
 ' Each enemy is a TRANSPARENT CONTAINER with its parts inside, the technique
 ' space_invaders.bas uses: children sit at coordinates relative to the
@@ -414,6 +435,7 @@ let eRect# = pdim#(MAX_ENEMY)
 ' rebuilt forty times a wave.
 for i = 1 to MAX_ENEMY
   eState#[i] = ST_DEAD
+  eShown#[i] = 0
   let row = cint((i - 1) / COLS) + 1
   let col = i - (row - 1) * COLS
   let r# = rectangle#(frm#, 0, 0, ENEMY_W, ENEMY_H)
@@ -470,7 +492,7 @@ end function
 
 ' The wasp: a small dart with swept wings. These are the ones you see twenty
 ' of at a time, so it stays simple and reads at a glance.
-function WaspParts(cont#, w, h) local b#, l#, r#, e#
+function WaspParts(cont#, w, h) local b#, l#, r#
   let l# = rectangle#(cont#, 0, cint(h * 0.45), cint(w * 0.34), cint(h * 0.3))
   rectangle_fill#(l#, "#1d7fb0")
   rectangle_strokenone#(l#)
@@ -489,15 +511,11 @@ function WaspParts(cont#, w, h) local b#, l#, r#, e#
   rectangle_strokenone#(b#)
   rectangle_hittest#(b#, 0)
 
-  let e# = ellipse#(cont#, cint(w * 0.4), cint(h * 0.24), cint(w * 0.2), cint(h * 0.2))
-  ellipse_fill#(e#, "#e8ecff")
-  ellipse_strokenone#(e#)
-  ellipse_hittest#(e#, 0)
   return 0
 end function
 
 ' The escort: a broader hull, two eyes, a pair of side fins.
-function EscortParts(cont#, w, h) local b#, l#, r#, e1#, e2#, p1#, p2#
+function EscortParts(cont#, w, h) local b#, l#, r#, e1#
   let l# = rectangle#(cont#, 0, cint(h * 0.3), cint(w * 0.2), cint(h * 0.44))
   rectangle_fill#(l#, "#ffab91")
   rectangle_strokenone#(l#)
@@ -519,30 +537,19 @@ function EscortParts(cont#, w, h) local b#, l#, r#, e1#, e2#, p1#, p2#
   rectangle_corners#(b#, 6, 6)
   rectangle_hittest#(b#, 0)
 
-  let e1# = ellipse#(cont#, cint(w * 0.3), cint(h * 0.34), cint(w * 0.16), cint(h * 0.2))
+  ' One visor rather than two eyes and two pupils. Four controls became one,
+  ' twenty times over, and at this size the face reads the same.
+  let e1# = ellipse#(cont#, cint(w * 0.3), cint(h * 0.34), cint(w * 0.4), cint(h * 0.2))
   ellipse_fill#(e1#, "#ffffff")
   ellipse_strokenone#(e1#)
   ellipse_hittest#(e1#, 0)
-  let p1# = ellipse#(cont#, cint(w * 0.34), cint(h * 0.4), cint(w * 0.08), cint(h * 0.1))
-  ellipse_fill#(p1#, "#2b1206")
-  ellipse_strokenone#(p1#)
-  ellipse_hittest#(p1#, 0)
-
-  let e2# = ellipse#(cont#, cint(w * 0.54), cint(h * 0.34), cint(w * 0.16), cint(h * 0.2))
-  ellipse_fill#(e2#, "#ffffff")
-  ellipse_strokenone#(e2#)
-  ellipse_hittest#(e2#, 0)
-  let p2# = ellipse#(cont#, cint(w * 0.58), cint(h * 0.4), cint(w * 0.08), cint(h * 0.1))
-  ellipse_fill#(p2#, "#2b1206")
-  ellipse_strokenone#(p2#)
-  ellipse_hittest#(p2#, 0)
   return 0
 end function
 
 ' The leader: the only one that can take your fighter, so it is the one that
 ' has to be recognisable in a crowd. Bigger hull, two antennae, and the violet
 ' emitter the beam comes out of.
-function LeaderParts(cont#, w, h) local b#, a1#, a2#, e1#, e2#, c#, l#, r#
+function LeaderParts(cont#, w, h) local b#, a1#, a2#, e1#, c#, l#, r#
   let l# = rectangle#(cont#, 0, cint(h * 0.38), cint(w * 0.22), cint(h * 0.4))
   rectangle_fill#(l#, "#1b8f5a")
   rectangle_strokenone#(l#)
@@ -581,14 +588,12 @@ function LeaderParts(cont#, w, h) local b#, a1#, a2#, e1#, e2#, c#, l#, r#
   rectangle_corners#(c#, 2, 2)
   rectangle_hittest#(c#, 0)
 
-  let e1# = ellipse#(cont#, cint(w * 0.28), cint(h * 0.34), cint(w * 0.16), cint(h * 0.2))
+  ' The antennae and the violet emitter are what tell a leader from an escort
+  ' across a crowded screen. The eyes did not, so they are gone.
+  let e1# = ellipse#(cont#, cint(w * 0.28), cint(h * 0.34), cint(w * 0.44), cint(h * 0.2))
   ellipse_fill#(e1#, "#05321f")
   ellipse_strokenone#(e1#)
   ellipse_hittest#(e1#, 0)
-  let e2# = ellipse#(cont#, cint(w * 0.56), cint(h * 0.34), cint(w * 0.16), cint(h * 0.2))
-  ellipse_fill#(e2#, "#05321f")
-  ellipse_strokenone#(e2#)
-  ellipse_hittest#(e2#, 0)
   return 0
 end function
 
@@ -691,14 +696,24 @@ end function
 ' ============================================================
 
 ' One move for the whole sprite: the parts ride the container.
+'
+' Visibility is only written when it CHANGES. Setting a property to what it
+' already holds still crosses into the control and can still invalidate it, and
+' this ran forty times a frame for no effect at all.
 function PlaceEnemy(idx) local r#
   r# = eRect##[idx]
   if eState#[idx] = ST_DEAD then
-    rectangle_visible#(r#, 0)
+    if eShown#[idx] = 1 then
+      rectangle_visible#(r#, 0)
+      eShown#[idx] = 0
+    end if
     return 0
   end if
   rectangle_move#(r#, cint(eX#[idx]), cint(eY#[idx]))
-  rectangle_visible#(r#, 1)
+  if eShown#[idx] = 0 then
+    rectangle_visible#(r#, 1)
+    eShown#[idx] = 1
+  end if
   return 0
 end function
 
@@ -995,6 +1010,9 @@ function GameLoop(sender#) local i
 end function
 
 function Stars() local i, y
+  ' Every other frame. At these speeds nobody can tell, and it halves the cost
+  ' of the one thing on screen that is not part of the game.
+  if tick - (cint(tick / 2) * 2) <> 0 then return 0
   for i = 1 to NUM_STARS
     y = starY#[i] + starV#[i]
     if y > PLAY_H then
@@ -1047,17 +1065,30 @@ function MoveShots() local i, y
   return 0
 end function
 
-function MoveEnemies() local i, s, t
-  formPhase = formPhase + 0.012
+function MoveEnemies() local i, s, slow
+  ' A sitting enemy only drifts with the formation's breathing, which is slow
+  ' enough that repositioning it on alternate frames is invisible -- and that is
+  ' up to forty control moves a frame that no longer happen. The phase steps
+  ' twice as far when it does step, so the drift keeps its speed.
+  slow = 0
+  if tick - (cint(tick / 2) * 2) = 0 then slow = 1
+  if slow = 1 then formPhase = formPhase + 0.024
+
   for i = 1 to MAX_ENEMY
     s = eState#[i]
     if s <> ST_DEAD then
-      if s = ST_ENTER then StepEnter(i)
-      if s = ST_FORM then StepForm(i)
-      if s = ST_DIVE then StepDive(i)
-      if s = ST_BEAM then StepBeam(i)
-      if s = ST_RETURN then StepReturn(i)
-      PlaceEnemy(i)
+      if s = ST_FORM then
+        if slow = 1 then
+          StepForm(i)
+          PlaceEnemy(i)
+        end if
+      else
+        if s = ST_ENTER then StepEnter(i)
+        if s = ST_DIVE then StepDive(i)
+        if s = ST_BEAM then StepBeam(i)
+        if s = ST_RETURN then StepReturn(i)
+        PlaceEnemy(i)
+      end if
     end if
   next i
   return 0
