@@ -870,6 +870,14 @@ background: #000;
      narrow screen before a single word is drawn. */
   .nav-inner, .construction-inner, .topbar { padding-left: 1rem; padding-right: 1rem; }
 
+  /* Two containers on this site place decoration or chips past their own
+     edge, and a parent that does not clip them hands their width to the page.
+     .features-section on the front page was one; this is the other. Neither
+     shows up in a scan of elements -- the overflow is the box's own, not a
+     child's -- and both were found by hiding sections and watching the page
+     width. */
+  .provider-strip { overflow-x: hidden; }
+
   table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
   pre { max-width: 100%; overflow-x: auto; }
   img, svg, video { max-width: 100%; height: auto; }
