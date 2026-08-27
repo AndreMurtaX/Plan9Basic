@@ -1133,6 +1133,9 @@ const games = [
 '    P              pause
 '    R              restart, once it is over
 '
+'  On a phone: three buttons at the foot of the screen, and a tap
+'  anywhere on the play area to start again once it is over.
+'
 '  HOW A CAPTURE WORKS, because it is the part worth playing for:
 '  a leader dives, stops above you and opens a beam. Sit in it and
 '  your fighter is taken -- you lose a life and the fighter joins
@@ -1166,9 +1169,31 @@ const games = [
 
 randomize()
 
+' --- Platform -------------------------------------------------
+' A phone has no arrow keys and no space bar, so on mobile the bottom of the
+' screen becomes a control strip and the play area shrinks to fit above it.
+' Every other game in this folder does the same; this one did not, and would
+' have opened on Android and been unplayable.
+let PLATFORM$ = os_name$()
+let IS_MOBILE = 0
+if PLATFORM$ = "Android" then IS_MOBILE = 1
+if PLATFORM$ = "iOS" then IS_MOBILE = 1
+if instr(PLATFORM$, "Android") >= 0 then IS_MOBILE = 1
+if instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
+
 ' --- Geometry -------------------------------------------------
 let GAME_W = 560
 let GAME_H = 780
+let CTRL_H = 0
+if IS_MOBILE = 1 then
+  let GAME_W = form_screenwidth()
+  let GAME_H = form_screenheight()
+  let CTRL_H = 120
+end if
+
+' Everything that flies lives above the control strip, so the play area is what
+' the game measures against -- not the window.
+let PLAY_H = GAME_H - CTRL_H
 let HUD_H = 44
 
 let PI = 3.14159265358979
@@ -1176,7 +1201,7 @@ let PI = 3.14159265358979
 ' --- Player ---------------------------------------------------
 let SHIP_W = 26
 let SHIP_H = 20
-let SHIP_Y = GAME_H - 60
+let SHIP_Y = PLAY_H - 60
 let SHIP_SPEED = 5
 let SHIP_GAP = 4          ' between the two hulls of a doubled fighter
 
@@ -1196,6 +1221,12 @@ let COLS = 8
 let MAX_ENEMY = 40        ' ROWS * COLS
 let CELL_W = 46
 let CELL_H = 38
+' Eight columns of 46 is 368 pixels, which is wider than a narrow phone. On
+' mobile the cell shrinks to whatever the screen affords.
+if IS_MOBILE = 1 then
+  let CELL_W = cint((GAME_W - 24) / COLS)
+  let CELL_H = cint(CELL_W * 0.82)
+end if
 let FORM_TOP = HUD_H + 40
 let FORM_LEFT = (GAME_W - COLS * CELL_W) / 2 + 8
 let ENEMY_W = 24
@@ -1307,7 +1338,7 @@ let starV# = dim#(NUM_STARS)
 let starR# = pdim#(NUM_STARS)
 for i = 1 to NUM_STARS
   starX#[i] = cint(rnd() * GAME_W)
-  starY#[i] = cint(rnd() * GAME_H)
+  starY#[i] = cint(rnd() * PLAY_H)
   starV#[i] = 1 + cint(rnd() * 2)
   let st# = rectangle#(frm#, starX#[i], starY#[i], 2, 2)
   rectangle_fill#(st#, STAR_C$)
@@ -1332,6 +1363,78 @@ label_fontsize#(lblLives#, 16)
 label_bold#(lblLives#, 1)
 label_textalign#(lblLives#, 2)
 label_fontcolor#(lblLives#, SHIP_C$)
+
+
+' --- On-screen controls, mobile only --------------------------
+' The buttons set exactly the same three variables the keyboard sets, so
+' everything downstream is unaware of how the player is holding the machine.
+if IS_MOBILE = 1 then
+  let btnW = cint(GAME_W / 3) - 10
+  let btnH = CTRL_H - 24
+  let btnY = PLAY_H + 12
+
+  let padL# = rectangle#(frm#, 8, btnY, btnW, btnH)
+  rectangle_fill#(padL#, "#111a33")
+  rectangle_stroke#(padL#, "#3f5aa6")
+  rectangle_strokethickness#(padL#, 2)
+  rectangle_corners#(padL#, 12, 12)
+  rectangle_onmousedown#(padL#, "PadLeftDown")
+  rectangle_onmouseup#(padL#, "PadLeftUp")
+  let capL# = label#(frm#, "<")
+  label_autosize#(capL#, 0)
+  label_move#(capL#, 8, btnY)
+  label_size#(capL#, btnW, btnH)
+  label_fontsize#(capL#, 30)
+  label_bold#(capL#, 1)
+  label_fontcolor#(capL#, "#8fa4e0")
+  label_textalign#(capL#, 1)
+  label_vertalign#(capL#, 1)
+  label_hittest#(capL#, 0)
+
+  let padF# = rectangle#(frm#, cint(GAME_W / 3) + 2, btnY, btnW + 4, btnH)
+  rectangle_fill#(padF#, "#2a1204")
+  rectangle_stroke#(padF#, "#ff7043")
+  rectangle_strokethickness#(padF#, 3)
+  rectangle_corners#(padF#, 12, 12)
+  rectangle_onmousedown#(padF#, "PadFireDown")
+  rectangle_onmouseup#(padF#, "PadFireUp")
+  let capF# = label#(frm#, "FIRE")
+  label_autosize#(capF#, 0)
+  label_move#(capF#, cint(GAME_W / 3) + 2, btnY)
+  label_size#(capF#, btnW + 4, btnH)
+  label_fontsize#(capF#, 20)
+  label_bold#(capF#, 1)
+  label_fontcolor#(capF#, "#ff8a65")
+  label_textalign#(capF#, 1)
+  label_vertalign#(capF#, 1)
+  label_hittest#(capF#, 0)
+
+  let padR# = rectangle#(frm#, GAME_W - btnW - 8, btnY, btnW, btnH)
+  rectangle_fill#(padR#, "#111a33")
+  rectangle_stroke#(padR#, "#3f5aa6")
+  rectangle_strokethickness#(padR#, 2)
+  rectangle_corners#(padR#, 12, 12)
+  rectangle_onmousedown#(padR#, "PadRightDown")
+  rectangle_onmouseup#(padR#, "PadRightUp")
+  let capR# = label#(frm#, ">")
+  label_autosize#(capR#, 0)
+  label_move#(capR#, GAME_W - btnW - 8, btnY)
+  label_size#(capR#, btnW, btnH)
+  label_fontsize#(capR#, 30)
+  label_bold#(capR#, 1)
+  label_fontcolor#(capR#, "#8fa4e0")
+  label_textalign#(capR#, 1)
+  label_vertalign#(capR#, 1)
+  label_hittest#(capR#, 0)
+
+  ' A tap anywhere on the play area restarts once it is over, because there is
+  ' no R key to press.
+  let tapArea# = rectangle#(frm#, 0, HUD_H, GAME_W, PLAY_H - HUD_H)
+  rectangle_fill#(tapArea#, "#00000000")
+  rectangle_strokenone#(tapArea#)
+  rectangle_sendtoback#(tapArea#)
+  rectangle_onmousedown#(tapArea#, "PadTap")
+end if
 
 ' --- The two hulls of the fighter -----------------------------
 ship# = rectangle#(frm#, shipX, SHIP_Y, SHIP_W, SHIP_H)
@@ -1422,13 +1525,13 @@ for i = 1 to MAX_ENEMY
 next i
 
 ' --- Messages -------------------------------------------------
-lblBig# = label#(frm#, "", 0, GAME_H / 2 - 60, GAME_W, 44)
+lblBig# = label#(frm#, "", 0, PLAY_H / 2 - 60, GAME_W, 44)
 label_fontsize#(lblBig#, 30)
 label_bold#(lblBig#, 1)
 label_textalign#(lblBig#, 1)
 label_fontcolor#(lblBig#, INK$)
 
-lblSmall# = label#(frm#, "", 0, GAME_H / 2 - 12, GAME_W, 30)
+lblSmall# = label#(frm#, "", 0, PLAY_H / 2 - 12, GAME_W, 30)
 label_fontsize#(lblSmall#, 15)
 label_textalign#(lblSmall#, 1)
 label_fontcolor#(lblSmall#, DIM$)
@@ -1676,7 +1779,7 @@ function DiveX(idx, t) local sx, tx
 end function
 
 function DiveY(idx, t)
-  return SlotY(idx) + (GAME_H + 60 - SlotY(idx)) * t * t
+  return SlotY(idx) + (PLAY_H + 60 - SlotY(idx)) * t * t
 end function
 
 ' ============================================================
@@ -1848,6 +1951,46 @@ function OnKeyUp(sender#, keyCode, keyChar$, shiftState$)
   return 0
 end function
 
+' --- Touch handlers -------------------------------------------
+' Seven one-line functions rather than one with a parameter, because a control
+' event carries only the sender and asking which rectangle it was would be more
+' code than this.
+'
+' THE ORDER OF THE ARGUMENTS IS NOT OPTIONAL. A mouse handler is
+' (sender#, button, x, y, shift$) -- the shift state comes LAST. The engine
+' matches a handler by its exact signature, so putting shift$ in the middle
+' does not raise an error: the function is simply never called, and the button
+' does nothing. That is the same failure the fire key had, one layer along, and
+' the documentation is where both answers were.
+function PadLeftDown(sender#, button, x, y, shift$)
+  moveL = 1
+  return 0
+end function
+function PadLeftUp(sender#, button, x, y, shift$)
+  moveL = 0
+  return 0
+end function
+function PadRightDown(sender#, button, x, y, shift$)
+  moveR = 1
+  return 0
+end function
+function PadRightUp(sender#, button, x, y, shift$)
+  moveR = 0
+  return 0
+end function
+function PadFireDown(sender#, button, x, y, shift$)
+  firing = 1
+  return 0
+end function
+function PadFireUp(sender#, button, x, y, shift$)
+  firing = 0
+  return 0
+end function
+function PadTap(sender#, button, x, y, shift$)
+  MaybeRestart()
+  return 0
+end function
+
 function TogglePause()
   if gstate <> G_PLAY then return 0
   if paused = 1 then
@@ -1950,7 +2093,7 @@ end function
 function Stars() local i, y
   for i = 1 to NUM_STARS
     y = starY#[i] + starV#[i]
-    if y > GAME_H then
+    if y > PLAY_H then
       y = -2
       starX#[i] = cint(rnd() * GAME_W)
     end if
@@ -1989,7 +2132,7 @@ function MoveShots() local i, y
     if bOn#[i] = 1 then
       y = bY#[i] + EBOMB_SPEED
       bY#[i] = y
-      if y > GAME_H then
+      if y > PLAY_H then
         bOn#[i] = 0
         rectangle_visible#(bRect##[i], 0)
       else
