@@ -21,6 +21,29 @@ runs the lot in one command.
 
 ---
 
+## 🕹️ About the example games
+
+`Demos/` holds a shelf of arcade games, and some of them carry the name of a
+machine from the late seventies or early eighties. A word about what they are,
+because the names invite an assumption that is not true.
+
+**Every one is an original implementation, written for this project as teaching
+material.** No sprite was traced, no sound sampled, no level data copied, and no
+code taken from any other version. Each ship on screen is drawn by the program
+from rectangles and ellipses -- open any of the files and the drawing is right
+there in the source, which is the whole point of them being here.
+
+What they reproduce is the *mechanics*: a formation that dives, a lander that
+runs out of fuel, tiles that merge. Mechanics are ideas, and ideas are what a
+programming example exists to teach.
+
+The names are used to say which classic a program is in the tradition of, so a
+reader knows what they are about to read. This project is not affiliated with,
+endorsed by, or connected to the rights holders of those games, and claims no
+interest in their trademarks. Games written from scratch here rather than in an
+existing tradition are given names of their own -- `Tractor` is one.
+
+---
 ## 📁 Project Overview
 
 **Plan9Basic** is a modern BASIC interpreter built with Delphi/FireMonkey for cross-platform applet development (Windows, macOS, Linux, Android, iOS).
