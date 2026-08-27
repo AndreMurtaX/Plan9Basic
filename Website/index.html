@@ -579,6 +579,12 @@ body::after {
 .features-section {
   position: relative;
   padding: 5rem 2rem;
+  /* The decorative glow below is placed at right:-100px, deliberately past the
+     edge. Without this it is not merely invisible -- it widens the PAGE by a
+     hundred pixels, and the whole site scrolls sideways with a dark band down
+     the right. A pseudo-element does not appear in the DOM, so nothing that
+     walks elements can find it; .ai-section already carries the same guard. */
+  overflow-x: hidden;
 }
 
 .features-section::before {
