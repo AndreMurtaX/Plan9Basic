@@ -695,25 +695,35 @@ end function
 '  DRAWING
 ' ============================================================
 
-' One move for the whole sprite: the parts ride the container.
+' THE ONLY PLACE THAT WRITES AN ENEMY'S VISIBILITY.
 '
-' Visibility is only written when it CHANGES. Setting a property to what it
-' already holds still crosses into the control and can still invalidate it, and
-' this ran forty times a frame for no effect at all.
-function PlaceEnemy(idx) local r#
-  r# = eRect##[idx]
+' eShown# is a shadow of what the control already holds, kept so the property is
+' written only when it changes -- setting it to what it is still crosses into
+' the control, forty times a frame for no effect.
+'
+' A shadow is only worth having if nothing writes the control behind its back.
+' KillEnemy used to hide the rectangle itself and leave eShown# saying "visible";
+' the next wave then asked for a show, was told it was already showing, and the
+' enemies of wave two onwards flew, bombed and collided while invisible. One
+' function now owns both, so the two cannot disagree again.
+' The parameter is not called "on": that is a reserved word here, and using it
+' answers "Error in function parameters declaration" pointing at the line after
+' the declaration rather than at the name.
+function ShowEnemy(idx, wanted)
+  if wanted = eShown#[idx] then return 0
+  rectangle_visible#(eRect##[idx], wanted)
+  eShown#[idx] = wanted
+  return 0
+end function
+
+' One move for the whole sprite: the parts ride the container.
+function PlaceEnemy(idx)
   if eState#[idx] = ST_DEAD then
-    if eShown#[idx] = 1 then
-      rectangle_visible#(r#, 0)
-      eShown#[idx] = 0
-    end if
+    ShowEnemy(idx, 0)
     return 0
   end if
-  rectangle_move#(r#, cint(eX#[idx]), cint(eY#[idx]))
-  if eShown#[idx] = 0 then
-    rectangle_visible#(r#, 1)
-    eShown#[idx] = 1
-  end if
+  rectangle_move#(eRect##[idx], cint(eX#[idx]), cint(eY#[idx]))
+  ShowEnemy(idx, 1)
   return 0
 end function
 
@@ -1314,7 +1324,7 @@ function KillEnemy(idx) local wasCaptive
     rectangle_visible#(beam#, 0)
   end if
   eState#[idx] = ST_DEAD
-  rectangle_visible#(eRect##[idx], 0)
+  ShowEnemy(idx, 0)
   aliveCount = aliveCount - 1
   score = score + Points(eKind#[idx])
 
