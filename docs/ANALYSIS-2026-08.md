@@ -5343,3 +5343,106 @@ not, so each was read as bytes, decoded, and written back with its own BOM state
 -- then checked for `AndrÃ©`, the mojibake form, which appears nowhere. And both
 suites stayed at exactly 6,089 assertions, which is what a comment-only change
 should do and the fastest way to prove it was one.
+
+## 74. A game written from nothing, and what it cost to learn the dialect
+
+`Demos/tractor.bas` is the first game here that is not a conversion. The author
+found a CC BY-NC-SA implementation of the same genre and asked whether we could
+have one; that licence is ShareAlike and this repository is MIT, so the two
+cannot be mixed and nothing here derives from that code. Mechanics are ideas.
+Expression is not, and the difference is the whole answer.
+
+**Five things about the dialect, each of which cost a debugging round**, and all
+five now in the file's header:
+
+    an element of a POINTER array takes two hashes    eRect##[i]
+    a function answering a pointer carries # itself   function Card#(...)
+    mid$ is 0-based, as instr is                      len-1 down to 0
+    square root is sqr(), not sqrt                    NumLib, not the tables
+    "on" is a reserved word                           as a parameter name
+
+The last two are worth separating from the others. `sqr` was found by the author
+asking whether it existed after I had said it did not: I had grepped the
+registration tables and come up empty, when `check-docs.py` exists precisely to
+keep the documentation true to those tables. The documentation was the surface
+to search and I searched the implementation. And `on` announces itself as
+"Error in function parameters declaration" against the line AFTER the
+declaration, which is where the eye goes and not where the fault is.
+
+**Three defects the author found by playing, none of which any check here could
+have caught:**
+
+  * The fire key did nothing. SPACE does not arrive as keyCode 32 -- FireMonkey
+    hands a printable key over as the character with the code left at zero. The
+    only two occurrences of that test in this repository were both mine, and
+    `flappy_bird.bas` has carried a one-line comment saying so for months.
+  * A local named `bad$` inside Preview clobbered the global `BAD$` holding the
+    warning colour, because names are case-insensitive and the suffix is part of
+    the name: S and s$ differ, BAD$ and bad$ do not. The warning printed black
+    on a dark panel, which reads as a palette chosen badly.
+  * Messages printed against the left edge. `label_textalign#` is 0=centre,
+    1=left, 2=right, and it had been written assuming 1 meant centre.
+
+**And one I caused fixing another.** The HUD overflowed the window by sixteen
+pixels, so I asked the form for its client area -- before `form_show`, when a
+form has not been laid out. Measured: a window created at 560x780 answers
+624x441 before it is shown and 544x741 after. The layout was built against the
+first pair, which put the fighter in the middle of the screen. A sixteen-pixel
+problem became a broken screen. A getter that answers before the thing it
+describes exists will answer *something*, and something is worse than an error.
+
+## 75. The interpreter was not the bottleneck, and the numbers say so
+
+The author reported frame-by-frame animation on an S24 Ultra and supposed the
+architecture of the language was at fault. It was worth measuring rather than
+agreeing, and the measurement said otherwise:
+
+    1,000,000 interpreter iterations, no GUI     407 ms   2.5 million a second
+    100,000 rectangle_move#                    1,178 ms   11.4 us each
+
+One control write costs twenty-eight interpreter iterations. The game needed a
+few thousand interpreter operations a frame and around a hundred and fifty
+control writes, so the VM spent about a millisecond per second of play and
+FireMonkey spent the rest. The bottleneck was the drawing this file asked for,
+not the language underneath it.
+
+    600 frames, driving GameLoop directly
+      before   8,592 ms    14.3 ms a frame
+      after    3,133 ms     5.2 ms a frame
+
+Four changes, in order of what they bought: the formation repositioned on
+alternate frames, sixty starfield rectangles cut to twenty-four moved on
+alternate frames, sprites stripped of the parts that carry no identity (387
+controls to 255), and visibility written only when it changes.
+
+14.3 ms was already against a 16 ms budget ON A DESKTOP. That number alone was
+the answer, and nobody had looked at it.
+
+**The optimisation then broke the game, and the break is the more useful half.**
+The visibility shadow was updated in one place and the control written in
+another: `KillEnemy` hid the rectangle and left the shadow saying "visible", so
+every enemy from the second wave onward flew, bombed and collided invisibly.
+One function owns both now.
+
+That is the second stale cache of mine this month -- section 68's wrote a
+truncated retrieval into a document cache. Same shape both times: a value cached
+in one place, updated in another. And both were reported by the author, because
+what I measured after each optimisation was speed, which was true and said
+nothing about whether the thing still worked.
+
+## 76. Edge to edge is the platform, not the phone
+
+The control strip ended up under the Android navigation bar, and the author
+asked whether it was a One UI defect. It is not. An app targeting Android 16
+draws under the status and navigation bars and cannot opt out; the opt-out that
+existed for API 35 was removed for 36, and this project's manifest targets 36.
+
+Nothing in the engine can ask where those bars are -- there is no safe-area or
+inset verb anywhere in the registered surface. So an applet has no honest option
+beyond keeping clear of them, and `tractor.bas` reserves 5.5% of the height top
+and bottom. Proportions rather than pixels, because a bar's pixel size follows
+the screen's density.
+
+The real fix is window insets and it belongs in the host application, which
+would mean rebuilding the IDE. Recorded here rather than done, because the
+choice is the author's and the workaround costs a band of unused stars.
