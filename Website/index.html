@@ -1152,7 +1152,7 @@ body::after {
     <button class="nav-hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">&#9776;</button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#features">Features</a></li>
-      <li><a href="#examples">Examples</a></li>
+      <li><a href="docs/examples.html">Examples</a></li>
       <li><a href="#ai">AI</a></li>
       <li><a href="#docs">Docs</a></li>
       <li><a href="#source">Source</a></li>
@@ -1163,14 +1163,17 @@ body::after {
 </nav>
 
 <!-- UNDER CONSTRUCTION BANNER -->
-<div class="construction-banner">
+<!-- The banner announces that content is being added; What's New is where
+     that content is listed. It is now the way there rather than a notice
+     with nowhere to go. -->
+<a href="#updates" class="construction-banner" style="display:block;text-decoration:none;color:inherit;">
   <div class="construction-inner">
     <span class="construction-icon">&#128679;</span>
     <span class="construction-text">SITE UNDER CONSTRUCTION</span>
     <span class="construction-sub">&mdash; New content being added progressively. Stay tuned!</span>
     <span class="construction-icon">&#128679;</span>
   </div>
-</div>
+</a>
 
 <!-- HERO -->
 <section class="hero" id="home">
@@ -1196,7 +1199,7 @@ body::after {
   <div class="hero-ctas">
     <a href="#source" class="btn btn-primary">&#9654; Get the Source</a>
     <a href="#docs" class="btn">&#128214; Documentation</a>
-    <a href="#examples" class="btn">&#128161; Examples</a>
+    <a href="docs/examples.html" class="btn">&#128161; Examples</a>
   </div>
 </section>
 
@@ -1287,6 +1290,9 @@ body::after {
       <p style="font-size:0.78rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.6;">
         13 lines of code &#8594; a native app on Windows, Linux, or Android.<br>No build tools. No dependencies. No complexity.
       </p>
+      <p style="font-size:0.82rem;margin-top:0.9rem;">
+        <a href="docs/examples.html">Every example, with its source &rarr;</a>
+      </p>
     </div>
   </div>
 
@@ -1321,7 +1327,10 @@ body::after {
       <div class="ai-text reveal">
         <h3>&#129302; Built-in AI Libraries</h3>
         <p>Connect to any AI provider, from cloud giants to on-premises models. The AI engine can validate code, detect errors, correct text, and much more.</p>
-        <div class="ai-providers">
+              <p style="margin-top:1rem;font-size:0.85rem;">
+        <a href="docs/examples.html#sec-ai">Read the AI applets, source and all &rarr;</a>
+      </p>
+<div class="ai-providers">
           <a href="https://openai.com" target="_blank" rel="noopener" class="provider-tag">OpenAI</a><a href="https://www.anthropic.com" target="_blank" rel="noopener" class="provider-tag">Anthropic</a><a href="https://ai.google.dev" target="_blank" rel="noopener" class="provider-tag">Google Gemini</a><a href="https://mistral.ai" target="_blank" rel="noopener" class="provider-tag">Mistral</a><a href="https://groq.com" target="_blank" rel="noopener" class="provider-tag">Groq</a><a href="https://www.deepseek.com" target="_blank" rel="noopener" class="provider-tag">DeepSeek</a><a href="https://x.ai" target="_blank" rel="noopener" class="provider-tag">xAI / Grok</a><a href="https://www.perplexity.ai" target="_blank" rel="noopener" class="provider-tag">Perplexity</a><a href="https://www.together.ai" target="_blank" rel="noopener" class="provider-tag">Together AI</a><a href="https://fireworks.ai" target="_blank" rel="noopener" class="provider-tag">Fireworks</a><a href="https://openrouter.ai" target="_blank" rel="noopener" class="provider-tag">OpenRouter</a><a href="https://ollama.com" target="_blank" rel="noopener" class="provider-tag">Ollama</a><a href="https://lmstudio.ai" target="_blank" rel="noopener" class="provider-tag">LM Studio</a>
         </div>
       </div>
@@ -1610,7 +1619,7 @@ Ready.
       <p class="footer-tagline" style="font-size:0.72rem;">Made with &#10084;&#65039; and lots of coffee</p>
     </div>
     <div><div class="footer-heading">Product</div><ul class="footer-links"><li><a href="#features">Features</a></li><li><a href="#source">Source</a></li><li><a href="#ai">AI Integration</a></li><li><a href="#">Changelog</a></li></ul></div>
-    <div><div class="footer-heading">Learn</div><ul class="footer-links"><li><a href="#docs">Documentation</a></li><li><a href="#examples">Examples</a></li><li><a href="#">Getting Started</a></li><li><a href="#">Tutorials</a></li></ul></div>
+    <div><div class="footer-heading">Learn</div><ul class="footer-links"><li><a href="#docs">Documentation</a></li><li><a href="docs/examples.html">Examples</a></li><li><a href="#">Getting Started</a></li><li><a href="#">Tutorials</a></li></ul></div>
     <div><div class="footer-heading">Community</div><ul class="footer-links"><li><a href="#">GitHub</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li><li><a href="#">Report a Bug</a></li></ul></div>
   </div>
   <div class="footer-bottom">
