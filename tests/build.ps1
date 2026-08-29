@@ -21,6 +21,20 @@
 .PARAMETER Path
   One or more .bas files or directories to run. Defaults to tests\suite.
 
+.PARAMETER Bench
+  Build and run tests\Plan9BasicBench.dpr over tests\bench instead of the test
+  runner: how long the engine takes, rather than whether it is right. Implies
+  -Run. The council in docs\ENGINE-COUNCIL-2026-08.md measured everything and
+  committed nothing; this is the instrument that stops that happening again.
+
+.PARAMETER Repeat
+  Benchmark only: how many times to run each file, reporting the best.
+  Default 3.
+
+.PARAMETER Csv
+  Benchmark only: append one row per benchmark to this file, to compare a
+  change against the run before it.
+
 .PARAMETER Dcc
   Full path to dcc64.exe, overriding registry detection.
 
@@ -29,6 +43,12 @@
 
 .EXAMPLE
   .\build.ps1 -Run -Smoke -Path ..\Examples
+
+.EXAMPLE
+  .\build.ps1 -Bench
+
+.EXAMPLE
+  .\build.ps1 -Bench -Repeat 5 -Csv bench.csv
 #>
 [CmdletBinding()]
 param(
@@ -36,6 +56,9 @@ param(
     [switch] $Smoke,
     [switch] $Gui,
     [switch] $Verbose2,
+    [switch] $Bench,
+    [int]    $Repeat = 3,
+    [string] $Csv,
     [string[]] $Path,
     [string] $Dcc
 )
@@ -79,9 +102,14 @@ New-Item -ItemType Directory -Force $dcuDir | Out-Null
 $searchPath = '..;..\Libs;..\Libs\GUI;..\Libs\GUI\Effects;..\Libs\GUI\Animations;..\utils;' +
               '..\engine;..\engine\Libs;..\engine\Libs\GUI;..\engine\Libs\AI;..\engine\utils'
 
+# The benchmark harness is a second program over the same engine sources. It
+# registers no FMX library on purpose: a benchmark that needs a form is timing
+# FireMonkey, not this engine.
+$project = if ($Bench) { 'Plan9BasicBench.dpr' } else { 'Plan9BasicTest.dpr' }
+
 Push-Location $here
 try {
-    & $dcc64 -B "-NU$dcuDir" "-E$binDir" "-U$searchPath" 'Plan9BasicTest.dpr' 2>&1 |
+    & $dcc64 -B "-NU$dcuDir" "-E$binDir" "-U$searchPath" $project 2>&1 |
         Where-Object { $_ -match 'Error|Fatal|Warning|lines,' }
     if ($LASTEXITCODE -ne 0) {
         Write-Error "build failed (exit $LASTEXITCODE)"
@@ -91,8 +119,17 @@ try {
     Pop-Location
 }
 
-$exe = Join-Path $binDir 'Plan9BasicTest.exe'
+$exe = Join-Path $binDir ([IO.Path]::ChangeExtension($project, '.exe'))
 Write-Host "built: $exe"
+
+if ($Bench) {
+    $benchArgs = @('--repeat', $Repeat)
+    if ($Csv)  { $benchArgs += @('--csv', $Csv) }
+    if ($Path) { $benchArgs += $Path }
+    Push-Location $here
+    try { & $exe @benchArgs; $code = $LASTEXITCODE } finally { Pop-Location }
+    exit $code
+}
 
 if (-not $Run) { exit 0 }
 
