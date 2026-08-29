@@ -362,7 +362,12 @@ type
     HeapMem: array [0 .. MAXVARS] of TAsmData; //Global data area
     StackMem: array [0 .. MAXSTACK] of TAsmData; //Local vars stack
     TypeStack: array [0 .. MAXSTACK] of TExprKind; //Local vars types
-    AuxStack: array[0 .. MAXSTACK] of TAsmData; //Auxiliary stack
+    //The auxiliary stack, used only by SELECT/CASE, and only ever for one
+    //number or one string at a time -- four places touch it. Held as a
+    //TAsmData it carried a pointer field nothing ever read, which is 8 bytes
+    //times MAXSTACK of an instance that is already most of a megabyte.
+    AuxStackN: array[0 .. MAXSTACK] of Extended; //Auxiliary stack, numbers
+    AuxStackS: array[0 .. MAXSTACK] of String;   //Auxiliary stack, strings
     AuxStackTypes: array [0 .. MAXSTACK] of TExprKind; //Auxiliary stack types
     //auxiliary functions
     //Validates an index into HeapMem before it is used. Locals and the stack
@@ -1012,6 +1017,15 @@ begin
     HeapMem[i].n := 0; // Classic BASIC: uninitialized numbers default to 0
     HeapMem[i].p := nil;
     HeapMem[i].s := '';
+  end;
+  //The stacks too, and only their strings: a program that built a ten-megabyte
+  //string and left it on the stack handed that buffer to the next run, which
+  //never touched the slot again and so never released it. HeapMem above has
+  //always been cleared here; these two were not.
+  for i := 0 to MAXSTACK do
+  begin
+    StackMem[i].s := '';
+    AuxStackS[i] := '';
   end;
   FErrorMessage := '';
   STKP := 0;
@@ -2937,7 +2951,7 @@ begin
     Dec(AuxStackIdx); // Rollback increment on type mismatch
     Exit();
   end;
-  AuxStack[AuxStackIdx].n := StackMem[STKP].n;
+  AuxStackN[AuxStackIdx] := StackMem[STKP].n;
   Pop();
   AuxStackTypes[AuxStackIdx] := TExprKind.ekNumber;
 end;
@@ -2958,7 +2972,7 @@ begin
     Dec(AuxStackIdx); // Rollback increment on type mismatch
     Exit();
   end;
-  AuxStack[AuxStackIdx].s := StackMem[STKP].s;
+  AuxStackS[AuxStackIdx] := StackMem[STKP].s;
   Pop();
   AuxStackTypes[AuxStackIdx] := TExprKind.ekString;
 end;
@@ -2971,12 +2985,12 @@ var
 begin
   if AuxStackTypes[AuxStackIdx] = TExprKind.ekNumber then
   begin
-    dt.n := AuxStack[AuxStackIdx].n;
+    dt.n := AuxStackN[AuxStackIdx];
     PushAsmData(dt, ekNumber);
   end
   else
   begin
-    dt.s := AuxStack[AuxStackIdx].s;
+    dt.s := AuxStackS[AuxStackIdx];
     PushAsmData(dt, ekString);
   end;
 end;
@@ -3303,15 +3317,20 @@ begin
     asmProg[i].token := atk;
     asmProg[i].proc := TokenToFunc(atk);
     asmLexer.Advance(s, p, atk);
-    if atk in [atkInteger, atkFloat] then
+    //An integer used to be parsed twice: once by StrToFloat2 for .n and again
+    //by StrToInt for .i, over the same characters. One parse, and .n takes the
+    //result -- an Integer is exact in an Extended, and a value too large for
+    //Integer already failed here before.
+    asmProg[i].i := 0;
+    if atk = atkInteger then
+    begin
+      asmProg[i].i := StrToInt(s);
+      asmProg[i].n := asmProg[i].i;
+    end
+    else if atk = atkFloat then
       asmProg[i].n := TUtils.StrToFloat2(s, ok)
     else
       asmProg[i].n := 0;
-
-    if atk = atkInteger then
-      asmProg[i].i := StrToInt(s)
-    else
-      asmProg[i].i := 0;
 
     if atk = atkString then
     begin

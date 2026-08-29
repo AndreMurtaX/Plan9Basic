@@ -181,7 +181,6 @@ type
     procedure SetError(err: String);
   public
     UserFunctionsTable: TUserFunctionsDictionary; //UDFs table
-    LibFunctionsTable: TFunctionsDictionary; //All functions available
     errPos, errLine: Integer;
     lastErr: String;
     lexer: TBasicLexer; //lexer
@@ -1178,7 +1177,39 @@ begin
   Self.Clear(); //Reset the environment from a new program
   lexer.LoadProg(Input); //Load and tokenize BASIC source
   lexer.GotoToken(0); //Set index to the first token
-  if lexer.TotalTokens >= MAXINSTR then SetError('Source code too big');
+
+  //The tokenizer can stop for two reasons that are not "the program ended", and
+  //only one of them was being asked about.
+  //
+  //Running out of memory while growing the token array sets lexer.Error and
+  //leaves the stream truncated. Nothing read that property -- nothing in the
+  //tree did -- so the parse below would run over a program cut off mid-
+  //statement and report a syntax error at wherever the cut happened to land,
+  //for source that is perfectly valid. The reader is then looking for a
+  //mistake at a line that has nothing wrong with it.
+  if lexer.Error then
+  begin
+    SetError('Cannot tokenize the source: ' + lexer.ErrorMessage);
+    //Both of these are about the file rather than a place in it, and the normal
+    //path sets errLine from errPos. Left alone it stays 0 and the reader is
+    //told about "line 0", which names nothing at all.
+    errLine := 1;
+    Result := -1;
+    Exit();
+  end;
+
+  //Hitting the token ceiling was already reported, and correctly. What it did
+  //not do was stop: the parse loop below ran anyway, and SetError overwrites
+  //lastErr, so any error the truncated stream provoked would replace this
+  //message with a syntax error. It has not happened to, which is not a reason
+  //to leave it possible.
+  if lexer.TotalTokens >= MAXINSTR then
+  begin
+    SetError('Source code too big');
+    errLine := 1;
+    Result := -1;
+    Exit();
+  end;
   TMPOutput.Clear; //Reset TMPOutput before scan
 
   //parse input code, set intermediate code at TMPOutput
@@ -1270,7 +1301,6 @@ end;
 constructor TBasicParser.Create();
 begin
   UserFunctionsTable := TUserFunctionsDictionary.Create();
-  LibFunctionsTable := TFunctionsDictionary.Create();
   TMPOutput := TStringTokens.Create();
   lexer := TBasicLexer.Create();
   exec := TExec.Create();
@@ -1302,7 +1332,6 @@ begin
   if Assigned(exec) then FreeAndNil(exec);
   if Assigned(lexer) then FreeAndNil(lexer);
   if Assigned(TMPOutput) then FreeAndNil(TMPOutput);
-  if Assigned(LibFunctionsTable) then FreeAndNil(LibFunctionsTable);
   if Assigned(UserFunctionsTable) then FreeAndNil(UserFunctionsTable);
   inherited Destroy();
 end;
@@ -3587,13 +3616,16 @@ begin
         Emmit('PUSHC 0');
         Emmit('PRINT');
         // Emit CRLF (this is println, not print)
-        Emmit('PUSHC 13');
-        Emmit('PUSHC 1');
-        Emmit('CALLEX$ "chr$@n"');
-        Emmit('PUSHC 10');
-        Emmit('PUSHC 1');
-        Emmit('CALLEX$ "chr$@n"');
-        Emmit('ADD$');
+        //Two empty strings joined by ADDCRLF$, which is the instruction that
+        //already knows what a line break is. Three instructions where there
+        //were seven, and no native call at all: chr$(13) and chr$(10) were two
+        //dictionary calls per println to build a constant known at compile
+        //time. It also makes println agree with the `/` operator, which has
+        //always used System.sLineBreak while this hardcoded CRLF -- so on
+        //Linux, Android and macOS the two disagreed about what a line is.
+        Emmit('PUSHC$ ""');
+        Emmit('PUSHC$ ""');
+        Emmit('ADDCRLF$');
         Emmit('PUSHC 1');
         Emmit('PRINT');
         Exit();
@@ -3629,13 +3661,11 @@ begin
   // PrintLn - add CRLF to the end of the command
   Emmit('PUSHC ' + IntToStr(i));
   Emmit('PRINT');
-  Emmit('PUSHC 13'); // Windows end of line
-  Emmit('PUSHC 1');
-  Emmit('CALLEX$ "chr$@n"');
-  Emmit('PUSHC 10'); // Windows end of line
-  Emmit('PUSHC 1');
-  Emmit('CALLEX$ "chr$@n"');
-  Emmit('ADD$');
+  //See the note at the empty-println branch above: three instructions and no
+  //native calls, and the line break is the platform's rather than CRLF.
+  Emmit('PUSHC$ ""');
+  Emmit('PUSHC$ ""');
+  Emmit('ADDCRLF$');
   Emmit('PUSHC 1');
   Emmit('PRINT');
 end;

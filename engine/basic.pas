@@ -85,7 +85,6 @@ type
     //BASIC program.
     //Can be used after source code compilation to get the signatures and entry
     //points for all these available functions.
-    LibFunctionsTable: TFunctionsDictionary;
 
     //--------------------------------------------------------------------------
     // The variables below are used solely by the functions to support the
@@ -177,7 +176,6 @@ type
     //Used to keep the registered functions
     property Functions: TFunctionsDictionary read FFunctions write FFunctions;
     property UserFunctions: TUserFunctionsDictionary read UserFunctionsTable;
-    //property LibFunctions: TFunctionsDictionary read LibFunctionsTable;
     //Indicates if a runtime exception ocurred during the script execution of a
     //self contained engine.
     property RuntimeException: Boolean read FRTException;
@@ -219,11 +217,6 @@ begin
     for Key in Parser.UserFunctionsTable.Keys do
       UserFunctionsTable.Add(Key, Parser.UserFunctionsTable[Key]);
 
-    //Get all functions signatures and entry points
-    LibFunctionsTable.Clear;
-    for Key in Parser.LibFunctionsTable.Keys do
-      LibFunctionsTable.Add(Key, Parser.LibFunctionsTable[Key]);
-
     Parser.exec.LoadSource(ASMSource);
   end
   else //there is an error
@@ -250,9 +243,6 @@ begin
     for Key in Parser.UserFunctionsTable.Keys do
       UserFunctionsTable.Add(Key, Parser.UserFunctionsTable[Key]);
 
-    LibFunctionsTable.Clear();
-    for Key in Parser.LibFunctionsTable.Keys do
-      LibFunctionsTable.Add(Key, Parser.LibFunctionsTable[Key]);
 
     Parser.exec.LoadSource(ASMSource);
   end
@@ -301,7 +291,6 @@ begin
   //UDFs data
   UserFunctionsTable := TUserFunctionsDictionary.Create();
   //All functions entry points
-  LibFunctionsTable := TFunctionsDictionary.Create();
   FScriptTimeOut := 30; //In seconds
 end;
 
@@ -329,7 +318,6 @@ begin
   if Assigned(FPendingLock) then FreeAndNil(FPendingLock);
   if Assigned(FOutputLock) then FreeAndNil(FOutputLock);
 
-  if Assigned(LibFunctionsTable) then FreeAndNil(LibFunctionsTable);
   if Assigned(UserFunctionsTable) then FreeAndNil(UserFunctionsTable);
   if Assigned(ASMSource) then FreeAndNil(ASMSource);
   if Assigned(INTSource) then FreeAndNil(INTSource);
@@ -638,11 +626,6 @@ begin
     UserFunctionsTable.Clear();
     for Key in Parser.UserFunctionsTable.Keys do
       UserFunctionsTable.Add(Key, Parser.UserFunctionsTable[Key]);
-
-    //Get all functions signatures and entry points
-    LibFunctionsTable.Clear();
-    for Key in Parser.LibFunctionsTable.Keys do
-      LibFunctionsTable.Add(Key, Parser.LibFunctionsTable[Key]);
 
     //Calls the stack machine and load the assembly code produced
     Parser.exec.LoadSource(ASMSource);
