@@ -332,6 +332,11 @@ type
                         var Args: array of TAsmData): TAsmData;
     procedure PushAsmData(const dt: TAsmData; st: TExprKind);
     function PopAsmData(checkType: TExprKind): TAsmData;
+    //The same two operations for the case that is almost all of them: a number,
+    //moved without building a TAsmData to carry it. See their bodies for why
+    //that record is expensive to hand around.
+    procedure PushNum(const v: Extended);
+    function PopNum(): Extended;
     procedure Pop();
     function TokenToFunc(tk: TAsmToken): TExeFunc;
     function ICallReturnType(signature: String): String;
@@ -398,6 +403,7 @@ type
     procedure fPrint(); //pop(?)[,pop(?)]*
     procedure fErr();
     procedure fComma();
+    procedure TraceComma();
     //procedure fFnAddr; //pop(s), push(n)
     procedure fIndirectCall();
     procedure fPushAuxStack();
@@ -1533,36 +1539,47 @@ begin
 end;
 
 procedure TExec.fComma();
-var
-  traceMsg: String;
 begin
   srcLine := asmProg[PRG_IP].i;
   //Output trace info when trace mode is enabled
+  //
+  //The trace itself lives in TraceComma below because it declares a String, and
+  //a managed local makes the compiler wrap the entire handler in an implicit
+  //try/finally to finalise it. This handler is one instruction in five or six
+  //of everything the VM executes -- it is how the line number gets set -- and
+  //with tracing off, which is almost always, its whole job is the field store
+  //above. It should not be paying for a string it never builds.
   if (FTraceLevel > 0) and Assigned(FPrintProc) then
-  begin
-    case FTraceLevel of
-      1: //Basic: Line number only
-        traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
-      2: //Standard: Line + function name
-        begin
-          traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
-          if FCurrentFunction <> '' then
-            traceMsg := traceMsg + ' | Function: ' + FCurrentFunction;
-        end;
-      3: //Verbose: Line + function + watched variables
-        begin
-          traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
-          if FCurrentFunction <> '' then
-            traceMsg := traceMsg + ' | Function: ' + FCurrentFunction;
-          if FWatchList.Count > 0 then
-            traceMsg := traceMsg + GetWatchedVariablesInfo();
-        end;
-    else
+    TraceComma();
+end;
+
+//The trace text, byte for byte as fComma produced it.
+procedure TExec.TraceComma();
+var
+  traceMsg: String;
+begin
+  case FTraceLevel of
+    1: //Basic: Line number only
       traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
-    end;
-    traceMsg := traceMsg + System.sLineBreak;
-    FPrintProc(PChar(traceMsg));
+    2: //Standard: Line + function name
+      begin
+        traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
+        if FCurrentFunction <> '' then
+          traceMsg := traceMsg + ' | Function: ' + FCurrentFunction;
+      end;
+    3: //Verbose: Line + function + watched variables
+      begin
+        traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
+        if FCurrentFunction <> '' then
+          traceMsg := traceMsg + ' | Function: ' + FCurrentFunction;
+        if FWatchList.Count > 0 then
+          traceMsg := traceMsg + GetWatchedVariablesInfo();
+      end;
+  else
+    traceMsg := '[TRACE] Line ' + IntToStr(srcLine);
   end;
+  traceMsg := traceMsg + System.sLineBreak;
+  FPrintProc(PChar(traceMsg));
 end;
 
 procedure TExec.fDiv();
@@ -2623,14 +2640,14 @@ end;
 procedure TExec.fPopStore();
 var
   i: Integer;
-  dt: TAsmData;
+  v: Extended;
 begin
-  dt := PopAsmData(ekNumber);
+  v := PopNum();
   i := asmProg[PRG_IP].i;
   if i < 0 then
-    StackMem[BASEP + i + MAXLOCALS].n := dt.n //local
+    StackMem[BASEP + i + MAXLOCALS].n := v //local
   else if GlobalIndexValid(i) then
-    HeapMem[i].n := dt.n; //global
+    HeapMem[i].n := v; //global
 end;
 
 procedure TExec.fPopStorePtr();
@@ -2718,6 +2735,18 @@ begin
     Inc(i);
     if i > n then
       break;
+    //A separator is always pushed as a string, so anything else in this slot is
+    //a malformed PRINT. Four lines above, the value read consults TypeStack
+    //before choosing which field to read; this one did not, and worked only
+    //because every numeric push leaves an empty string behind it in the slot.
+    //That was the compiler's doing until PushNum started writing the fields by
+    //hand, so it is now an invariant three handlers maintain deliberately --
+    //and an invariant maintained by hand is one to stop depending on.
+    if TypeStack[STKP + i] <> ekString then
+    begin
+      RTError(rtePrintSyntaxMismatch, atkNull);
+      Exit;
+    end;
     s := StackMem[STKP + i].s;
     if (s <> ',') and (s <> ';') then
     begin
@@ -2826,11 +2855,8 @@ end;
 
 //Push numerical constant
 procedure TExec.fPushC();
-var
-  dt: TAsmData;
 begin
-  dt.n := asmProg[PRG_IP].n;
-  PushAsmData(dt, ekNumber);
+  PushNum(asmProg[PRG_IP].n);
 end;
 
 //Push pointer var (local or global)
@@ -2955,7 +2981,12 @@ begin
   Dec(STKP, n);
   Inc(STKP);
   TypeStack[STKP] := TypeStack[SP];
-  StackMem[STKP] := StackMem[SP];
+  //Field by field; see PopAsmData. Safe when STKP and SP are the same slot,
+  //which they can be: three self-assignments are what the whole-record form
+  //did too.
+  StackMem[STKP].n := StackMem[SP].n;
+  StackMem[STKP].p := StackMem[SP].p;
+  StackMem[STKP].s := StackMem[SP].s;
 end;
 
 procedure TExec.fReturn();
@@ -3191,13 +3222,78 @@ begin
     RTError(rteStackUnderflow, atkNull);
     Exit;
   end;
-  Result := StackMem[STKP];
+  //Field by field rather than `Result := StackMem[STKP]`. A record holding a
+  //managed field turns a whole-record assignment into a call to
+  //System.@CopyRecord, which walks the record's RTTI field table at run time:
+  //7.85 ns measured, against 2.45 ns for these same three writes. It is the
+  //RTTI walk being paid for and not the reference count -- a record whose only
+  //field is the String still costs 5.85 ns, more than three separate writes.
+  Result.n := StackMem[STKP].n;
+  Result.p := StackMem[STKP].p;
+  Result.s := StackMem[STKP].s;
   if TypeStack[STKP] <> checkType then
   begin
     RTError(rteStackTypeMismatch, atkNull);
     Exit;
   end;
   Dec(STKP);
+end;
+
+//Pop a number, with the same type check, without moving a record to do it.
+//
+//PopAsmData returns a TAsmData by value: the caller gets a hidden local that
+//must be finalised, and the assignment inside is the RTTI walk described above,
+//all to carry one Extended. The two early exits below are PopAsmData's, in the
+//same order and with the same behaviour -- and in particular NEITHER of them
+//decrements STKP, which callers depend on.
+function TExec.PopNum(): Extended;
+begin
+  if STKP = 0 then
+  begin
+    Result := 0;
+    RTError(rteStackUnderflow, atkNull);
+    Exit;
+  end;
+  Result := StackMem[STKP].n;
+  if TypeStack[STKP] <> ekNumber then
+  begin
+    RTError(rteStackTypeMismatch, atkNull);
+    Exit;
+  end;
+  Dec(STKP);
+end;
+
+//Push a number without building a TAsmData to hold it.
+//
+//A `dt: TAsmData` local in a handler is a managed local: the compiler zeroes it
+//on entry and wraps the whole routine in an implicit try/finally to finalise it
+//on the way out. Three of the hottest handlers were paying that to carry one
+//Extended into PushAsmData, which then copied three fields back out again.
+procedure TExec.PushNum(const v: Extended);
+begin
+  if STKP >= MAXSTACK - 1 then
+  begin
+    RTError(rteStackOverflow, atkNull);
+    Exit;
+  end;
+  Inc(STKP);
+  StackMem[STKP].n := v;
+  //Both of the next two lines were the compiler's work until now: the managed
+  //local arrived zeroed and PushAsmData copied all three fields over the slot.
+  //Writing fields directly means writing all of them.
+  //
+  //The string is load-bearing here and not obviously so. fPrint reads
+  //StackMem[..].s for a separator without consulting TypeStack, and works today
+  //only because a numeric push copies an empty string over whatever the slot
+  //held. Leaving a stale string would put the previous value's text into a
+  //PRINT, which is a wrong answer rather than a crash.
+  StackMem[STKP].s := '';
+  //Nothing reads .p from a numeric cell, so this is not load-bearing -- it is
+  //here so the cell means one thing. A slot that says "number" while carrying
+  //the previous occupant's pointer is the kind of state that makes the next
+  //defect take a week.
+  StackMem[STKP].p := nil;
+  TypeStack[STKP] := ekNumber;
 end;
 
 //Push a data cell (TAsmdata) into the stack
@@ -3210,7 +3306,12 @@ begin
     Exit;
   end;
   Inc(STKP);
-  StackMem[STKP] := dt;
+  //Field by field, for the reason spelled out in PopAsmData above: the
+  //whole-record form is a run-time RTTI walk, and this is the single hottest
+  //line in the engine.
+  StackMem[STKP].n := dt.n;
+  StackMem[STKP].p := dt.p;
+  StackMem[STKP].s := dt.s;
   TypeStack[STKP] := st;
 end;
 
