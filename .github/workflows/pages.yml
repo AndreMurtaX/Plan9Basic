@@ -1,9 +1,10 @@
 # Serve Website/ from GitHub Pages.
 #
-# Inert until the repository is public and Pages is enabled (PLAN 3.5). It is
-# committed early on purpose: everything on this side can be reviewed and
-# corrected while nothing depends on it, so the day the switch is thrown is a
-# switch and not a project.
+# The repository is public since 2026-08-25; Pages itself is still not enabled,
+# and the domain still points at HostGator, so the publish half below runs only
+# when someone asks for it by hand. It is committed early on purpose: everything
+# on this side can be reviewed and corrected while nothing depends on it, so the
+# day the switch is thrown is a switch and not a project.
 #
 # Two things on the live site would not survive this unchanged, and
 # tools/check-pages.py is what says so out loud:
@@ -18,7 +19,7 @@
 #
 # Until both are settled, enabling this would take the site backwards, which is
 # the failure PLAN 4.6 exists to prevent.
-name: Publish the site
+name: Checks, and GitHub Pages by hand
 
 on:
   push:
@@ -49,7 +50,13 @@ jobs:
       # between a correction and a page that contradicts it.
       - run: python tools/check-all.py --quick
 
+  # Manual only. Pages is not enabled on the repository, so on a push this job
+  # failed at deploy-pages and mailed a red build for a site that was never
+  # meant to go live yet. The check above is worth running on every push; this
+  # half is not, until the flip is decided. `deploy-hostgator.yml` publishes to
+  # the host that answers for the domain today.
   publish:
+    if: github.event_name == 'workflow_dispatch'
     needs: check
     runs-on: ubuntu-latest
     environment:

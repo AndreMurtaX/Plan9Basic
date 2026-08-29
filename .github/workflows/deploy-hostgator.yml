@@ -1,0 +1,107 @@
+# Publish Website/ to the host that actually answers for plan9basic.com.
+#
+# The site is on HostGator, and until now publishing it meant uploading files by
+# hand -- which is how 111 corrected files once sat unpublished for a month. This
+# makes the push the publish, without a password ever passing through a chat or a
+# commit: the credentials live in GitHub's own secret store, entered in GitHub's
+# UI, and this workflow is the only thing that reads them.
+#
+# THREE THINGS TO SET, all under Settings -> Secrets and variables -> Actions:
+#
+#   Secrets   FTP_HOST      e.g. ftp.plan9basic.com  (or the server's hostname)
+#             FTP_USERNAME  an FTP account made in cPanel, scoped to the
+#                           document root below and to nothing else
+#             FTP_PASSWORD  that account's password
+#
+#   Variables FTP_REMOTE_DIR   the document root, with both slashes.
+#                              /public_html/ for a primary domain;
+#                              an addon domain has its own directory.
+#             FTP_AUTODEPLOY   "true" to let a push publish. Absent, only a
+#                              manual run does -- so adding the secrets alone
+#                              cannot surprise anyone.
+#
+# WHY THE FIRST RUN SHOULD BE A DRY RUN. This is a sync, not an upload: it
+# deletes remote files that are not in Website/. What is on that server beyond
+# what git tracks is not knowable from here -- the two ebook PDFs are the ones we
+# know about, and they are excluded below. Run this by hand with dry-run left on,
+# read the list of what it would remove, and only then set FTP_AUTODEPLOY.
+name: Publish to plan9basic.com
+
+on:
+  push:
+    branches: [main]
+    paths: ['Website/**', '.github/workflows/deploy-hostgator.yml']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List what would change without changing it'
+        type: boolean
+        default: true
+
+# One publish at a time, and let a running one finish: a half-uploaded site is
+# the state this exists to avoid.
+concurrency:
+  group: hostgator
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The checks that read files rather than compile: they are what stands
+      # between a correction and a published page that contradicts it.
+      - run: python tools/check-all.py --quick
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Secrets are not readable from a job-level `if`, so the gate is a step.
+      # Missing credentials leave this green and idle rather than red: a failing
+      # workflow that everyone learns to ignore is worse than no workflow.
+      - id: gate
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          AUTO: ${{ vars.FTP_AUTODEPLOY }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ -z "$FTP_HOST" ]; then
+            echo 'No FTP_HOST secret is set, so there is nowhere to publish to.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'The header of this workflow file lists what to set.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT" = 'push' ] && [ "$AUTO" != 'true' ]; then
+            echo 'Credentials are set and FTP_AUTODEPLOY is not "true", so a push does not publish.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Run this workflow by hand while that is being decided.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.gate.outputs.ready == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Explicit FTPS over port 21, which is what shared cPanel hosting
+          # offers. `loose` accepts the server's certificate without verifying
+          # the chain -- shared hosts usually present the provider's, not the
+          # domain's, and a verified chain is not on offer to refuse.
+          protocol: ftps
+          security: loose
+          local-dir: ./Website/
+          server-dir: ${{ vars.FTP_REMOTE_DIR }}
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          # Not in git, on the server, and linked from the front page: about
+          # 65 MB of PDFs that a sync would otherwise delete as unknown.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            assets/ebooks/**

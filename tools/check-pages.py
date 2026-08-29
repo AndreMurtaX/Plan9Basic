@@ -101,6 +101,31 @@ def found_dynamic():
     return hits
 
 
+def linked_refs():
+    """Every local path the pages point at, on this disk or not.
+
+    `found_untracked` below can only see a file that is here to be seen, and a
+    CI runner checks out what git tracks -- so the two entries below, which are
+    untracked by definition, are absent there and looked settled. The check then
+    demanded they be dropped and failed the run, on this tree, eight pushes in a
+    row. A file that is linked and not committed is a 404 on Pages whether or
+    not it happens to sit on the disk running the check, so staleness is decided
+    from this set instead: an entry is stale when it is committed or when
+    nothing links to it, and never merely because this machine does not have it.
+    """
+    hits = set()
+    for page in pages():
+        base = os.path.dirname(page)
+        text = open(page, encoding='utf-8', errors='replace').read()
+        for ref in LOCAL.findall(text) + ASSET_IN_JS.findall(text):
+            if '://' in ref or ref.startswith(('mailto:', 'data:', '//')):
+                continue
+            target = os.path.normpath(os.path.join(base, unquote(ref)))
+            if target.startswith(SITE):
+                hits.add(os.path.relpath(target, SITE).replace(os.sep, '/'))
+    return hits
+
+
 def found_untracked(tracked):
     """Files a page links to that are on this disk and not in git."""
     hits = set()
@@ -162,9 +187,14 @@ def main():
     for extra in sorted(unt - set(UNTRACKED)):
         problems.append(f'{extra} is linked and not in git, and UNTRACKED does '
                         f'not name it; on Pages it is a 404')
+    linked = linked_refs()
     for gone in sorted(set(UNTRACKED) - unt):
-        problems.append(f'UNTRACKED still names {gone} and it is either '
-                        f'committed or no longer linked; drop it')
+        if 'Website/' + gone in tracked:
+            problems.append(f'UNTRACKED still names {gone} and it is committed; '
+                            f'drop it so the list keeps describing the tree')
+        elif gone not in linked:
+            problems.append(f'UNTRACKED still names {gone} and nothing links to '
+                            f'it; drop it so the list keeps describing the tree')
 
     for p in problems:
         print(f'  {p}')
