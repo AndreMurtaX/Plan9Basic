@@ -76,9 +76,9 @@ identical error message for nothing, and that is what shipped.
 
 ## How this document was produced
 
-This is the settlement of an adversarial review, run because the engine is
-complete against its specification and the author had run out of his own ideas
-for it. Eleven agents in three phases:
+This is the settlement of a review run because the engine is complete against
+its specification and the author had run out of his own ideas for it. Eleven
+agents in three phases, each set against the others on purpose:
 
 * **Five analysts**, one lens each and no overlap: the dispatch loop; value
   representation and memory traffic; the compile pipeline; syntax sugar and

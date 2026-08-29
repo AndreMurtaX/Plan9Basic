@@ -664,7 +664,7 @@ negative = <span class="num">-273.15</span>   <span class="cmt">' Negative numbe
 
 <div class="callout">
 <span class="callout-label">&#128161; Note</span>
-<p>Values are stored internally as Delphi's <code>Extended</code>, and how wide that is <strong>depends on the target</strong>. This page used to say 80-bit on Windows and Linux, which was never true of 64-bit Windows:</p>
+<p>Values are stored internally as Delphi's <code>Extended</code>. How wide that is depends on the target:</p>
 <table>
 <tr><th>Target</th><th>Width</th><th>Significant digits</th></tr>
 <tr><td>Windows 32-bit</td><td>80-bit</td><td>~18&ndash;19</td></tr>
@@ -672,10 +672,10 @@ negative = <span class="num">-273.15</span>   <span class="cmt">' Negative numbe
 <tr><td>Linux 64-bit, macOS Intel</td><td>80-bit</td><td>~18&ndash;19</td></tr>
 <tr><td>Android ARM, iOS, macOS Apple Silicon</td><td>64-bit</td><td>~15&ndash;16</td></tr>
 </table>
-<p>In practice the difference is narrower than the table suggests, and it is worth knowing exactly where it hides. <code>STR$</code> formats to 15 significant digits, which a 64-bit value already carries, so <strong>printed output agrees across every target</strong> &mdash; <code>1/3</code>, <code>SQR(2)</code> and an accumulated <code>0.1</code> come out identical on all of them. Where the extra bits show is in a <em>comparison</em>: this program prints a different line on 32-bit Windows than on 64-bit.</p>
+<p>In practice the difference rarely shows. <code>STR$</code> formats to 15 significant digits, which a 64-bit value already carries, so printed output is identical on every target &mdash; <code>1/3</code>, <code>SQR(2)</code> and an accumulated <code>0.1</code> all agree. The extra bits show only in a comparison. This program prints a different line on 32-bit Windows than on 64-bit:</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>e = <span class="num">1</span> + <span class="num">1</span>/<span class="num">1152921504606846976</span>   <span class="cmt">' 1 + 2^-60</span>
 <span class="kw">IF</span> e &gt; <span class="num">1</span> <span class="kw">THEN</span> <span class="kw">PRINTLN</span> <span class="str">"more than 64 bits"</span> <span class="kw">ELSE</span> <span class="kw">PRINTLN</span> <span class="str">"64 bits"</span></pre></div></div>
-<p>Integer values up to 2,147,483,647 are preserved exactly everywhere. If a program must decide the same way on every target, round before comparing rather than relying on the last bit.</p>
+<p>Integer values up to 2,147,483,647 are preserved exactly on every target. If a program must decide the same way everywhere, round before comparing.</p>
 <p><strong>Numbers turned into text do not all agree either.</strong> <code>PRINT</code> formats to 13 significant digits and <code>STR$()</code> to 15, so <code>PRINTLN "third = "; 1/3</code> gives <code>0.3333333333333</code> while <code>PRINTLN "third = " + 1/3</code> gives <code>0.333333333333333</code>. Concatenating a number into a string uses <code>STR$</code>.</p>
 </div>
 
@@ -772,7 +772,7 @@ myDict# = <span class="fn">dict#</span>()        <span class="cmt">' Create a di
 <span class="cmt">' A list declares names only. This is an error:</span>
 <span class="cmt">'   LET a, b = 5</span></pre></div></div>
 <h3>Constants</h3>
-<p><code>CONST</code> names a literal number or a literal string. The value is substituted wherever the name appears, so a constant uses none of the 512 global variable slots &mdash; and <strong>assigning to one is a compile error</strong>, which is the point of declaring it constant.</p>
+<p><code>CONST</code> names a literal number or a literal string. The value is substituted wherever the name appears, so a constant uses none of the 512 global variable slots, and assigning to one is a compile error.</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">CONST</span> MAXLIVES = <span class="num">3</span>
 <span class="kw">CONST</span> FREEZING = <span class="num">-40</span>
 <span class="kw">CONST</span> GREETING$ = <span class="str">"hello"</span>
@@ -814,7 +814,7 @@ grid#[row, col] *= <span class="num">2</span>
 
 names# = <span class="fn">sdim#</span>(<span class="num">4</span>)
 names#$[<span class="num">1</span>] += <span class="str">" jr"</span>     <span class="cmt">' string elements take += only</span></pre></div></div>
-<p>The index is evaluated <strong>once</strong>, even though the element has to be both read and written. <code>a#[nextSlot()] += 1</code> calls <code>nextSlot</code> a single time and updates the element it named.</p>
+<p>The index is evaluated once, even though the element is both read and written: <code>a#[nextSlot()] += 1</code> calls <code>nextSlot</code> once.</p>
 
 <h3>Arithmetic Operators</h3>
 <table class="doc-table">
@@ -1170,7 +1170,7 @@ shape = <span class="num">1</span>
 <span class="kw">END FUNCTION</span></pre></div></div>
 
 <h3>Returning Nothing</h3>
-<p><code>RETURN</code> on its own leaves a function early. It gives back the same value the function would have given by running off its end &mdash; zero, an empty string, or an empty pointer &mdash; so a function used as a procedure does not have to invent a number for the caller to throw away.</p>
+<p><code>RETURN</code> on its own leaves a function early, giving back the same value the function would have given by running off its end &mdash; zero, an empty string, or an empty pointer. A function used as a procedure no longer has to return a value it does not have.</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">FUNCTION</span> OnBtnUpDown(sender#)
   <span class="kw">IF</span> running = <span class="num">0</span> <span class="kw">THEN</span> <span class="kw">RETURN</span>
   nextDirY = <span class="num">-1</span>
@@ -1311,13 +1311,13 @@ n#[<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">label_text#</span>(lblScore#, <span class="str">"SCORE: "</span> + score)
 msg$ = <span class="str">"a"</span> + n * <span class="num">2</span> + <span class="str">"b"</span>  <span class="cmt">' n=3 gives "a6b"</span>
 msg$ = <span class="str">"a"</span> + n + <span class="num">1</span>      <span class="cmt">' n=3 gives "a31" -- the second + joins</span></pre></div></div>
-<p>Three things this does not do, each for a reason:</p>
+<p>Three limits:</p>
 <ul>
   <li>The text must come <strong>first</strong>. An expression's kind is decided by its first value, so <code>x + " items"</code> is a numeric expression that has met text, and is still an error. Put the text first, or use <code>STR$()</code>.</li>
-  <li>A <code>(</code> after <code>+</code> still opens a <strong>string</strong> expression, because it always has &mdash; <code>"a" + (b$ + c$)</code> is valid. Arithmetic in brackets needs <code>STR$()</code>: <code>"x" + STR$(n + 1)</code>.</li>
+  <li>A <code>(</code> after <code>+</code> opens a <strong>string</strong> expression, as it always has: <code>"a" + (b$ + c$)</code> is valid. Arithmetic in brackets needs <code>STR$()</code> &mdash; <code>"x" + STR$(n + 1)</code>.</li>
   <li><code>-</code> and <code>/</code> keep their string meanings: <code>s$ - 3</code> truncates and <code>a$ / b$</code> joins with a line break.</li>
 </ul>
-<p>The conversion is <code>STR$</code>, which formats to 15 significant digits. <code>PRINT</code> formats to 13, so the two disagree on the last digits of a long fraction &mdash; see <a href="#data-types">Data Types</a>.</p>
+<p>The conversion is <code>STR$</code>, which formats to 15 significant digits. <code>PRINT</code> formats to 13, so the two differ on the last digits of a long fraction &mdash; see <a href="#data-types">Data Types</a>.</p>
 
 <h3>String Indexing</h3>
 <p>Strings support both <strong>line-based</strong> and <strong>character-based</strong> indexing (both 0-based). Since strings are mutable, you can both read and write using index notation:</p>
