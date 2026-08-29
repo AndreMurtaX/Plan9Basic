@@ -664,7 +664,16 @@ negative = <span class="num">-273.15</span>   <span class="cmt">' Negative numbe
 
 <div class="callout">
 <span class="callout-label">&#128161; Note</span>
-<p>Values are stored internally as <strong>extended precision floating-point</strong> (80-bit on Windows/Linux x86/x64, giving ~18&ndash;19 significant digits). On Android ARM, the runtime maps to double precision (64-bit, ~15 significant digits). Integer values up to 2,147,483,647 are preserved exactly on all platforms.</p>
+<p>Values are stored internally as Delphi's <code>Extended</code>, and how wide that is <strong>depends on the target</strong>. This page used to say 80-bit on Windows and Linux, which was never true of 64-bit Windows:</p>
+<table>
+<tr><th>Target</th><th>Width</th><th>Significant digits</th></tr>
+<tr><td>Windows 32-bit</td><td>80-bit</td><td>~18&ndash;19</td></tr>
+<tr><td><strong>Windows 64-bit</strong></td><td><strong>64-bit</strong> (<code>Extended</code> is an alias for <code>Double</code>)</td><td>~15&ndash;16</td></tr>
+<tr><td>Linux 64-bit, macOS Intel</td><td>80-bit</td><td>~18&ndash;19</td></tr>
+<tr><td>Android ARM, iOS, macOS Apple Silicon</td><td>64-bit</td><td>~15&ndash;16</td></tr>
+</table>
+<p>So the same arithmetic can give a slightly different last digit on Linux than on 64-bit Windows. Integer values up to 2,147,483,647 are preserved exactly everywhere, and if you need a result to be identical across platforms, round it.</p>
+<p><strong>Numbers turned into text do not all agree either.</strong> <code>PRINT</code> formats to 13 significant digits and <code>STR$()</code> to 15, so <code>PRINTLN "third = "; 1/3</code> gives <code>0.3333333333333</code> while <code>PRINTLN "third = " + 1/3</code> gives <code>0.333333333333333</code>. Concatenating a number into a string uses <code>STR$</code>.</p>
 </div>
 
 <h3>Strings</h3>
@@ -747,6 +756,30 @@ myDict# = <span class="fn">dict#</span>()        <span class="cmt">' Create a di
   result = temp * <span class="num">2</span>
   <span class="kw">RETURN</span> result
 <span class="kw">END FUNCTION</span></pre></div></div>
+
+<h3>Declaring Names</h3>
+<p><code>LET</code> gives a list of names their starting values in one statement. Numbers start at zero, strings empty, and pointers holding an empty handle &mdash; exactly what writing each one out the long way would have given them.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' Six names, one line</span>
+<span class="kw">LET</span> frm#, lblScore#, lblHigh#, food#, tmr#, snake#
+<span class="kw">LET</span> score, highScore, running, gameOver
+
+<span class="cmt">' A single name works too</span>
+<span class="kw">LET</span> total
+
+<span class="cmt">' A list declares names only. This is an error:</span>
+<span class="cmt">'   LET a, b = 5</span></pre></div></div>
+<h3>Constants</h3>
+<p><code>CONST</code> names a literal number or a literal string. The value is substituted wherever the name appears, so a constant uses none of the 512 global variable slots &mdash; and <strong>assigning to one is a compile error</strong>, which is the point of declaring it constant.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">CONST</span> MAXLIVES = <span class="num">3</span>
+<span class="kw">CONST</span> FREEZING = <span class="num">-40</span>
+<span class="kw">CONST</span> GREETING$ = <span class="str">"hello"</span>
+
+<span class="kw">PRINTLN</span> GREETING$ + <span class="str">", you have "</span> + MAXLIVES
+
+<span class="cmt">' Both of these are errors:</span>
+<span class="cmt">'   MAXLIVES = 4          a constant cannot be assigned to</span>
+<span class="cmt">'   CONST N = MAXLIVES*2  CONST takes a literal, not an expression</span></pre></div></div>
+<p><code>CONST</code> and <code>ELSEIF</code> are recognised only where a statement begins, so they are still available as ordinary variable and function names. <code>const = 7</code> assigns to a variable called <code>const</code>.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -754,6 +787,20 @@ myDict# = <span class="fn">dict#</span>()        <span class="cmt">' Create a di
 <!-- ============================================================ -->
 <section class="doc-section" id="operators">
 <h2>&#128295; Operators</h2>
+
+<h3>Assignment Operators</h3>
+<p>A compound assignment applies an operator to a variable and stores the result back in it. <code>a += 1</code> is exactly <code>a = a + 1</code>, down to the instructions the compiler emits.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>emptyCount += <span class="num">1</span>       <span class="cmt">' emptyCount = emptyCount + 1</span>
+writeCol -= <span class="num">1</span>         <span class="cmt">' writeCol = writeCol - 1</span>
+scale *= <span class="num">2</span>            <span class="cmt">' scale = scale * 2</span>
+half /= <span class="num">2</span>             <span class="cmt">' half = half / 2</span>
+
+score += val * <span class="num">2</span>      <span class="cmt">' the whole right side first: adds val*2</span>
+msg$ += <span class="str">" done"</span>      <span class="cmt">' strings take += only</span>
+
+<span class="cmt">' The operator and the = must touch. This is an error:</span>
+<span class="cmt">'   x + = 1</span></pre></div></div>
+<p>Strings take <code>+=</code> and nothing else: <code>-</code> between strings already means truncate, so <code>-=</code> would not mean what it looks like.</p>
 
 <h3>Arithmetic Operators</h3>
 <table class="doc-table">
@@ -835,6 +882,24 @@ myDict# = <span class="fn">dict#</span>()        <span class="cmt">' Create a di
   <span class="kw">PRINTLN</span> <span class="str">"Negative"</span>
 <span class="kw">ELSE</span>
   <span class="kw">PRINTLN</span> <span class="str">"Zero"</span>
+<span class="kw">END IF</span></pre></div></div>
+<p><code>ELSEIF</code> may be written as one word, and a single-line <code>IF</code> may carry its own <code>ELSE</code>:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' ELSE on the same line as its IF</span>
+<span class="kw">IF</span> alive <span class="kw">THEN</span> colour$ = <span class="str">"#44ff44"</span> <span class="kw">ELSE</span> colour$ = <span class="str">"#00cc00"</span>
+
+<span class="cmt">' ELSEIF as one word, mixable with ELSE IF</span>
+<span class="kw">IF</span> x &gt; <span class="num">0</span> <span class="kw">THEN</span>
+  <span class="kw">PRINTLN</span> <span class="str">"Positive"</span>
+<span class="kw">ELSEIF</span> x &lt; <span class="num">0</span> <span class="kw">THEN</span>
+  <span class="kw">PRINTLN</span> <span class="str">"Negative"</span>
+<span class="kw">ELSE</span>
+  <span class="kw">PRINTLN</span> <span class="str">"Zero"</span>
+<span class="kw">END IF</span></pre></div></div>
+<p>An <code>ELSE</code> written on the same line as an <code>IF</code> belongs to that <code>IF</code>. On the next line it belongs to whichever block <code>IF</code> is open, which is what it has always meant:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">IF</span> dirX &gt; <span class="num">0</span> <span class="kw">THEN</span>
+  <span class="kw">IF</span> rightEdge <span class="kw">THEN</span> drop = <span class="num">1</span>
+<span class="kw">ELSE</span>                              <span class="cmt">' belongs to the outer IF</span>
+  <span class="kw">IF</span> leftEdge <span class="kw">THEN</span> drop = <span class="num">1</span>
 <span class="kw">END IF</span></pre></div></div>
 
 <h3>FOR...NEXT</h3>
@@ -1090,6 +1155,13 @@ shape = <span class="num">1</span>
   <span class="kw">RETURN</span> result
 <span class="kw">END FUNCTION</span></pre></div></div>
 
+<h3>Returning Nothing</h3>
+<p><code>RETURN</code> on its own leaves a function early. It gives back the same value the function would have given by running off its end &mdash; zero, an empty string, or an empty pointer &mdash; so a function used as a procedure does not have to invent a number for the caller to throw away.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">FUNCTION</span> OnBtnUpDown(sender#)
+  <span class="kw">IF</span> running = <span class="num">0</span> <span class="kw">THEN</span> <span class="kw">RETURN</span>
+  nextDirY = <span class="num">-1</span>
+<span class="kw">END FUNCTION</span></pre></div></div>
+
 <h3>Limitations</h3>
 <ul>
   <li>Functions cannot be nested (no function inside another function)</li>
@@ -1219,6 +1291,19 @@ n#[<span class="num">1</span>, <span class="num">1</span>, <span class="num">1</
 <!-- ============================================================ -->
 <section class="doc-section" id="strings">
 <h2>&#128221; String Operations</h2>
+
+<h3>Joining Text and Numbers</h3>
+<p>A number on the right of <code>+</code> inside a string expression is converted to text for you. The number's own operators still bind tighter than the join, so the arithmetic happens first.</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="fn">label_text#</span>(lblScore#, <span class="str">"SCORE: "</span> + score)
+msg$ = <span class="str">"a"</span> + n * <span class="num">2</span> + <span class="str">"b"</span>  <span class="cmt">' n=3 gives "a6b"</span>
+msg$ = <span class="str">"a"</span> + n + <span class="num">1</span>      <span class="cmt">' n=3 gives "a31" -- the second + joins</span></pre></div></div>
+<p>Three things this does not do, each for a reason:</p>
+<ul>
+  <li>The text must come <strong>first</strong>. An expression's kind is decided by its first value, so <code>x + " items"</code> is a numeric expression that has met text, and is still an error. Put the text first, or use <code>STR$()</code>.</li>
+  <li>A <code>(</code> after <code>+</code> still opens a <strong>string</strong> expression, because it always has &mdash; <code>"a" + (b$ + c$)</code> is valid. Arithmetic in brackets needs <code>STR$()</code>: <code>"x" + STR$(n + 1)</code>.</li>
+  <li><code>-</code> and <code>/</code> keep their string meanings: <code>s$ - 3</code> truncates and <code>a$ / b$</code> joins with a line break.</li>
+</ul>
+<p>The conversion is <code>STR$</code>, which formats to 15 significant digits. <code>PRINT</code> formats to 13, so the two disagree on the last digits of a long fraction &mdash; see <a href="#data-types">Data Types</a>.</p>
 
 <h3>String Indexing</h3>
 <p>Strings support both <strong>line-based</strong> and <strong>character-based</strong> indexing (both 0-based). Since strings are mutable, you can both read and write using index notation:</p>
