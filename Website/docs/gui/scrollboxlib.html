@@ -923,9 +923,14 @@ function cycleTheme(){
   ti=(ti+1)%themes.length;
   document.documentElement.setAttribute('data-theme',themes[ti]);
   document.getElementById('themeBtn').textContent='THEME: '+themes[ti].toUpperCase();
-  localStorage.setItem('p9t',themes[ti]);
+  //Wrapped because a browser with site data blocked THROWS here rather than
+  //returning nothing, and this sits at the top level of the page's only
+  //script. An uncaught error here stops everything after it -- including the
+  //scroll observer that reveals the content -- so the whole page reads as
+  //blank. Losing the remembered theme is the correct amount to lose.
+  try{localStorage.setItem('p9t',themes[ti]);}catch(e){}
 }
-const st=localStorage.getItem('p9t');
+let st=null;try{st=localStorage.getItem('p9t');}catch(e){}
 if(st&&themes.includes(st)){ti=themes.indexOf(st);document.documentElement.setAttribute('data-theme',st);document.getElementById('themeBtn').textContent='THEME: '+st.toUpperCase();}
 
 // Sidebar toggle (mobile)
