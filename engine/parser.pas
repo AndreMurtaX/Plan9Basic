@@ -131,7 +131,10 @@ type
     procedure ParseRestore(); //RESTORE
     procedure ParseFunction(); //FUNCTION
     procedure ParseEndFunction(); //ENDFUNCTION
-    procedure ParseReturn(); //RETURN
+    procedure ParseReturn();
+    procedure EmitDefaultReturnValue();
+    function CompoundOp(): String;
+    procedure ParseLetList(); //LET a, b, c
     procedure ParseUnassignedNumFunction(); //fnc(...)
     procedure ParseUnassignedStrFunction(); //fnc$(...)
     procedure ParseUnassignedPtrFunction(); //fnc#(...)
@@ -258,9 +261,26 @@ implementation
 
 procedure TBasicParser.AssignNum();
 var
-  s: String;
+  s, op: String;
 begin
   s := lexer.CurrS(); //variable to store numerical expression result.
+  op := CompoundOp();
+  if op <> '' then
+  begin
+    //  a += 1   ->   PUSH @a / <expr> / ADD / POPSTORE @a
+    //
+    //Exactly what the longhand emits, which is the point: `a = a + 1` and
+    //`a += 1` are the same four instructions, so nothing downstream has to
+    //learn about this and no program that does not use it can be affected.
+    Emmit('PUSH @' + s);
+    lexer.Advance; //skip identifier
+    lexer.Advance; //skip the operator
+    lexer.Advance; //skip '='
+    NextNumericExpression();
+    Emmit(op);
+    Emmit('POPSTORE @' + s);
+    Exit();
+  end;
   if lexer.NextTok() <> btkEqual then
   begin
     status := BasTerminated;
@@ -529,6 +549,25 @@ begin
     Emmit('PUSHC 3');
     Emmit('CALLEX$ "line$@$n$"     ');
     Emmit('POPSTORE$ @' + s);
+  end
+  else if CompoundOp() = 'ADD' then
+  begin
+    //  s$ += x   ->   <expr> / APPEND$ @s
+    //
+    //Straight to the append rather than emitting the longhand and letting
+    //TCompiler.AssignAppend find it again. Two instructions instead of four,
+    //and the same result: the destination never reaches the stack, so its
+    //buffer grows in place instead of being copied whole.
+    //
+    //Only '+'. `s$ -= x` stays an error, because '-' between strings already
+    //means truncate and `s$ = s$ - x` is not what anyone writing `-=` means.
+    //'*' and '/' have their own string meanings too and neither has a sensible
+    //compound form.
+    lexer.Advance(); //skip identifier
+    lexer.Advance(); //skip '+'
+    lexer.Advance(); //skip '='
+    NextStringExpression();
+    Emmit('APPEND$ @' + s);
   end
   else
   begin
@@ -1474,6 +1513,26 @@ begin
     btkLet:
     begin
       lexer.Advance();
+      //`let a, b, c` -- names declared without values.
+      //
+      //Recognised when a name is followed by a comma or by the end of the
+      //statement, so `let a = 1` and every other existing form goes down the
+      //untouched path below. Both `let a, b` and a bare `let a` are compile
+      //errors today, which is what makes this additive.
+      //
+      //The single name is here because leaving it out would have been a rule
+      //nobody could remember: `let a, b` declaring two variables while `let a`
+      //refused to declare one. The test file caught that before this shipped.
+      //
+      //Each name emits exactly what its own longhand emits, so EnumVarsFuncs
+      //registers the globals identically and nothing downstream can tell.
+      if (lexer.CurrTok() in [btkIdentifier, btkStrIdentifier,
+                              btkPointerIdentifier]) and
+         (lexer.NextTok() in [btkComma, btkCRLF, btkColon, btkNull]) then
+      begin
+        ParseLetList();
+        Exit();
+      end;
       case lexer.currTok() of
         btkIdentifier: AssignNum();
         btkPointerIdentifier: AssignPtr();
@@ -2490,11 +2549,7 @@ begin
   end;
 
   lexer.Advance();
-  case lastFunc of
-    btkNumFunction: Emmit('PUSHC 0');
-    btkStrFunction: Emmit('PUSHC$ ""');
-    btkPointerFunction: Emmit('PUSHC 0');
-  end;
+  EmitDefaultReturnValue();
   inFunction := False;
   Emmit('RETFUNCTION');
   Emmit('ENDFUNCTION');
@@ -3752,6 +3807,117 @@ begin
   Emmit('RESTORE');
 end;
 
+//Recognise a compound assignment operator sitting after the current
+//identifier, and return the arithmetic instruction it stands for -- '' when
+//there is none.
+//
+//No lexer change is needed for this: `+` and `=` are already separate tokens,
+//so `a += 1` arrives here as identifier, btkPlus, btkEqual. What does have to
+//be checked is that the two are ADJACENT IN THE SOURCE. Without that test
+//`x + = 1`, which is an error today, would quietly start meaning something --
+//and a construction that changes what existing text means is exactly what this
+//whole exercise is not allowed to do.
+//
+//Operand order needs no thought: SUB and DIV compute first-pushed against
+//second-pushed, so PUSH v / <expr> / SUB is v - expr, which is what `v -= expr`
+//says. Precedence needs none either: NextNumericExpression consumes the whole
+//right-hand side, so `score += val * 2` adds val*2 rather than val.
+function TBasicParser.CompoundOp(): String;
+var
+  //Fields rather than the record: exec declares a TBasInstr as well, and
+  //inside this class the identifier `lexer` is a field, so the type cannot be
+  //qualified here at all.
+  opId: TBasToken;
+  opEnd, eqPos: Integer;
+begin
+  Result := '';
+  if lexer.TokenInfo(lexer.CurrIP + 2).id <> btkEqual then
+    Exit();
+  opId := lexer.TokenInfo(lexer.CurrIP + 1).id;
+  opEnd := lexer.TokenInfo(lexer.CurrIP + 1).pos +
+           lexer.TokenInfo(lexer.CurrIP + 1).len;
+  eqPos := lexer.TokenInfo(lexer.CurrIP + 2).pos;
+  if opEnd <> eqPos then
+    Exit();
+  case opId of
+    btkPlus:  Result := 'ADD';
+    btkMinus: Result := 'SUB';
+    btkStar:  Result := 'MUL';
+    btkSlash: Result := 'DIV';
+  end;
+end;
+
+//`let a, b, c` -- declare several variables at once, each with the value its
+//longhand form would have given it.
+//
+//The corpus is the argument for this one: 618 lines in Demos/ and Examples/ are
+//`let x# = pointer#(0)`, twenty-six of them consecutively in snake.bas alone,
+//and every one of those lines says nothing except that a name exists.
+//
+//`let a, b = 5` is rejected rather than half-parsed. It could mean that both
+//get five or that a is merely declared, a reader would have to know which, and
+//neither reading is worth a rule. The error says to write that one out.
+procedure TBasicParser.ParseLetList();
+var
+  s: String;
+  kind: TBasToken;
+begin
+  repeat
+    kind := lexer.CurrTok();
+    if not (kind in [btkIdentifier, btkStrIdentifier, btkPointerIdentifier]) then
+    begin
+      status := BasTerminated;
+      SetError('Variable name expected in LET list');
+      Exit();
+    end;
+    s := lexer.CurrS();
+    case kind of
+      btkIdentifier:
+      begin
+        Emmit('PUSHC 0');
+        Emmit('POPSTORE @' + s);
+      end;
+      btkStrIdentifier:
+      begin
+        Emmit('PUSHC$ ""');
+        Emmit('POPSTORE$ @' + s);
+      end;
+      btkPointerIdentifier:
+      begin
+        //The same three instructions `let p# = pointer#(0)` emits, because a
+        //pointer variable that has never held a handle still has to hold a
+        //valid empty one.
+        Emmit('PUSHC 0');
+        Emmit('PUSHC 1');
+        Emmit('CALLEX# "pointer#@n"');
+        Emmit('POPSTORE# @' + s);
+      end;
+    end;
+    lexer.Advance(); //past the name
+    if lexer.CurrTok() = btkEqual then
+    begin
+      status := BasTerminated;
+      SetError('A LET list declares names only; give the value in its own LET');
+      Exit();
+    end;
+    if lexer.CurrTok() <> btkComma then
+      Break;
+    lexer.Advance(); //past the comma
+  until False;
+end;
+
+//The value a function gives back when the program did not name one. Emitted in
+//two places -- a bare RETURN, and falling off the end at ENDFUNCTION -- and
+//here so the two cannot drift apart.
+procedure TBasicParser.EmitDefaultReturnValue();
+begin
+  case lastFunc of
+    btkNumFunction: Emmit('PUSHC 0');
+    btkStrFunction: Emmit('PUSHC$ ""');
+    btkPointerFunction: Emmit('PUSHC 0');
+  end;
+end;
+
 procedure TBasicParser.ParseReturn();
 begin
   lexer.Advance();
@@ -3759,10 +3925,26 @@ begin
     Emmit('RETURN')
   else
   begin
-    // Check if there's a return value - functions must return a value
-    if (lexer.CurrTok = btkCRLF) or (lexer.CurrTok = btkColon) then
+    //A bare RETURN.
+    //
+    //This used to be "Return value expected", and the rule made every procedure
+    //in the language pretend to be a function. Of the 1,115 FUNCTION
+    //declarations in Demos/ and Examples/, 929 have no RETURN at all and 122
+    //more return a value only to satisfy this -- 1,051 of 1,115 writing a
+    //number the engine is about to discard.
+    //
+    //The value it gives back is the one ENDFUNCTION already gives when control
+    //falls off the end, so a bare RETURN and running out of function now mean
+    //the same thing, which is what a reader would assume anyway.
+    //
+    //btkNull is in the test because a bare RETURN can be the last token in a
+    //file. Without it that one case falls through to the expression parser and
+    //fails with a message about a value.
+    if (lexer.CurrTok = btkCRLF) or (lexer.CurrTok = btkColon) or
+       (lexer.CurrTok = btkNull) then
     begin
-      SetError('Return value expected');
+      EmitDefaultReturnValue();
+      Emmit('RETFUNCTION');
       Exit();
     end;
     // Parse the return value expression
@@ -5099,7 +5281,7 @@ begin
       end;
       //All instructions that uses variables
       atkPush, atkPopStore, atkPushPtr, atkPopStorePtr, atkPushS, atkPopStoreS,
-      atkForCycle, atkRead, atkReadS:
+      atkAppendS, atkForCycle, atkRead, atkReadS:
       begin
         asmLexer.LoadLine(PChar(postfixCode[i].Str));
         sInstr := asmLexer.NextString(); //Instruction
