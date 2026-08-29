@@ -1968,7 +1968,18 @@ begin
         btkStep, btkNull, btkSemiColon, btkGoto, btkGosub, btkCall, btkElse:
           Break;
         else
-          SetError('Arithmetic operator expected');
+          //The kind of an expression is decided by its first token, so
+          //`println x + " items"` is a numeric expression that has just met
+          //text, and it is not going to work whichever way this is written.
+          //Say what to do about it: the reverse order now needs no str$ at
+          //all, so "put the text first" is real advice and not a consolation.
+          if lexer.CurrTok() in [btkString, btkStrIdentifier, btkStrFunction,
+                                 btkCharArray, btkStrArray, btkPointerArrayStr,
+                                 btkIndirectCallStr] then
+            SetError('Text in a numeric expression: put the text first, ' +
+                     'as "..." + number, or wrap the number in str$()')
+          else
+            SetError('Arithmetic operator expected');
       end;
     until GetError;
   except
@@ -2036,8 +2047,41 @@ begin
         btkPlus: // +
         begin
           lexer.Advance();
-          NextStringValue();
-          Emmit('ADD$');
+          //  "SCORE: " + score   ->   "SCORE: " + str$(score)
+          //
+          //Gated on an explicit list of tokens that begin a NUMBER, and not on
+          //ExpressionKind, which answers "number" for anything outside its two
+          //lists. btkRoundOpen is the case that matters: NextStringValue has a
+          //real arm for it that parses a parenthesised STRING, so
+          //`s$ = "a" + (b$ + c$)` compiles today and asking ExpressionKind
+          //would have handed it to the numeric parser.
+          //
+          //NextArith rather than NextNumericExpression, because it is the right
+          //precedence level: it consumes *, /, MOD and ^ and stops at the next
+          //+, so `"a" + n * 2 + "b"` converts n*2 and then concatenates "b".
+          //
+          //The conversion is str$, which formats to 15 digits. PRINT formats to
+          //13, so `println "third = "; 1/3` and `"third = " + 1/3` do not agree
+          //on the last two digits. Picking one and saying so beats leaving the
+          //choice implicit; the language reference carries the note.
+          if lexer.CurrTok() in [btkInteger, btkFloat, btkIdentifier,
+                                 btkNumFunction, btkPointerArray, btkAmpersand,
+                                 btkAt, btkMinus] then
+          begin
+            NextArith();
+            Emmit('PUSHC 1');
+            Emmit('CALLEX$ "str$@n"     ');
+            Emmit('ADD$');
+            //NextArith leaves the lexer on the token after the number, and the
+            //loop below advances again at the top. Step back so it does not
+            //skip an operator.
+            lexer.GotoToken(lexer.CurrIP - 1);
+          end
+          else
+          begin
+            NextStringValue();
+            Emmit('ADD$');
+          end;
         end;
         btkSlash: // /
         begin
