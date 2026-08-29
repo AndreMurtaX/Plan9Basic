@@ -205,6 +205,20 @@ type
   end;
   TInstrArray = array of TInstr;
 
+  //One native call site, resolved once when the program is loaded.
+  //
+  //The three CALLEX handlers used to open by building a fresh heap String out
+  //of the constant pool and hashing it twice -- ContainsKey, then the lookup --
+  //on every execution, for a signature that is a compile-time constant sitting
+  //in the instruction. Roughly 55 ns a call, and not on a rare path: a#[i]
+  //compiles to a CALLEX of narr_get@#n, so every array element access paid it.
+  TFarTarget = record
+    Fn: TLinkFunction;  //entry point and the flags that travel with it
+    Name: String;       //kept because the error text names the function
+    Known: Boolean;     //False when the signature is not registered
+  end;
+  TFarTable = array of TFarTarget;
+
   //Type used by the DATA/READ statements
   TDataItem = record
     DataType: AnsiChar; //String '$' or numeric 'n'
@@ -299,6 +313,8 @@ type
     sourceAlloc, ended: Boolean;
     asmLexer: TAsmLexer;
     asmProg: TInstrArray; //List of Asm code to exec
+    //One entry per CALLEX instruction; asmProg[i].i indexes it.
+    FFarTable: TFarTable;
     FTotInsts: Integer; //Total of Asm instructions
     FCallbackProc: TNotifyEvent;
     FCallbackObj: TObject;
@@ -335,6 +351,7 @@ type
     //The same two operations for the case that is almost all of them: a number,
     //moved without building a TAsmData to carry it. See their bodies for why
     //that record is expensive to hand around.
+    procedure ResolveFarCalls();
     procedure PushNum(const v: Extended);
     function PopNum(): Extended;
     procedure Pop();
@@ -1380,14 +1397,18 @@ end;
 //Numerical far call
 procedure TExec.fCallFar();
 var
-  n,i: Integer;
+  n,i,t: Integer;
   numF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
-  farFuncSign: String;
 begin
-  farFuncSign := StrPas(PChar(strConst) + asmProg[PRG_IP].i);
-  if not ProgramFunctions.ContainsKey(farFuncSign) then
+  //The signature was resolved once, when the program was loaded, so the
+  //instruction now carries a row in FFarTable instead of an offset into the
+  //string pool. What used to happen here on every execution -- build a heap
+  //String, hash it for ContainsKey, hash it again for the lookup -- happens
+  //once per call site in ResolveFarCalls.
+  t := asmProg[PRG_IP].i;
+  if (t < 0) or (t > High(FFarTable)) or (not FFarTable[t].Known) then
   begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit();
@@ -1395,7 +1416,7 @@ begin
   //The whole record: the entry point and the flags that travel with it.
   //Copying only Entry left NeedsUIThread reading stack garbage, which is
   //why the marshalling seam never fired.
-  numF := ProgramFunctions[farFuncSign]; //entry point and flags
+  numF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1435,7 +1456,7 @@ begin
   except
     on E: Exception do
     begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + farFuncSign + '): ' + E.Message);
+      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
       Exit;
     end;
   end;
@@ -1445,14 +1466,18 @@ end;
 //Pointer far call
 procedure TExec.fCallFarP();
 var
-  n,i: Integer;
+  n,i,t: Integer;
   ptrF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
-  farFuncSign: String;
 begin
-  farFuncSign := StrPas(PChar(strConst) + asmProg[PRG_IP].i);
-  if not ProgramFunctions.ContainsKey(farFuncSign) then
+  //The signature was resolved once, when the program was loaded, so the
+  //instruction now carries a row in FFarTable instead of an offset into the
+  //string pool. What used to happen here on every execution -- build a heap
+  //String, hash it for ContainsKey, hash it again for the lookup -- happens
+  //once per call site in ResolveFarCalls.
+  t := asmProg[PRG_IP].i;
+  if (t < 0) or (t > High(FFarTable)) or (not FFarTable[t].Known) then
   begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit;
@@ -1460,7 +1485,7 @@ begin
   //The whole record: the entry point and the flags that travel with it.
   //Copying only Entry left NeedsUIThread reading stack garbage, which is
   //why the marshalling seam never fired.
-  ptrF := ProgramFunctions[farFuncSign]; //entry point and flags
+  ptrF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1500,7 +1525,7 @@ begin
   except
     on E: Exception do
     begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + farFuncSign + '): ' + E.Message);
+      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
       Exit;
     end;
   end;
@@ -1510,14 +1535,18 @@ end;
 //String far call
 procedure TExec.fCallFarS();
 var
-  n,i: Integer;
+  n,i,t: Integer;
   strF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
-  farFuncSign: String;
 begin
-  farFuncSign := StrPas(PChar(strConst) + asmProg[PRG_IP].i);
-  if not ProgramFunctions.ContainsKey(farFuncSign) then
+  //The signature was resolved once, when the program was loaded, so the
+  //instruction now carries a row in FFarTable instead of an offset into the
+  //string pool. What used to happen here on every execution -- build a heap
+  //String, hash it for ContainsKey, hash it again for the lookup -- happens
+  //once per call site in ResolveFarCalls.
+  t := asmProg[PRG_IP].i;
+  if (t < 0) or (t > High(FFarTable)) or (not FFarTable[t].Known) then
   begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
     Exit;
@@ -1525,7 +1554,7 @@ begin
   //The whole record: the entry point and the flags that travel with it.
   //Copying only Entry left NeedsUIThread reading stack garbage, which is
   //why the marshalling seam never fired.
-  strF := ProgramFunctions[farFuncSign]; //entry point and flags
+  strF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
   try
     SetLength(Args, n); //allocate parameters
@@ -1565,7 +1594,7 @@ begin
   except
     on E: Exception do
     begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + farFuncSign + '): ' + E.Message);
+      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
       Exit;
     end;
   end;
@@ -3241,6 +3270,45 @@ begin
       strConst := strConst + s + #0;
     end;
   end;
+  ResolveFarCalls();
+end;
+
+//Turn every native call site's signature into an index into FFarTable, once.
+//
+//The dictionary is complete and frozen before this runs: the parser fills
+//exec.ProgramFunctions inside Compile, which returns before basic.pas calls
+//LoadSource. So the lookup that each CALLEX was repeating on every execution
+//can be done here instead, and asmProg[i].i stops being an offset into the
+//string pool and becomes a row in this table.
+//
+//A signature that is not registered is RECORDED, not reported. LoadIntermediate
+//is public and bypasses the parser's compile-time check, so a program can
+//arrive here naming a function that does not exist -- and an error raised now
+//would be discarded anyway, because ExecuteProgram calls Clear and Clear resets
+//`ended` to false. It has to fire when the call is reached, which is also where
+//it always fired.
+procedure TExec.ResolveFarCalls();
+var
+  i, n: Integer;
+  sign: String;
+begin
+  n := 0;
+  for i := 0 to High(asmProg) do
+    if asmProg[i].token in [atkCallFar, atkCallFarP, atkCallFarS] then
+      Inc(n);
+  SetLength(FFarTable, n);
+  if n = 0 then
+    Exit();
+  n := 0;
+  for i := 0 to High(asmProg) do
+    if asmProg[i].token in [atkCallFar, atkCallFarP, atkCallFarS] then
+    begin
+      sign := StrPas(PChar(strConst) + asmProg[i].i);
+      FFarTable[n].Name := sign;
+      FFarTable[n].Known := ProgramFunctions.TryGetValue(sign, FFarTable[n].Fn);
+      asmProg[i].i := n;
+      Inc(n);
+    end;
 end;
 
 //Pop and discard
