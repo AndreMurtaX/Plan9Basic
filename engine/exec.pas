@@ -50,6 +50,14 @@ const
   // Higher = faster execution but less responsive UI
   // 0 = refresh on every PRINT (original behavior)
   DEFAULT_UI_REFRESH_INTERVAL = 50;
+  //How wide and how deep the reusable argument buffers are. Neither is a limit
+  //on the language: a call that does not fit takes the allocating path it
+  //always took. A function taking more than sixty-four arguments must keep
+  //working, not start erroring, which is the difference between an
+  //optimisation and a compatibility break.
+  ARGBUF_WIDTH = 64;  //arguments in one call
+  ARGBUF_DEPTH = 16;  //native calls in flight at once
+
 
 type
   //Assembly tokens
@@ -219,6 +227,24 @@ type
   end;
   TFarTable = array of TFarTarget;
 
+  //Argument buffers for native calls, reused instead of allocated.
+  //
+  //Every CALLEX used to SetLength a local `array of TAsmData`: a heap block
+  //allocated, zeroed, registered for finalisation and finalised again on the
+  //way out, for a call that is often one number.
+  //
+  //Static, and it has to be. Slice is the only way to hand a routine expecting
+  //an open array a prefix of a larger buffer -- the callee reads Length(Args)
+  //to know how many arguments it got -- and Slice takes a static array. It
+  //refuses a dynamic one, which is worth writing down because the shape that
+  //grows on demand is the obvious design and does not compile.
+  //
+  //Two dimensions because a native call can re-enter the VM: a control callback
+  //runs BASIC, which makes another native call, and that call must not write
+  //over the arguments of the one still in flight.
+  TArgRow = array[0..ARGBUF_WIDTH - 1] of TAsmData;
+  TArgBuf = array[0..ARGBUF_DEPTH - 1] of TArgRow;
+
   //Type used by the DATA/READ statements
   TDataItem = record
     DataType: AnsiChar; //String '$' or numeric 'n'
@@ -315,6 +341,8 @@ type
     asmProg: TInstrArray; //List of Asm code to exec
     //One entry per CALLEX instruction; asmProg[i].i indexes it.
     FFarTable: TFarTable;
+    FArgBuf: TArgBuf;
+    FArgDepth: Integer; //how many native calls are in flight
     FTotInsts: Integer; //Total of Asm instructions
     FCallbackProc: TNotifyEvent;
     FCallbackObj: TObject;
@@ -352,6 +380,8 @@ type
     //moved without building a TAsmData to carry it. See their bodies for why
     //that record is expensive to hand around.
     procedure ResolveFarCalls();
+    function AcquireArgs(n: Integer): Integer;
+    procedure TakeArg(var cell: TAsmData);
     procedure PushNum(const v: Extended);
     function PopNum(): Extended;
     procedure Pop();
@@ -988,6 +1018,7 @@ begin
   PRG_IP := 0;
   BASEP := 0; // HIGH PRIORITY FIX: Initialize base pointer
   AuxStackIdx := 0; // HIGH PRIORITY FIX: Initialize auxiliary stack index
+  FArgDepth := 0; //no native call is in flight at the start of a program
   ended := false;
 end;
 
@@ -1046,6 +1077,7 @@ var
   deltaTicks: Int64;
   Timer: TStopWatch;
   innerProc, i, TmpIP, TmpSTKP, TmpBASEP, TmpAuxStackIdx: Integer;
+  TmpArgDepth: Integer;
   instructionCount, drainCount: Integer;
   dt: TAsmData;
   WasEnded, HadError: Boolean;
@@ -1068,6 +1100,13 @@ begin
   // If a callback fires while the main program is inside a SELECT/CASE block,
   // and the callback also uses SELECT/CASE, the auxiliary stack would be corrupted.
   TmpAuxStackIdx := AuxStackIdx;
+  //And the native-call nesting, for the same reason as the four above. Every
+  //CALLEX gives its level back from a finally, so this should already be where
+  //it was -- but Clear runs only from Create and from the top of
+  //ExecuteProgram, never from here, so a level that did leak inside a callback
+  //would stay leaked for the rest of the run and push every later call towards
+  //the allocating path. Restoring it bounds that to one callback.
+  TmpArgDepth := FArgDepth;
 
   //Use try/finally to GUARANTEE state restoration even if exceptions occur
   try
@@ -1200,6 +1239,7 @@ begin
     STKP := TmpSTKP;
     BASEP := TmpBASEP;
     AuxStackIdx := TmpAuxStackIdx; // Restore auxiliary stack (SELECT/CASE)
+    FArgDepth := TmpArgDepth;
   end;
 end;
 
@@ -1397,7 +1437,7 @@ end;
 //Numerical far call
 procedure TExec.fCallFar();
 var
-  n,i,t: Integer;
+  n,i,t,lvl: Integer;
   numF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
@@ -1418,46 +1458,49 @@ begin
   //why the marshalling seam never fired.
   numF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
-  try
-    SetLength(Args, n); //allocate parameters
-  except
-    RTError(rteUserMessage, atkNull, 'Out of memory');
-    Exit();
-  end;
-
-  if n > 0 then
-    for i := n - 1 downto 0 do //for each parameter...
-    begin
-      Pop;
-      case TypeStack[STKP + 1] of
-        ekNumber:
+  lvl := AcquireArgs(n);
+  if lvl >= 0 then
+  begin
+    //The ordinary path: a buffer that already exists.
+    try
+      for i := n - 1 downto 0 do //for each parameter...
+        TakeArg(FArgBuf[lvl][i]);
+      //Sliced, because the buffer is wider than this call and the callee reads
+      //Length(Args) to know how many arguments it was given.
+      try
+        dt := CallNative(numF, Slice(FArgBuf[lvl], n));
+      except
+        on E: Exception do
         begin
-          Args[i].n := StackMem[STKP + 1].n;
-          Args[i].p := nil;
-          Args[i].s := '';
-        end;
-        ekPointer:
-        begin
-          Args[i].n := 0;
-          Args[i].p := Pointer(StackMem[STKP + 1].p);
-          Args[i].s := '';
-        end;
-        ekString:
-        begin
-          Args[i].n := 0;
-          Args[i].p := nil;
-          Args[i].s := StackMem[STKP + 1].s;
+          RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+          Exit;
         end;
       end;
+    finally
+      //Whatever happened above -- an error, an Exit out of the except branch --
+      //the level goes back, or every later call in this run starts one deeper.
+      Dec(FArgDepth);
     end;
-  //Calls 'numF' and push the result
-  try
-    dt := CallNative(numF, args);
-  except
-    on E: Exception do
-    begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
-      Exit;
+  end
+  else
+  begin
+    //Too many arguments, or too deeply nested. Allocate, as this always did.
+    try
+      SetLength(Args, n); //allocate parameters
+    except
+      RTError(rteUserMessage, atkNull, 'Out of memory');
+      Exit();
+    end;
+    for i := n - 1 downto 0 do
+      TakeArg(Args[i]);
+    try
+      dt := CallNative(numF, Args);
+    except
+      on E: Exception do
+      begin
+        RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+        Exit;
+      end;
     end;
   end;
   PushAsmData(dt, ekNumber);
@@ -1466,7 +1509,7 @@ end;
 //Pointer far call
 procedure TExec.fCallFarP();
 var
-  n,i,t: Integer;
+  n,i,t,lvl: Integer;
   ptrF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
@@ -1480,53 +1523,56 @@ begin
   if (t < 0) or (t > High(FFarTable)) or (not FFarTable[t].Known) then
   begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
-    Exit;
+    Exit();
   end;
   //The whole record: the entry point and the flags that travel with it.
   //Copying only Entry left NeedsUIThread reading stack garbage, which is
   //why the marshalling seam never fired.
   ptrF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
-  try
-    SetLength(Args, n); //allocate parameters
-  except
-    RTError(rteUserMessage, atkNull, 'Out of memory');
-    Exit();
-  end;
-
-  if n > 0 then
-    for i := n - 1 downto 0 do //for each parameter
-    begin
-      Pop;
-      case TypeStack[STKP + 1] of
-        ekNumber:
+  lvl := AcquireArgs(n);
+  if lvl >= 0 then
+  begin
+    //The ordinary path: a buffer that already exists.
+    try
+      for i := n - 1 downto 0 do //for each parameter...
+        TakeArg(FArgBuf[lvl][i]);
+      //Sliced, because the buffer is wider than this call and the callee reads
+      //Length(Args) to know how many arguments it was given.
+      try
+        dt := CallNative(ptrF, Slice(FArgBuf[lvl], n));
+      except
+        on E: Exception do
         begin
-          Args[i].n := StackMem[STKP + 1].n;
-          Args[i].p := nil;
-          Args[i].s := '';
-        end;
-        ekPointer:
-        begin
-          Args[i].n := 0;
-          Args[i].p := Pointer(StackMem[STKP + 1].p);
-          Args[i].s := '';
-        end;
-        ekString:
-        begin
-          Args[i].n := 0;
-          Args[i].p := nil;
-          Args[i].s := StackMem[STKP + 1].s;
+          RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+          Exit;
         end;
       end;
+    finally
+      //Whatever happened above -- an error, an Exit out of the except branch --
+      //the level goes back, or every later call in this run starts one deeper.
+      Dec(FArgDepth);
     end;
-  //Calls 'ptrF' and push the result
-  try
-    dt := CallNative(ptrF, args);
-  except
-    on E: Exception do
-    begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
-      Exit;
+  end
+  else
+  begin
+    //Too many arguments, or too deeply nested. Allocate, as this always did.
+    try
+      SetLength(Args, n); //allocate parameters
+    except
+      RTError(rteUserMessage, atkNull, 'Out of memory');
+      Exit();
+    end;
+    for i := n - 1 downto 0 do
+      TakeArg(Args[i]);
+    try
+      dt := CallNative(ptrF, Args);
+    except
+      on E: Exception do
+      begin
+        RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+        Exit;
+      end;
     end;
   end;
   PushAsmData(dt, ekPointer);
@@ -1535,7 +1581,7 @@ end;
 //String far call
 procedure TExec.fCallFarS();
 var
-  n,i,t: Integer;
+  n,i,t,lvl: Integer;
   strF: TLinkFunction;
   Args: Array of TAsmData;
   dt: TAsmData;
@@ -1549,53 +1595,56 @@ begin
   if (t < 0) or (t > High(FFarTable)) or (not FFarTable[t].Known) then
   begin
     RTError(rteUserMessage, atkNull, 'There is no function with such arguments.');
-    Exit;
+    Exit();
   end;
   //The whole record: the entry point and the flags that travel with it.
   //Copying only Entry left NeedsUIThread reading stack garbage, which is
   //why the marshalling seam never fired.
   strF := FFarTable[t].Fn; //entry point and flags
   n := Trunc(PopAsmData(ekNumber).n);
-  try
-    SetLength(Args, n); //allocate parameters
-  except
-    RTError(rteUserMessage, atkNull, 'Out of memory');
-    Exit;
-  end;
-
-  if n > 0 then
-    for i := n - 1 downto 0 do //for each parameter
-    begin
-      Pop;
-      case TypeStack[STKP + 1] of
-        ekNumber:
+  lvl := AcquireArgs(n);
+  if lvl >= 0 then
+  begin
+    //The ordinary path: a buffer that already exists.
+    try
+      for i := n - 1 downto 0 do //for each parameter...
+        TakeArg(FArgBuf[lvl][i]);
+      //Sliced, because the buffer is wider than this call and the callee reads
+      //Length(Args) to know how many arguments it was given.
+      try
+        dt := CallNative(strF, Slice(FArgBuf[lvl], n));
+      except
+        on E: Exception do
         begin
-          Args[i].n := StackMem[STKP + 1].n;
-          Args[i].p := nil;
-          Args[i].s := '';
-        end;
-        ekPointer:
-        begin
-          Args[i].n := 0;
-          Args[i].p := Pointer(StackMem[STKP + 1].p);
-          Args[i].s := '';
-        end;
-        ekString:
-        begin
-          Args[i].n := 0;
-          Args[i].p := nil;
-          Args[i].s := StackMem[STKP + 1].s;
+          RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+          Exit;
         end;
       end;
+    finally
+      //Whatever happened above -- an error, an Exit out of the except branch --
+      //the level goes back, or every later call in this run starts one deeper.
+      Dec(FArgDepth);
     end;
-  //Calls 'strF' and push the result
-  try
-    dt := CallNative(strF, Args);
-  except
-    on E: Exception do
-    begin
-      RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
-      Exit;
+  end
+  else
+  begin
+    //Too many arguments, or too deeply nested. Allocate, as this always did.
+    try
+      SetLength(Args, n); //allocate parameters
+    except
+      RTError(rteUserMessage, atkNull, 'Out of memory');
+      Exit();
+    end;
+    for i := n - 1 downto 0 do
+      TakeArg(Args[i]);
+    try
+      dt := CallNative(strF, Args);
+    except
+      on E: Exception do
+      begin
+        RTError(rteUserMessage, atkNull, 'Far call error (' + FFarTable[t].Name + '): ' + E.Message);
+        Exit;
+      end;
     end;
   end;
   PushAsmData(dt, ekString);
@@ -3309,6 +3358,49 @@ begin
       asmProg[i].i := n;
       Inc(n);
     end;
+end;
+
+//Claim the next argument buffer for a call taking n arguments, and return its
+//level. The caller must Dec(FArgDepth) when the call is done, from a finally.
+//
+//Returns -1 for a call that does not fit -- too many arguments, or too deeply
+//nested -- and the caller then allocates, exactly as every call used to.
+function TExec.AcquireArgs(n: Integer): Integer;
+begin
+  if (n > ARGBUF_WIDTH) or (FArgDepth >= ARGBUF_DEPTH) then
+    Exit(-1);
+  Result := FArgDepth;
+  Inc(FArgDepth);
+end;
+
+//Move one argument off the stack into a cell.
+//
+//Shared by both paths above so that the buffered call and the allocated one
+//cannot drift apart: two copies of this would be two places to fix the day a
+//fourth kind of value exists.
+procedure TExec.TakeArg(var cell: TAsmData);
+begin
+  Pop;
+  case TypeStack[STKP + 1] of
+    ekNumber:
+    begin
+      cell.n := StackMem[STKP + 1].n;
+      cell.p := nil;
+      cell.s := '';
+    end;
+    ekPointer:
+    begin
+      cell.n := 0;
+      cell.p := Pointer(StackMem[STKP + 1].p);
+      cell.s := '';
+    end;
+    ekString:
+    begin
+      cell.n := 0;
+      cell.p := nil;
+      cell.s := StackMem[STKP + 1].s;
+    end;
+  end;
 end;
 
 //Pop and discard
