@@ -105,6 +105,9 @@ type
     procedure ToolbarButtonMouseEnter(Sender: TObject);
     procedure ToolbarButtonMouseLeave(Sender: TObject);
     procedure EditorKeyDown(Sender: TObject; var Key: Word; var KeyChar: WideChar; Shift: TShiftState);
+    procedure EditorKeyUp(Sender: TObject; var Key: Word; var KeyChar: WideChar; Shift: TShiftState);
+    procedure EditorMouseUp(Sender: TObject; Button: TMouseButton;
+                            Shift: TShiftState; X, Y: Single);
   private
     FBasic: TBasicEngine;
     FFilename: string;
@@ -113,7 +116,11 @@ type
     FHistoryIndex: Integer;
     FModified: Boolean;
     FPendingEditorSync: Boolean;
-    FLastEditorLineCount: Integer;
+    //The line the caret was on when it was last looked at. Reformatting
+    //happens when this changes, which is what makes leaving a line by any
+    //means -- ENTER, an arrow key, a click -- do the same thing.
+    FLastCaretLine: Integer;
+    FFormattingLine: Boolean;
     FInterfaceMode: TInterfaceMode;
     FCurrentTheme: TColorTheme;
     FThemes: array[TColorTheme] of TThemeColors;
@@ -302,6 +309,10 @@ type
 
     function IsKeyword(const Word: string): Boolean;
     function UppercaseKeywords(const Line: string): string;
+    function IsContextualKeyword(const Word: string; AtStatementStart: Boolean;
+                                 const Rest: string): Boolean;
+    procedure FormatLineLeft();
+    procedure TrackCaretLine();
     procedure FormatLoadedSource();
 
 
@@ -534,7 +545,7 @@ begin
   FClosing := False;
   FCurrentTheme := ctGreen;
   FAnonymousCounter := 0;
-  FLastEditorLineCount := 1;
+  FLastCaretLine := 0;
 
   InitializeThemes();
 
@@ -672,6 +683,11 @@ begin
   edtCommand.SetFocus();
 
   Editor.OnKeyDown := EditorKeyDown;
+  //Leaving a line by moving the caret, rather than by typing. OnChange cannot
+  //see an arrow key or a click, and FMX gives a memo no caret-moved event, so
+  //these two are where navigation is noticed.
+  Editor.OnKeyUp := EditorKeyUp;
+  Editor.OnMouseUp := EditorMouseUp;
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -1003,61 +1019,88 @@ begin
   end;
 end;
 
-procedure TfrmMain.EditorChange(Sender: TObject);
+//Uppercase the keywords on the line the caret has just left.
+//
+//One line, in place. The previous version read the whole document out of the
+//memo, split it into a TStringList, replaced one entry, joined it back and
+//assigned the result to Editor.Text -- which makes FireMonkey rebuild the
+//layout of every line. Measured with tests/EditorFormatProbe.dpr on a
+//5,000-line program that was 1.30 ms; Editor.Lines[i] is 0.0001 ms and does not
+//grow with the document. The formatting itself was never the cost: it is
+//0.001 ms and flat.
+procedure TfrmMain.FormatLineLeft();
 var
-  CurrentLineCount, I, CaretLine: Integer;
-  EdText, PrevLine, Formatted: string;
-  SL: TStringList;
+  Line, Formatted: string;
+  Caret: TCaretPosition;
+begin
+  //Assigning to Lines fires OnChange, which calls back into here.
+  if FFormattingLine then
+    Exit();
+  if (FLastCaretLine < 0) or (FLastCaretLine >= Editor.Lines.Count) then
+    Exit();
+  Line := Editor.Lines[FLastCaretLine];
+  Formatted := UppercaseKeywords(Line);
+  if Formatted = Line then
+    Exit();
+
+  FFormattingLine := True;
+  try
+    Caret := Editor.CaretPosition;
+    Editor.OnChange := nil;
+    try
+      Editor.Lines[FLastCaretLine] := Formatted;
+      //Replacing a line moves the caret to it. Put it back where the person
+      //left it, or every ENTER would drop them on the line above.
+      Editor.CaretPosition := Caret;
+    finally
+      Editor.OnChange := EditorChange;
+    end;
+  finally
+    FFormattingLine := False;
+  end;
+end;
+
+//Has the caret changed line since this was last asked? Then the line it left is
+//finished, and gets formatted.
+//
+//This is called from typing, from key-up and from mouse-up, which between them
+//cover ENTER, the arrow keys, Page Up and Down, and clicking somewhere else.
+//FireMonkey gives a memo no caret-moved event, so there is no single place.
+procedure TfrmMain.TrackCaretLine();
+var
+  L: Integer;
+begin
+  if FFormattingLine then
+    Exit();
+  L := Editor.CaretPosition.Line;
+  if L = FLastCaretLine then
+    Exit();
+  FormatLineLeft();
+  FLastCaretLine := L;
+end;
+
+procedure TfrmMain.EditorKeyUp(Sender: TObject; var Key: Word;
+  var KeyChar: WideChar; Shift: TShiftState);
+begin
+  TrackCaretLine();
+end;
+
+procedure TfrmMain.EditorMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  TrackCaretLine();
+end;
+
+procedure TfrmMain.EditorChange(Sender: TObject);
 begin
   FModified := True;
-
-  // --- Detect single line-break insertion and format the completed line ---
-  EdText := Editor.Text;
-
-  // Count lines efficiently (same method as UpdateLineNumbers)
-  CurrentLineCount := 1;
-  for I := 1 to Length(EdText) do
-    if EdText[I] = #10 then
-      Inc(CurrentLineCount);
-  if EdText = '' then
-    CurrentLineCount := 1;
-
-  // Only format on single line-break (typing ENTER / virtual keyboard newline).
-  // Multi-line jumps (paste, LOAD, SyncEditorToProgram) are handled by
-  // FormatLoadedSource, so we skip them here.
-  if CurrentLineCount = FLastEditorLineCount + 1 then
-  begin
-    CaretLine := Editor.CaretPosition.Line;
-    if CaretLine >= 1 then
-    begin
-      SL := TStringList.Create;
-      try
-        SL.Text := EdText;
-        if (CaretLine - 1) < SL.Count then
-        begin
-          PrevLine := SL[CaretLine - 1];
-          Formatted := UppercaseKeywords(PrevLine);
-          if Formatted <> PrevLine then
-          begin
-            SL[CaretLine - 1] := Formatted;
-            Editor.OnChange := nil;
-            try
-              Editor.Text := SL.Text;
-              Editor.CaretPosition := TCaretPosition.Create(CaretLine, 0);
-            finally
-              Editor.OnChange := EditorChange;
-            end;
-          end;
-        end;
-      finally
-        SL.Free;
-      end;
-    end;
-  end;
-
-  FLastEditorLineCount := CurrentLineCount;
-  // --- End line-break detection ---
-
+  //Formatting used to be triggered by counting the document's lines on every
+  //keystroke and looking for the count to go up by one -- which meant copying
+  //the whole document out of the memo and walking it character by character
+  //before knowing whether anything had happened at all. On a 5,000-line
+  //program that was 0.36 ms per keystroke and growing. Comparing two integers
+  //answers the same question.
+  TrackCaretLine();
   DeferredUpdateLineNumbers();
   UpdateStatusBar();
 end;
@@ -1996,6 +2039,29 @@ end;
 // Step 3: UppercaseKeywords - processes a single line
 // Walks character by character, preserving strings and comments.
 // -----------------------------------------------------------------------
+//CONST and ELSEIF are keywords only where a statement begins and only when
+//they are not being assigned to -- the same rule the parser applies, and for
+//the same reason. Neither is in the lexer's keyword table, so both remain
+//usable as ordinary variable and function names: `const = 7` compiles and runs,
+//and uppercasing it there would tell the reader something untrue.
+function TfrmMain.IsContextualKeyword(const Word: string;
+  AtStatementStart: Boolean; const Rest: string): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  if not AtStatementStart then
+    Exit();
+  if not (SameText(Word, 'CONST') or SameText(Word, 'ELSEIF')) then
+    Exit();
+  //What follows, ignoring spaces. An '=' means this is an assignment to a
+  //variable that happens to have the name.
+  i := 1;
+  while (i <= Length(Rest)) and (Rest[i] = ' ') do
+    Inc(i);
+  Result := (i > Length(Rest)) or (Rest[i] <> '=');
+end;
+
 function TfrmMain.UppercaseKeywords(const Line: string): string;
 var
   I, Len, WordStart: Integer;
@@ -2003,12 +2069,16 @@ var
   Word: string;
   InString: Boolean;
   StringChar: Char;
+  AtStatementStart: Boolean;
 begin
   Result := '';
   Len := Length(Line);
   I := 1;
   InString := False;
   StringChar := #0;
+  //True until the line's first word, and again after every ':'. This is what
+  //lets CONST and ELSEIF be recognised where the parser recognises them.
+  AtStatementStart := True;
 
   while I <= Len do
   begin
@@ -2058,15 +2128,21 @@ begin
 
       Word := Copy(Line, WordStart, I - WordStart);
 
-      if IsKeyword(Word) then
+      if IsKeyword(Word) or
+         IsContextualKeyword(Word, AtStatementStart, Copy(Line, I, Len - I + 1)) then
         Result := Result + UpperCase(Word)
       else
         Result := Result + Word; // preserve original case for identifiers
 
+      AtStatementStart := False;
       Continue; // I already advanced past the word
     end;
 
     // --- Everything else (operators, numbers, spaces, etc.) ---
+    if Ch = ':' then
+      AtStatementStart := True
+    else if Ch <> ' ' then
+      AtStatementStart := False;
     Result := Result + Ch;
     Inc(I);
   end;
