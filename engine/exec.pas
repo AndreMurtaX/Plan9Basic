@@ -493,6 +493,24 @@ function CanPauseForHostDialog: Boolean;
 
 implementation
 
+//How often the two dispatch loops step outside the program to look at the
+//world. Both intervals used to be local constants inside ExecuteProgram, which
+//is exactly how the two loops came to disagree: the commit that throttled the
+//timeout check to one instruction in ten thousand landed in ExecuteProgram and
+//not in ExecuteFunction, 120 lines away in this file, and ExecuteFunction went
+//on calling QueryPerformanceCounter twice per instruction for every callback.
+//That cost nothing where it was written -- the IDE sets ScriptTimeOut to 0, so
+//the branch never runs there -- and 1.7x of the frame time on a device, where
+//runner\AppletRunner.pas sets 30. Here, neither loop can drift from the other
+//without someone editing a line that says both.
+const
+  //Small enough that a runaway callback is still stopped close to its deadline,
+  //large enough that the clock disappears into the dispatch loop it sits in.
+  TIMEOUT_CHECK_INTERVAL = 10000;
+  //Small enough that a click is answered without a visible wait, large enough
+  //that the null test disappears into the dispatch loop it sits in.
+  DRAIN_CHECK_INTERVAL = 512;
+
 function CanPauseForHostDialog: Boolean;
 begin
   //Parking is safe whenever the thread that would answer is not the thread
@@ -960,6 +978,7 @@ var
   deltaTicks: Int64;
   Timer: TStopWatch;
   innerProc, i, TmpIP, TmpSTKP, TmpBASEP, TmpAuxStackIdx: Integer;
+  instructionCount: Integer;
   dt: TAsmData;
   WasEnded, HadError: Boolean;
 begin
@@ -1016,6 +1035,7 @@ begin
     end;
     deltaTicks := FTimeOut * 1000; //Timeout in milliseconds
     Timer := TStopWatch.StartNew; //Create watch
+    instructionCount := 0;
     try
       repeat //run function's body
         if (asmProg[PRG_IP].token = atkCallNear) then Inc(innerProc);
@@ -1024,16 +1044,27 @@ begin
         Inc(PRG_IP); //move to next instruction
         //If there is a callback, run it.
         if (callBackObj <> nil) then CallBackProc(callBackObj);
-        //Check for the script timeout
+        //Check for the script timeout.
+        //
+        //This used to Stop and Start the watch on every instruction: two
+        //QueryPerformanceCounter calls to answer a question that cannot change
+        //meaningfully between one instruction and the next. Measured at about
+        //34 ns per instruction, which is 1.7x of the frame time of a game whose
+        //steps arrive here as OnTimer callbacks. ElapsedMilliseconds reads a
+        //running watch -- ExecuteProgram has relied on that since its own fix,
+        //and stopping the watch was never what made the reading correct.
         if FTimeOut > 0 then //0 = no timeout (be careful)
         begin
-          Timer.Stop(); //Stop watch
-          if Timer.ElapsedMilliseconds > deltaTicks then //Check for timeout
+          Inc(instructionCount);
+          if instructionCount >= TIMEOUT_CHECK_INTERVAL then
           begin
-            HadError := true;
-            Break; //Exit loop instead of raising exception
+            instructionCount := 0;
+            if Timer.ElapsedMilliseconds > deltaTicks then //Check for timeout
+            begin
+              HadError := true;
+              Break; //Exit loop instead of raising exception
+            end;
           end;
-          Timer.Start(); //Restart the watch
         end;
       until (ended or (innerProc = 0));
     finally
@@ -1065,12 +1096,10 @@ begin
 end;
 
 //Execute the entire program
+//Both intervals this loop uses are declared at the top of the implementation
+//section, because ExecuteFunction uses them too and the two loops disagreeing
+//about them is the defect that put them there.
 procedure TExec.ExecuteProgram();
-const
-  TIMEOUT_CHECK_INTERVAL = 10000; // Check timeout every N instructions
-  //Small enough that a click is answered without a visible wait, large enough
-  //that the null test disappears into the dispatch loop it sits in.
-  DRAIN_CHECK_INTERVAL = 512;
 var
   deltaTicks: Int64;
   Timer: TStopWatch;

@@ -35,6 +35,12 @@
   Benchmark only: append one row per benchmark to this file, to compare a
   change against the run before it.
 
+.PARAMETER Probe
+  Build and run one of the probe programs by name -- CallbackProbe,
+  VMThreadProbe, AlignOrderProbe. A probe is a test that has to be the host to
+  ask its question, so it cannot be written as a .bas file. CallbackProbe is
+  the one that guards ExecuteFunction, which no suite reaches.
+
 .PARAMETER Dcc
   Full path to dcc64.exe, overriding registry detection.
 
@@ -59,6 +65,7 @@ param(
     [switch] $Bench,
     [int]    $Repeat = 3,
     [string] $Csv,
+    [string] $Probe,
     [string[]] $Path,
     [string] $Dcc
 )
@@ -105,7 +112,15 @@ $searchPath = '..;..\Libs;..\Libs\GUI;..\Libs\GUI\Effects;..\Libs\GUI\Animations
 # The benchmark harness is a second program over the same engine sources. It
 # registers no FMX library on purpose: a benchmark that needs a form is timing
 # FireMonkey, not this engine.
-$project = if ($Bench) { 'Plan9BasicBench.dpr' } else { 'Plan9BasicTest.dpr' }
+$project =
+    if     ($Probe) { [IO.Path]::ChangeExtension($Probe, '.dpr') }
+    elseif ($Bench) { 'Plan9BasicBench.dpr' }
+    else            { 'Plan9BasicTest.dpr' }
+
+if ($Probe -and -not (Test-Path (Join-Path $here $project))) {
+    $known = (Get-ChildItem $here -Filter '*Probe.dpr' | ForEach-Object BaseName) -join ', '
+    throw "no such probe: $Probe. Known probes: $known"
+}
 
 Push-Location $here
 try {
@@ -121,6 +136,12 @@ try {
 
 $exe = Join-Path $binDir ([IO.Path]::ChangeExtension($project, '.exe'))
 Write-Host "built: $exe"
+
+if ($Probe) {
+    Push-Location $here
+    try { & $exe; $code = $LASTEXITCODE } finally { Pop-Location }
+    exit $code
+}
 
 if ($Bench) {
     $benchArgs = @('--repeat', $Repeat)
