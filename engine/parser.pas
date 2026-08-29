@@ -74,6 +74,12 @@ type
     //break, which is the whole safety property: an ELSE binds to a one-line IF
     //only when the two are on the same line.
     inlineIfCnt: Integer;
+    //Named constants: the name, lowercased, against the instruction that
+    //pushes its value. A constant is substituted where it is used and has no
+    //storage, which is the point of it -- MAXVARS is 515 with three registers
+    //reserved, so a program's named numbers were competing for the same 512
+    //slots as its variables.
+    FConsts: TDictionary<String, String>;
     forVarStack: array[0..MAXSTACK] of String; //Stack to track FOR loop control variables
     inFunction: Boolean;
     lastFunc: TBasToken; //Info about the current function
@@ -139,6 +145,10 @@ type
     procedure EmitDefaultReturnValue();
     function CompoundOp(): String;
     procedure ParseLetList(); //LET a, b, c
+    function AtContextualKeyword(const AWord: String): Boolean;
+    procedure ParseConst(); //CONST NAME = literal
+    function ConstPush(const AName: String): String;
+    procedure ParseElseIf(); //ELSEIF written as one word
     procedure ParseUnassignedNumFunction(); //fnc(...)
     procedure ParseUnassignedStrFunction(); //fnc$(...)
     procedure ParseUnassignedPtrFunction(); //fnc#(...)
@@ -268,6 +278,13 @@ var
   s, op: String;
 begin
   s := lexer.CurrS(); //variable to store numerical expression result.
+  //The diagnostic that makes CONST worth having.
+  if ConstPush(s) <> '' then
+  begin
+    status := BasTerminated;
+    SetError(s + ' is a constant and cannot be assigned to');
+    Exit();
+  end;
   op := CompoundOp();
   if op <> '' then
   begin
@@ -497,6 +514,12 @@ var
   s: String;
 begin
   s := lexer.CurrS();
+  if ConstPush(s) <> '' then
+  begin
+    status := BasTerminated;
+    SetError(s + ' is a constant and cannot be assigned to');
+    Exit();
+  end;
   if lexer.CurrTok() = btkCharArray then //var$[[index]] = expression$
   begin
     Emmit('PUSH$ @'+s);
@@ -1184,6 +1207,7 @@ var
   i: Integer;
 begin
   ClearCounts();
+  if Assigned(FConsts) then FConsts.Clear();
   inFunction := False;
   status := BasReady;
   lastErr := '';
@@ -1349,6 +1373,7 @@ begin
   lexer := TBasicLexer.Create();
   exec := TExec.Create();
   FGlobalVars := TStrList.Create();
+  FConsts := TDictionary<String, String>.Create();
   Clear();
 
   //preprocessing errors
@@ -1372,6 +1397,7 @@ end;
 
 destructor TBasicParser.Destroy();
 begin
+  if Assigned(FConsts) then FreeAndNil(FConsts);
   if Assigned(FGlobalVars) then FreeAndNil(FGlobalVars);
   if Assigned(exec) then FreeAndNil(exec);
   if Assigned(lexer) then FreeAndNil(lexer);
@@ -1535,7 +1561,16 @@ begin
   end;
 
   case lexer.currTok() of
-    btkIdentifier: AssignNum();
+    btkIdentifier:
+      //Contextual keywords are tested before an identifier becomes an
+      //assignment, and only here -- at the start of a statement. See
+      //AtContextualKeyword for why they cannot be lexer keywords.
+      if AtContextualKeyword('elseif') then
+        ParseElseIf()
+      else if AtContextualKeyword('const') then
+        ParseConst()
+      else
+        AssignNum();
     btkPointerIdentifier: AssignPtr();
     btkStrIdentifier, btkCharArray, btkStrArray: AssignStr();
     btkPointerArray: AssignPointerArrayNum();
@@ -2168,7 +2203,14 @@ begin
     end;
     btkPointerArrayStr: ParsePointerArrayStrGet();
     btkIndirectCallStr: ParseIndirectCall(TExprKInd.ekString);
-    btkStrIdentifier: Emmit('PUSH$ @' + lexer.CurrS());
+    btkStrIdentifier:
+    begin
+      st := ConstPush(lexer.CurrS());
+      if st <> '' then
+        Emmit(st)
+      else
+        Emmit('PUSH$ @' + lexer.CurrS());
+    end;
     btkString: Emmit('PUSHC$ "'+lexer.CurrS()+'"');
     else
       SetError('String expected');
@@ -2209,7 +2251,16 @@ begin
     *)
     btkPointerArray: ParsePointerArrayNumGet();
     btkAmpersand: ParseIndirectCall(TExprKind.ekNumber);
-    btkIdentifier: Emmit('PUSH @' + lexer.CurrS());
+    btkIdentifier:
+    begin
+      //A named constant is substituted here rather than read from a variable
+      //slot, because it has no slot.
+      st := ConstPush(lexer.CurrS());
+      if st <> '' then
+        Emmit(st)
+      else
+        Emmit('PUSH @' + lexer.CurrS());
+    end;
     btkInteger, btkFloat: Emmit('PUSHC ' + TUtils.FloatToStr2(lexer.CurrN));
     else
       SetError('Value expected');
@@ -3943,6 +3994,129 @@ begin
     btkMinus: Result := 'SUB';
     btkStar:  Result := 'MUL';
     btkSlash: Result := 'DIV';
+  end;
+end;
+
+//The instruction that pushes a named constant's value, or '' when the name is
+//not one. Both callers ask before treating an identifier as a variable.
+function TBasicParser.ConstPush(const AName: String): String;
+begin
+  if not FConsts.TryGetValue(AName.ToLower(), Result) then
+    Result := '';
+end;
+
+//`const NAME = <literal>` -- a name for a number or a piece of text.
+//
+//What the programmer gains is not speed. After the push path was rewritten a
+//PUSHC is worth low single-digit nanoseconds more than a PUSH, and nobody would
+//notice. Two other things are worth having:
+//
+//  * A constant occupies no variable slot. MAXVARS is 515 with three registers
+//    reserved, and named numbers were spending that budget.
+//  * Assigning to one is a compile error. That diagnostic is the thing a reader
+//    of the program actually gets -- a name declared constant that something
+//    later writes to is a bug the language can catch and used not to.
+//
+//Literals only, deliberately. `const N = M + 1` would need constant folding,
+//which the council rejected on its own merits, and a constant whose value
+//depends on evaluation order is a worse idea than a longer program.
+procedure TBasicParser.ParseConst();
+var
+  name, push: String;
+  kind: TBasToken;
+begin
+  lexer.Advance(); //skip CONST
+  kind := lexer.CurrTok();
+  if not (kind in [btkIdentifier, btkStrIdentifier]) then
+  begin
+    status := BasTerminated;
+    SetError('Constant name expected after CONST');
+    Exit();
+  end;
+  name := lexer.CurrS();
+  if FConsts.ContainsKey(name.ToLower()) then
+  begin
+    status := BasTerminated;
+    SetError('Constant ' + name + ' is already declared');
+    Exit();
+  end;
+  if lexer.NextTok() <> btkEqual then
+  begin
+    status := BasTerminated;
+    SetError('= expected in CONST declaration');
+    Exit();
+  end;
+  lexer.Advance(); //past the name
+  lexer.Advance(); //past the '='
+
+  push := '';
+  if kind = btkIdentifier then
+  begin
+    //A leading '-' is part of the literal rather than an operator here: there
+    //is nothing to subtract it from.
+    if lexer.CurrTok() = btkMinus then
+    begin
+      lexer.Advance();
+      if lexer.CurrTok() in [btkInteger, btkFloat] then
+        push := 'PUSHC ' + TUtils.FloatToStr2(0 - lexer.CurrN());
+    end
+    else if lexer.CurrTok() in [btkInteger, btkFloat] then
+      push := 'PUSHC ' + TUtils.FloatToStr2(lexer.CurrN());
+  end
+  else if lexer.CurrTok() = btkString then
+    push := 'PUSHC$ "' + lexer.CurrS() + '"';
+
+  if push = '' then
+  begin
+    status := BasTerminated;
+    SetError('CONST takes a literal number or a literal string');
+    Exit();
+  end;
+  FConsts.Add(name.ToLower(), push);
+  lexer.Advance(); //past the literal
+end;
+
+//Is the parser sitting on AWord used as a keyword rather than as a variable?
+//
+//Contextual recognition, and it is not optional. BasIdentKind is consulted
+//before the lexer's test for '(' and that test only remaps three identifier
+//tokens, so putting a word in the keyword table breaks a user FUNCTION of that
+//name as well as a variable. `elseif = 5 : println elseif` compiles and runs on
+//the shipped binary -- it prints 12 next to `const = 7` -- and has to go on
+//doing so.
+//
+//A word is the keyword when it starts a statement and is not being assigned to.
+//`elseif <condition> then` has that shape; `elseif = 5` and `elseif += 1` do
+//not.
+function TBasicParser.AtContextualKeyword(const AWord: String): Boolean;
+begin
+  Result := (lexer.CurrTok() = btkIdentifier) and
+            SameText(lexer.CurrS(), AWord) and
+            (lexer.NextTok() <> btkEqual) and
+            (CompoundOp() = '');
+end;
+
+//`elseif` as one word. The chain it builds is the one `else if` already builds,
+//down to the same two markers, so AssignIf resolves both without knowing which
+//spelling was used. WEND beside ENDWHILE and NEXT beside ENDFOR already
+//establish doubled spellings as this language's habit.
+procedure TBasicParser.ParseElseIf();
+begin
+  if (ifCnt < 1) then
+  begin
+    status := BasTerminated;
+    SetError('Misplaced ELSEIF');
+    Exit();
+  end;
+  lexer.Advance(); //skip ELSEIF
+  Emmit('ELSEIFTEST'); //pre test label
+  NextLogicExpression(); //logic expression (the test)
+  Emmit('ELSEIFBODY'); //pos test label
+  if lexer.CurrTok <> btkThen then
+  begin
+    status := BasTerminated;
+    SetError('THEN expected');
+    Exit();
   end;
 end;
 
