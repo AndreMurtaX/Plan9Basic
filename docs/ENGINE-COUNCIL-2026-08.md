@@ -7,6 +7,73 @@ and the language's surface syntax. Line references apply to the commit above.
 
 ---
 
+## What became of it
+
+**All of it was built, between 2026-08-29 and the commits listed below.** This
+section is here so that a reader who finds this document does not act on
+recommendations that are already in the tree, and so that the three items it
+recommended and we refused are refused in writing rather than forgotten.
+
+Measured on this machine with `tests/build.ps1 -Bench -Repeat 7`, against the
+same benchmarks at the baseline commit `e9ab83f`:
+
+| benchmark | before | after | |
+|---|---:|---:|---:|
+| empty 2M `FOR` | 167.63 ms | 91.40 ms | 1.83x |
+| arithmetic | 368.37 ms | 180.18 ms | 2.04x |
+| array read | 223.32 ms | 103.43 ms | 2.16x |
+| array write | 227.41 ms | 103.14 ms | 2.20x |
+| native call | 165.94 ms | 68.89 ms | 2.41x |
+| 160,000 string appends | 2200.32 ms | 18.46 ms | **119x** |
+| a game step, at the device's timeout | 2065.28 ms | 516.50 ms | **4.00x** |
+
+The append row is the only one that changes a complexity class: the cost per
+append was growing 45-fold across the series and is now flat at ~112 ns
+throughout. The last row is the one a person holding a phone would feel.
+
+Callbacks answered in three seconds went from 96,926 to 523,678.
+
+Every suite is unchanged in what it asserts and larger by what was added:
+1,317 + 4,950 assertions, 15 negative programs rejected, 98 examples and 12
+demos still running. The six syntax additions changed the assembly of **zero**
+of the 121 existing programs, which `tests/AsmDump.dpr` proves rather than
+claims.
+
+### Three things this document recommended and we did not do
+
+**Taking the mutex out of handle validation** (row 8). It is worth 13.5 ns of
+the 21.5 that validating a handle costs, on every `a#[i]`. It is also the only
+thing making that dictionary safe to read while the UI thread destroys a control
+on it -- which is the arrangement this engine now supports, and the reason the
+marshalling seam exists. The council marked it "not judged". It should stay that
+way until someone judges it.
+
+**`single-hash-dynamic-lookups`** (row 10) is blocked by its own condition. The
+saving is turning `ContainsKey` plus a lookup into one `TryGetValue`, and the
+second hash in those six handlers is inside `@programFunctions[...].Entry`,
+which the compatibility judge said not to touch. The half that is allowed saves
+nothing.
+
+**`jump-threading-at-load`** (row 15). The council itself put it at "a fraction
+of a percent" and attached a condition -- never thread past `atkComma` -- whose
+violation is a silently wrong line number. That is the wrong side of the trade.
+
+### Two places where this document was wrong
+
+The lexer's instruction ceiling **was** reported correctly: a program past it
+says "Source code too big", not the syntax error at line 16667 recorded in row
+17. The real hole was next to it and worse -- `lexer.Error`, which is set when
+the tokenizer runs out of memory, had no reader anywhere in the tree, so that
+failure truncated the token stream and let the parse report a syntax error in
+valid source. That is fixed.
+
+And the exception frame in `ExecuteFunction` is not free per instruction, as the
+red team's measurement of `ExecuteProgram` suggested it would be: measured here
+it took 2.6% off every callback. One frame around the whole loop gives an
+identical error message for nothing, and that is what shipped.
+
+---
+
 ## How this document was produced
 
 This is the settlement of an adversarial review, run because the engine is
