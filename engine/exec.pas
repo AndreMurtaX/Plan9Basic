@@ -55,7 +55,7 @@ type
   //Assembly tokens
   TAsmToken = (
     {A}
-    atkAdd, atkAddCRLFS, atkAddS, atkAnd, atkAssert,
+    atkAdd, atkAddCRLFS, atkAddS, atkAnd, atkAppendS, atkAssert,
     {B}
     atkBreak, atkBreakpoint, atkCRLF, atkCallFar, atkCallFarP, atkCallFarS, atkCallNear,
     atkCls, atkComma, atkComment, atkContinue,
@@ -371,7 +371,8 @@ type
     procedure fLTS(); //pop(s1), pop(s2), (s1<s2)?push(1):push(0)
     procedure fNES(); //pop(s1), pop(s2), (s1!=s2)?push(1):push(0)
     procedure fEQS(); //pop(s1), pop(s2), (s1==s2)?push(1):push(0)
-    procedure fAddS(); //pop(s1), pop(s2), push(s1+s2)
+    procedure fAddS();
+    procedure fAppendS(); //pop(s1), pop(s2), push(s1+s2)
     procedure fSubS(); //pop(n1), pop(s1), push(s1[0,length(s1)-n1])
     procedure fAddCRLFS(); //pop(s1), pop(s2), push(s1+'/n'+s2)
     procedure fRead();
@@ -862,7 +863,11 @@ begin
     452: if tokStr = 'I_CALL' then Result := atkIndirectCall;
     466: if tokStr = 'ASSERT' then Result := atkAssert;
     470: if tokStr = 'ONGOTO' then Result := atkOnGoto;
-    476: if tokStr = 'CALLEX#' then Result := atkCallFarP;
+    476:
+    begin
+      if tokStr = 'CALLEX#' then Result := atkCallFarP
+      else if tokStr = 'APPEND$' then Result := atkAppendS;
+    end;
     477:
     begin
       if tokStr = 'CALLEX$' then Result := atkCallFarS
@@ -1298,6 +1303,51 @@ procedure TExec.fAddS();
 begin
   Pop();
   StackMem[STKP].s := StackMem[STKP].s + StackMem[STKP + 1].s;
+end;
+
+//Append the string on top of the stack to a variable, in place.
+//
+//`s$ = s$ + x$` compiled to PUSH$ s / <x> / ADD$ / POPSTORE$ s, and that
+//sequence is quadratic. PUSH$ hands the stack the variable's own buffer, so the
+//variable and the stack slot hold it at reference count two, and Delphi's
+//_UStrCat can only extend a buffer in place at reference count one. At two it
+//allocates a fresh buffer and copies everything built so far. Every iteration.
+//Measured before this existed: 10k appends 3.03 ms, 40k 31.69, 160k 2200.32 --
+//eighteen times the time for twice the work.
+//
+//This never puts the destination on the stack, so its buffer stays at one
+//reference and grows in place. TCompiler.AssignAppend is what rewrites the
+//sequence into it, and only for the exact four-instruction shape where the
+//variable read and the variable written are the same one.
+procedure TExec.fAppendS();
+var
+  i: Integer;
+begin
+  if STKP = 0 then
+  begin
+    RTError(rteStackUnderflow, atkNull);
+    Exit;
+  end;
+  if TypeStack[STKP] <> ekString then
+  begin
+    RTError(rteStackTypeMismatch, atkNull);
+    Exit;
+  end;
+  i := asmProg[PRG_IP].i;
+  //`s$ = s$ + s$` reaches here with the source and the destination sharing one
+  //buffer, so the append below finds reference count two and allocates, exactly
+  //as the old sequence always did. Correct, and no slower than before.
+  if i < 0 then
+    StackMem[BASEP + i + MAXLOCALS].s :=
+      StackMem[BASEP + i + MAXLOCALS].s + StackMem[STKP].s //local
+  else if GlobalIndexValid(i) then
+    HeapMem[i].s := HeapMem[i].s + StackMem[STKP].s; //global
+  //Release the slot rather than leaving it to Pop, which deliberately does not.
+  //Nothing reads this cell again -- the value has been consumed -- and a stack
+  //slot holding the last fragment of a string built in a loop keeps a buffer
+  //alive for no reason.
+  StackMem[STKP].s := '';
+  Dec(STKP);
 end;
 
 //Debug: ASSERT condition, "message"
@@ -3387,6 +3437,7 @@ begin
     atkNes: Result := fNES;
     atkEqs: Result := fEQS;
     atkAdds: Result := fAddS;
+    atkAppendS: Result := fAppendS;
     atkSubs: Result := fSubS;
     atkAddcrlfs: Result := fAddCRLFS;
     atkRead: Result := fRead;

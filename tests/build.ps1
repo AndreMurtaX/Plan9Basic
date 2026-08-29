@@ -41,6 +41,12 @@
   ask its question, so it cannot be written as a .bas file. CallbackProbe is
   the one that guards ExecuteFunction, which no suite reaches.
 
+.PARAMETER Dump
+  Build and run tests\AsmDump.dpr over -Path: print the assembly a program
+  compiles to. With -Quiet it prints one line per file with an instruction
+  count and a checksum, which is how a parser change proves it left every other
+  program alone.
+
 .PARAMETER Dcc
   Full path to dcc64.exe, overriding registry detection.
 
@@ -72,6 +78,8 @@ param(
     [int]    $Repeat = 3,
     [string] $Csv,
     [string] $Probe,
+    [switch] $Dump,
+    [switch] $Quiet,
     [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]] $Path,
     [string] $Dcc
@@ -121,6 +129,7 @@ $searchPath = '..;..\Libs;..\Libs\GUI;..\Libs\GUI\Effects;..\Libs\GUI\Animations
 # FireMonkey, not this engine.
 $project =
     if     ($Probe) { [IO.Path]::ChangeExtension($Probe, '.dpr') }
+    elseif ($Dump)  { 'AsmDump.dpr' }
     elseif ($Bench) { 'Plan9BasicBench.dpr' }
     else            { 'Plan9BasicTest.dpr' }
 
@@ -143,6 +152,15 @@ try {
 
 $exe = Join-Path $binDir ([IO.Path]::ChangeExtension($project, '.exe'))
 Write-Host "built: $exe"
+
+if ($Dump) {
+    $dumpArgs = @('--gui')
+    if ($Quiet) { $dumpArgs += '--quiet' }
+    if ($Path)  { $dumpArgs += $Path } else { $dumpArgs += @('..\Examples', '..\Demos') }
+    Push-Location $here
+    try { & $exe @dumpArgs; $code = $LASTEXITCODE } finally { Pop-Location }
+    exit $code
+}
 
 if ($Probe) {
     Push-Location $here

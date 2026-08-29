@@ -239,6 +239,7 @@ type
     procedure AssignFuncs(); //functions entry points
     procedure SkipFuncs(); //additional functions processing
     procedure AssignData(); //Find the position of each DATA command at the source
+    procedure AssignAppend(); //s$ = s$ + x  ->  an in-place append
     procedure AssignSelect(); //SELECT .. CASE
     //--------------------------------------------------------------------------
     procedure FindErrline();
@@ -4173,6 +4174,89 @@ begin
 end;
 
 //Substitute functions addresses
+//Rewrite `s$ = s$ + <one term>` into an append that never puts s$ on the stack.
+//
+//The emitted shape is PUSH$ v / <push> / ADD$ / POPSTORE$ v, and it is
+//quadratic in a loop: PUSH$ hands the stack the variable's own string buffer,
+//so ADD$ finds it at reference count two and Delphi's _UStrCat cannot extend it
+//in place -- it allocates and copies everything built so far, on every
+//iteration. Measured at 160,000 appends: 2.2 seconds to do work that should
+//take milliseconds.
+//
+//The rewrite is strictly 1:1 IN PLACE, and that is not a stylistic choice. The
+//parser bakes ABSOLUTE instruction indices into the code as it emits it, which
+//is why all of the passes above are in-place rewrites too: deleting a slot
+//would silently move every jump target after it. So the first PUSH$ and the
+//ADD$ become NOP and only the store changes into an append.
+//
+//Matched narrowly on purpose:
+//
+//  * The variable read and the variable written must be the same one. After
+//    EnumVarsFuncs both operands are indices, so comparing the text compares
+//    the variables exactly -- `s$ = t$ + "z"` emits the same four tokens with
+//    different operands and must not match.
+//  * The middle instruction must be a single push. `s$ = s$ + t$ + "w"` emits
+//    six instructions, and pairing its first PUSH$ with its last ADD$ would
+//    take the wrong operand off the stack.
+//  * Nothing may jump into the middle of the window. A GOTO landing on a NOP we
+//    just wrote would run half a pattern, so every absolute target in the
+//    program is collected first and any window containing one is left alone.
+procedure TCompiler.AssignAppend();
+var
+  i, n, addr: Integer;
+  isTarget: array of Boolean;
+
+  //The operand of an instruction, as text. Uses the assembly lexer rather than
+  //string splitting because the emitted lines carry trailing padding.
+  function Operand(k: Integer): String;
+  begin
+    asmLexer.LoadLine(PChar(postfixCode[k].Str));
+    asmLexer.NextString(); //the mnemonic
+    Result := asmLexer.NextString();
+  end;
+
+begin
+  n := postfixCode.Count;
+  if n < 4 then
+    Exit();
+
+  //Every instruction that carries a code address in its operand. These four are
+  //the whole set: the _CRLF and _EndIf variants of POPNJUMP are resolved into
+  //plain POPNJUMP by the passes above, and FORCYCLE's operand is a variable
+  //index rather than an address.
+  SetLength(isTarget, n);
+  for i := 0 to n - 1 do
+    case postfixCode[i].Token of
+      atkJump, atkPopnJump, atkCallNear, atkPopnCall:
+      begin
+        addr := StrToIntDef(Operand(i), -1);
+        if (addr >= 0) and (addr < n) then
+          isTarget[addr] := True;
+      end;
+    end;
+
+  i := 0;
+  while i <= n - 4 do
+  begin
+    if (postfixCode[i].Token = atkPushS) and
+       (postfixCode[i + 1].Token in [atkPushS, atkPushCS]) and
+       (postfixCode[i + 2].Token = atkAddS) and
+       (postfixCode[i + 3].Token = atkPopStoreS) and
+       (Operand(i) = Operand(i + 3)) and
+       (not isTarget[i + 1]) and
+       (not isTarget[i + 2]) and
+       (not isTarget[i + 3]) then
+    begin
+      postfixCode[i + 3] := StrItem('APPEND$ ' + Operand(i + 3), atkAppendS);
+      postfixCode[i] := StrItem('NOP', atkNop);
+      postfixCode[i + 2] := StrItem('NOP', atkNop);
+      Inc(i, 4);
+    end
+    else
+      Inc(i);
+  end;
+end;
+
 procedure TCompiler.AssignFuncs();
 var
   i: Integer;
@@ -4784,6 +4868,9 @@ begin
   if compResult = compOk then AssignFuncs();
   if compResult = compOk then SkipFuncs();
   if compResult = compOk then AssignData();
+  //Last, and it has to be: it reads the absolute jump targets the passes
+  //above have just finished writing.
+  if compResult = compOk then AssignAppend();
   Result := compResult;
   if Result <> compOk then
     FindErrline();
@@ -5005,13 +5092,24 @@ begin
             errLine := i;
             Exit;
           end;
-          //Update the postfix code
-          postfixCode[i] := StrItem(sInstr+' '+IntToStr(position), TAsmToken(GetEnumValue(TypeInfo(TAsmToken), sInstr)));
+          //Update the postfix code.
+          //
+          //The token is tokenType, which the case above already selected
+          //on. It used to be GetEnumValue(TypeInfo(TAsmToken), sInstr),
+          //and sInstr is the assembly mnemonic -- 'PUSH', 'POPSTORE$' --
+          //while the enumeration's members are named atkPush and
+          //atkPopStoreS. GetEnumValue matches the declared identifier, so
+          //it found nothing and returned -1, and every instruction
+          //carrying a variable left this pass with TAsmToken(-1) in a
+          //field that is supposed to say what it is. Nothing downstream
+          //happened to read it, which is why it went unnoticed and is not
+          //a reason to leave a field lying.
+          postfixCode[i] := StrItem(sInstr+' '+IntToStr(position), tokenType);
         end
         else
         begin
-          //Update the postfix code
-          postfixCode[i] := StrItem(sInstr+' '+IntToStr(position), TAsmToken(GetEnumValue(TypeInfo(TAsmToken), sInstr)));
+          //Update the postfix code (see the note in the branch above)
+          postfixCode[i] := StrItem(sInstr+' '+IntToStr(position), tokenType);
         end;
       end;
     end;
