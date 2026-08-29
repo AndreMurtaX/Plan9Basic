@@ -56,7 +56,13 @@
 .EXAMPLE
   .\build.ps1 -Bench -Repeat 5 -Csv bench.csv
 #>
-[CmdletBinding()]
+# PositionalBinding is off, and Path is the one parameter that takes a bare
+# argument. Without this, adding -Repeat and -Csv ahead of -Path in this list
+# quietly moved what a positional argument binds to: `build.ps1 -Bench
+# tests\bench\07.bas` bound that .bas file to -Csv, and the script opened a
+# source file to append results to it. Nothing was lost, and nothing about the
+# call looked wrong.
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [switch] $Run,
     [switch] $Smoke,
@@ -66,6 +72,7 @@ param(
     [int]    $Repeat = 3,
     [string] $Csv,
     [string] $Probe,
+    [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]] $Path,
     [string] $Dcc
 )

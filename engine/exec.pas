@@ -286,6 +286,10 @@ type
     FYieldProc: TYieldProc;
     FMarshalProc: TMarshalProc;
     FDrainProc: TDrainProc;
+    //How many drains are in flight. Draining runs a queued call, a queued call
+    //runs ExecuteFunction, and ExecuteFunction drains -- so this is re-entrant
+    //by construction, and nothing else bounds how deep it goes.
+    FDrainDepth: Integer;
     //Set for the duration of one marshalled call, because an open array cannot
     //be captured by the parameterless method Synchronize wants.
     FCallFn: TLinkFunction;
@@ -322,6 +326,7 @@ type
     //is enabled only in the Debug configuration.
     function GlobalIndexValid(Index: Integer): Boolean;
     procedure RunPendingCall();
+    procedure Drain();
     //Every native call the VM makes goes through here.
     function CallNative(const AFn: TLinkFunction;
                         var Args: array of TAsmData): TAsmData;
@@ -535,6 +540,41 @@ end;
 procedure TExec.RunPendingCall();
 begin
   FCallResult := FCallFn.Entry(FCallArgs);
+end;
+
+//Runs whatever another thread queued for the VM, and is the only way either
+//dispatch loop should reach FDrainProc.
+//
+//Draining is re-entrant by construction: it runs a queued call, the queued call
+//runs ExecuteFunction, and ExecuteFunction drains again. That nesting is not
+//new and is not in itself unsafe -- it is the same shape the engine already
+//tolerates when a control callback fires in the middle of the main program, and
+//ExecuteFunction is built for it, saving and restoring the whole VM state and
+//building its frame on top of the existing stack rather than at zero.
+//
+//What nothing bounded was the depth. A queued call that computes for a while,
+//answering more queued calls that also compute, would nest as far as the host
+//kept asking, spending VM stack and Delphi stack on every level. The cap is not
+//a guess about what is safe so much as a statement that the queue is a queue:
+//past this depth the remaining calls wait for the ones already running to
+//finish, which is what they would have done before any of this existed.
+procedure TExec.Drain();
+const
+  //Deep enough that ordinary nesting -- a program, a timer tick, a click
+  //handler the tick provoked -- never notices; shallow enough that a runaway
+  //cannot walk the stack down.
+  MAX_DRAIN_DEPTH = 8;
+begin
+  if not Assigned(FDrainProc) then
+    Exit();
+  if FDrainDepth >= MAX_DRAIN_DEPTH then
+    Exit();
+  Inc(FDrainDepth);
+  try
+    FDrainProc();
+  finally
+    Dec(FDrainDepth);
+  end;
 end;
 
 function TExec.CallNative(const AFn: TLinkFunction;
@@ -978,7 +1018,7 @@ var
   deltaTicks: Int64;
   Timer: TStopWatch;
   innerProc, i, TmpIP, TmpSTKP, TmpBASEP, TmpAuxStackIdx: Integer;
-  instructionCount: Integer;
+  instructionCount, drainCount: Integer;
   dt: TAsmData;
   WasEnded, HadError: Boolean;
 begin
@@ -1036,37 +1076,77 @@ begin
     deltaTicks := FTimeOut * 1000; //Timeout in milliseconds
     Timer := TStopWatch.StartNew; //Create watch
     instructionCount := 0;
+    drainCount := 0;
     try
-      repeat //run function's body
-        if (asmProg[PRG_IP].token = atkCallNear) then Inc(innerProc);
-        if (asmProg[PRG_IP].token = atkRetFunction) then Dec(innerProc);
-        asmProg[PRG_IP].proc(); //call proc linked to the instruction
-        Inc(PRG_IP); //move to next instruction
-        //If there is a callback, run it.
-        if (callBackObj <> nil) then CallBackProc(callBackObj);
-        //Check for the script timeout.
-        //
-        //This used to Stop and Start the watch on every instruction: two
-        //QueryPerformanceCounter calls to answer a question that cannot change
-        //meaningfully between one instruction and the next. Measured at about
-        //34 ns per instruction, which is 1.7x of the frame time of a game whose
-        //steps arrive here as OnTimer callbacks. ElapsedMilliseconds reads a
-        //running watch -- ExecuteProgram has relied on that since its own fix,
-        //and stopping the watch was never what made the reading correct.
-        if FTimeOut > 0 then //0 = no timeout (be careful)
-        begin
-          Inc(instructionCount);
-          if instructionCount >= TIMEOUT_CHECK_INTERVAL then
+      //The guard ExecuteProgram carries as FIX #12, and for the same reason:
+      //without it a library exception leaves this loop with the error text
+      //naming nothing, and the four collection libraries raise fatally in 121
+      //places, so a callback reaching one of them is not a remote case.
+      //
+      //One frame around the whole loop, where ExecuteProgram puts one around
+      //each instruction. The message is identical either way: the raise happens
+      //before Inc(PRG_IP), so PRG_IP still names the failing instruction when
+      //the exception arrives here. Both re-raise, so the loop ends the same
+      //way. Only the cost differs, and here it is not free -- measured per
+      //instruction it took 2.6% off every callback, which is 2.6% off every
+      //frame of a game to gain a prefix on a message.
+      try
+        repeat //run function's body
+          if (asmProg[PRG_IP].token = atkCallNear) then Inc(innerProc);
+          if (asmProg[PRG_IP].token = atkRetFunction) then Dec(innerProc);
+          asmProg[PRG_IP].proc(); //call proc linked to the instruction
+          Inc(PRG_IP); //move to next instruction
+          //If there is a callback, run it.
+          if (callBackObj <> nil) then CallBackProc(callBackObj);
+          //Anything another thread queued while this callback was running. Until
+          //this was here a computing callback answered nothing, so a click that
+          //arrived during a frame waited out the whole script timeout and came
+          //back as "the VM did not reach a yield point in time" -- the failure
+          //the drain exists to prevent, in the one loop that did not have it.
+          if Assigned(FDrainProc) then
           begin
-            instructionCount := 0;
-            if Timer.ElapsedMilliseconds > deltaTicks then //Check for timeout
+            Inc(drainCount);
+            if drainCount >= DRAIN_CHECK_INTERVAL then
             begin
-              HadError := true;
-              Break; //Exit loop instead of raising exception
+              drainCount := 0;
+              Drain();
             end;
           end;
+          //Check for the script timeout.
+          //
+          //This used to Stop and Start the watch on every instruction: two
+          //QueryPerformanceCounter calls to answer a question that cannot change
+          //meaningfully between one instruction and the next. Measured at about
+          //34 ns per instruction, which is 1.7x of the frame time of a game whose
+          //steps arrive here as OnTimer callbacks. ElapsedMilliseconds reads a
+          //running watch -- ExecuteProgram has relied on that since its own fix,
+          //and stopping the watch was never what made the reading correct.
+          if FTimeOut > 0 then //0 = no timeout (be careful)
+          begin
+            Inc(instructionCount);
+            if instructionCount >= TIMEOUT_CHECK_INTERVAL then
+            begin
+              instructionCount := 0;
+              if Timer.ElapsedMilliseconds > deltaTicks then //Check for timeout
+              begin
+                HadError := true;
+                Break; //Exit loop instead of raising exception
+              end;
+            end;
+          end;
+        until (ended or (innerProc = 0));
+      except
+        on E: Exception do
+        begin
+          if not ended then
+          begin
+            FErrorMessage := 'Unexpected error at ASM[' + IntToStr(PRG_IP) +
+              '] Source[' + IntToStr(srcLine) + ']: ' + E.Message;
+            ended := true;
+          end;
+          raise;
         end;
-      until (ended or (innerProc = 0));
+      end;
     finally
       Timer.Stop(); //Stop watch
     end;
@@ -1127,8 +1207,7 @@ begin
       //A console host can reach this through YieldProc instead, and the first
       //version of this only worked that way. An FMX host cannot: its YieldProc
       //pumps the message loop, which from a worker is wrong, so it has none.
-      if Assigned(FDrainProc) then
-        FDrainProc();
+      Drain();
       // Two reasons, and the second arrived later than the first.
       //
       // Without a sleep this loop burns a core while the VM waits for the host
@@ -1175,7 +1254,7 @@ begin
       if drainCount >= DRAIN_CHECK_INTERVAL then
       begin
         drainCount := 0;
-        FDrainProc();
+        Drain();
       end;
     end;
     // HIGH PRIORITY FIX: Optimized timeout checking - only check every N instructions

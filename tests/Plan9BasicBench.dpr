@@ -88,6 +88,7 @@ type
     Spec: TBenchSpec;
     CompileMs: Double;
     BestMs: Double;         //ExecuteProgram, or the callback loop at timeout 0
+    WorstMs: Double;        //the slowest of the same runs, for the spread
     DeviceMs: Double;       //the callback loop at the device timeout; -1 = n/a
     Failed: Boolean;
     Detail: String;
@@ -290,6 +291,7 @@ begin
   Result := Default(TBenchResult);
   Result.Name := TPath.GetFileNameWithoutExtension(FileName);
   Result.BestMs := -1;
+  Result.WorstMs := -1;
   Result.DeviceMs := -1;
 
   Source := TStringList.Create();
@@ -326,6 +328,8 @@ begin
       Result.BestMs := RunMs;
       Result.CompileMs := CompileMs;
     end;
+    if RunMs > Result.WorstMs then
+      Result.WorstMs := RunMs;
     if (DeviceMs >= 0) and ((Result.DeviceMs < 0) or (DeviceMs < Result.DeviceMs)) then
       Result.DeviceMs := DeviceMs;
   end;
@@ -334,6 +338,22 @@ end;
 //----------------------------------------------------------------------------
 // Reporting
 //----------------------------------------------------------------------------
+
+//How far apart the fastest and slowest runs of the same benchmark were, as a
+//percentage of the fastest.
+//
+//This column exists because of a mistake made while using this harness: three
+//runs of the callback benchmark differed by 5.8% between builds, and 3% of that
+//was read as the cost of a change that turned out to cost nothing. A number
+//without its spread invites exactly that. Anything smaller than this column is
+//not a result.
+function Spread(const R: TBenchResult): String;
+begin
+  if (R.BestMs <= 0) or (R.WorstMs <= R.BestMs) then
+    Exit('0.0%');
+  Result := Format('%.1f%%', [(R.WorstMs - R.BestMs) * 100.0 / R.BestMs],
+                   TFormatSettings.Invariant);
+end;
 
 function NsPerOp(const R: TBenchResult; Ms: Double): String;
 var
@@ -366,10 +386,11 @@ begin
   WriteLn;
   WriteLn(StringOfChar('-', 92));
   if AnyDevice then
-    WriteLn(Format('%-22s %10s %12s %10s %14s %10s',
-      ['benchmark', 'compile', 'best', 'ns/op', 'at timeout', 'cost']))
+    WriteLn(Format('%-22s %10s %12s %8s %10s %14s %8s',
+      ['benchmark', 'compile', 'best', 'spread', 'ns/op', 'at timeout', 'cost']))
   else
-    WriteLn(Format('%-22s %10s %12s %10s', ['benchmark', 'compile', 'best', 'ns/op']));
+    WriteLn(Format('%-22s %10s %12s %8s %10s',
+      ['benchmark', 'compile', 'best', 'spread', 'ns/op']));
   WriteLn(StringOfChar('-', 92));
 
   for R in Results do
@@ -383,20 +404,23 @@ begin
     //Invariant throughout: a decimal comma in one column and a thousands
     //comma in the next is a table nobody can read twice the same way.
     if R.DeviceMs >= 0 then
-      WriteLn(Format('%-22s %10.2f %12.2f %10s %14.2f %9.2fx',
-        [R.Name, R.CompileMs, R.BestMs, NsPerOp(R, R.BestMs), R.DeviceMs,
-         R.DeviceMs / Max(R.BestMs, 0.0001)], TFormatSettings.Invariant))
+      WriteLn(Format('%-22s %10.2f %12.2f %8s %10s %14.2f %7.2fx',
+        [R.Name, R.CompileMs, R.BestMs, Spread(R), NsPerOp(R, R.BestMs),
+         R.DeviceMs, R.DeviceMs / Max(R.BestMs, 0.0001)],
+        TFormatSettings.Invariant))
     else if AnyDevice then
-      WriteLn(Format('%-22s %10.2f %12.2f %10s %14s %10s',
-        [R.Name, R.CompileMs, R.BestMs, NsPerOp(R, R.BestMs), '-', '-'],
+      WriteLn(Format('%-22s %10.2f %12.2f %8s %10s %14s %8s',
+        [R.Name, R.CompileMs, R.BestMs, Spread(R), NsPerOp(R, R.BestMs), '-', '-'],
         TFormatSettings.Invariant))
     else
-      WriteLn(Format('%-22s %10.2f %12.2f %10s',
-        [R.Name, R.CompileMs, R.BestMs, NsPerOp(R, R.BestMs)],
+      WriteLn(Format('%-22s %10.2f %12.2f %8s %10s',
+        [R.Name, R.CompileMs, R.BestMs, Spread(R), NsPerOp(R, R.BestMs)],
         TFormatSettings.Invariant));
   end;
   WriteLn(StringOfChar('-', 92));
-  WriteLn('best of ' + IntToStr(OptRepeat) + ' run(s); times in milliseconds');
+  WriteLn('best of ' + IntToStr(OptRepeat) + ' run(s); times in milliseconds.');
+  WriteLn('"spread" is how far the slowest run of each benchmark was from the fastest.');
+  WriteLn('A difference between two builds smaller than that is not a result.');
   if AnyDevice then
   begin
     WriteLn(Format('"at timeout" is the same loop with ScriptTimeOut = %d, the way '
@@ -416,11 +440,11 @@ begin
   try
     if Exists then Append(F) else Rewrite(F);
     if not Exists then
-      WriteLn(F, 'benchmark,compile_ms,best_ms,device_ms,ops,calls');
+      WriteLn(F, 'benchmark,compile_ms,best_ms,worst_ms,device_ms,ops,calls');
     for R in Results do
       if not R.Failed then
-        WriteLn(F, Format('%s,%.3f,%.3f,%.3f,%d,%d',
-          [R.Name, R.CompileMs, R.BestMs, R.DeviceMs, R.Spec.Ops,
+        WriteLn(F, Format('%s,%.3f,%.3f,%.3f,%.3f,%d,%d',
+          [R.Name, R.CompileMs, R.BestMs, R.WorstMs, R.DeviceMs, R.Spec.Ops,
            R.Spec.CallbackCalls], TFormatSettings.Invariant));
   finally
     CloseFile(F);
