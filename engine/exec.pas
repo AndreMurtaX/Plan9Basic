@@ -84,6 +84,11 @@ type
     atkInteger, atkInv,
     {J}
     atkJsonObj, atkJump,
+    //A marker, not an instruction. Emitted by an IF that has an ELSE on the
+    //same source line, and turned into a plain JUMP by
+    //TCompiler.AssignIfCRLF before the program ever runs -- so, like
+    //atkPopnJump_CRLF beside it, this needs no handler.
+    atkJump_CRLF,
     {K}
     {L}
     atkLabel, atkLe, atkLeS, atkLoopEnd, atkLoopUntil, atkLoopWhile, atkLt, atkLtS,
@@ -962,6 +967,7 @@ begin
     827: if tokStr = 'REFRESHRATE' then Result := atkRefreshRate;
     829: if tokStr = 'ENDFUNCTION' then Result := atkEndfunction;
     849: if tokStr = 'RETFUNCTION' then Result := atkRetFunction;
+    706: if tokStr = 'JUMP_CRLF' then Result := atkJump_CRLF;
     1023: if tokStr = 'POPNJUMP_CRLF' then Result := atkPopNJump_CRLF;
     1086: if tokStr = 'POPNJUMP_ENDIF' then Result := atkPopNJump_EndIf;
   end;

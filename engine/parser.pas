@@ -70,6 +70,10 @@ type
     status: TBasStatus;
     TMPOutput: TStringTokens;
     forCnt, ifCnt, whileCnt, repeatCnt, selectCnt, doCnt, fError: Integer;
+    //Single-line IFs still open ON THIS SOURCE LINE. Reset at every line
+    //break, which is the whole safety property: an ELSE binds to a one-line IF
+    //only when the two are on the same line.
+    inlineIfCnt: Integer;
     forVarStack: array[0..MAXSTACK] of String; //Stack to track FOR loop control variables
     inFunction: Boolean;
     lastFunc: TBasToken; //Info about the current function
@@ -1198,6 +1202,7 @@ procedure TBasicParser.ClearCounts();
 begin
   forCnt := 0;
   ifCnt := 0;
+  inlineIfCnt := 0;
   whileCnt := 0;
   repeatCnt := 0;
   selectCnt := 0;
@@ -1487,7 +1492,33 @@ begin
   if (lexer.CurrTok() = btkCRLF) or (lexer.currTok() = btkColon) then
     Emmit(',    ');
 
-  lexer.Advance();
+  //The line ended, so no one-line IF is open any more. A COLON does not reset
+  //this -- a colon keeps you on the same line, and `if a then x : else y` is
+  //still one line.
+  //
+  //This is what keeps Demos/space_invaders.bas correct. It has a block IF whose
+  //true branch is a one-line IF, followed by an ELSE belonging to the OUTER
+  //one. If the inline count survived the line break, that ELSE would bind to
+  //the inner IF instead -- inverting the alien direction logic and leaving
+  //`end if` matched against nothing.
+  if lexer.CurrTok() = btkCRLF then
+    inlineIfCnt := 0;
+
+  //An ELSE that ENDED the previous command rather than starting a line.
+  //
+  //The Advance below is right for a CRLF or a colon and wrong here: it would
+  //step straight over the ELSE, ParseElse would never run, and the false branch
+  //would execute unconditionally -- which is what the first version of this
+  //did, silently, and only the assembly dump showed it. ParseElse consumes the
+  //ELSE itself, so the dispatch below continues on the statement after it.
+  if lexer.CurrTok() = btkElse then
+  begin
+    ParseElse();
+    if GetError() then
+      Exit();
+  end
+  else
+    lexer.Advance();
 
   //When the line starts with a floating point number
   if (lexer.CurrTok() = btkFloat) then
@@ -1632,8 +1663,11 @@ var
 begin
   NextCommand;
   id := lexer.CurrTok;
+  //btkElse joins the list because a one-line IF's true branch is a whole
+  //command, and what follows it can now be an ELSE on the same line.
   if (id <> btkCRLF) and (id <> btkColon) and (id <> btkThen) and
-     (id <> btkNull) and (id <> btkInteger) and (id <> btkLabel) then
+     (id <> btkNull) and (id <> btkInteger) and (id <> btkLabel) and
+     (id <> btkElse) then
     if not GetError then
       SetError('Syntax error');
 end;
@@ -1923,11 +1957,15 @@ begin
           NextArith();
           Emmit('MAX');
         end;
-        //after an expression, token must be one of the listed below
+        //after an expression, token must be one of the listed below.
+        //btkElse is here for `if C then r = 10 else r = 20`: without it the
+        //expression parser reads on past the ELSE looking for an operator.
+        //An ELSE after an expression was an error everywhere before, so
+        //ending the expression there cannot change what any program means.
         btkCRLF, btkThen, btkColon, btkRoundClose, btkSquareClose,
         btkDoubleSquareClose, btkEqual, btkNotEqual, btkLower, btkComma,
         btkLowerEqual, btkGreater, btkGreaterEqual, btkAnd, btkOr, btkTo,
-        btkStep, btkNull, btkSemiColon, btkGoto, btkGosub, btkCall:
+        btkStep, btkNull, btkSemiColon, btkGoto, btkGosub, btkCall, btkElse:
           Break;
         else
           SetError('Arithmetic operator expected');
@@ -2021,10 +2059,11 @@ begin
             Emmit('SUB$');
           end;
         end;
-        //token after a string expression must be one of the following
+        //token after a string expression must be one of the following.
+        //btkElse for the same reason as the numeric list above.
         btkNull, btkCRLF, btkColon, btkSemiColon, btkRoundClose, btkSquareClose,
         btkNotEqual, btkEqual, btkAnd, btkOr, btkThen, btkComma, btkLower,
-        btkLowerEqual, btkGreater, btkGreaterEqual:
+        btkLowerEqual, btkGreater, btkGreaterEqual, btkElse:
           Break;
         else
           SetError('String operator expected')
@@ -2466,6 +2505,19 @@ end;
 
 procedure TBasicParser.ParseElse();
 begin
+  //  if C then A else B
+  //
+  //An ELSE with a one-line IF open on the same line belongs to that IF, not to
+  //any block IF around it. The JUMP_CRLF below is what the true branch takes to
+  //skip the false one; AssignIfCRLF resolves both it and the POPNJUMP_CRLF that
+  //now has to land on B rather than at the end of the line.
+  if inlineIfCnt > 0 then
+  begin
+    Emmit('JUMP_CRLF');
+    Dec(inlineIfCnt);
+    lexer.Advance(); //skip ELSE
+    Exit();
+  end;
   if (ifCnt < 1) then
   begin
     status := BasTerminated;
@@ -2878,7 +2930,10 @@ begin
     Inc(ifCnt);
   end
   else
+  begin
     Emmit('POPNJUMP_CRLF');
+    Inc(inlineIfCnt); //open until the end of this line, or until an ELSE
+  end;
 end;
 
 //The indirect call operator does not check for the called function return type.
@@ -4711,23 +4766,66 @@ begin
 end;
 
 //Substitute the single line IF commands
+//Resolve the one-line IF, and the one-line IF that has an ELSE.
+//
+//Without an ELSE the false branch jumps to the end of the line, which is the
+//next line marker. With one it has to jump to the start of the false branch
+//instead -- the instruction after the JUMP_CRLF that ends the true branch --
+//and the JUMP_CRLF itself jumps to the end of the line.
+//
+//The nesting is counted rather than assumed, because `if a then if b then x
+//else y` puts two one-line IFs on one line and the ELSE belongs to the inner
+//one. Scanning for the first JUMP_CRLF without counting would give the outer
+//IF the inner IF's else-branch, which is a wrong answer rather than an error.
 procedure TCompiler.AssignIfCRLF();
 var
-  i, p: Integer;
+  i, p, depth, target: Integer;
 begin
   for i := 0 to postfixCode.Count - 1 do
   begin
-    //Deals only with 'POPNJUMP_CRLF'
+    if postfixCode[i].Token = atkJump_CRLF then
+    begin
+      //The true branch's exit: always the end of the line.
+      p := i;
+      repeat
+        Inc(p);
+        if postfixCode[p].Token = atkComma then
+          Break;
+      until p >= postfixCode.Count - 1;
+      postfixCode[i] := StrItem('JUMP ' + IntToStr(p), atkJump);
+      Continue;
+    end;
+
     if (postfixCode[i].Token <> atkPopNJump_CRLF) then
       Continue;
+
+    depth := 0;
+    target := -1;
     p := i;
     repeat
-      Inc(p); //Start from next line
-      if postfixCode[p].Token = atkComma then
+      Inc(p);
+      if postfixCode[p].Token = atkPopNJump_CRLF then
+        Inc(depth)
+      else if postfixCode[p].Token = atkJump_CRLF then
+      begin
+        //Only the JUMP_CRLF at our own depth is ours; any before it belongs to
+        //a one-line IF nested inside our true branch.
+        if depth = 0 then
+        begin
+          target := p + 1; //the false branch starts after it
+          Break;
+        end;
+        Dec(depth);
+      end
+      else if postfixCode[p].Token = atkComma then
+      begin
+        target := p; //no ELSE on this line: jump past the whole line
         Break;
+      end;
     until p >= postfixCode.Count - 1;
-    //Updates line address
-    postfixCode[i] := StrItem('POPNJUMP ' + IntToStr(p), atkPopNJump);
+    if target < 0 then
+      target := p;
+    postfixCode[i] := StrItem('POPNJUMP ' + IntToStr(target), atkPopNJump);
   end;
 end;
 
