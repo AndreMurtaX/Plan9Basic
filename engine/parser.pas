@@ -144,6 +144,7 @@ type
     procedure ParseReturn();
     procedure EmitDefaultReturnValue();
     function CompoundOp(): String;
+    function CompoundOpAt(AOffset: Integer): String;
     procedure ParseLetList(); //LET a, b, c
     function AtContextualKeyword(const AWord: String): Boolean;
     procedure ParseConst(); //CONST NAME = literal
@@ -316,7 +317,7 @@ end;
 
 procedure TBasicParser.AssignPointerArrayNum();
 var
-  s: String;
+  s, op: String;
   i: Integer;
 begin
   i := 0;
@@ -351,6 +352,28 @@ begin
     Exit();
   end;
   lexer.Advance(); //skip the ']'
+  op := CompoundOpAt(0);
+  if op <> '' then
+  begin
+    //  a#[i] += v
+    //
+    //The pointer and the indices are already on the stack, and both the read
+    //and the write need them. DUPN copies them rather than the parser emitting
+    //the index expression a second time: `a#[f()] += 1` must call f once, and
+    //the three internal registers cannot hold up to ten indices anyway.
+    Emmit('DUPN ' + IntToStr(i));
+    Emmit('PUSHC ' + IntToStr(i));
+    Emmit('CALLEX "narr_get@#' + System.StrUtils.DupeString('n', i-1) + '"');
+    lexer.Advance(); //skip the operator
+    lexer.Advance(); //skip the '='
+    NextNumericExpression();
+    Emmit(op);
+    Inc(i);
+    Emmit('PUSHC ' + IntToStr(i));
+    Emmit('CALLEX# "narr_set#@#' + System.StrUtils.DupeString('n', i-1) + '"');
+    Emmit('POP'); //discard the returned pointer (stack cleanup)
+    Exit();
+  end;
   if lexer.CurrTok() <> btkEqual then
   begin
     status := BasTerminated;
@@ -419,7 +442,7 @@ end;
 
 procedure TBasicParser.AssignPointerArrayStr();
 var
-  s: String;
+  s, op: String;
   i: Integer;
 begin
   i := 0;
@@ -456,6 +479,32 @@ begin
     Exit();
   end;
   lexer.Advance(); //skip the ']'
+  op := CompoundOpAt(0);
+  if op <> '' then
+  begin
+    //  a#$[i] += v
+    //
+    //Only '+', for the reason a plain string variable takes only '+': '-'
+    //between strings already means truncate.
+    if op <> 'ADD' then
+    begin
+      status := BasTerminated;
+      SetError('Only += applies to a string array element');
+      Exit();
+    end;
+    Emmit('DUPN ' + IntToStr(i));
+    Emmit('PUSHC ' + IntToStr(i));
+    Emmit('CALLEX$ "sarr_get$@#' + System.StrUtils.DupeString('n', i-1) + '"');
+    lexer.Advance(); //skip the '+'
+    lexer.Advance(); //skip the '='
+    NextStringExpression();
+    Emmit('ADD$');
+    Inc(i);
+    Emmit('PUSHC ' + IntToStr(i));
+    Emmit('CALLEX# "sarr_set#@#' + System.StrUtils.DupeString('n', i-2) + '$"');
+    Emmit('POP'); //discard the returned pointer (stack cleanup)
+    Exit();
+  end;
   if lexer.CurrTok() <> btkEqual then
   begin
     status := BasTerminated;
@@ -3972,7 +4021,16 @@ end;
 //second-pushed, so PUSH v / <expr> / SUB is v - expr, which is what `v -= expr`
 //says. Precedence needs none either: NextNumericExpression consumes the whole
 //right-hand side, so `score += val * 2` adds val*2 rather than val.
+//The same test, wherever the operator happens to sit relative to the lexer.
+//An assignment to a plain variable is read with the lexer still on the name, so
+//the operator is one token ahead; an assignment to an array element is read
+//after the ']' has been skipped, so the operator is where the lexer already is.
 function TBasicParser.CompoundOp(): String;
+begin
+  Result := CompoundOpAt(1);
+end;
+
+function TBasicParser.CompoundOpAt(AOffset: Integer): String;
 var
   //Fields rather than the record: exec declares a TBasInstr as well, and
   //inside this class the identifier `lexer` is a field, so the type cannot be
@@ -3981,12 +4039,12 @@ var
   opEnd, eqPos: Integer;
 begin
   Result := '';
-  if lexer.TokenInfo(lexer.CurrIP + 2).id <> btkEqual then
+  if lexer.TokenInfo(lexer.CurrIP + AOffset + 1).id <> btkEqual then
     Exit();
-  opId := lexer.TokenInfo(lexer.CurrIP + 1).id;
-  opEnd := lexer.TokenInfo(lexer.CurrIP + 1).pos +
-           lexer.TokenInfo(lexer.CurrIP + 1).len;
-  eqPos := lexer.TokenInfo(lexer.CurrIP + 2).pos;
+  opId := lexer.TokenInfo(lexer.CurrIP + AOffset).id;
+  opEnd := lexer.TokenInfo(lexer.CurrIP + AOffset).pos +
+           lexer.TokenInfo(lexer.CurrIP + AOffset).len;
+  eqPos := lexer.TokenInfo(lexer.CurrIP + AOffset + 1).pos;
   if opEnd <> eqPos then
     Exit();
   case opId of

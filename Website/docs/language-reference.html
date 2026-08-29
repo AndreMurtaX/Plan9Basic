@@ -801,6 +801,17 @@ msg$ += <span class="str">" done"</span>      <span class="cmt">' strings take +
 <span class="cmt">' The operator and the = must touch. This is an error:</span>
 <span class="cmt">'   x + = 1</span></pre></div></div>
 <p>Strings take <code>+=</code> and nothing else: <code>-</code> between strings already means truncate, so <code>-=</code> would not mean what it looks like.</p>
+<p><strong>Array elements take them too</strong>, at any number of dimensions:</p>
+<div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre>arr# = <span class="fn">dim#</span>(<span class="num">10</span>)
+arr#[<span class="num">1</span>] = <span class="num">10</span>
+arr#[<span class="num">1</span>] += <span class="num">10</span>        <span class="cmt">' 20</span>
+
+grid# = <span class="fn">dim#</span>(<span class="num">3</span>, <span class="num">3</span>)
+grid#[row, col] *= <span class="num">2</span>
+
+names# = <span class="fn">sdim#</span>(<span class="num">4</span>)
+names#$[<span class="num">1</span>] += <span class="str">" jr"</span>     <span class="cmt">' string elements take += only</span></pre></div></div>
+<p>The index is evaluated <strong>once</strong>, even though the element has to be both read and written. <code>a#[nextSlot()] += 1</code> calls <code>nextSlot</code> a single time and updates the element it named.</p>
 
 <h3>Arithmetic Operators</h3>
 <table class="doc-table">

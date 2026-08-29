@@ -71,6 +71,7 @@ type
     atkCaseEnd, atkCaseElse, atkCaseStart,
     {D}
     atkData, atkDataS, atkDiv, atkDoStart, atkDoUntil, atkDoWhile, atkDump,
+    atkDupN,
     {E}
     atkElse, atkElseIfBody, atkElseIfTest, atkEnd, atkEndFunction, atkEndIf,
     atkEndWhile, atkEq, atkEqs, atkErr, atkExit,
@@ -429,7 +430,8 @@ type
     procedure fNES(); //pop(s1), pop(s2), (s1!=s2)?push(1):push(0)
     procedure fEQS(); //pop(s1), pop(s2), (s1==s2)?push(1):push(0)
     procedure fAddS();
-    procedure fAppendS(); //pop(s1), pop(s2), push(s1+s2)
+    procedure fAppendS();
+    procedure fDupN(); //copy the top N cells above themselves
     procedure fSubS(); //pop(n1), pop(s1), push(s1[0,length(s1)-n1])
     procedure fAddCRLFS(); //pop(s1), pop(s2), push(s1+'/n'+s2)
     procedure fRead();
@@ -893,6 +895,7 @@ begin
     297: if tokStr = 'ELSE' then Result := atkElse;
     310: if tokStr = 'DUMP' then Result := atkDump;
     314: if tokStr = 'EXIT' then Result := atkExit;
+    311: if tokStr = 'DUPN' then Result := atkDupN;
     316: if tokStr = 'JUMP' then Result := atkJump;
     318: if tokStr = 'DATA$' then Result := atkDataS;
     319: if tokStr = 'NEXT' then Result := atkNext;
@@ -1380,6 +1383,48 @@ procedure TExec.fAddS();
 begin
   Pop();
   StackMem[STKP].s := StackMem[STKP].s + StackMem[STKP + 1].s;
+end;
+
+//Copy the top N stack cells, in order, above themselves.
+//
+//`a#[i] += 1` is why this exists. It needs the array pointer and the index
+//TWICE -- once to read the element and once to write it back -- and there is no
+//way to get them there by re-emitting the index expression: `a#[f()] += 1`
+//would call f twice, which is a different program from the one written.
+//
+//The internal registers cannot hold them either. There are three of them and
+//dim# takes up to ten dimensions, so the shape that works for `a#[i]` runs out
+//at `a#[i,j,k,l]` -- which is the kind of rule that makes a feature not worth
+//having. Copying on the stack has no such limit.
+//
+//The type stack is copied with the values, because the cells being duplicated
+//are not all of one kind: a pointer followed by numbers.
+procedure TExec.fDupN();
+var
+  n, i, base: Integer;
+begin
+  n := asmProg[PRG_IP].i;
+  if n <= 0 then
+    Exit;
+  if STKP < n then
+  begin
+    RTError(rteStackUnderflow, atkNull);
+    Exit;
+  end;
+  if STKP + n >= MAXSTACK then
+  begin
+    RTError(rteStackOverflow, atkNull);
+    Exit;
+  end;
+  base := STKP - n;
+  for i := 1 to n do
+  begin
+    StackMem[STKP + i].n := StackMem[base + i].n;
+    StackMem[STKP + i].p := StackMem[base + i].p;
+    StackMem[STKP + i].s := StackMem[base + i].s;
+    TypeStack[STKP + i] := TypeStack[base + i];
+  end;
+  Inc(STKP, n);
 end;
 
 //Append the string on top of the stack to a variable, in place.
@@ -3623,6 +3668,7 @@ begin
     atkEqs: Result := fEQS;
     atkAdds: Result := fAddS;
     atkAppendS: Result := fAppendS;
+    atkDupN: Result := fDupN;
     atkSubs: Result := fSubS;
     atkAddcrlfs: Result := fAddCRLFS;
     atkRead: Result := fRead;
