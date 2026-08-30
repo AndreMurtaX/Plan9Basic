@@ -104,3 +104,16 @@ bin/
 
 # RAD Studio writes this during the Deploy target
 deployedassets.txt
+
+# ----- Test byproducts -----
+# The Base64 and archive examples write their scratch files into whatever
+# directory they are run from, so these appear at the repository root or under
+# tests/ depending on where the runner was started. Three of them were
+# committed by accident in 6df7f38, the commit that started actually RUNNING
+# the shipped applets rather than only compiling them -- including one whose
+# name is a sentence, left behind by a code path that no longer exists.
+b64_test_input.txt
+b64_test_output.txt
+tests/b64_test_input.txt
+tests/b64_test_output.txt
+This is test file content for BASE64 encoding
