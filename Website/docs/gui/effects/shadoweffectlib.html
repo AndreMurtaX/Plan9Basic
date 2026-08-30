@@ -456,5 +456,80 @@ const sidebar=document.getElementById('sidebar'),overlay=document.getElementById
 const links=document.querySelectorAll('.sidebar-link[href^="#"]'),sections=[...links].map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);window.addEventListener('scroll',()=>{let c='';for(const s of sections){if(s.getBoundingClientRect().top<=120)c=s.id}links.forEach(l=>{l.classList.toggle('active',l.getAttribute('href')==='#'+c)})},{passive:true});
 links.forEach(l=>l.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')}));
 </script>
+<script>
+// Sidebar: the toggle a narrow screen needs, and highlighting the entry for
+// whatever is being read.
+//
+// Both halves were missing from most of these pages. The toggle button is shown
+// below 768px and the sidebar is pushed off-screen there, so without a listener
+// the navigation could not be reached at all on a phone -- a visible button that
+// did nothing. And .sidebar-link.active was styled on every page and applied on
+// almost none.
+//
+// One copy, on every page, because the version this replaces existed twice and
+// the two had already diverged.
+(function(){
+  var sidebar=document.getElementById('sidebar');
+  var toggle=document.getElementById('sidebarToggle');
+  var overlay=document.getElementById('sidebarOverlay');
+
+  function close(){
+    if(sidebar)sidebar.classList.remove('open');
+    if(overlay)overlay.classList.remove('show');
+  }
+  if(toggle&&sidebar)toggle.addEventListener('click',function(){
+    sidebar.classList.toggle('open');
+    if(overlay)overlay.classList.toggle('show');
+  });
+  if(overlay)overlay.addEventListener('click',close);
+
+  var links=Array.prototype.slice.call(document.querySelectorAll('.sidebar-link'))
+    .filter(function(l){var h=l.getAttribute('href');return h&&h.charAt(0)==='#';});
+  links.forEach(function(l){
+    l.addEventListener('click',function(){if(window.innerWidth<=768)close();});
+  });
+
+  var targets=links.map(function(l){
+    return document.getElementById(l.getAttribute('href').slice(1));
+  }).filter(Boolean);
+  if(!targets.length)return;
+
+  // Sorted by where they sit in the PAGE, not by where they sit in the sidebar.
+  // The rule below walks them in order and takes the last one past the line, so
+  // it needs document order -- and a sidebar is free to group its entries
+  // differently. downloads.html does exactly that: it lists the three platforms
+  // together and the three "getting started" sections after them, while the
+  // page interleaves the pairs.
+  targets.sort(function(a,b){
+    return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+  });
+
+  function updateActiveSection(){
+    // The entry to highlight is the last target whose top has passed the line.
+    // Recomputed from all of them rather than from the observer's entries: a
+    // callback reports only what CHANGED, so acting on the batch alone makes
+    // the answer depend on which target happened to cross last.
+    var current=null;
+    for(var i=0;i<targets.length;i++){
+      if(targets[i].getBoundingClientRect().top<=120)current=targets[i];
+    }
+    if(!current)current=targets[0];
+    links.forEach(function(l){
+      l.classList.toggle('active',l.getAttribute('href')==='#'+current.id);
+    });
+  }
+
+  // threshold 0, not a fraction. A threshold is a fraction of the TARGET's own
+  // height, and the detection band below is a couple of hundred pixels tall --
+  // so a section taller than about ten times the band can never have a tenth of
+  // itself inside it, and never becomes active at all. "Input & Output" in the
+  // language reference is 9,231px against a 276px band: it was arithmetically
+  // impossible for it to ever be highlighted.
+  var obs=new IntersectionObserver(updateActiveSection,
+    {threshold:0,rootMargin:'-80px 0px -60% 0px'});
+  targets.forEach(function(t){obs.observe(t);});
+  updateActiveSection();
+})();
+</script>
 </body>
 </html>
