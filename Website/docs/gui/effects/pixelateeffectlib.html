@@ -58,15 +58,38 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* sync-nav: the top bar on a phone */
+.sidebar-site { display: none; }
+@media (max-width: 768px) {
+  .topbar-nav a { display: none; }
+  .sidebar-site { display: block; }
+}
+/* end sync-nav */
 </style>
 </head>
 <body>
 
-<header class="topbar"><a href="../../../index.html" class="topbar-logo"><img src="../../../assets/img/launcher-48.png" alt="" class="topbar-logo-icon"><span>Plan9Basic</span></a><nav class="topbar-nav"><a href="../../../index.html#docs">Docs</a><a href="../../language-reference.html">Language</a>
-    <a href="../../library_guide.html">Libraries</a><button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button></nav><button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button></header>
+<header class="topbar"><a href="../../../index.html" class="topbar-logo"><img src="../../../assets/img/launcher-48.png" alt="" class="topbar-logo-icon"><span>Plan9Basic</span></a><nav class="topbar-nav">
+    <a href="../../../index.html#docs">Docs</a>
+    <a href="../../language-reference.html">Language</a>
+    <a href="../../library_guide.html">Libraries</a>
+    <a href="../../examples.html">Examples</a>
+    <a href="../../../downloads.html">Download</a>
+    <button id="themeBtn" class="theme-btn" onclick="cycleTheme()">THEME: GREEN</button>
+  </nav><button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button></header>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <nav class="sidebar" id="sidebar">
+<!-- sync-nav: site links, shown in the drawer on a phone -->
+  <div class="sidebar-section sidebar-site">
+    <div class="sidebar-section-title">Plan9Basic</div>
+    <a href="../../../index.html#docs" class="sidebar-link">Docs</a>
+    <a href="../../language-reference.html" class="sidebar-link">Language</a>
+    <a href="../../library_guide.html" class="sidebar-link">Libraries</a>
+    <a href="../../examples.html" class="sidebar-link">Examples</a>
+    <a href="../../../downloads.html" class="sidebar-link">Download</a>
+  </div>
+  <!-- end sync-nav -->
   <a href="../../../index.html">&larr; Back to Plan9Basic</a>
   <div class="sidebar-section">
     <div class="sidebar-section-title">PixelateEffectLib</div>

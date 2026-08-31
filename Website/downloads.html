@@ -449,6 +449,12 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* sync-nav: the top bar on a phone */
+@media (max-width: 768px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar-nav { flex-wrap: wrap; justify-content: flex-start; gap: 0.4rem 0.9rem; }
+}
+/* end sync-nav */
 </style>
 </head>
 <body>
@@ -459,11 +465,11 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
     <a href="./index.html">Plan9Basic</a>
   </div>
   <nav class="topbar-nav">
-    <a href="./index.html">Home</a>
-    <a href="./docs/language-reference.html">Language</a>
-    <a href="./docs/library_guide.html">Libraries</a>
-    <a href="./docs/examples.html">Examples</a>
-    <a href="./downloads.html" class="active">Build</a>
+    <a href="index.html#docs">Docs</a>
+    <a href="docs/language-reference.html">Language</a>
+    <a href="docs/library_guide.html">Libraries</a>
+    <a href="docs/examples.html">Examples</a>
+    <a href="downloads.html" class="active">Download</a>
   </nav>
   <div class="topbar-themes">
     <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>

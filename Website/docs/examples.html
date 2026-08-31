@@ -886,6 +886,12 @@ background: #000;
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* sync-nav: the top bar on a phone */
+@media (max-width: 768px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar-nav { flex-wrap: wrap; justify-content: flex-start; gap: 0.4rem 0.9rem; }
+}
+/* end sync-nav */
 </style>
 </head>
 <body>
@@ -905,7 +911,9 @@ background: #000;
     <span style="color:var(--text-secondary)">Examples</span>
   </div>
   <div class="topbar-right">
+    <a href="language-reference.html">Language</a>
     <a href="library_guide.html">Libraries</a>
+    <a href="../downloads.html">Download</a>
     <button class="theme-btn" onclick="cycleTheme()" id="themeBtn">THEME: GREEN</button>
   </div>
 </div>
