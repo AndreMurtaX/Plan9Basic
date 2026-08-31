@@ -44,22 +44,34 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, 'tools')
 RUNNER = os.path.join(ROOT, 'tests', 'bin', 'Plan9BasicTest.exe')
 
-APPLETS = ['Examples', 'Website/assets/examples', 'Demos',
-           'runner/assets/examples']
+#Website/assets/examples is deliberately absent. Its 98 files are the same 98
+#programs as Examples/ -- 97 byte for byte, and the last differing only by a
+#byte order mark -- and check-site-examples.py holds them that way, pairing them
+#by name without the leading number, reading both as utf-8-sig and comparing.
+#Running the folder as well cost about eighteen minutes to execute the same
+#programs a second time, which is a third of what the whole suite cost and the
+#reason nobody ran it before pushing.
+APPLETS = ['Examples', 'Demos', 'runner/assets/examples']
 
 
 def tool(name, *args):
     return [sys.executable, os.path.join(TOOLS, name), *args]
 
 
-def applets(folder):
+def applets():
     #Run them, rather than only compiling them. Compiling proved the source
     #was valid and nothing else, and the day that changed found a library
     #function that always answered 0, an assertion about scrollbox parents
     #that had never been true, and eighty comparisons written for the
     #contract instr had before 1.1 -- including the platform detection in
     #every shipped game.
-    return [RUNNER, '--gui', '--smoke', os.path.join(ROOT, *folder.split('/'))]
+    #
+    #One step for all three folders rather than one per folder: run-applets.py
+    #packs them together, so a folder of twelve quick files is not a worker
+    #standing idle while another folder's slow ones finish. It also gives each
+    #worker its own directory, which is why the applets no longer leave their
+    #scratch files in the repository.
+    return tool('run-applets.py', *APPLETS)
 
 
 def run(label, cmd, slow=False):
@@ -101,7 +113,7 @@ def main():
     ]
     if not quick:
         checks += [('code blocks', tool('check-doc-blocks.py'), True)]
-        checks += [(f'applets in {f}', applets(f), True) for f in APPLETS]
+        checks += [('applets', applets(), True)]
 
     if not os.path.exists(RUNNER) and not quick:
         print('the test runner is not built; build it with tests/build.ps1')
