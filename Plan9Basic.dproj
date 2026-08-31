@@ -495,67 +495,10 @@
             </Delphi.Personality>
             <Deployment Version="5">
                 <DeployFile LocalName="$(BDS)\Redist\iossimulator\libcgunwind.1.0.dylib" Class="DependencyModule">
-                    <Platform Name="iOSSimulator">
-                        <Overwrite>true</Overwrite>
-                    </Platform>
                 </DeployFile>
                 <DeployFile LocalName="$(BDS)\Redist\iossimulator\libpcre.dylib" Class="DependencyModule">
-                    <Platform Name="iOSSimulator">
-                        <Overwrite>true</Overwrite>
-                    </Platform>
                 </DeployFile>
                 <DeployFile LocalName="$(BDS)\Redist\osx32\libcgunwind.1.0.dylib" Class="DependencyModule">
-                    <Platform Name="OSX32">
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\armeabi-v7a\libnative-activity.so" Configuration="Debug" Class="AndroidLibnativeArmeabiv7aFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\armeabi-v7a\libnative-activity.so" Configuration="Release" Class="AndroidLibnativeArmeabiv7aFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Configuration="Debug" Class="AndroidLibnativeArmeabiFile">
-                    <Platform Name="Android">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Configuration="Debug" Class="AndroidLibnativeArmeabiFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Configuration="Release" Class="AndroidLibnativeArmeabiFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\mips\libnative-activity.so" Configuration="Debug" Class="AndroidLibnativeMipsFile">
-                    <Platform Name="Android">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\mips\libnative-activity.so" Configuration="Debug" Class="AndroidLibnativeMipsFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="$(BDS)\lib\android\debug\mips\libnative-activity.so" Configuration="Release" Class="AndroidLibnativeMipsFile">
-                    <Platform Name="Android64">
-                        <RemoteName>libPlan9Basic.so</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
                 </DeployFile>
                 <DeployFile LocalName="All Platforms\Debug\Plan9Basic" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="All Platforms">
@@ -1281,13 +1224,6 @@
                     </Platform>
                 </DeployFile>
                 <DeployClass Name="AdditionalDebugSymbols">
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="Win32">
                         <Operation>0</Operation>
                     </Platform>
@@ -1299,32 +1235,6 @@
                     </Platform>
                     <Platform Name="Android64">
                         <RemoteDir>res\xml</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidLibnativeArmeabiFile">
-                    <Platform Name="Android">
-                        <RemoteDir>library\lib\armeabi</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                    <Platform Name="Android64">
-                        <RemoteDir>library\lib\armeabi</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidLibnativeArmeabiv7aFile">
-                    <Platform Name="Android64">
-                        <RemoteDir>library\lib\armeabi-v7a</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                </DeployClass>
-                <DeployClass Name="AndroidLibnativeMipsFile">
-                    <Platform Name="Android">
-                        <RemoteDir>library\lib\mips</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
-                    <Platform Name="Android64">
-                        <RemoteDir>library\lib\mips</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
@@ -1695,23 +1605,11 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="DebugSymbols">
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="Win32">
                         <Operation>0</Operation>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="DependencyFramework">
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                        <Extensions>.framework</Extensions>
-                    </Platform>
                     <Platform Name="OSX64">
                         <RemoteDir>Contents\MacOS</RemoteDir>
                         <Operation>1</Operation>
@@ -1727,20 +1625,11 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="DependencyModule">
-                    <Platform Name="iOSDevice32">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                         <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSSimARM64">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
                         <Operation>1</Operation>
                         <Extensions>.dylib</Extensions>
                     </Platform>
@@ -1760,20 +1649,11 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Required="true" Name="DependencyPackage">
-                    <Platform Name="iOSDevice32">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                         <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSSimARM64">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
                         <Operation>1</Operation>
                         <Extensions>.dylib</Extensions>
                     </Platform>
@@ -1799,17 +1679,10 @@
                     <Platform Name="Android64">
                         <Operation>0</Operation>
                     </Platform>
-                    <Platform Name="iOSDevice32">
-                        <Operation>0</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>0</Operation>
                     </Platform>
                     <Platform Name="iOSSimARM64">
-                        <Operation>0</Operation>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\Resources\StartUp\</RemoteDir>
                         <Operation>0</Operation>
                     </Platform>
                     <Platform Name="OSX64">
@@ -1843,10 +1716,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXEntitlements">
-                    <Platform Name="OSX32">
-                        <RemoteDir>..\</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="OSX64">
                         <RemoteDir>..\</RemoteDir>
                         <Operation>1</Operation>
@@ -1857,10 +1726,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXInfoPList">
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="OSX64">
                         <RemoteDir>Contents</RemoteDir>
                         <Operation>1</Operation>
@@ -1871,10 +1736,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXResource">
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\Resources</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="OSX64">
                         <RemoteDir>Contents\Resources</RemoteDir>
                         <Operation>1</Operation>
@@ -1893,9 +1754,6 @@
                         <RemoteDir>library\lib\arm64-v8a</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
-                    <Platform Name="iOSDevice32">
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                     </Platform>
@@ -1903,10 +1761,6 @@
                         <Operation>1</Operation>
                     </Platform>
                     <Platform Name="Linux64">
-                        <Operation>1</Operation>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                     <Platform Name="OSX64">
@@ -1942,10 +1796,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSDeviceDebug">
-                    <Platform Name="iOSDevice32">
-                        <RemoteDir>..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <RemoteDir>..\$(PROJECTNAME).app.dSYM\Contents\Resources\DWARF</RemoteDir>
                         <Operation>1</Operation>
@@ -1956,10 +1806,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSEntitlements">
-                    <Platform Name="iOSDevice32">
-                        <RemoteDir>..\</RemoteDir>
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <RemoteDir>..\</RemoteDir>
                         <Operation>1</Operation>
@@ -1970,9 +1816,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSInfoPList">
-                    <Platform Name="iOSDevice32">
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                     </Platform>
@@ -1991,9 +1834,6 @@
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectiOSResource">
-                    <Platform Name="iOSDevice32">
-                        <Operation>1</Operation>
-                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
                     </Platform>
@@ -2231,11 +2071,9 @@
                 </DeployClass>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Android64" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="iOSSimARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Linux64" Name="$(PROJECTNAME)"/>
-                <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSX64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="OSXARM64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>

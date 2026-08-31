@@ -71,9 +71,13 @@ def version():
 
 
 def build(platform, target):
-    cmd = (f'"{RSVARS}" && msbuild Plan9Basic.dproj /t:{target} '
+    #shell=True, and the command as one string. Handing ['cmd', '/c', cmd] to
+    #subprocess instead gets the argument quoted for it -- the string both
+    #starts with a quote and contains spaces -- and cmd receives \"C:\Program
+    #Files (x86)\...\rsvars.bat\", which it reports as not being a command.
+    cmd = (f'call "{RSVARS}" && msbuild Plan9Basic.dproj /t:{target} '
            f'/p:Config=Release /p:Platform={platform} /v:minimal /nologo')
-    res = subprocess.run(['cmd', '/c', cmd], cwd=ROOT, capture_output=True,
+    res = subprocess.run(cmd, shell=True, cwd=ROOT, capture_output=True,
                          text=True, encoding='utf-8', errors='replace')
     return res.returncode, (res.stdout or '') + (res.stderr or '')
 

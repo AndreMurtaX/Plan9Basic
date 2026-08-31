@@ -105,24 +105,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\mips\libnative-activity.so" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Plan9Basic\library\lib\mips\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeMipsFile</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\mips\libnative-activity.so" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Plan9Basic\library\lib\mips\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeMipsFile</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="P9B.Artwork\Android\FM_NotificationIcon_48x48.png" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Plan9Basic\res\drawable-xhdpi\</RemoteDir>
             <RemoteName>ic_notification.png</RemoteName>
@@ -136,24 +118,6 @@
             <RemoteDir>Plan9Basic\res\drawable-xhdpi\</RemoteDir>
             <RemoteName>ic_notification.png</RemoteName>
             <DeployClass>Android_NotificationIcon48</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\armeabi-v7a\libnative-activity.so" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Plan9Basic\library\lib\armeabi-v7a\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeArmeabiv7aFile</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\armeabi-v7a\libnative-activity.so" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Plan9Basic\library\lib\armeabi-v7a\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeArmeabiv7aFile</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -281,24 +245,6 @@
             <RemoteDir>Plan9Basic\res\drawable\</RemoteDir>
             <RemoteName>splash_vector.xml</RemoteName>
             <DeployClass>Android_VectorizedSplash</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Plan9Basic\library\lib\armeabi\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeArmeabiFile</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Condition="'$(Config)'=='Release'">
-            <RemoteDir>Plan9Basic\library\lib\armeabi\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeArmeabiFile</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
@@ -928,15 +874,6 @@
             <RemoteCommand/>
             <Overwrite>True</Overwrite>
         </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\mips\libnative-activity.so" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Plan9Basic\library\lib\mips\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeMipsFile</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
         <DeployFile Include="P9B.Artwork\Android\FM_LauncherIcon_96x96.png" Condition="'$(Config)'=='Debug'">
             <RemoteDir>Plan9Basic\res\drawable-xhdpi\</RemoteDir>
             <RemoteName>ic_launcher.png</RemoteName>
@@ -1013,15 +950,6 @@
             <RemoteDir>Plan9Basic\res\drawable-mdpi\</RemoteDir>
             <RemoteName>ic_launcher.png</RemoteName>
             <DeployClass>Android_LauncherIcon48</DeployClass>
-            <Operation>1</Operation>
-            <LocalCommand/>
-            <RemoteCommand/>
-            <Overwrite>True</Overwrite>
-        </DeployFile>
-        <DeployFile Include="$(BDS)\lib\android\debug\armeabi\libnative-activity.so" Condition="'$(Config)'=='Debug'">
-            <RemoteDir>Plan9Basic\library\lib\armeabi\</RemoteDir>
-            <RemoteName>libPlan9Basic.so</RemoteName>
-            <DeployClass>AndroidLibnativeArmeabiFile</DeployClass>
             <Operation>1</Operation>
             <LocalCommand/>
             <RemoteCommand/>
