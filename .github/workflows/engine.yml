@@ -16,10 +16,15 @@
 # engine/ and Libs/ directly. `--quick` is exactly that set, it needs nothing
 # but Python, and it runs here on a GitHub-hosted machine at no cost.
 #
-# The other half compiles: the test suites, the applets, and the documentation's
-# code blocks -- the last of which is what would have caught those three
-# examples. That half needs RAD Studio, which no GitHub-hosted image has, so it
-# waits for a self-hosted runner.
+# The other half compiles: the language suites, the GUI suite, the applets, and
+# the documentation's code blocks -- the last of which is what would have caught
+# those three examples. That half needs RAD Studio, which no GitHub-hosted image
+# has, so it waits for a self-hosted runner.
+#
+# Most of it is fast. Building the runner and running suite/ and negative/ takes
+# five seconds; the GUI suite's 4,950 assertions take under two; the code blocks
+# take thirteen. The applets are the rest of it, and they are the only reason
+# this job is measured in minutes rather than in seconds.
 #
 # HOW TO SWITCH THE SECOND HALF ON
 #
@@ -107,8 +112,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The full suite: the test programs, the applets, and the documentation's
-      # code blocks. It builds what it needs itself.
+      # Build the runner, then the language suites: suite/ must pass and
+      # negative/ must be rejected. Five seconds for 1,348 assertions and the
+      # fifteen programs the compiler is required to refuse.
+      #
+      # These are not in check-all.py, whose stated scope is the documentation,
+      # so running that alone would build nothing and prove nothing about the
+      # engine -- which is the whole reason this file exists.
+      - run: powershell -ExecutionPolicy Bypass -File tests/build.ps1 -Run
+        shell: cmd
+
+      # The GUI suite: 4,950 assertions about controls, geometry and events.
+      - run: tests\bin\Plan9BasicTest.exe --gui tests/gui
+        shell: cmd
+
+      # And the checks that compile: the documentation's code blocks, and the
+      # applets the site hands out.
       - run: python tools/check-all.py
         shell: cmd
 

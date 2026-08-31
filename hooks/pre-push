@@ -1,0 +1,97 @@
+#!/bin/sh
+# Run before `git push`, so a broken commit is found here rather than by a
+# reader.
+#
+# TURN IT ON WITH
+#
+#     git config core.hooksPath hooks
+#
+# Hooks live in .git/hooks, which git does not track, so a hook nobody can see
+# is a hook nobody maintains. This one is in the tree and core.hooksPath points
+# at it, which means it is reviewed like anything else and arrives with a clone.
+#
+# WHAT IT RUNS, AND WHY THAT MUCH
+#
+# The suite used to cost an hour, so it was not run, and on 2026-08-31 three
+# documentation examples that do not compile were pushed. But almost none of
+# that hour was the useful part. Measured:
+#
+#     build the runner, suite/ and negative/       5 s   1,348 assertions
+#     the GUI suite                                2 s   4,950 assertions
+#     the checks that read files (--quick)         6 s   21 checks
+#     the documentation's code blocks             13 s   1,594 blocks compiled
+#     ------------------------------------------------
+#                                                 26 s
+#
+#     the applets                                ~9 min
+#
+# So everything except the applets costs under half a minute, and the thirteen
+# seconds of code blocks is precisely what would have caught the three bad
+# examples.
+#
+# WHAT IT DOES NOT RUN
+#
+# The applets. Nine minutes is past what anyone tolerates before a push, and a
+# hook people bypass protects nothing. It is not skipped silently -- the last
+# line says so every time, with the command to run them. CI runs them in full
+# once a self-hosted runner exists; see .github/workflows/engine.yml.
+#
+#     git push --no-verify        skip this entirely, when you mean to
+
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+
+# git hands the hook one line per ref: <local ref> <local sha> <remote ref>
+# <remote sha>. A push that only deletes refs has an all-zero local sha and
+# nothing new to check.
+refs=$(cat)
+[ -z "$refs" ] && exit 0
+if ! printf '%s\n' "$refs" | awk '{print $2}' | grep -qv '^0\{40\}$'; then
+    exit 0
+fi
+
+python=python
+command -v python >/dev/null 2>&1 || python=python3
+
+log=$(mktemp 2>/dev/null || echo "${TMP:-/tmp}/pre-push.$$")
+failed=''
+
+# Run one step quietly, and show everything it said only if it fails. A hook
+# that prints four screens of passing output on every push teaches people to
+# stop reading it.
+step() {
+    label=$1
+    shift
+    printf '  %s' "$label"
+    if "$@" >"$log" 2>&1; then
+        printf ' ok\n'
+    else
+        printf ' FAILED\n\n'
+        cat "$log"
+        failed="$label"
+    fi
+}
+
+echo 'pre-push: everything except the applets (about half a minute)'
+
+step 'the runner, suite/ and negative/ ' \
+    powershell -ExecutionPolicy Bypass -File tests/build.ps1 -Run
+[ -n "$failed" ] || step 'the GUI suite                     ' \
+    tests/bin/Plan9BasicTest.exe --gui tests/gui
+[ -n "$failed" ] || step 'the checks that read files        ' \
+    "$python" tools/check-all.py --quick
+[ -n "$failed" ] || step "the documentation's code blocks   " \
+    "$python" tools/check-doc-blocks.py
+
+rm -f "$log"
+
+if [ -n "$failed" ]; then
+    echo
+    echo "pre-push: stopped at: $failed"
+    echo 'pre-push: fix it, or push with --no-verify if you mean to.'
+    exit 1
+fi
+
+echo 'pre-push: ok. The applets did NOT run; for those:'
+echo '  python tools/run-applets.py Examples Demos runner/assets/examples'
+exit 0
