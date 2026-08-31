@@ -107,7 +107,20 @@ jobs:
   compiling:
     name: Checks that build and run
     needs: reading
-    if: needs.reading.outputs.compiling == 'true'
+    # Never on a pull request. A self-hosted runner is somebody's actual
+    # machine, and this repository is public: anyone may open a pull request,
+    # and a job that ran here would execute a stranger's code on that desktop,
+    # as that user, with whatever it can reach. GitHub says as much in its own
+    # documentation and it is the reason self-hosted runners and public
+    # repositories are a bad pair by default.
+    #
+    # Pushes to main come from someone who can already write to the repository,
+    # so they are no new trust. The reading job above still runs for pull
+    # requests -- it is on a GitHub-hosted machine, where a stranger's code can
+    # do nothing worse than fail.
+    if: >-
+      needs.reading.outputs.compiling == 'true' &&
+      github.event_name != 'pull_request'
     runs-on: [self-hosted, windows, rad-studio]
     steps:
       - uses: actions/checkout@v4
