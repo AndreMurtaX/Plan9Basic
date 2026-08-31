@@ -205,6 +205,26 @@ type
     procedure SyncEditorToProgram();
     procedure SyncProgramToEditor();
 
+    // The system bars
+    //
+    // From Android 15 (API 35) an app draws behind the status bar and the
+    // navigation bar, and from 16 there is no opting out. This one targets 36,
+    // so on a phone the clock sat on top of the title and the gesture bar sat
+    // on top of the prompt and the status line.
+    //
+    // FireMonkey does report the space they take: the Android platform
+    // registers IFMXWindowSafeAreaService, DoShow asks it once, and the
+    // platform calls SafeAreaChanged again when it changes. Nothing here was
+    // listening.
+    //
+    // The padding goes on RectBackground rather than on the form or on
+    // LayoutMain, so the dark background still paints edge to edge under the
+    // bars while every child -- header, toolbar, console, editor, input,
+    // status -- is pushed inside the safe area.
+    procedure ApplySafeArea(const AInsets: TRectF);
+    procedure FormSafeAreaChanged(Sender: TObject; const AInsets: TRectF);
+    procedure QuerySafeArea();
+
     // Status bar
     procedure UpdateStatusBar();
     procedure UpdateLineNumbers();
@@ -688,6 +708,15 @@ begin
   //these two are where navigation is noticed.
   Editor.OnKeyUp := EditorKeyUp;
   Editor.OnMouseUp := EditorMouseUp;
+
+  //Assigned here rather than in the designer, so the whole of this belongs to
+  //one file. DoShow asks the safe-area service and raises this before the form
+  //is first painted, and the platform raises it again on rotation, so the
+  //handler alone covers both -- but the service is asked directly as well,
+  //because a form that is already visible when this runs would never see that
+  //first call.
+  OnSafeAreaChanged := FormSafeAreaChanged;
+  QuerySafeArea();
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -2007,6 +2036,31 @@ end;
 // -----------------------------------------------------------------------------
 // Status Bar
 // -----------------------------------------------------------------------------
+
+procedure TfrmMain.ApplySafeArea(const AInsets: TRectF);
+begin
+  if RectBackground = nil then
+    Exit;
+  //Assigning the whole rect at once, so a phone that reports only a top inset
+  //does not keep a bottom one from a previous orientation.
+  RectBackground.Padding.Rect := AInsets;
+end;
+
+procedure TfrmMain.FormSafeAreaChanged(Sender: TObject; const AInsets: TRectF);
+begin
+  ApplySafeArea(AInsets);
+end;
+
+procedure TfrmMain.QuerySafeArea();
+var
+  Svc: IFMXWindowSafeAreaService;
+begin
+  //No conditional compilation: on a desktop the service is simply not
+  //registered and this does nothing, which is the right answer there -- a
+  //window has no system bars to sit under.
+  if TPlatformServices.Current.SupportsPlatformService(IFMXWindowSafeAreaService, Svc) then
+    ApplySafeArea(Svc.GetSafeAreaInsets(Self));
+end;
 
 procedure TfrmMain.UpdateStatusBar();
 var
