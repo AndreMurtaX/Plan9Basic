@@ -899,7 +899,7 @@ names#$[<span class="num">1</span>] += <span class="str">" jr"</span>     <span 
 <span class="kw">END IF</span></pre></div></div>
 <p><code>ELSEIF</code> may be written as one word, and a single-line <code>IF</code> may carry its own <code>ELSE</code>:</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">' ELSE on the same line as its IF</span>
-<span class="kw">IF</span> alive <span class="kw">THEN</span> colour$ = <span class="str">"#44ff44"</span> <span class="kw">ELSE</span> colour$ = <span class="str">"#00cc00"</span>
+<span class="kw">IF</span> alive = <span class="num">1</span> <span class="kw">THEN</span> colour$ = <span class="str">"#44ff44"</span> <span class="kw">ELSE</span> colour$ = <span class="str">"#00cc00"</span>
 
 <span class="cmt">' ELSEIF as one word, mixable with ELSE IF</span>
 <span class="kw">IF</span> x &gt; <span class="num">0</span> <span class="kw">THEN</span>
@@ -911,9 +911,9 @@ names#$[<span class="num">1</span>] += <span class="str">" jr"</span>     <span 
 <span class="kw">END IF</span></pre></div></div>
 <p>An <code>ELSE</code> written on the same line as an <code>IF</code> belongs to that <code>IF</code>. On the next line it belongs to whichever block <code>IF</code> is open, which is what it has always meant:</p>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; plan9basic</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="kw">IF</span> dirX &gt; <span class="num">0</span> <span class="kw">THEN</span>
-  <span class="kw">IF</span> rightEdge <span class="kw">THEN</span> drop = <span class="num">1</span>
+  <span class="kw">IF</span> rightEdge = <span class="num">1</span> <span class="kw">THEN</span> drop = <span class="num">1</span>
 <span class="kw">ELSE</span>                              <span class="cmt">' belongs to the outer IF</span>
-  <span class="kw">IF</span> leftEdge <span class="kw">THEN</span> drop = <span class="num">1</span>
+  <span class="kw">IF</span> leftEdge = <span class="num">1</span> <span class="kw">THEN</span> drop = <span class="num">1</span>
 <span class="kw">END IF</span></pre></div></div>
 
 <h3>FOR...NEXT</h3>
