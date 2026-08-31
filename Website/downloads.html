@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Build &mdash; Plan9Basic</title>
-<meta name="description" content="Download Plan9Basic for Windows 64-bit, Linux 64-bit, and Android. Free and open source BASIC interpreter with 4,000+ built-in functions.">
+<title>Download &amp; Build &mdash; Plan9Basic</title>
+<meta name="description" content="Download Plan9Basic for Windows 64-bit, Windows 32-bit, Linux 64-bit and Android, or build it from source. Free and open source BASIC interpreter with 4,000+ built-in functions.">
 <link rel="icon" type="image/png" href="assets/img/launcher-48.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -230,6 +230,13 @@ strong { color: var(--text-primary); font-weight: 700; }
   padding: 0.6rem 1.1rem; border-radius: 7px;
   cursor: pointer; text-decoration: none;
   transition: all 0.2s; align-self: flex-start;
+}
+.download-btn.ghost {
+  background: transparent; border-color: var(--border); color: var(--text-secondary);
+}
+.download-btn.ghost:hover {
+  background: var(--accent-subtle); border-color: var(--accent-dim);
+  color: var(--text-primary); box-shadow: none;
 }
 .download-btn:hover {
   background: rgba(0,255,65,0.18); border-color: var(--accent);
@@ -497,13 +504,13 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
 
   <div class="page-header">
     <div class="page-header-eyebrow">Plan9Basic &rsaquo; Build</div>
-    <h1 class="page-title">Build Plan9Basic</h1>
+    <h1 class="page-title">Download or Build Plan9Basic</h1>
     <p class="page-subtitle">
       Plan9Basic runs natively on <strong>Windows</strong>, <strong>Linux</strong>, and <strong>Android</strong>.
-      There are no binaries here any more &mdash; the whole project is
-      <a href="https://github.com/AndreMurtaX/Plan9Basic">one repository</a>, and what
-      you build from it is still a single self-contained executable with no runtime and
-      no dependencies to install. Pick your platform for what that takes.
+      Take the ready-made executable for your platform, or build it yourself from
+      <a href="https://github.com/AndreMurtaX/Plan9Basic">the repository</a> &mdash; which is the
+      whole project, the IDE and the libraries and the BASIC engine together. Both routes end at
+      the same thing: one self-contained file, with no runtime and no dependencies to install.
     </p>
   </div>
 
@@ -517,7 +524,26 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         <span>Plan9Basic.exe</span>
         <span class="file-size">Win64</span>
       </div>
-      <a class="download-btn" href="#windows">
+      <a class="download-btn" href="https://github.com/AndreMurtaX/Plan9Basic/releases/latest/download/Plan9Basic-Win64.exe">
+        ⬇ Download
+      </a>
+      <a class="download-btn ghost" href="#windows">
+        🔧 How to build it
+      </a>
+    </div>
+
+    <div class="platform-card">
+      <div class="platform-icon">🪟</div>
+      <div class="platform-name">Windows 32-bit</div>
+      <div class="platform-detail">The same editor and engine built for 32-bit Windows, for an older machine or an older install. Identical language, identical libraries.</div>
+      <div class="platform-file">
+        <span>Plan9Basic.exe</span>
+        <span class="file-size">Win32</span>
+      </div>
+      <a class="download-btn" href="https://github.com/AndreMurtaX/Plan9Basic/releases/latest/download/Plan9Basic-Win32.exe">
+        ⬇ Download
+      </a>
+      <a class="download-btn ghost" href="#windows">
         🔧 How to build it
       </a>
     </div>
@@ -530,7 +556,10 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         <span>Plan9Basic</span>
         <span class="file-size">Linux64</span>
       </div>
-      <a class="download-btn" href="#linux">
+      <a class="download-btn" href="https://github.com/AndreMurtaX/Plan9Basic/releases/latest/download/Plan9Basic-Linux64">
+        ⬇ Download
+      </a>
+      <a class="download-btn ghost" href="#linux">
         🔧 How to build it
       </a>
     </div>
@@ -543,11 +572,50 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         <span>Plan9Basic.apk</span>
         <span class="file-size">Android 64-bit</span>
       </div>
-      <a class="download-btn" href="#android">
+      <a class="download-btn" href="https://github.com/AndreMurtaX/Plan9Basic/releases/latest/download/Plan9Basic-Android64.apk">
+        ⬇ Download
+      </a>
+      <a class="download-btn ghost" href="#android">
         🔧 How to build it
       </a>
     </div>
+
   </div>
+
+
+  <!-- ── VERIFYING ───────────────────────────── -->
+  <section class="doc-section" id="verify">
+    <h2>🔐 About the downloads</h2>
+    <p>
+      The binaries are not code-signed. The first time you run the downloaded
+      <code>.exe</code>, Windows will show <em>&ldquo;Windows protected your PC&rdquo;</em>
+      &mdash; that warning is about the missing signing certificate, not about anything
+      found in the file. Choose <strong>More info → Run anyway</strong> if you decide to
+      trust it. If you would rather not, building it yourself takes a few minutes and is
+      documented below; a binary you compiled never crossed the network, so it never
+      raises the question.
+    </p>
+    <p>
+      On Android the APK is installed by sideloading, which the
+      <a href="#android">Android section</a> walks through. It is not on Google Play.
+    </p>
+    <p>
+      Every release publishes the SHA-256 of each file next to it, so you can confirm
+      that what arrived is what was published. The checksums live with the release rather
+      than on this page, because a checksum printed here would describe one build and
+      then quietly outlive it:
+    </p>
+    <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; verify</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt"># Windows</span>
+certutil -hashfile Plan9Basic.exe SHA256
+
+<span class="cmt"># Linux</span>
+sha256sum Plan9Basic</pre></div></div>
+    <p>
+      Downloads always come from the
+      <a href="https://github.com/AndreMurtaX/Plan9Basic/releases">releases page</a>,
+      where every earlier version stays available.
+    </p>
+  </section>
 
   <!-- ── WINDOWS ───────────────────────────────────────────────── -->
   <section class="doc-section" id="windows">
@@ -578,7 +646,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         <div class="step-num">1</div>
         <div class="step-body">
           <h4>Build the executable</h4>
-          <p>Open <code>Plan9Basic.dproj</code> in RAD Studio, select the <strong>Windows 64-bit</strong> target and build, or run <code>dcc64 Plan9Basic.dpr</code> from the repository root. Either produces <code>Plan9Basic.exe</code>, which you can put in any folder — your Desktop, <code>C:\Tools\</code>, or anywhere convenient.</p>
+          <p>Open <code>Plan9Basic.dproj</code> in RAD Studio, select the <strong>Windows 64-bit</strong> target and build, or run <code>dcc64 Plan9Basic.dpr</code> from the repository root. For the 32-bit build, pick <strong>Windows 32-bit</strong> instead, or run <code>dcc32</code> in place of <code>dcc64</code>. Either produces <code>Plan9Basic.exe</code>, which you can put in any folder — your Desktop, <code>C:\Tools\</code>, or anywhere convenient.</p>
         </div>
       </div>
       <div class="step">
@@ -611,7 +679,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: none; }
         </div>
       </div>
     </div>
-    <div class="info-box">&#9432; <strong>First launch:</strong> the application fetches <code>Translations.ini</code> once, in the background, so the first run wants a network connection. After that it is cached beside the executable and never fetched again. A binary you compiled yourself does not trip SmartScreen, since it never crossed the network.</div>
+    <div class="info-box">&#9432; <strong>First launch:</strong> the application fetches <code>Translations.ini</code> once, in the background, so the first run wants a network connection. After that it is cached beside the executable and never fetched again. A binary you compiled yourself does not trip SmartScreen, since it never crossed the network; a downloaded one does, because it is not code-signed &mdash; see <a href="#verify">About the downloads</a>.</div>
 
     <h3>Passing arguments to scripts</h3>
     <p>Arguments after the script path are available via <code>paramcount</code> and <code>paramstr$(n)</code>:</p>
