@@ -26,6 +26,7 @@ release. Publishing is a decision, and it is not this script's to make.
     python tools/release.py                 build, verify and stage
     python tools/release.py --skip-build    verify and stage what is already built
 """
+import glob
 import hashlib
 import io
 import os
@@ -44,19 +45,31 @@ OUT = os.path.join(ROOT, 'dist', 'release')
 IDE = os.path.join(ROOT, 'UnitMain.pas')
 RSVARS = r'C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\rsvars.bat'
 
-#platform, the target that produces the artifact, where it lands, the name the
+#platform, the targets to run in order, where the artifact lands, the name the
 #site asks for, and what the file must turn out to be.
 TARGETS = [
-    ('Win64', 'Build', r'Win64\Release\Plan9Basic.exe',
+    ('Win64', ('Build',), r'Win64\Release\Plan9Basic.exe',
      'Plan9Basic-Win64.exe', 'pe', 'x86-64'),
-    ('Win32', 'Build', r'Win32\Release\Plan9Basic.exe',
+    ('Win32', ('Build',), r'Win32\Release\Plan9Basic.exe',
      'Plan9Basic-Win32.exe', 'pe', 'x86'),
-    ('Linux64', 'Build', r'Linux64\Release\Plan9Basic',
+    ('Linux64', ('Build',), r'Linux64\Release\Plan9Basic',
      'Plan9Basic-Linux64', 'elf', 'x86-64'),
-    #Deploy rather than Build: see the note at the top.
-    ('Android64', 'Deploy', r'Android64\Release\Plan9Basic\bin\Plan9Basic.apk',
+    #BOTH, in this order, and the order is the whole point. Build compiles and
+    #links libPlan9Basic.so and stops -- no packaging runs and no .apk appears.
+    #Deploy packages whatever .so is already sitting there and does not compile.
+    #Running only Deploy therefore succeeds, reports a fresh APK, and ships a
+    #library from whenever it was last built: on 2026-08-31 that put a four and
+    #a half hour old build into an APK handed over as carrying a fix it did not
+    #contain.
+    ('Android64', ('Build', 'Deploy'),
+     r'Android64\Release\Plan9Basic\bin\Plan9Basic.apk',
      'Plan9Basic-Android64.apk', 'apk', 'arm64-v8a'),
 ]
+
+#Sources whose age the artifacts are compared against. An artifact older than
+#the newest of these was not built from them, whatever the build said.
+SOURCE_GLOBS = ('*.pas', '*.fmx', '*.dpr', 'engine/*.pas', 'engine/Libs/*.pas',
+                'Libs/**/*.pas', 'utils/*.pas')
 
 PE_MACHINE = {0x014c: 'x86', 0x8664: 'x86-64', 0xaa64: 'arm64'}
 ELF_MACHINE = {0x03: 'x86', 0x3e: 'x86-64', 0xb7: 'arm64'}
@@ -108,6 +121,44 @@ def arch_of(path, kind):
     return (','.join(abis) if abis else None), (inner, signed)
 
 
+def newest_source():
+    """When the most recently edited source was touched."""
+    newest = 0.0
+    for pattern in SOURCE_GLOBS:
+        for p in glob.glob(os.path.join(ROOT, pattern), recursive=True):
+            try:
+                newest = max(newest, os.path.getmtime(p))
+            except OSError:
+                pass
+    return newest
+
+
+#The artifacts are checked against the sources they claim to be built from.
+#Reading a build's exit code is not enough, because a step can succeed while
+#doing nothing: msbuild's Deploy target for Android packages whatever
+#libPlan9Basic.so is already on disk, so a release built with Deploy alone
+#reports a fresh APK around a library from whenever it was last compiled. That
+#happened -- an APK was handed over as carrying a fix whose source had been
+#edited four and a half hours after the library inside it was built. A
+#timestamp comparison is crude, and it is exactly the crudeness that catches
+#this.
+def stale_intermediates(newest):
+    problems = []
+    if not newest:
+        return problems
+    for rel in (r'Android64\Release\libPlan9Basic.so',
+                r'Android64\Release\Plan9Basic\library\lib\arm64-v8a\libPlan9Basic.so'):
+        p = os.path.join(ROOT, rel)
+        if not os.path.exists(p):
+            continue
+        age = newest - os.path.getmtime(p)
+        if age > 0:
+            problems.append(
+                f'{rel} is {age / 60:.0f} minute(s) older than the newest source; '
+                f'it was not built from it')
+    return problems
+
+
 def revert(label):
     dirty = subprocess.run(['git', 'status', '--porcelain', '--'] + DIRTIED,
                            cwd=ROOT, capture_output=True, text=True).stdout.strip()
@@ -129,20 +180,28 @@ def main():
 
     skip = '--skip-build' in sys.argv
     problems = []
+    #Read before anything is built, and checked afterwards either way:
+    #--skip-build is precisely the mode in which what is already on disk might
+    #be older than the code it claims to be.
+    newest = newest_source()
 
     if not skip:
         if not os.path.exists(RSVARS):
             print(f'  RAD Studio is not where this expects it: {RSVARS}')
             return 1
-        for platform, target, rel, _name, _kind, _arch in TARGETS:
+        for platform, targets, rel, _name, _kind, _arch in TARGETS:
             path = os.path.join(ROOT, rel)
             if os.path.exists(path):
                 os.remove(path)
-            code, log = build(platform, target)
+            code, log = 0, ''
+            for target in targets:
+                code, log = build(platform, target)
+                if code != 0:
+                    break
             ok = code == 0 and os.path.exists(path)
             size = os.path.getsize(path) if os.path.exists(path) else 0
             print(f'  build {platform:10} {"ok " if ok else "FAILED"}  '
-                  f'{size / 1048576:6.1f} MB')
+                  f'{size / 1048576:6.1f} MB   ({"+".join(targets)})')
             if not ok:
                 problems.append(f'{platform} did not build ({rel} is not there)')
                 for line in log.splitlines():
@@ -151,17 +210,19 @@ def main():
             revert(platform)
         print()
 
+    problems += stale_intermediates(newest)
+
     #Clear the assets this script owns, and leave anything else -- the release
     #notes are written by hand and staged here, and deleting somebody's draft
     #because a build ran is not a thing a build script should do.
     os.makedirs(OUT, exist_ok=True)
-    for _p, _t, _r, name, _k, _a in TARGETS:
+    for _p, _ts, _r, name, _k, _a in TARGETS:
         stale = os.path.join(OUT, name)
         if os.path.exists(stale):
             os.remove(stale)
 
     sums = []
-    for _platform, _target, rel, name, kind, expect in TARGETS:
+    for _platform, _targets, rel, name, kind, expect in TARGETS:
         path = os.path.join(ROOT, rel)
         if not os.path.exists(path):
             problems.append(f'{name}: nothing at {rel}')
@@ -214,7 +275,7 @@ def main():
     tag = 'v' + (re.match(r'[\d.]+', want).group(0).rstrip('.'))
     if tag.count('.') == 1:
         tag += '.0'
-    files = ' '.join(f'dist/release/{n}' for _p, _t, _r, n, _k, _a in TARGETS)
+    files = ' '.join(f'dist/release/{n}' for _p, _ts, _r, n, _k, _a in TARGETS)
     print(f'staged in dist/release, {len(TARGETS)} file(s) and SHA256SUMS.txt')
     print()
     print('  Nothing has been published. To publish, with the release notes')
