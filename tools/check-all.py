@@ -27,6 +27,16 @@ made it.
                                                 its own name promises
     the generated suites     gen_*_suite --check  is the committed .bas still
                                                 what its generator produces
+    the site's claims        check-site-claims  does the version, the function
+                                                count and the platform list on
+                                                a page match the code
+    the navigation           sync-nav --check   does every page carry the one
+                                                navigation, at the right depth
+    the downloads            check-release      do the download buttons point
+                                                at files this project builds,
+                                                by a path that will not rot
+    the editor's keywords    check-editor-keywords  does the IDE uppercase the
+                                                same words the lexer knows
 
 Everything here is read-only. The generators that write files --
 gen-doc-examples.py and check-doc-blocks.py --baseline -- are run by hand, since
