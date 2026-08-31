@@ -577,7 +577,7 @@ body::after {
 <section class="doc-section" id="platform">
 <h2>Platform Considerations</h2>
 <div class="table-wrap"><table><thead><tr><th>Platform</th><th>Approach</th><th>Reason</th></tr></thead><tbody>
-<tr><td>Desktop (Windows, macOS, Linux)</td><td><strong>Synchronous</strong> functions</td><td>Simple, blocking &mdash; main thread is fine</td></tr>
+<tr><td>Desktop (Windows, Linux)</td><td><strong>Synchronous</strong> functions</td><td>Simple, blocking &mdash; main thread is fine</td></tr>
 <tr><td>Mobile (Android, iOS)</td><td><strong>Synchronous</strong> functions</td><td>The same calls. A long request blocks the UI thread, so keep requests small and set <code>http_timeout#</code></td></tr>
 </tbody></table></div>
 <div class="code-block"><div class="code-titlebar"><span class="code-titlebar-title">&#9583; desktop.bas</span><div class="code-titlebar-controls"><span class="code-titlebar-btn">&#9472;</span><span class="code-titlebar-btn">&#9723;</span><span class="code-titlebar-btn close">&#10005;</span></div></div><div class="code-body"><pre><span class="cmt">&#x27; Desktop - synchronous (simple)</span>

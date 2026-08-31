@@ -87,6 +87,7 @@ def main():
         ('site examples', tool('check-site-examples.py'), False),
         ('pages layout', tool('check-pages.py'), False),
         ('editor keywords', tool('check-editor-keywords.py'), False),
+        ('site claims', tool('check-site-claims.py'), False),
         ('examples catalogue', tool('check-examples-catalog.py'), False),
         ('module state', tool('check-module-state.py'), False),
         ('event binding', tool('check-event-binding.py'), False),

@@ -37,8 +37,15 @@ VERSION_IN_CODE = re.compile(r"VERSION\s*=\s*'([^']+)'")
 VERSION_ON_PAGE = re.compile(r'v(\d+\.\d+(?:\.\d+)?(?: \(BETA\))?)')
 VERSION_PAGES = [
     ('index.html', 3),                      # boot banner, badge, boot animation
-    (os.path.join('docs', 'language-reference.html'), 1),
+    (os.path.join('docs', 'language-reference.html'), 2),   # header, footer
 ]
+
+# Counting only the CORRECT mentions is what let the footer of the reference
+# page read v1.0 until 2026-08-30: the header said v1.8 (BETA), the count came
+# to the 1 expected here, and the check passed. check-site-claims.py closes that
+# hole from the other side -- it rejects any version on any page that is not the
+# engine's -- so this table now only has to say how many times each page is
+# meant to state it at all.
 
 
 # utils/Translations.ini is the source; the IDE downloads
