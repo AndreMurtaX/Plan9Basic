@@ -1,0 +1,128 @@
+# The engine and the libraries, checked on push.
+#
+# Until this file existed, they were not. The two workflows already here filter
+# on `paths: ['Website/**']`, so a commit touching engine/ or Libs/ -- 125 files
+# and 131,694 lines -- triggered nothing whatsoever, and neither did one touching
+# tests/. The 96 test programs and the six thousand assertions ran only when
+# somebody remembered to run them, on one machine. On 2026-08-31 three
+# documentation examples that do not compile reached main exactly that way.
+#
+# TWO HALVES, AND THE FIRST ONE WORKS TODAY
+#
+# Most of the checks read the Delphi sources rather than compile them:
+# check-docs compares every documented signature against what the libraries
+# register, check-fmx-boundary holds the GUI/engine line, check-callbacks,
+# check-engine-lookup, check-event-docs and check-module-state all read
+# engine/ and Libs/ directly. `--quick` is exactly that set, it needs nothing
+# but Python, and it runs here on a GitHub-hosted machine at no cost.
+#
+# The other half compiles: the test suites, the applets, and the documentation's
+# code blocks -- the last of which is what would have caught those three
+# examples. That half needs RAD Studio, which no GitHub-hosted image has, so it
+# waits for a self-hosted runner.
+#
+# HOW TO SWITCH THE SECOND HALF ON
+#
+#   1. Settings -> Actions -> Runners -> New self-hosted runner, on the machine
+#      that has RAD Studio 37. Give it the labels: self-hosted, windows,
+#      rad-studio.
+#   2. Settings -> Secrets and variables -> Actions -> Variables:
+#      set ENGINE_RUNNER to true.
+#
+# Until that variable says true, the compiling job is skipped and says so in the
+# run summary. It does not queue, and it does not go red -- which is the failure
+# pages.yml records from doing this the other way round: a job that needed
+# something absent ran on every push and mailed a red build for it.
+name: Engine
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'engine/**'
+      - 'Libs/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'UnitMain.pas'
+      - '**.dpr'
+      - '**.dproj'
+      - '.github/workflows/engine.yml'
+  pull_request:
+    paths:
+      - 'engine/**'
+      - 'Libs/**'
+      - 'tests/**'
+      - 'tools/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A second push while the first is still building tells us nothing new about
+# the first, and these runs are minutes long.
+concurrency:
+  group: engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reading:
+    name: Checks that read the sources
+    runs-on: ubuntu-latest
+    outputs:
+      compiling: ${{ steps.gate.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/check-all.py --quick
+
+      - id: gate
+        shell: bash
+        env:
+          ENGINE_RUNNER: ${{ vars.ENGINE_RUNNER }}
+        run: |
+          if [ "$ENGINE_RUNNER" = 'true' ]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            {
+              echo '### The compiling checks did not run'
+              echo
+              echo 'They need RAD Studio, so they need a self-hosted runner.'
+              echo 'The header of `.github/workflows/engine.yml` says how to'
+              echo 'register one and set the `ENGINE_RUNNER` variable that'
+              echo 'turns this half on.'
+              echo
+              echo 'What did run: every check that reads the sources without'
+              echo 'building them.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  compiling:
+    name: Checks that build and run
+    needs: reading
+    if: needs.reading.outputs.compiling == 'true'
+    runs-on: [self-hosted, windows, rad-studio]
+    steps:
+      - uses: actions/checkout@v4
+
+      # The full suite: the test programs, the applets, and the documentation's
+      # code blocks. It builds what it needs itself.
+      - run: python tools/check-all.py
+        shell: cmd
+
+      # A build must not show up as a source change. msbuild rewrites the
+      # default <Platform> in the project file and an Android build puts the
+      # attached device's serial back into .deployproj; on a developer's machine
+      # those get reverted by hand, and on a runner they would quietly ride
+      # along into the next checkout.
+      - if: always()
+        shell: bash
+        run: |
+          dirty=$(git status --porcelain -- '*.dproj' '*.deployproj' '*.res')
+          if [ -n "$dirty" ]; then
+            echo "the build modified project files:"
+            echo "$dirty"
+            git checkout -- '*.dproj' '*.deployproj' '*.res'
+          fi
