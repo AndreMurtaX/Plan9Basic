@@ -101,6 +101,10 @@ def main():
         ('editor keywords', tool('check-editor-keywords.py'), False),
         ('site claims', tool('check-site-claims.py'), False),
         ('navigation', tool('sync-nav.py', '--check'), False),
+        #Offline only. The --online half asks GitHub whether the release is
+        #really there, and a check that goes red when somebody else's service
+        #hiccups is a check people learn to ignore.
+        ('downloads', tool('check-release.py'), False),
         ('examples catalogue', tool('check-examples-catalog.py'), False),
         ('module state', tool('check-module-state.py'), False),
         ('event binding', tool('check-event-binding.py'), False),
