@@ -12,7 +12,8 @@
 '  and mechanics are not anybody's to own. Nothing here comes from
 '  another implementation: no sprite was traced, no level copied,
 '  no sound sampled. Every shape on screen is a rectangle# or an
-'  ellipse# drawn by this file.
+'  ellipse# drawn by this file, and every sound was synthesised from
+'  plain oscillators by tools/make-girder-sounds.py.
 '
 '  Controls
 '    LEFT / RIGHT   walk
@@ -50,6 +51,15 @@ if PLATFORM$ = "Android" then IS_MOBILE = 1
 if PLATFORM$ = "iOS" then IS_MOBILE = 1
 if instr(PLATFORM$, "Android") >= 0 then IS_MOBILE = 1
 if instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
+
+' --- Sound ----------------------------------------------------
+' Each platform gets the format it plays natively, as in the other games with
+' sound: WAV on Windows, OGG on Linux and Android. Only those two are on the
+' site, so anything else asks for OGG too. The effects were synthesised by
+' tools/make-girder-sounds.py, which is where they can be changed.
+let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/girder/"
+let SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
 
 ' --- Geometry -------------------------------------------------
 let GAME_W = 560
@@ -133,6 +143,17 @@ let D_ROLL = 1
 let D_FALL = 2
 let D_LADDER = 3
 
+let SND_START = 1
+let SND_JUMP = 2
+let SND_SCORE = 3
+let SND_HAMMER = 4
+let SND_SMASH = 5
+let SND_THROW = 6
+let SND_DIE = 7
+let SND_CLEAR = 8
+let SND_OVER = 9
+let NUM_SND = 10          ' the tenth is a second smash, so two can overlap
+
 ' --- Palette --------------------------------------------------
 let BG$ = "#0b0a16"
 let STAR_C$ = "#3a3760"
@@ -186,6 +207,10 @@ let pLad = 0              ' the ladder he is on, while climbing
 let hammerUntil = 0
 let hamPose = -1          ' which hammer sprite is showing, -1 for none
 let legPhase = 0
+
+let snd# = pdim#(NUM_SND)
+let soundInitDone = 0     ' set on the first tick of the loop, see GameLoop
+let smashFlip = 0
 
 let throwAt = 0
 let armUp = 0
@@ -684,7 +709,52 @@ function ResetLevel() local i
   return 0
 end function
 
+' ============================================================
+'  SOUND
+'
+'  One player per effect, loaded on the first tick of the loop
+'  rather than at start: Android's media player needs the event
+'  loop running, and space_invaders.bas found that out first.
+'  Until then Sfx() does nothing, which is also what keeps the
+'  test runner, whose timers never fire, silent.
+' ============================================================
+
+function LoadSound#(name$, vol) local p#
+  p# = media_player#()
+  media_load#(p#, SOUND_BASE$ + name$ + "." + SOUND_EXT$)
+  media_volume#(p#, vol)
+  return p#
+end function
+
+function InitSounds()
+  snd##[SND_START] = LoadSound#("start", 0.7)
+  snd##[SND_JUMP] = LoadSound#("jump", 0.6)
+  snd##[SND_SCORE] = LoadSound#("score", 0.7)
+  snd##[SND_HAMMER] = LoadSound#("hammer", 0.7)
+  snd##[SND_SMASH] = LoadSound#("smash", 0.8)
+  snd##[SND_THROW] = LoadSound#("throw", 0.5)
+  snd##[SND_DIE] = LoadSound#("die", 0.8)
+  snd##[SND_CLEAR] = LoadSound#("clear", 0.8)
+  snd##[SND_OVER] = LoadSound#("over", 0.8)
+  snd##[NUM_SND] = LoadSound#("smash", 0.8)
+  return 0
+end function
+
+function Sfx(n)
+  if soundInitDone = 0 then return 0
+  ' Two drums smashed a few frames apart should both be heard, so smashes
+  ' take turns between two players.
+  if n = SND_SMASH then
+    smashFlip = 1 - smashFlip
+    if smashFlip = 1 then n = NUM_SND
+  end if
+  media_stop(snd##[n])
+  media_play(snd##[n])
+  return 0
+end function
+
 function NewGame()
+  Sfx(SND_START)
   score = 0
   lives = 3
   level = 1
@@ -705,6 +775,7 @@ end function
 
 function LevelClear()
   score = score + bonus
+  Sfx(SND_CLEAR)
   gstate = G_CLEAR
   stateUntil = tick + 150
   Message("RESCUED!", "bonus " + str$(cint(bonus)))
@@ -718,11 +789,13 @@ function Die(big$)
   rectangle_opacity#(player#, 0.35)
   Hud()
   if lives < 1 then
+    Sfx(SND_OVER)
     gstate = G_OVER
     if score > best then best = score
     Message("GAME OVER", "R to play again   -   best " + str$(cint(best)))
     return 0
   end if
+  Sfx(SND_DIE)
   gstate = G_DYING
   stateUntil = tick + 90
   Message(big$, "")
@@ -783,6 +856,7 @@ function StepWalk() local dxp, cx, li
       pstate = P_JUMP
       pvy = 0 - JUMP_V
       pvx = dxp
+      Sfx(SND_JUMP)
       return 0
     end if
     if moveU = 1 then
@@ -845,6 +919,7 @@ function PickHammer() local i
       hOn#[i] = 0
       rectangle_visible#(hRect##[i], 0)
       hammerUntil = tick + HAMMER_TICKS
+      Sfx(SND_HAMMER)
     end if
   next i
   return 0
@@ -857,6 +932,7 @@ function JumpScore(cx) local i
       if abs(dx#[i] - cx) < 12 AND py < dy#[i] - DRUM_R + 2 then
         dScored#[i] = 1
         score = score + 100
+        Sfx(SND_SCORE)
         Pop("100", dx#[i], dy#[i] - 20)
         Hud()
       end if
@@ -892,6 +968,7 @@ function StepRobot()
   end if
   if tick >= throwAt then
     SpawnDrum()
+    Sfx(SND_THROW)
     armUp = 0
     rectangle_move#(armR#, cint(54 * SCALE), cint(20 * SCALE))
     throwAt = tick + ThrowGap()
@@ -1031,6 +1108,7 @@ function Collide() local i, x0, y0, sz, bx0, by0
         if Overlap(px - 20, py - PLR_H - 18, PLR_W + 40, PLR_H + 18, x0, y0, sz, sz) = 1 then
           KillDrum(i)
           score = score + 300
+          Sfx(SND_SMASH)
           Pop("300", dx#[i], dy#[i])
           Hud()
         end if
@@ -1064,6 +1142,11 @@ end function
 ' ============================================================
 
 function GameLoop(sender#)
+  if soundInitDone = 0 then
+    soundInitDone = 1
+    InitSounds()
+    return 0
+  end if
   tick = tick + 1
   Flicker()
   if paused = 1 then return 0
