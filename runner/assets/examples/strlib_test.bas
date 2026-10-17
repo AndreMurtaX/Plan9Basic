@@ -52,8 +52,8 @@ text$ = "Plan9Basic Programming"
 PRINTLN "Text: "; text$
 PRINTLN "containsstr('Basic'): "; containsstr(text$, "Basic")
 PRINTLN "containstext('basic'): "; containstext(text$, "basic")
-PRINTLN "startsstr('Plan', text$): "; startsstr("Plan", text$)
-PRINTLN "endsstr('ming', text$): "; endsstr("ming", text$)
+PRINTLN "startsstr(text$, 'Plan'): "; startsstr(text$, "Plan")
+PRINTLN "endsstr(text$, 'ming'): "; endsstr(text$, "ming")
 PRINTLN ""
 ' Test manipulation
 PRINTLN "--- String Manipulation ---"

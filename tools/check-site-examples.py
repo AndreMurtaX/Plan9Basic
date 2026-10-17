@@ -30,6 +30,25 @@ Naming one canonical and generating the other would have worked too. Keeping
 both and checking them is what this does, because the two are read by different
 things -- one is the repository's own examples, one is the site's downloads --
 and neither is obviously the copy of the other.
+
+There is a third directory, and for two months nothing asked it. When the applet
+runner was folded in on 2026-08-19 (f8d1905) it brought `runner/assets/examples/`
+with it: 21 programs, 17 of them under the same name as a catalogue file. Two of
+those 17 were the runner repository's older copies, from before fixes that had
+already landed here. `Base64Lib_tests.bas` called `savetext$` with its arguments
+in the order b3e871b had corrected, and `strlib_test.bas` called `startsstr` and
+`endsstr` pattern-first, as 4570de8 had corrected. This check still printed "all
+identical", truthfully, about the two directories it knew. The runner's copies
+are now held to the catalogue wherever the names match; its four programs of its
+own (`hello_ai.bas` and the like) have nothing to match and are left alone.
+
+The Base64 one was not caught by the applet run either, and that is worth
+knowing. It writes `b64_test_input.txt` without checking `savetext$` succeeded,
+and the runner keeps one working directory per worker for every file on it. In
+`check-all.py`, which runs all three folders together, the timing cache packed
+the good `Examples/21_Base64Lib_tests.bas` onto the same worker just ahead of
+the bad copy, which then found the good copy's file and passed. Run alone, the
+runner's folder failed every time.
 """
 import os
 import re
@@ -52,6 +71,9 @@ ENTRY = re.compile(r"id:\s*'([^']+)'.*?code:\s*`(.*?)`\s*[,}]", re.S)
 REPO_EXAMPLES = os.path.join(ROOT, 'Examples')
 SITE_EXAMPLES = os.path.join(ROOT, 'Website', 'assets', 'examples')
 LEADING_NUMBER = re.compile(r'^\d+[_-]?')
+
+#runner/assets/examples/Base64Lib_tests.bas <-> Website/assets/examples/Base64Lib_tests.bas
+RUNNER_EXAMPLES = os.path.join(ROOT, 'runner', 'assets', 'examples')
 
 
 def embedded():
@@ -105,6 +127,27 @@ def mirrored():
     return out, len(set(repo) & set(site))
 
 
+def runner_copies():
+    """The runner's examples that share a name with the catalogue."""
+    if not os.path.isdir(RUNNER_EXAMPLES) or not os.path.isdir(SITE_EXAMPLES):
+        return [], 0
+    site = {f.lower(): f for f in os.listdir(SITE_EXAMPLES) if f.endswith('.bas')}
+    out, counted = [], 0
+    for f in sorted(os.listdir(RUNNER_EXAMPLES)):
+        if not f.endswith('.bas') or f.lower() not in site:
+            continue
+        counted += 1
+        a = read(os.path.join(RUNNER_EXAMPLES, f))
+        b = read(os.path.join(SITE_EXAMPLES, site[f.lower()]))
+        if a != b:
+            la, lb = a.split('\n'), b.split('\n')
+            d = sum(1 for x, y in zip(la, lb) if x != y)
+            d += abs(len(la) - len(lb))
+            out.append(('runner/assets/examples/' + f,
+                        f'{d} line(s) differ from the catalogue copy'))
+    return out, counted
+
+
 def main():
     if not os.path.isfile(PAGE):
         print('the examples page is not where this expects it: ' + PAGE)
@@ -128,6 +171,8 @@ def main():
 
     mirror, counted = mirrored()
     problems += mirror
+    runner, shared = runner_copies()
+    problems += runner
 
     for name, why in problems:
         print(f'  {name}: {why}')
@@ -137,8 +182,8 @@ def main():
         print('The site is what a reader copies, so it is what they run.')
         return 1
     print(f'ok  {len(found)} example(s) on the page, {len(PAIRS)} paired with '
-          f'the repository, and {counted} in both example directories, '
-          f'all identical')
+          f'the repository, {counted} in both example directories, and '
+          f'{shared} shared with the runner\'s, all identical')
     return 0
 
 
