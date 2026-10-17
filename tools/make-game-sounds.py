@@ -16,7 +16,8 @@ Android. Lunar Lander's thrust and crash were remade for the same reason (1.13
 and 1.15), and thrust for a second one: it was 143 s, 12.6 MB of WAV that every
 Windows player downloaded on each start, for a clip the game never needs past
 20 s. Snake's eat and Lunar's land, lowfuel and start are the clips on the site
-this does not make (though it writes eat's MP3, see TRANSCODE).
+this does not make (though it writes eat's MP3, see TRANSCODE), and so are
+all of Missile Command's (MP3s likewise).
 
 Each effect is written three times, because a game asks for the format its
 platform plays natively: WAV on Windows, OGG on Linux and Android, MP3 anywhere
@@ -310,8 +311,12 @@ GAMES = {
 # Clips on the site that this script does not synthesise, but whose MP3 it
 # writes from the WAV already there, so that every clip a game asks for exists
 # in every format it asks for. Snake's eat is older than this script and keeps
-# its sound; it had a WAV and an OGG and no MP3.
-TRANSCODE = {'snake': ('eat',)}
+# its sound; it had a WAV and an OGG and no MP3. Missile Command's six are the
+# same story, and two of them are stereo at 44.1 kHz, which encode() keeps.
+TRANSCODE = {
+    'snake': ('eat',),
+    'missile': ('city_hit', 'explode', 'game_over', 'launch', 'wave_clear', 'wave_start'),
+}
 
 
 def _ogg_crc_table():
@@ -356,7 +361,7 @@ def pin_ogg_serial(path, serial):
 def write_game(game):
     out_dir = os.path.join(SOUNDS, game)
     os.makedirs(out_dir, exist_ok=True)
-    for name, make in GAMES[game].items():
+    for name, make in GAMES.get(game, {}).items():
         s = make()
         # Below full scale on purpose: Vorbis overshoots the peaks it is given,
         # and at a ceiling of 0.95 two of these came back from the encoder at
@@ -377,7 +382,7 @@ def write_game(game):
         print(f'{game:9s}{name:11s}{len(s) / rate:5.2f} s  (MP3 from the WAV)')
 
 
-LONG = RATE * 4
+LONG_SECONDS = 4
 
 
 def encode(path, s, fmt, subtype, rate=RATE):
@@ -389,19 +394,21 @@ def encode(path, s, fmt, subtype, rate=RATE):
     to 0.01 against one call for the same samples, so the short clips keep the
     single call and the bytes they were first published with.
     """
-    if len(s) <= LONG:
+    if len(s) <= rate * LONG_SECONDS:
         sf.write(path, s, rate, format=fmt, subtype=subtype)
         return
-    with sf.SoundFile(path, 'w', rate, 1, format=fmt, subtype=subtype) as f:
+    channels = 1 if s.ndim == 1 else s.shape[1]
+    with sf.SoundFile(path, 'w', rate, channels, format=fmt, subtype=subtype) as f:
         for i in range(0, len(s), 4096):
             f.write(s[i:i + 4096])
 
 
 def main():
-    wanted = sys.argv[1:] or list(GAMES)
+    known = list(GAMES) + [g for g in TRANSCODE if g not in GAMES]
+    wanted = sys.argv[1:] or known
     for game in wanted:
-        if game not in GAMES:
-            sys.exit(f'no such game: {game} (known: {", ".join(GAMES)})')
+        if game not in known:
+            sys.exit(f'no such game: {game} (known: {", ".join(known)})')
         write_game(game)
 
 
