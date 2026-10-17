@@ -28,7 +28,7 @@
 '    - Penalty for angle at landing
 '
 '  Sound Effects (hosted at https://plan9basic.com/assets/sounds/lunar/):
-'    thrust.{wav|mp3|ogg}   - Engine burn loop (~2s, loops while firing)
+'    thrust.{wav|mp3|ogg}   - Engine burn (24s, longer than a full tank)
 '    land.{wav|mp3|ogg}     - Successful landing chime
 '    crash.{wav|mp3|ogg}    - Explosion on impact
 '    lowfuel.{wav|mp3|ogg}  - Warning beep (triggers once below 30% fuel)
@@ -493,9 +493,10 @@ END FUNCTION
 ' ============================================================
 '
 '  Required audio files at https://plan9basic.com/assets/sounds/lunar/ :
-'    thrust.wav / thrust.mp3 / thrust.ogg   (~2s engine burn, will loop)
+'    thrust.wav / thrust.mp3 / thrust.ogg   (24s engine burn, see OnThrustEnd)
 '    land.wav   / land.mp3   / land.ogg     (~2s success chime)
 '    crash.wav  / crash.mp3  / crash.ogg    (~2s explosion boom)
+'  thrust and crash are synthesised by tools/make-game-sounds.py.
 '    lowfuel.wav/ lowfuel.mp3/ lowfuel.ogg  (~1s warning beep)
 '    start.wav  / start.mp3  / start.ogg    (~1s level-start jingle)
 FUNCTION InitSounds()
@@ -523,9 +524,14 @@ FUNCTION InitSounds()
   media_volume#(sndStart#, 0.60)
 END FUNCTION
 ' Called automatically when the thrust clip ends.
-' If the engine is still firing, restart the clip to create a seamless loop.
+' If the engine is still firing, restart the clip.
+' media_stop first: a player that has reached its end stays there, and
+' media_play alone was measured on 2026-10-17 to play nothing -- the loop
+' ran once and went quiet. The clip is 24 s, longer than a full tank lasts,
+' so this is a safety net more than a loop.
 FUNCTION OnThrustEnd(sender#)
   IF thrustOn = 1 AND fuel > 0 AND running = 1 THEN
+    media_stop(sndThrust#)
     media_play(sndThrust#)
   END IF
 END FUNCTION

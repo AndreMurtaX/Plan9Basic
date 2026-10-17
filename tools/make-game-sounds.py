@@ -12,10 +12,15 @@ URLs with nothing behind them: the games played on, silent at exactly the
 moments a sound mattered most. The invaders' shoot and explode, which were
 there, were remade here too: they had been mastered to full scale, and the
 Vorbis encode of each came back peaking at 1.17 and 1.23, clipped on Linux and
-Android. Snake's eat is the one clip on the site this does not make.
+Android. Lunar Lander's thrust and crash were remade for the same reason (1.13
+and 1.15), and thrust for a second one: it was 143 s, 12.6 MB of WAV that every
+Windows player downloaded on each start, for a clip the game never needs past
+20 s. Snake's eat and Lunar's land, lowfuel and start are the clips on the site
+this does not make.
 
 Each effect is written twice, because a game asks for the format its platform
-plays natively: WAV on Windows, OGG on Linux and Android.
+plays natively: WAV on Windows, OGG on Linux and Android. Lunar's are written a
+third time, as MP3, because lunar_lander.bas asks for that everywhere else.
 
 Needs numpy and soundfile (whose bundled libsndfile encodes Vorbis):
     python -m pip install numpy soundfile
@@ -239,6 +244,50 @@ def inv_wave_clear():
     return seq(*run, rest(0.04), held * decay(int(RATE * secs), 0.5))
 
 
+# --- Lunar Lander --------------------------------------------------------
+
+def loop_seam(s, fade):
+    """Fold the last `fade` samples over the first, so the clip loops without a seam."""
+    head, body, tail = s[:fade], s[fade:-fade], s[-fade:]
+    ramp = np.linspace(0.0, 1.0, fade)
+    return np.concatenate([head * ramp + tail * (1 - ramp), body])
+
+
+def lunar_thrust():
+    # 24 seconds because the longest burn the game allows is about 20: a full
+    # tank at level 1 is 145 units at 0.2 a frame, 725 frames, and the loop runs
+    # nearer 37 frames a second than the 62 its timer asks for. So a burn never
+    # reaches the end, and never meets the gap of up to 100 ms that a restart
+    # from OnThrustEnd costs (the media player polls for the end every 100 ms).
+    # The file it replaces did the same job by being 143 s and 12.6 MB.
+    secs = 24.0
+    fade = int(RATE * 0.5)
+    total = secs + 0.5
+    n = int(RATE * total)
+    roar = lowpass(noise(total, seed=41), 14) * 2.2
+    hiss = lowpass(noise(total, seed=42), 2) * 0.12
+    flutter = 1.0 + 0.12 * np.sin(2 * np.pi * 7.5 * t_of(total)) \
+                  + 0.06 * np.sin(2 * np.pi * 2.3 * t_of(total))
+    s = loop_seam((roar + hiss) * flutter, fade)
+    # A few milliseconds at each end so a stop or a restart does not click.
+    return s * env(len(s), attack=0.004, release=0.004)
+
+
+def lunar_crash():
+    secs = 2.0
+    n = int(RATE * secs)
+    blast = lowpass(noise(secs, seed=51), 3) * decay(n, 0.12)
+    rumble = lowpass(noise(secs, seed=52), 24) * 3.0 * decay(n, 0.6)
+    thud = np.sin(2 * np.pi * np.cumsum(sweep(120, 35, secs)) / RATE) * 0.8 * decay(n, 0.25)
+    # Debris: a few late crackles, at fixed places so the file is reproducible.
+    debris = np.zeros(n)
+    for at, seed in ((0.35, 61), (0.55, 62), (0.8, 63), (1.1, 64)):
+        i = int(RATE * at)
+        k = int(RATE * 0.05)
+        debris[i:i + k] += noise(0.05, seed=seed)[:len(debris[i:i + k])] * decay(k, 0.012) * 0.5
+    return (blast + rumble + thud + debris) * env(n, attack=0.002, release=0.3)
+
+
 GAMES = {
     'girder': {
         'start': start, 'jump': jump, 'score': score, 'hammer': hammer,
@@ -252,7 +301,14 @@ GAMES = {
         'march': inv_march, 'player_hit': inv_player_hit,
         'game_over': inv_game_over, 'wave_clear': inv_wave_clear,
     },
+    'lunar': {
+        'thrust': lunar_thrust, 'crash': lunar_crash,
+    },
 }
+
+# lunar_lander.bas is the one game that asks for MP3 where it is not on Windows,
+# Linux or Android, and its directory has always carried all three.
+FORMATS = {'lunar': ('wav', 'ogg', 'mp3')}
 
 
 def _ogg_crc_table():
@@ -308,9 +364,31 @@ def write_game(game):
         s = s.astype(np.float32)
         sf.write(os.path.join(out_dir, name + '.wav'), s, RATE, subtype='PCM_16')
         ogg = os.path.join(out_dir, name + '.ogg')
-        sf.write(ogg, s, RATE, format='OGG', subtype='VORBIS')
+        encode(ogg, s, 'OGG', 'VORBIS')
         pin_ogg_serial(ogg, zlib.crc32(f'{game}/{name}'.encode()))
+        if 'mp3' in FORMATS.get(game, ()):
+            encode(os.path.join(out_dir, name + '.mp3'), s, 'MP3', 'MPEG_LAYER_III')
         print(f'{game:9s}{name:11s}{len(s) / RATE:5.2f} s')
+
+
+LONG = RATE * 4
+
+
+def encode(path, s, fmt, subtype):
+    """Write a lossy file, a long clip in blocks.
+
+    Handed the 24 s thrust in one call, libsndfile's Vorbis encoder overflowed
+    the stack and took the process down with exit code 127, leaving an OGG of
+    headers alone. Blocks avoid that -- but they also change the encode, by up
+    to 0.01 against one call for the same samples, so the short clips keep the
+    single call and the bytes they were first published with.
+    """
+    if len(s) <= LONG:
+        sf.write(path, s, RATE, format=fmt, subtype=subtype)
+        return
+    with sf.SoundFile(path, 'w', RATE, 1, format=fmt, subtype=subtype) as f:
+        for i in range(0, len(s), 4096):
+            f.write(s[i:i + 4096])
 
 
 def main():
