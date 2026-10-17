@@ -13,7 +13,7 @@
 '  another implementation: no sprite was traced, no level copied,
 '  no sound sampled. Every shape on screen is a rectangle# or an
 '  ellipse# drawn by this file, and every sound was synthesised from
-'  plain oscillators by tools/make-girder-sounds.py.
+'  plain oscillators by tools/make-game-sounds.py.
 '
 '  Controls
 '    LEFT / RIGHT   walk
@@ -56,7 +56,7 @@ if instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 ' Each platform gets the format it plays natively, as in the other games with
 ' sound: WAV on Windows, OGG on Linux and Android. Only those two are on the
 ' site, so anything else asks for OGG too. The effects were synthesised by
-' tools/make-girder-sounds.py, which is where they can be changed.
+' tools/make-game-sounds.py, which is where they can be changed.
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/girder/"
 let SOUND_EXT$ = "ogg"
 if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
