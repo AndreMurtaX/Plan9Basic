@@ -16,11 +16,12 @@ Android. Lunar Lander's thrust and crash were remade for the same reason (1.13
 and 1.15), and thrust for a second one: it was 143 s, 12.6 MB of WAV that every
 Windows player downloaded on each start, for a clip the game never needs past
 20 s. Snake's eat and Lunar's land, lowfuel and start are the clips on the site
-this does not make.
+this does not make (though it writes eat's MP3, see TRANSCODE).
 
-Each effect is written twice, because a game asks for the format its platform
-plays natively: WAV on Windows, OGG on Linux and Android. Lunar's are written a
-third time, as MP3, because lunar_lander.bas asks for that everywhere else.
+Each effect is written three times, because a game asks for the format its
+platform plays natively: WAV on Windows, OGG on Linux and Android, MP3 anywhere
+else (macOS and iOS). Until 2026-10-17 only Lunar Lander's directory had MP3s;
+Snake and Space Invaders asked for them and found none.
 
 Needs numpy and soundfile (whose bundled libsndfile encodes Vorbis):
     python -m pip install numpy soundfile
@@ -306,9 +307,11 @@ GAMES = {
     },
 }
 
-# lunar_lander.bas is the one game that asks for MP3 where it is not on Windows,
-# Linux or Android, and its directory has always carried all three.
-FORMATS = {'lunar': ('wav', 'ogg', 'mp3')}
+# Clips on the site that this script does not synthesise, but whose MP3 it
+# writes from the WAV already there, so that every clip a game asks for exists
+# in every format it asks for. Snake's eat is older than this script and keeps
+# its sound; it had a WAV and an OGG and no MP3.
+TRANSCODE = {'snake': ('eat',)}
 
 
 def _ogg_crc_table():
@@ -366,15 +369,18 @@ def write_game(game):
         ogg = os.path.join(out_dir, name + '.ogg')
         encode(ogg, s, 'OGG', 'VORBIS')
         pin_ogg_serial(ogg, zlib.crc32(f'{game}/{name}'.encode()))
-        if 'mp3' in FORMATS.get(game, ()):
-            encode(os.path.join(out_dir, name + '.mp3'), s, 'MP3', 'MPEG_LAYER_III')
+        encode(os.path.join(out_dir, name + '.mp3'), s, 'MP3', 'MPEG_LAYER_III')
         print(f'{game:9s}{name:11s}{len(s) / RATE:5.2f} s')
+    for name in TRANSCODE.get(game, ()):
+        s, rate = sf.read(os.path.join(out_dir, name + '.wav'), dtype='float32')
+        encode(os.path.join(out_dir, name + '.mp3'), s, 'MP3', 'MPEG_LAYER_III', rate)
+        print(f'{game:9s}{name:11s}{len(s) / rate:5.2f} s  (MP3 from the WAV)')
 
 
 LONG = RATE * 4
 
 
-def encode(path, s, fmt, subtype):
+def encode(path, s, fmt, subtype, rate=RATE):
     """Write a lossy file, a long clip in blocks.
 
     Handed the 24 s thrust in one call, libsndfile's Vorbis encoder overflowed
@@ -384,9 +390,9 @@ def encode(path, s, fmt, subtype):
     single call and the bytes they were first published with.
     """
     if len(s) <= LONG:
-        sf.write(path, s, RATE, format=fmt, subtype=subtype)
+        sf.write(path, s, rate, format=fmt, subtype=subtype)
         return
-    with sf.SoundFile(path, 'w', RATE, 1, format=fmt, subtype=subtype) as f:
+    with sf.SoundFile(path, 'w', rate, 1, format=fmt, subtype=subtype) as f:
         for i in range(0, len(s), 4096):
             f.write(s[i:i + 4096])
 

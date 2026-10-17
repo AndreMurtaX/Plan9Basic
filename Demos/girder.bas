@@ -54,12 +54,14 @@ if instr(PLATFORM$, "iOS") >= 0 then IS_MOBILE = 1
 
 ' --- Sound ----------------------------------------------------
 ' Each platform gets the format it plays natively, as in the other games with
-' sound: WAV on Windows, OGG on Linux and Android. Only those two are on the
-' site, so anything else asks for OGG too. The effects were synthesised by
-' tools/make-game-sounds.py, which is where they can be changed.
+' sound: WAV on Windows, OGG on Linux and Android, MP3 anywhere else. The
+' effects were synthesised by tools/make-game-sounds.py, which is where they
+' can be changed.
 let SOUND_BASE$ = "https://plan9basic.com/assets/sounds/girder/"
-let SOUND_EXT$ = "ogg"
+let SOUND_EXT$ = "mp3"
 if instr(PLATFORM$, "Windows") >= 0 then SOUND_EXT$ = "wav"
+if instr(PLATFORM$, "Linux") >= 0 then SOUND_EXT$ = "ogg"
+if instr(PLATFORM$, "Android") >= 0 then SOUND_EXT$ = "ogg"
 
 ' --- Geometry -------------------------------------------------
 let GAME_W = 560
