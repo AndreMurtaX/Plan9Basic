@@ -9,8 +9,10 @@ It began with Girder and took on the clips two older games had always asked
 for and never had. Until 2026-10-17 snake.bas loaded die and start, and
 space_invaders.bas loaded player_hit, game_over, wave_clear and march, from
 URLs with nothing behind them: the games played on, silent at exactly the
-moments a sound mattered most. The clips those games already had -- snake's
-eat, the invaders' shoot and explode -- are not made here and are left alone.
+moments a sound mattered most. The invaders' shoot and explode, which were
+there, were remade here too: they had been mastered to full scale, and the
+Vorbis encode of each came back peaking at 1.17 and 1.23, clipped on Linux and
+Android. Snake's eat is the one clip on the site this does not make.
 
 Each effect is written twice, because a game asks for the format its platform
 plays natively: WAV on Windows, OGG on Linux and Android.
@@ -182,6 +184,24 @@ def snake_die():
 
 # --- Space Invaders ------------------------------------------------------
 
+def inv_shoot():
+    # A falling zap: thin pulse wave swept down, gone in a third of a second.
+    secs = 0.3
+    n = int(RATE * secs)
+    zap = square(sweep(1500, 260, secs), secs, duty=0.2)
+    return zap * decay(n, 0.11) * env(n, attack=0.002, release=0.05) * 0.5
+
+
+def inv_explode():
+    # A crunch rather than a boom: plays for every alien hit, so it stays
+    # bright and short, and two of them overlap through the game's pool of three.
+    secs = 0.3
+    n = int(RATE * secs)
+    crunch = lowpass(noise(secs, seed=31), 2) * decay(n, 0.07)
+    body = square(sweep(240, 70, secs), secs, duty=0.5) * 0.35 * decay(n, 0.1)
+    return (crunch + body) * env(n, attack=0.001, release=0.04)
+
+
 def inv_march():
     # One low knock per step of the formation. A single clip, re-triggered by
     # the game, so the tempo is the game's and speeds up with it.
@@ -228,6 +248,7 @@ GAMES = {
         'start': snake_start, 'die': snake_die,
     },
     'invaders': {
+        'shoot': inv_shoot, 'explode': inv_explode,
         'march': inv_march, 'player_hit': inv_player_hit,
         'game_over': inv_game_over, 'wave_clear': inv_wave_clear,
     },
