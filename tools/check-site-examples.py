@@ -2,7 +2,7 @@
 r"""The games the site hands out, against the games in the repository.
 
 `Website/docs/examples.html` carries the source of every example inside itself,
-in a JavaScript template literal, and that is what a reader copies. The nine
+in a JavaScript template literal, and that is what a reader copies. The
 games also exist as files under `Demos/`. Two copies of the same program.
 
 They drifted. The corrections of 2026-08 landed in `Demos/` and never in the
@@ -42,6 +42,7 @@ PAGE = os.path.join(ROOT, 'Website', 'docs', 'examples.html')
 PAIRS = {name: os.path.join(ROOT, 'Demos', name + '.bas') for name in [
     '2048', 'asteroids', 'breakout', 'flappy_bird', 'lunar_lander',
     'missile_command', 'snake', 'space_invaders', 'space_mines',
+    'girder',
     'tractor',
     'whack_a_mole']}
 
