@@ -25,8 +25,12 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#.claude holds the worktrees of other editing sessions: whole second copies of
+#the tree, at other paths. On 2026-10-17 one was open while this ran, and its
+#five READERS units were reported as unexplained -- the table names them by
+#their path here, not there -- which stopped a push that touched no Pascal.
 SKIP = ('.git', '__history', 'dist', 'Android64', 'Win64', 'Linux64', 'Win32',
-        'OSX64', 'bin')
+        'OSX64', 'bin', '.claude')
 NAMES = ('ModuleEngine', 'ModuleOutput')
 
 #Units with no parent chain to walk, and why each has none.
